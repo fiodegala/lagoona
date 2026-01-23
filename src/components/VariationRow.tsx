@@ -1,0 +1,199 @@
+import { useState } from 'react';
+import { TableRow, TableCell } from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Trash2, ImagePlus, X } from 'lucide-react';
+import { ProductVariation } from '@/services/variations';
+import ImageUpload from './ImageUpload';
+
+interface VariationRowProps {
+  variation: ProductVariation;
+  onUpdate: (
+    variationId: string,
+    field: 'price' | 'stock' | 'sku' | 'is_active' | 'image_url',
+    value: string | number | boolean
+  ) => Promise<void>;
+  onDelete: (variationId: string) => Promise<void>;
+}
+
+const VariationRow = ({ variation, onUpdate, onDelete }: VariationRowProps) => {
+  const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
+  const [localImageUrl, setLocalImageUrl] = useState(variation.image_url || '');
+
+  const handleImageSave = async () => {
+    await onUpdate(variation.id, 'image_url', localImageUrl);
+    setIsImageDialogOpen(false);
+  };
+
+  const handleRemoveImage = async () => {
+    setLocalImageUrl('');
+    await onUpdate(variation.id, 'image_url', '');
+  };
+
+  return (
+    <TableRow>
+      <TableCell>
+        <div className="flex items-center gap-2">
+          {/* Image thumbnail */}
+          <Dialog open={isImageDialogOpen} onOpenChange={setIsImageDialogOpen}>
+            <DialogTrigger asChild>
+              <button
+                type="button"
+                className="relative h-10 w-10 rounded-md border border-dashed border-muted-foreground/25 flex items-center justify-center overflow-hidden hover:border-primary transition-colors group"
+              >
+                {variation.image_url ? (
+                  <>
+                    <img
+                      src={variation.image_url}
+                      alt="Variação"
+                      className="h-full w-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <ImagePlus className="h-4 w-4 text-white" />
+                    </div>
+                  </>
+                ) : (
+                  <ImagePlus className="h-4 w-4 text-muted-foreground" />
+                )}
+              </button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Imagem da Variação</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <ImageUpload
+                  value={localImageUrl}
+                  onChange={(url) => setLocalImageUrl(url || '')}
+                  bucket="product-images"
+                  folder="variations"
+                />
+                {localImageUrl && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    onClick={handleRemoveImage}
+                  >
+                    <X className="h-4 w-4 mr-2" />
+                    Remover Imagem
+                  </Button>
+                )}
+                <div className="flex gap-2 justify-end">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setLocalImageUrl(variation.image_url || '');
+                      setIsImageDialogOpen(false);
+                    }}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button type="button" onClick={handleImageSave}>
+                    Salvar
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* Attribute values */}
+          <div className="flex flex-wrap gap-1">
+            {variation.attribute_values?.map((av, idx) => (
+              <Badge key={idx} variant="outline" className="text-xs">
+                {av.value}
+              </Badge>
+            ))}
+          </div>
+        </div>
+      </TableCell>
+      <TableCell>
+        <Input
+          value={variation.sku || ''}
+          onChange={(e) => onUpdate(variation.id, 'sku', e.target.value)}
+          placeholder="SKU"
+          className="h-8 w-24"
+        />
+      </TableCell>
+      <TableCell>
+        <Input
+          type="number"
+          step="0.01"
+          value={variation.price ?? ''}
+          onChange={(e) =>
+            onUpdate(variation.id, 'price', parseFloat(e.target.value) || 0)
+          }
+          className="h-8 w-24"
+        />
+      </TableCell>
+      <TableCell>
+        <Input
+          type="number"
+          value={variation.stock}
+          onChange={(e) =>
+            onUpdate(variation.id, 'stock', parseInt(e.target.value) || 0)
+          }
+          className="h-8 w-20"
+        />
+      </TableCell>
+      <TableCell>
+        <Switch
+          checked={variation.is_active}
+          onCheckedChange={(checked) =>
+            onUpdate(variation.id, 'is_active', checked)
+          }
+        />
+      </TableCell>
+      <TableCell>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-8 w-8">
+              <Trash2 className="h-4 w-4 text-destructive" />
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Remover variação?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Esta ação não pode ser desfeita.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => onDelete(variation.id)}
+                className="bg-destructive text-destructive-foreground"
+              >
+                Remover
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </TableCell>
+    </TableRow>
+  );
+};
+
+export default VariationRow;
