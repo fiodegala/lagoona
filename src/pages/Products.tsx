@@ -38,7 +38,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
-import { Package, Plus, Pencil, Trash2, Loader2, Eye, EyeOff, Filter, Search, ChevronLeft, ChevronRight, Download, FileSpreadsheet, Upload } from 'lucide-react';
+import { Package, Plus, Pencil, Trash2, Loader2, Eye, EyeOff, Filter, Search, ChevronLeft, ChevronRight, Download, FileSpreadsheet, Upload, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import {
   DropdownMenu,
@@ -53,6 +53,9 @@ import ProductImportModal from '@/components/ProductImportModal';
 
 const ITEMS_PER_PAGE_OPTIONS = [10, 25, 50, 100];
 
+type SortField = 'name' | 'price' | 'stock' | null;
+type SortDirection = 'asc' | 'desc';
+
 const Products = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -64,6 +67,8 @@ const Products = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [sortField, setSortField] = useState<SortField>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
   const loadData = async () => {
     try {
@@ -86,7 +91,7 @@ const Products = () => {
   }, []);
 
   const filteredProducts = useMemo(() => {
-    return products.filter(product => {
+    let result = products.filter(product => {
       const matchesSearch = searchQuery === '' || 
         product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         product.description?.toLowerCase().includes(searchQuery.toLowerCase());
@@ -97,12 +102,35 @@ const Products = () => {
       
       return matchesSearch && matchesCategory;
     });
-  }, [products, searchQuery, selectedCategory]);
+
+    // Apply sorting
+    if (sortField) {
+      result = [...result].sort((a, b) => {
+        let comparison = 0;
+        
+        switch (sortField) {
+          case 'name':
+            comparison = a.name.localeCompare(b.name, 'pt-BR');
+            break;
+          case 'price':
+            comparison = a.price - b.price;
+            break;
+          case 'stock':
+            comparison = a.stock - b.stock;
+            break;
+        }
+        
+        return sortDirection === 'asc' ? comparison : -comparison;
+      });
+    }
+
+    return result;
+  }, [products, searchQuery, selectedCategory, sortField, sortDirection]);
 
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, selectedCategory]);
+  }, [searchQuery, selectedCategory, sortField, sortDirection]);
 
   // Pagination calculations
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
@@ -159,6 +187,30 @@ const Products = () => {
     if (!categoryId) return null;
     const category = categories.find(c => c.id === categoryId);
     return category?.name || null;
+  };
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      // Toggle direction or clear sort
+      if (sortDirection === 'asc') {
+        setSortDirection('desc');
+      } else {
+        setSortField(null);
+        setSortDirection('asc');
+      }
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  const getSortIcon = (field: SortField) => {
+    if (sortField !== field) {
+      return <ArrowUpDown className="h-4 w-4 text-muted-foreground/50" />;
+    }
+    return sortDirection === 'asc' 
+      ? <ArrowUp className="h-4 w-4 text-primary" />
+      : <ArrowDown className="h-4 w-4 text-primary" />;
   };
 
   const handleCreate = () => {
@@ -426,10 +478,34 @@ const Products = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Produto</TableHead>
+                      <TableHead 
+                        className="cursor-pointer select-none hover:bg-muted/50 transition-colors"
+                        onClick={() => handleSort('name')}
+                      >
+                        <div className="flex items-center gap-2">
+                          Produto
+                          {getSortIcon('name')}
+                        </div>
+                      </TableHead>
                       <TableHead>Categoria</TableHead>
-                      <TableHead>Preço</TableHead>
-                      <TableHead>Estoque</TableHead>
+                      <TableHead 
+                        className="cursor-pointer select-none hover:bg-muted/50 transition-colors"
+                        onClick={() => handleSort('price')}
+                      >
+                        <div className="flex items-center gap-2">
+                          Preço
+                          {getSortIcon('price')}
+                        </div>
+                      </TableHead>
+                      <TableHead 
+                        className="cursor-pointer select-none hover:bg-muted/50 transition-colors"
+                        onClick={() => handleSort('stock')}
+                      >
+                        <div className="flex items-center gap-2">
+                          Estoque
+                          {getSortIcon('stock')}
+                        </div>
+                      </TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
