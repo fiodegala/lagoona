@@ -38,8 +38,9 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
-import { Package, Plus, Pencil, Trash2, Loader2, Eye, EyeOff, Filter, Search, ChevronLeft, ChevronRight, Download, FileSpreadsheet, Upload, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { Package, Plus, Pencil, Trash2, Loader2, Eye, EyeOff, Filter, Search, ChevronLeft, ChevronRight, Download, FileSpreadsheet, Upload, ArrowUpDown, ArrowUp, ArrowDown, MoreHorizontal } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -70,6 +71,8 @@ const Products = () => {
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [sortField, setSortField] = useState<SortField>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+  const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
+  const [isBulkActionLoading, setIsBulkActionLoading] = useState(false);
 
   const loadData = async () => {
     try {
@@ -245,6 +248,88 @@ const Products = () => {
       loadData();
     } catch (error) {
       toast.error('Erro ao atualizar produto');
+    }
+  };
+
+  // Bulk selection handlers
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      const allIds = paginatedProducts.map(p => p.id);
+      setSelectedProducts(new Set(allIds));
+    } else {
+      setSelectedProducts(new Set());
+    }
+  };
+
+  const handleSelectProduct = (productId: string, checked: boolean) => {
+    const newSelected = new Set(selectedProducts);
+    if (checked) {
+      newSelected.add(productId);
+    } else {
+      newSelected.delete(productId);
+    }
+    setSelectedProducts(newSelected);
+  };
+
+  const isAllSelected = paginatedProducts.length > 0 && 
+    paginatedProducts.every(p => selectedProducts.has(p.id));
+  
+  const isIndeterminate = selectedProducts.size > 0 && 
+    !isAllSelected && 
+    paginatedProducts.some(p => selectedProducts.has(p.id));
+
+  const handleBulkDelete = async () => {
+    if (selectedProducts.size === 0) return;
+    
+    setIsBulkActionLoading(true);
+    try {
+      const promises = Array.from(selectedProducts).map(id => productsService.delete(id));
+      await Promise.all(promises);
+      toast.success(`${selectedProducts.size} produto(s) excluído(s)`);
+      setSelectedProducts(new Set());
+      loadData();
+    } catch (error) {
+      toast.error('Erro ao excluir produtos');
+    } finally {
+      setIsBulkActionLoading(false);
+    }
+  };
+
+  const handleBulkActivate = async () => {
+    if (selectedProducts.size === 0) return;
+    
+    setIsBulkActionLoading(true);
+    try {
+      const promises = Array.from(selectedProducts).map(id => 
+        productsService.toggleActive(id, true)
+      );
+      await Promise.all(promises);
+      toast.success(`${selectedProducts.size} produto(s) ativado(s)`);
+      setSelectedProducts(new Set());
+      loadData();
+    } catch (error) {
+      toast.error('Erro ao ativar produtos');
+    } finally {
+      setIsBulkActionLoading(false);
+    }
+  };
+
+  const handleBulkDeactivate = async () => {
+    if (selectedProducts.size === 0) return;
+    
+    setIsBulkActionLoading(true);
+    try {
+      const promises = Array.from(selectedProducts).map(id => 
+        productsService.toggleActive(id, false)
+      );
+      await Promise.all(promises);
+      toast.success(`${selectedProducts.size} produto(s) desativado(s)`);
+      setSelectedProducts(new Set());
+      loadData();
+    } catch (error) {
+      toast.error('Erro ao desativar produtos');
+    } finally {
+      setIsBulkActionLoading(false);
     }
   };
 
@@ -489,10 +574,86 @@ const Products = () => {
             </CardContent>
           ) : (
             <CardContent className="p-0">
+              {/* Bulk Actions Bar */}
+              {selectedProducts.size > 0 && (
+                <div className="flex items-center justify-between px-4 py-3 bg-primary/5 border-b">
+                  <span className="text-sm font-medium">
+                    {selectedProducts.size} produto(s) selecionado(s)
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleBulkActivate}
+                      disabled={isBulkActionLoading}
+                      className="gap-1"
+                    >
+                      <Eye className="h-4 w-4" />
+                      Ativar
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleBulkDeactivate}
+                      disabled={isBulkActionLoading}
+                      className="gap-1"
+                    >
+                      <EyeOff className="h-4 w-4" />
+                      Desativar
+                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={isBulkActionLoading}
+                          className="gap-1 text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          Excluir
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Excluir produtos?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Você está prestes a excluir {selectedProducts.size} produto(s). Esta ação não pode ser desfeita.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={handleBulkDelete}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            Excluir {selectedProducts.size} produto(s)
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setSelectedProducts(new Set())}
+                    >
+                      Limpar seleção
+                    </Button>
+                  </div>
+                </div>
+              )}
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="w-12">
+                        <Checkbox
+                          checked={isAllSelected}
+                          // @ts-ignore - indeterminate prop
+                          indeterminate={isIndeterminate}
+                          onCheckedChange={handleSelectAll}
+                          aria-label="Selecionar todos"
+                        />
+                      </TableHead>
                       <TableHead 
                         className="cursor-pointer select-none hover:bg-muted/50 transition-colors"
                         onClick={() => handleSort('name')}
@@ -527,7 +688,14 @@ const Products = () => {
                   </TableHeader>
                   <TableBody>
                     {paginatedProducts.map((product) => (
-                      <TableRow key={product.id}>
+                      <TableRow key={product.id} className={selectedProducts.has(product.id) ? 'bg-primary/5' : ''}>
+                        <TableCell>
+                          <Checkbox
+                            checked={selectedProducts.has(product.id)}
+                            onCheckedChange={(checked) => handleSelectProduct(product.id, !!checked)}
+                            aria-label={`Selecionar ${product.name}`}
+                          />
+                        </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-3">
                             {product.image_url ? (
