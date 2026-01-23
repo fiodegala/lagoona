@@ -1,0 +1,253 @@
+import { useState, useEffect } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
+import { productsService, categoriesService, Product, Category, CreateProductData } from '@/services/products';
+
+interface ProductFormModalProps {
+  open: boolean;
+  onClose: () => void;
+  onSuccess: () => void;
+  product?: Product | null;
+}
+
+const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModalProps) => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
+  
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [price, setPrice] = useState('');
+  const [stock, setStock] = useState('0');
+  const [categoryId, setCategoryId] = useState<string>('');
+  const [imageUrl, setImageUrl] = useState('');
+  const [isActive, setIsActive] = useState(true);
+
+  const isEditing = !!product;
+
+  useEffect(() => {
+    if (open) {
+      loadCategories();
+      if (product) {
+        setName(product.name);
+        setDescription(product.description || '');
+        setPrice(product.price.toString());
+        setStock(product.stock.toString());
+        setCategoryId(product.category_id || '');
+        setImageUrl(product.image_url || '');
+        setIsActive(product.is_active);
+      } else {
+        resetForm();
+      }
+    }
+  }, [open, product]);
+
+  const loadCategories = async () => {
+    try {
+      const data = await categoriesService.getAll();
+      setCategories(data);
+    } catch (error) {
+      console.error('Error loading categories:', error);
+    }
+  };
+
+  const resetForm = () => {
+    setName('');
+    setDescription('');
+    setPrice('');
+    setStock('0');
+    setCategoryId('');
+    setImageUrl('');
+    setIsActive(true);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!name.trim()) {
+      toast.error('Nome é obrigatório');
+      return;
+    }
+    
+    const priceValue = parseFloat(price);
+    if (isNaN(priceValue) || priceValue < 0) {
+      toast.error('Preço inválido');
+      return;
+    }
+
+    setIsLoading(true);
+    
+    try {
+      const data: CreateProductData = {
+        name: name.trim(),
+        description: description.trim() || undefined,
+        price: priceValue,
+        stock: parseInt(stock) || 0,
+        category_id: categoryId || undefined,
+        image_url: imageUrl.trim() || undefined,
+        is_active: isActive,
+      };
+
+      if (isEditing && product) {
+        await productsService.update(product.id, data);
+        toast.success('Produto atualizado com sucesso!');
+      } else {
+        await productsService.create(data);
+        toast.success('Produto criado com sucesso!');
+      }
+      
+      onSuccess();
+      onClose();
+    } catch (error) {
+      console.error('Error saving product:', error);
+      toast.error(isEditing ? 'Erro ao atualizar produto' : 'Erro ao criar produto');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>{isEditing ? 'Editar Produto' : 'Novo Produto'}</DialogTitle>
+          <DialogDescription>
+            {isEditing ? 'Atualize as informações do produto' : 'Preencha os dados do novo produto'}
+          </DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit} className="space-y-4 py-4">
+          <div className="space-y-2">
+            <Label htmlFor="name">Nome *</Label>
+            <Input
+              id="name"
+              placeholder="Nome do produto"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="description">Descrição</Label>
+            <Textarea
+              id="description"
+              placeholder="Descrição do produto..."
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={3}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="price">Preço (R$) *</Label>
+              <Input
+                id="price"
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="0.00"
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="stock">Estoque</Label>
+              <Input
+                id="stock"
+                type="number"
+                min="0"
+                placeholder="0"
+                value={stock}
+                onChange={(e) => setStock(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="category">Categoria</Label>
+            <Select value={categoryId} onValueChange={setCategoryId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione uma categoria" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Sem categoria</SelectItem>
+                {categories.map((cat) => (
+                  <SelectItem key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="imageUrl">URL da Imagem</Label>
+            <Input
+              id="imageUrl"
+              type="url"
+              placeholder="https://exemplo.com/imagem.jpg"
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+            />
+          </div>
+
+          <div className="flex items-center justify-between rounded-lg border p-3">
+            <div>
+              <Label htmlFor="isActive" className="font-medium">Produto ativo</Label>
+              <p className="text-sm text-muted-foreground">
+                Produtos inativos não aparecem na loja
+              </p>
+            </div>
+            <Switch
+              id="isActive"
+              checked={isActive}
+              onCheckedChange={setIsActive}
+            />
+          </div>
+
+          <DialogFooter className="pt-4">
+            <Button type="button" variant="outline" onClick={onClose}>
+              Cancelar
+            </Button>
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Salvando...
+                </>
+              ) : isEditing ? (
+                'Atualizar'
+              ) : (
+                'Criar Produto'
+              )}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+export default ProductFormModal;

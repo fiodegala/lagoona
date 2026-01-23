@@ -1,0 +1,152 @@
+import { supabase } from '@/integrations/supabase/client';
+
+export interface Product {
+  id: string;
+  name: string;
+  description: string | null;
+  price: number;
+  stock: number;
+  category_id: string | null;
+  image_url: string | null;
+  is_active: boolean;
+  metadata: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  parent_id: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateProductData {
+  name: string;
+  description?: string;
+  price: number;
+  stock?: number;
+  category_id?: string;
+  image_url?: string;
+  is_active?: boolean;
+  metadata?: Record<string, unknown>;
+}
+
+export const productsService = {
+  async getAll(): Promise<Product[]> {
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return (data || []) as Product[];
+  },
+
+  async getById(id: string): Promise<Product | null> {
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) throw error;
+    return data as Product;
+  },
+
+  async create(input: CreateProductData): Promise<Product> {
+    const insertData = {
+      name: input.name,
+      description: input.description || null,
+      price: input.price,
+      stock: input.stock || 0,
+      category_id: input.category_id || null,
+      image_url: input.image_url || null,
+      is_active: input.is_active ?? true,
+      metadata: input.metadata || {},
+    };
+
+    const { data, error } = await supabase
+      .from('products')
+      .insert(insertData as never)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data as Product;
+  },
+
+  async update(id: string, input: Partial<CreateProductData>): Promise<Product> {
+    const updateData: Record<string, unknown> = {
+      updated_at: new Date().toISOString(),
+    };
+    
+    if (input.name !== undefined) updateData.name = input.name;
+    if (input.description !== undefined) updateData.description = input.description;
+    if (input.price !== undefined) updateData.price = input.price;
+    if (input.stock !== undefined) updateData.stock = input.stock;
+    if (input.category_id !== undefined) updateData.category_id = input.category_id;
+    if (input.image_url !== undefined) updateData.image_url = input.image_url;
+    if (input.is_active !== undefined) updateData.is_active = input.is_active;
+    if (input.metadata !== undefined) updateData.metadata = input.metadata;
+
+    const { data, error } = await supabase
+      .from('products')
+      .update(updateData as never)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data as Product;
+  },
+
+  async delete(id: string): Promise<void> {
+    const { error } = await supabase
+      .from('products')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+  },
+
+  async toggleActive(id: string, isActive: boolean): Promise<void> {
+    const { error } = await supabase
+      .from('products')
+      .update({ is_active: isActive })
+      .eq('id', id);
+
+    if (error) throw error;
+  },
+};
+
+export const categoriesService = {
+  async getAll(): Promise<Category[]> {
+    const { data, error } = await supabase
+      .from('categories')
+      .select('*')
+      .order('name', { ascending: true });
+
+    if (error) throw error;
+    return (data || []) as Category[];
+  },
+
+  async create(input: { name: string; slug: string; description?: string }): Promise<Category> {
+    const { data, error } = await supabase
+      .from('categories')
+      .insert({
+        name: input.name,
+        slug: input.slug,
+        description: input.description || null,
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data as Category;
+  },
+};
