@@ -54,7 +54,7 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
         setDescription(product.description || '');
         setPrice(product.price.toString());
         setStock(product.stock.toString());
-        setCategoryId(product.category_id || '');
+        setCategoryId(product.category_id || 'none');
         setImageUrl(product.image_url || '');
         setIsActive(product.is_active);
       } else {
@@ -77,7 +77,7 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
     setDescription('');
     setPrice('');
     setStock('0');
-    setCategoryId('');
+    setCategoryId('none');
     setImageUrl('');
     setIsActive(true);
   };
@@ -104,7 +104,7 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
         description: description.trim() || undefined,
         price: priceValue,
         stock: parseInt(stock) || 0,
-        category_id: categoryId || undefined,
+        category_id: categoryId === 'none' ? undefined : categoryId,
         image_url: imageUrl.trim() || undefined,
         is_active: isActive,
       };
@@ -194,8 +194,8 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
                 <SelectValue placeholder="Selecione uma categoria" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Sem categoria</SelectItem>
-                {categories.map((cat) => (
+                <SelectItem value="none">Sem categoria</SelectItem>
+                {categories.filter(cat => cat.id).map((cat) => (
                   <SelectItem key={cat.id} value={cat.id}>
                     {cat.name}
                   </SelectItem>
