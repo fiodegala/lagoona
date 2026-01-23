@@ -38,8 +38,14 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
-import { Package, Plus, Pencil, Trash2, Loader2, Eye, EyeOff, Filter, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Package, Plus, Pencil, Trash2, Loader2, Eye, EyeOff, Filter, Search, ChevronLeft, ChevronRight, Download, FileSpreadsheet } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
 import { productsService, Product, categoriesService, Category } from '@/services/products';
 import ProductFormModal from '@/components/ProductFormModal';
@@ -190,6 +196,116 @@ const Products = () => {
     }).format(value);
   };
 
+  const formatCurrencyForExport = (value: number) => {
+    return value.toFixed(2).replace('.', ',');
+  };
+
+  const getExportData = () => {
+    return filteredProducts.map(product => ({
+      Nome: product.name,
+      Descrição: product.description || '',
+      Categoria: getCategoryName(product.category_id) || 'Sem categoria',
+      'Preço (R$)': formatCurrencyForExport(product.price),
+      Estoque: product.stock,
+      Status: product.is_active ? 'Ativo' : 'Inativo',
+      'Criado em': new Date(product.created_at).toLocaleDateString('pt-BR'),
+      'Atualizado em': new Date(product.updated_at).toLocaleDateString('pt-BR'),
+    }));
+  };
+
+  const exportToCSV = () => {
+    const data = getExportData();
+    if (data.length === 0) {
+      toast.error('Nenhum produto para exportar');
+      return;
+    }
+
+    const headers = Object.keys(data[0]);
+    const csvRows = [
+      headers.join(';'),
+      ...data.map(row => 
+        headers.map(header => {
+          const value = String(row[header as keyof typeof row] ?? '');
+          // Escape quotes and wrap in quotes if contains semicolon or newline
+          if (value.includes(';') || value.includes('\n') || value.includes('"')) {
+            return `"${value.replace(/"/g, '""')}"`;
+          }
+          return value;
+        }).join(';')
+      )
+    ];
+
+    const csvContent = '\uFEFF' + csvRows.join('\n'); // BOM for UTF-8
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `produtos_${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
+    toast.success(`${data.length} produto(s) exportado(s) para CSV`);
+  };
+
+  const exportToExcel = () => {
+    const data = getExportData();
+    if (data.length === 0) {
+      toast.error('Nenhum produto para exportar');
+      return;
+    }
+
+    const headers = Object.keys(data[0]);
+    
+    // Create Excel XML format
+    const xmlRows = data.map(row => 
+      `<Row>${headers.map(header => {
+        const value = row[header as keyof typeof row];
+        const cellValue = String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const isNumber = header === 'Estoque' || header === 'Preço (R$)';
+        return `<Cell><Data ss:Type="${isNumber ? 'Number' : 'String'}">${isNumber ? String(value).replace(',', '.') : cellValue}</Data></Cell>`;
+      }).join('')}</Row>`
+    ).join('\n');
+
+    const headerRow = `<Row>${headers.map(h => 
+      `<Cell ss:StyleID="header"><Data ss:Type="String">${h}</Data></Cell>`
+    ).join('')}</Row>`;
+
+    const excelContent = `<?xml version="1.0" encoding="UTF-8"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+  xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+  <Styles>
+    <Style ss:ID="Default" ss:Name="Normal">
+      <Alignment ss:Vertical="Bottom"/>
+    </Style>
+    <Style ss:ID="header">
+      <Font ss:Bold="1"/>
+      <Interior ss:Color="#E0E0E0" ss:Pattern="Solid"/>
+    </Style>
+  </Styles>
+  <Worksheet ss:Name="Produtos">
+    <Table>
+      ${headerRow}
+      ${xmlRows}
+    </Table>
+  </Worksheet>
+</Workbook>`;
+
+    const blob = new Blob([excelContent], { type: 'application/vnd.ms-excel' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `produtos_${new Date().toISOString().split('T')[0]}.xls`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
+    toast.success(`${data.length} produto(s) exportado(s) para Excel`);
+  };
+
   return (
     <AdminLayout>
       <div className="space-y-6 animate-fade-in">
@@ -198,10 +314,30 @@ const Products = () => {
             <h1 className="text-2xl font-bold text-foreground">Produtos</h1>
             <p className="text-muted-foreground mt-1">Gerencie seu catálogo de produtos</p>
           </div>
-          <Button className="gap-2" onClick={handleCreate}>
-            <Plus className="h-4 w-4" />
-            Novo Produto
-          </Button>
+          <div className="flex items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="gap-2" disabled={filteredProducts.length === 0}>
+                  <Download className="h-4 w-4" />
+                  Exportar
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={exportToCSV} className="gap-2 cursor-pointer">
+                  <Download className="h-4 w-4" />
+                  Exportar CSV
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={exportToExcel} className="gap-2 cursor-pointer">
+                  <FileSpreadsheet className="h-4 w-4" />
+                  Exportar Excel
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Button className="gap-2" onClick={handleCreate}>
+              <Plus className="h-4 w-4" />
+              Novo Produto
+            </Button>
+          </div>
         </div>
 
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
