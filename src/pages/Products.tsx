@@ -424,7 +424,7 @@ const Products = () => {
               <SelectContent>
                 <SelectItem value="all">Todas as categorias</SelectItem>
                 <SelectItem value="none">Sem categoria</SelectItem>
-                {categories.map((cat) => (
+                {categories.filter(cat => cat.id).map((cat) => (
                   <SelectItem key={cat.id} value={cat.id}>
                     {cat.name}
                   </SelectItem>
