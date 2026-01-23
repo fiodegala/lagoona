@@ -38,7 +38,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
-import { Package, Plus, Pencil, Trash2, Loader2, Eye, EyeOff, Filter, Search, ChevronLeft, ChevronRight, Download, FileSpreadsheet } from 'lucide-react';
+import { Package, Plus, Pencil, Trash2, Loader2, Eye, EyeOff, Filter, Search, ChevronLeft, ChevronRight, Download, FileSpreadsheet, Upload } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import {
   DropdownMenu,
@@ -49,6 +49,7 @@ import {
 import { toast } from 'sonner';
 import { productsService, Product, categoriesService, Category } from '@/services/products';
 import ProductFormModal from '@/components/ProductFormModal';
+import ProductImportModal from '@/components/ProductImportModal';
 
 const ITEMS_PER_PAGE_OPTIONS = [10, 25, 50, 100];
 
@@ -57,6 +58,7 @@ const Products = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [formOpen, setFormOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -315,6 +317,10 @@ const Products = () => {
             <p className="text-muted-foreground mt-1">Gerencie seu catálogo de produtos</p>
           </div>
           <div className="flex items-center gap-2">
+            <Button variant="outline" className="gap-2" onClick={() => setImportOpen(true)}>
+              <Upload className="h-4 w-4" />
+              Importar
+            </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="gap-2" disabled={filteredProducts.length === 0}>
@@ -611,6 +617,13 @@ const Products = () => {
         onClose={() => setFormOpen(false)}
         onSuccess={loadData}
         product={editingProduct}
+      />
+
+      <ProductImportModal
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        onSuccess={loadData}
+        categories={categories}
       />
     </AdminLayout>
   );
