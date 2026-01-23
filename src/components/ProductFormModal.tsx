@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Loader2, Package, Layers } from 'lucide-react';
+import { Loader2, Package, Layers, Weight, Ruler } from 'lucide-react';
 import { toast } from 'sonner';
 import { productsService, categoriesService, Product, Category, CreateProductData } from '@/services/products';
 import { variationsService } from '@/services/variations';
@@ -49,6 +49,12 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
   const [isActive, setIsActive] = useState(true);
   const [productType, setProductType] = useState<'simple' | 'variable'>('simple');
   const [hasVariations, setHasVariations] = useState(false);
+  
+  // Shipping fields
+  const [weightKg, setWeightKg] = useState('');
+  const [widthCm, setWidthCm] = useState('');
+  const [heightCm, setHeightCm] = useState('');
+  const [depthCm, setDepthCm] = useState('');
 
   const isEditing = !!product;
 
@@ -63,6 +69,10 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
         setCategoryId(product.category_id || 'none');
         setImageUrl(product.image_url || '');
         setIsActive(product.is_active);
+        setWeightKg(product.weight_kg?.toString() || '');
+        setWidthCm(product.width_cm?.toString() || '');
+        setHeightCm(product.height_cm?.toString() || '');
+        setDepthCm(product.depth_cm?.toString() || '');
         // Check if product has variations
         checkProductVariations(product.id);
       } else {
@@ -105,6 +115,10 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
     setActiveTab('details');
     setProductType('simple');
     setHasVariations(false);
+    setWeightKg('');
+    setWidthCm('');
+    setHeightCm('');
+    setDepthCm('');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -132,6 +146,10 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
         category_id: categoryId === 'none' ? undefined : categoryId,
         image_url: imageUrl.trim() || undefined,
         is_active: isActive,
+        weight_kg: weightKg ? parseFloat(weightKg) : undefined,
+        width_cm: widthCm ? parseFloat(widthCm) : undefined,
+        height_cm: heightCm ? parseFloat(heightCm) : undefined,
+        depth_cm: depthCm ? parseFloat(depthCm) : undefined,
       };
 
       if (isEditing && product) {
@@ -302,6 +320,64 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
             />
           </TabsContent>
         </Tabs>
+      </div>
+
+      {/* Shipping Section */}
+      <div className="space-y-3 rounded-lg border p-4">
+        <div className="flex items-center gap-2">
+          <Weight className="h-4 w-4 text-muted-foreground" />
+          <Label className="font-medium">Peso e Dimensões (para frete)</Label>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1">
+            <Label htmlFor="weight" className="text-xs text-muted-foreground">Peso (kg)</Label>
+            <Input
+              id="weight"
+              type="number"
+              step="0.01"
+              min="0"
+              placeholder="0.00"
+              value={weightKg}
+              onChange={(e) => setWeightKg(e.target.value)}
+            />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="width" className="text-xs text-muted-foreground">Largura (cm)</Label>
+            <Input
+              id="width"
+              type="number"
+              step="0.1"
+              min="0"
+              placeholder="0"
+              value={widthCm}
+              onChange={(e) => setWidthCm(e.target.value)}
+            />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="height" className="text-xs text-muted-foreground">Altura (cm)</Label>
+            <Input
+              id="height"
+              type="number"
+              step="0.1"
+              min="0"
+              placeholder="0"
+              value={heightCm}
+              onChange={(e) => setHeightCm(e.target.value)}
+            />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="depth" className="text-xs text-muted-foreground">Profundidade (cm)</Label>
+            <Input
+              id="depth"
+              type="number"
+              step="0.1"
+              min="0"
+              placeholder="0"
+              value={depthCm}
+              onChange={(e) => setDepthCm(e.target.value)}
+            />
+          </div>
+        </div>
       </div>
 
       <div className="flex items-center justify-between rounded-lg border p-3">
