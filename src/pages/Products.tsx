@@ -29,7 +29,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Package, Plus, Pencil, Trash2, Loader2, Eye, EyeOff, Filter } from 'lucide-react';
+import { Package, Plus, Pencil, Trash2, Loader2, Eye, EyeOff, Filter, Search } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { productsService, Product, categoriesService, Category } from '@/services/products';
 import ProductFormModal from '@/components/ProductFormModal';
@@ -41,6 +42,7 @@ const Products = () => {
   const [formOpen, setFormOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const loadData = async () => {
     try {
@@ -62,11 +64,17 @@ const Products = () => {
     loadData();
   }, []);
 
-  const filteredProducts = selectedCategory === 'all'
-    ? products
-    : selectedCategory === 'none'
-      ? products.filter(p => !p.category_id)
-      : products.filter(p => p.category_id === selectedCategory);
+  const filteredProducts = products.filter(product => {
+    const matchesSearch = searchQuery === '' || 
+      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product.description?.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesCategory = selectedCategory === 'all' ||
+      (selectedCategory === 'none' && !product.category_id) ||
+      product.category_id === selectedCategory;
+    
+    return matchesSearch && matchesCategory;
+  });
 
   const getCategoryName = (categoryId: string | null) => {
     if (!categoryId) return null;
@@ -125,31 +133,49 @@ const Products = () => {
           </Button>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <Filter className="h-4 w-4" />
-            <span className="text-sm font-medium">Filtrar por categoria:</span>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+          <div className="relative w-full sm:w-[280px]">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar produtos..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9"
+            />
           </div>
-          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-            <SelectTrigger className="w-[220px]">
-              <SelectValue placeholder="Todas as categorias" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas as categorias</SelectItem>
-              <SelectItem value="none">Sem categoria</SelectItem>
-              {categories.map((cat) => (
-                <SelectItem key={cat.id} value={cat.id}>
-                  {cat.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {selectedCategory !== 'all' && (
-            <Button variant="ghost" size="sm" onClick={() => setSelectedCategory('all')}>
-              Limpar filtro
-            </Button>
-          )}
-          <span className="text-sm text-muted-foreground ml-auto">
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Filter className="h-4 w-4" />
+              <span className="text-sm font-medium">Categoria:</span>
+            </div>
+            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Todas" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas as categorias</SelectItem>
+                <SelectItem value="none">Sem categoria</SelectItem>
+                {categories.map((cat) => (
+                  <SelectItem key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {(selectedCategory !== 'all' || searchQuery) && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => {
+                  setSelectedCategory('all');
+                  setSearchQuery('');
+                }}
+              >
+                Limpar filtros
+              </Button>
+            )}
+          </div>
+          <span className="text-sm text-muted-foreground sm:ml-auto">
             {filteredProducts.length} produto{filteredProducts.length !== 1 ? 's' : ''}
           </span>
         </div>
