@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import {
   LayoutDashboard,
   Package,
+  FolderTree,
   ShoppingCart,
   Key,
   Settings,
@@ -36,6 +37,7 @@ interface AdminLayoutProps {
 const navItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
   { icon: Package, label: 'Produtos', path: '/products' },
+  { icon: FolderTree, label: 'Categorias', path: '/categories' },
   { icon: ShoppingCart, label: 'Pedidos', path: '/orders' },
   { icon: BarChart3, label: 'Relatórios', path: '/reports' },
   { icon: Users, label: 'Usuários', path: '/users', requireAdmin: true },
