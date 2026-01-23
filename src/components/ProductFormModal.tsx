@@ -129,7 +129,7 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-lg max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>{isEditing ? 'Editar Produto' : 'Novo Produto'}</DialogTitle>
           <DialogDescription>
@@ -137,7 +137,7 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4 py-4">
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto space-y-4 py-4 pr-2">
           <div className="space-y-2">
             <Label htmlFor="name">Nome *</Label>
             <Input
