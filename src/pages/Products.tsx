@@ -38,7 +38,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
-import { Package, Plus, Pencil, Trash2, Loader2, Eye, EyeOff, Filter, Search, ChevronLeft, ChevronRight, Download, FileSpreadsheet, Upload, ArrowUpDown, ArrowUp, ArrowDown, MoreHorizontal } from 'lucide-react';
+import { Package, Plus, Trash2, Loader2, Eye, EyeOff, Filter, Search, ChevronLeft, ChevronRight, Download, FileSpreadsheet, Upload, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -51,6 +51,7 @@ import { toast } from 'sonner';
 import { productsService, Product, categoriesService, Category } from '@/services/products';
 import ProductFormModal from '@/components/ProductFormModal';
 import ProductImportModal from '@/components/ProductImportModal';
+import ProductTableRow from '@/components/ProductTableRow';
 
 const ITEMS_PER_PAGE_OPTIONS = [10, 25, 50, 100];
 
@@ -688,120 +689,17 @@ const Products = () => {
                   </TableHeader>
                   <TableBody>
                     {paginatedProducts.map((product) => (
-                      <TableRow key={product.id} className={selectedProducts.has(product.id) ? 'bg-primary/5' : ''}>
-                        <TableCell>
-                          <Checkbox
-                            checked={selectedProducts.has(product.id)}
-                            onCheckedChange={(checked) => handleSelectProduct(product.id, !!checked)}
-                            aria-label={`Selecionar ${product.name}`}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-3">
-                            {product.image_url ? (
-                              <img
-                                src={product.image_url}
-                                alt={product.name}
-                                className="h-10 w-10 rounded-lg object-cover"
-                              />
-                            ) : (
-                              <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center">
-                                <Package className="h-5 w-5 text-muted-foreground" />
-                              </div>
-                            )}
-                            <div>
-                              <p className="font-medium">{product.name}</p>
-                              {product.description && (
-                                <p className="text-xs text-muted-foreground truncate max-w-[200px]">
-                                  {product.description}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          {getCategoryName(product.category_id) ? (
-                            <Badge variant="outline">{getCategoryName(product.category_id)}</Badge>
-                          ) : (
-                            <span className="text-muted-foreground text-sm">—</span>
-                          )}
-                        </TableCell>
-                        <TableCell className="font-medium">
-                          {formatCurrency(product.price)}
-                        </TableCell>
-                        <TableCell>
-                          <Badge
-                            variant={product.stock > 0 ? 'secondary' : 'destructive'}
-                            className={product.stock > 0 ? '' : 'bg-destructive/10 text-destructive'}
-                          >
-                            {product.stock} un.
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          {product.is_active ? (
-                            <Badge className="bg-success/10 text-success hover:bg-success/20">
-                              Ativo
-                            </Badge>
-                          ) : (
-                            <Badge variant="secondary">Inativo</Badge>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-1">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8"
-                              onClick={() => handleToggleActive(product)}
-                              title={product.is_active ? 'Desativar' : 'Ativar'}
-                            >
-                              {product.is_active ? (
-                                <EyeOff className="h-4 w-4" />
-                              ) : (
-                                <Eye className="h-4 w-4" />
-                              )}
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8"
-                              onClick={() => handleEdit(product)}
-                              title="Editar"
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8 text-destructive hover:text-destructive"
-                                  title="Excluir"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Excluir produto?</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    Esta ação não pode ser desfeita. O produto "{product.name}" será removido permanentemente.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() => handleDelete(product.id)}
-                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                  >
-                                    Excluir
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </div>
-                        </TableCell>
-                      </TableRow>
+                      <ProductTableRow
+                        key={product.id}
+                        product={product}
+                        isSelected={selectedProducts.has(product.id)}
+                        onSelect={(checked) => handleSelectProduct(product.id, checked)}
+                        onEdit={() => handleEdit(product)}
+                        onDelete={() => handleDelete(product.id)}
+                        onToggleActive={() => handleToggleActive(product)}
+                        getCategoryName={getCategoryName}
+                        formatCurrency={formatCurrency}
+                      />
                     ))}
                   </TableBody>
                 </Table>
