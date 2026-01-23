@@ -1,0 +1,483 @@
+import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { Switch } from '@/components/ui/switch';
+import { Plus, Trash2, X, Loader2, Wand2 } from 'lucide-react';
+import { toast } from 'sonner';
+import {
+  variationsService,
+  ProductAttribute,
+  ProductVariation,
+} from '@/services/variations';
+
+interface ProductVariationsEditorProps {
+  productId: string;
+  basePrice: number;
+}
+
+const ProductVariationsEditor = ({ productId, basePrice }: ProductVariationsEditorProps) => {
+  const [attributes, setAttributes] = useState<ProductAttribute[]>([]);
+  const [variations, setVariations] = useState<ProductVariation[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // New attribute form
+  const [newAttrName, setNewAttrName] = useState('');
+  const [newAttrValues, setNewAttrValues] = useState('');
+
+  // New value for existing attribute
+  const [addingValueTo, setAddingValueTo] = useState<string | null>(null);
+  const [newValueInput, setNewValueInput] = useState('');
+
+  const loadData = async () => {
+    try {
+      setIsLoading(true);
+      const [attrs, vars] = await Promise.all([
+        variationsService.getAttributesByProduct(productId),
+        variationsService.getVariationsByProduct(productId),
+      ]);
+      setAttributes(attrs);
+      setVariations(vars);
+    } catch (error) {
+      console.error('Error loading variations data:', error);
+      toast.error('Erro ao carregar variações');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (productId) {
+      loadData();
+    }
+  }, [productId]);
+
+  const handleAddAttribute = async () => {
+    if (!newAttrName.trim()) {
+      toast.error('Nome do atributo é obrigatório');
+      return;
+    }
+
+    const values = newAttrValues
+      .split(',')
+      .map((v) => v.trim())
+      .filter((v) => v);
+
+    if (values.length === 0) {
+      toast.error('Adicione pelo menos um valor');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      await variationsService.createAttribute({
+        product_id: productId,
+        name: newAttrName.trim(),
+        values,
+      });
+      toast.success('Atributo adicionado');
+      setNewAttrName('');
+      setNewAttrValues('');
+      await loadData();
+    } catch (error) {
+      console.error('Error creating attribute:', error);
+      toast.error('Erro ao criar atributo');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDeleteAttribute = async (attributeId: string) => {
+    try {
+      await variationsService.deleteAttribute(attributeId);
+      toast.success('Atributo removido');
+      await loadData();
+    } catch (error) {
+      console.error('Error deleting attribute:', error);
+      toast.error('Erro ao remover atributo');
+    }
+  };
+
+  const handleAddValue = async (attributeId: string) => {
+    if (!newValueInput.trim()) return;
+
+    try {
+      await variationsService.addAttributeValue(attributeId, newValueInput.trim());
+      toast.success('Valor adicionado');
+      setNewValueInput('');
+      setAddingValueTo(null);
+      await loadData();
+    } catch (error) {
+      console.error('Error adding value:', error);
+      toast.error('Erro ao adicionar valor');
+    }
+  };
+
+  const handleDeleteValue = async (valueId: string) => {
+    try {
+      await variationsService.deleteAttributeValue(valueId);
+      toast.success('Valor removido');
+      await loadData();
+    } catch (error) {
+      console.error('Error deleting value:', error);
+      toast.error('Erro ao remover valor');
+    }
+  };
+
+  const handleGenerateVariations = async () => {
+    const combinations = variationsService.generateCombinations(attributes);
+
+    if (combinations.length === 0) {
+      toast.error('Adicione atributos com valores primeiro');
+      return;
+    }
+
+    if (combinations.length > 100) {
+      toast.error('Muitas combinações. Reduza os valores dos atributos.');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      for (const combo of combinations) {
+        // Check if variation already exists
+        const exists = variations.some((v) => {
+          const existingValues = (v.attribute_values || []).map((av) => av.value).sort();
+          const newValues = combo.values.map((cv) => cv.value).sort();
+          return JSON.stringify(existingValues) === JSON.stringify(newValues);
+        });
+
+        if (!exists) {
+          await variationsService.createVariation({
+            product_id: productId,
+            price: basePrice,
+            stock: 0,
+            attribute_value_ids: combo.values.map((v) => v.id),
+          });
+        }
+      }
+      toast.success('Variações geradas com sucesso!');
+      await loadData();
+    } catch (error) {
+      console.error('Error generating variations:', error);
+      toast.error('Erro ao gerar variações');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleUpdateVariation = async (
+    variationId: string,
+    field: 'price' | 'stock' | 'sku' | 'is_active',
+    value: string | number | boolean
+  ) => {
+    try {
+      await variationsService.updateVariation(variationId, { [field]: value });
+      setVariations((prev) =>
+        prev.map((v) => (v.id === variationId ? { ...v, [field]: value } : v))
+      );
+    } catch (error) {
+      console.error('Error updating variation:', error);
+      toast.error('Erro ao atualizar variação');
+    }
+  };
+
+  const handleDeleteVariation = async (variationId: string) => {
+    try {
+      await variationsService.deleteVariation(variationId);
+      toast.success('Variação removida');
+      setVariations((prev) => prev.filter((v) => v.id !== variationId));
+    } catch (error) {
+      console.error('Error deleting variation:', error);
+      toast.error('Erro ao remover variação');
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Attributes Section */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">Atributos</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {attributes.map((attr) => (
+            <div key={attr.id} className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="font-medium">{attr.name}</Label>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-6 w-6">
+                      <Trash2 className="h-3 w-3 text-destructive" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Remover atributo?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Isso também removerá todas as variações associadas.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => handleDeleteAttribute(attr.id)}
+                        className="bg-destructive text-destructive-foreground"
+                      >
+                        Remover
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {attr.values?.map((val) => (
+                  <Badge key={val.id} variant="secondary" className="gap-1 pr-1">
+                    {val.value}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-4 w-4 hover:bg-transparent"
+                      onClick={() => handleDeleteValue(val.id)}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </Badge>
+                ))}
+                {addingValueTo === attr.id ? (
+                  <div className="flex items-center gap-1">
+                    <Input
+                      value={newValueInput}
+                      onChange={(e) => setNewValueInput(e.target.value)}
+                      placeholder="Novo valor"
+                      className="h-6 w-24 text-xs"
+                      onKeyDown={(e) => e.key === 'Enter' && handleAddValue(attr.id)}
+                    />
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-6 w-6"
+                      onClick={() => handleAddValue(attr.id)}
+                    >
+                      <Plus className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-6 w-6"
+                      onClick={() => {
+                        setAddingValueTo(null);
+                        setNewValueInput('');
+                      }}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-6 text-xs"
+                    onClick={() => setAddingValueTo(attr.id)}
+                  >
+                    <Plus className="h-3 w-3 mr-1" />
+                    Adicionar
+                  </Button>
+                )}
+              </div>
+            </div>
+          ))}
+
+          {/* Add new attribute */}
+          <div className="border-t pt-4 space-y-3">
+            <Label className="text-sm text-muted-foreground">Novo Atributo</Label>
+            <div className="flex gap-2">
+              <Input
+                placeholder="Ex: Cor"
+                value={newAttrName}
+                onChange={(e) => setNewAttrName(e.target.value)}
+                className="w-32"
+              />
+              <Input
+                placeholder="Valores separados por vírgula (ex: Azul, Vermelho)"
+                value={newAttrValues}
+                onChange={(e) => setNewAttrValues(e.target.value)}
+                className="flex-1"
+              />
+              <Button onClick={handleAddAttribute} disabled={isSaving}>
+                {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Variations Section */}
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base">Variações ({variations.length})</CardTitle>
+            {attributes.length > 0 && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-2"
+                onClick={handleGenerateVariations}
+                disabled={isSaving}
+              >
+                {isSaving ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Wand2 className="h-4 w-4" />
+                )}
+                Gerar Combinações
+              </Button>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent>
+          {variations.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-4">
+              Nenhuma variação criada. Adicione atributos e clique em "Gerar Combinações".
+            </p>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Variação</TableHead>
+                    <TableHead>SKU</TableHead>
+                    <TableHead>Preço</TableHead>
+                    <TableHead>Estoque</TableHead>
+                    <TableHead>Ativo</TableHead>
+                    <TableHead className="w-10"></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {variations.map((variation) => (
+                    <TableRow key={variation.id}>
+                      <TableCell>
+                        <div className="flex gap-1">
+                          {variation.attribute_values?.map((av, idx) => (
+                            <Badge key={idx} variant="outline" className="text-xs">
+                              {av.value}
+                            </Badge>
+                          ))}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          value={variation.sku || ''}
+                          onChange={(e) =>
+                            handleUpdateVariation(variation.id, 'sku', e.target.value)
+                          }
+                          placeholder="SKU"
+                          className="h-8 w-24"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          value={variation.price ?? ''}
+                          onChange={(e) =>
+                            handleUpdateVariation(
+                              variation.id,
+                              'price',
+                              parseFloat(e.target.value) || 0
+                            )
+                          }
+                          className="h-8 w-24"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          type="number"
+                          value={variation.stock}
+                          onChange={(e) =>
+                            handleUpdateVariation(
+                              variation.id,
+                              'stock',
+                              parseInt(e.target.value) || 0
+                            )
+                          }
+                          className="h-8 w-20"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Switch
+                          checked={variation.is_active}
+                          onCheckedChange={(checked) =>
+                            handleUpdateVariation(variation.id, 'is_active', checked)
+                          }
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Remover variação?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Esta ação não pode ser desfeita.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleDeleteVariation(variation.id)}
+                                className="bg-destructive text-destructive-foreground"
+                              >
+                                Remover
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+export default ProductVariationsEditor;

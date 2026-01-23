@@ -24,6 +24,7 @@ import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { productsService, categoriesService, Product, Category, CreateProductData } from '@/services/products';
 import ImageUpload from './ImageUpload';
+import ProductVariationsEditor from './ProductVariationsEditor';
 
 interface ProductFormModalProps {
   open: boolean;
@@ -35,12 +36,13 @@ interface ProductFormModalProps {
 const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModalProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [activeTab, setActiveTab] = useState('details');
   
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
   const [stock, setStock] = useState('0');
-  const [categoryId, setCategoryId] = useState<string>('');
+  const [categoryId, setCategoryId] = useState<string>('none');
   const [imageUrl, setImageUrl] = useState('');
   const [isActive, setIsActive] = useState(true);
 
@@ -80,6 +82,7 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
     setCategoryId('none');
     setImageUrl('');
     setIsActive(true);
+    setActiveTab('details');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -127,9 +130,138 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
     }
   };
 
+  const renderForm = () => (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="name">Nome *</Label>
+        <Input
+          id="name"
+          placeholder="Nome do produto"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          required
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="description">Descrição</Label>
+        <Textarea
+          id="description"
+          placeholder="Descrição do produto..."
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          rows={3}
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="price">Preço (R$) *</Label>
+          <Input
+            id="price"
+            type="number"
+            step="0.01"
+            min="0"
+            placeholder="0.00"
+            value={price}
+            onChange={(e) => setPrice(e.target.value)}
+            required
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="stock">Estoque</Label>
+          <Input
+            id="stock"
+            type="number"
+            min="0"
+            placeholder="0"
+            value={stock}
+            onChange={(e) => setStock(e.target.value)}
+          />
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="category">Categoria</Label>
+        <Select value={categoryId} onValueChange={setCategoryId}>
+          <SelectTrigger>
+            <SelectValue placeholder="Selecione uma categoria" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">Sem categoria</SelectItem>
+            {categories.filter(cat => cat.id).map((cat) => (
+              <SelectItem key={cat.id} value={cat.id}>
+                {cat.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-2">
+        <Label>Imagem do Produto</Label>
+        <Tabs defaultValue="upload" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="upload">Upload</TabsTrigger>
+            <TabsTrigger value="url">URL</TabsTrigger>
+          </TabsList>
+          <TabsContent value="upload" className="mt-3">
+            <ImageUpload
+              value={imageUrl}
+              onChange={(url) => setImageUrl(url || '')}
+              bucket="product-images"
+              folder="products"
+            />
+          </TabsContent>
+          <TabsContent value="url" className="mt-3">
+            <Input
+              id="imageUrl"
+              type="url"
+              placeholder="https://exemplo.com/imagem.jpg"
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+            />
+          </TabsContent>
+        </Tabs>
+      </div>
+
+      <div className="flex items-center justify-between rounded-lg border p-3">
+        <div>
+          <Label htmlFor="isActive" className="font-medium">Produto ativo</Label>
+          <p className="text-sm text-muted-foreground">
+            Produtos inativos não aparecem na loja
+          </p>
+        </div>
+        <Switch
+          id="isActive"
+          checked={isActive}
+          onCheckedChange={setIsActive}
+        />
+      </div>
+
+      <DialogFooter className="pt-4">
+        <Button type="button" variant="outline" onClick={onClose}>
+          Cancelar
+        </Button>
+        <Button type="submit" disabled={isLoading}>
+          {isLoading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Salvando...
+            </>
+          ) : isEditing ? (
+            'Atualizar'
+          ) : (
+            'Criar Produto'
+          )}
+        </Button>
+      </DialogFooter>
+    </form>
+  );
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg max-h-[90vh] flex flex-col">
+      <DialogContent className={`max-h-[90vh] flex flex-col ${isEditing ? 'max-w-3xl' : 'max-w-lg'}`}>
         <DialogHeader>
           <DialogTitle>{isEditing ? 'Editar Produto' : 'Novo Produto'}</DialogTitle>
           <DialogDescription>
@@ -137,132 +269,31 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto space-y-4 py-4 pr-2">
-          <div className="space-y-2">
-            <Label htmlFor="name">Nome *</Label>
-            <Input
-              id="name"
-              placeholder="Nome do produto"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="description">Descrição</Label>
-            <Textarea
-              id="description"
-              placeholder="Descrição do produto..."
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={3}
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="price">Preço (R$) *</Label>
-              <Input
-                id="price"
-                type="number"
-                step="0.01"
-                min="0"
-                placeholder="0.00"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="stock">Estoque</Label>
-              <Input
-                id="stock"
-                type="number"
-                min="0"
-                placeholder="0"
-                value={stock}
-                onChange={(e) => setStock(e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="category">Categoria</Label>
-            <Select value={categoryId} onValueChange={setCategoryId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione uma categoria" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">Sem categoria</SelectItem>
-                {categories.filter(cat => cat.id).map((cat) => (
-                  <SelectItem key={cat.id} value={cat.id}>
-                    {cat.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label>Imagem do Produto</Label>
-            <Tabs defaultValue="upload" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="upload">Upload</TabsTrigger>
-                <TabsTrigger value="url">URL</TabsTrigger>
-              </TabsList>
-              <TabsContent value="upload" className="mt-3">
-                <ImageUpload
-                  value={imageUrl}
-                  onChange={(url) => setImageUrl(url || '')}
-                  bucket="product-images"
-                  folder="products"
+        {isEditing ? (
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="details">Detalhes</TabsTrigger>
+              <TabsTrigger value="variations">Variações</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="details" className="flex-1 overflow-y-auto mt-4 pr-2">
+              {renderForm()}
+            </TabsContent>
+            
+            <TabsContent value="variations" className="flex-1 overflow-y-auto mt-4 pr-2">
+              {product && (
+                <ProductVariationsEditor 
+                  productId={product.id} 
+                  basePrice={product.price}
                 />
-              </TabsContent>
-              <TabsContent value="url" className="mt-3">
-                <Input
-                  id="imageUrl"
-                  type="url"
-                  placeholder="https://exemplo.com/imagem.jpg"
-                  value={imageUrl}
-                  onChange={(e) => setImageUrl(e.target.value)}
-                />
-              </TabsContent>
-            </Tabs>
-          </div>
-
-          <div className="flex items-center justify-between rounded-lg border p-3">
-            <div>
-              <Label htmlFor="isActive" className="font-medium">Produto ativo</Label>
-              <p className="text-sm text-muted-foreground">
-                Produtos inativos não aparecem na loja
-              </p>
-            </div>
-            <Switch
-              id="isActive"
-              checked={isActive}
-              onCheckedChange={setIsActive}
-            />
-          </div>
-
-          <DialogFooter className="pt-4">
-            <Button type="button" variant="outline" onClick={onClose}>
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Salvando...
-                </>
-              ) : isEditing ? (
-                'Atualizar'
-              ) : (
-                'Criar Produto'
               )}
-            </Button>
-          </DialogFooter>
-        </form>
+            </TabsContent>
+          </Tabs>
+        ) : (
+          <div className="flex-1 overflow-y-auto py-4 pr-2">
+            {renderForm()}
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
