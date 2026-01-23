@@ -379,7 +379,9 @@ export type Database = {
         Row: {
           category_id: string | null
           created_at: string
+          depth_cm: number | null
           description: string | null
+          height_cm: number | null
           id: string
           image_url: string | null
           is_active: boolean
@@ -388,11 +390,15 @@ export type Database = {
           price: number
           stock: number
           updated_at: string
+          weight_kg: number | null
+          width_cm: number | null
         }
         Insert: {
           category_id?: string | null
           created_at?: string
+          depth_cm?: number | null
           description?: string | null
+          height_cm?: number | null
           id?: string
           image_url?: string | null
           is_active?: boolean
@@ -401,11 +407,15 @@ export type Database = {
           price: number
           stock?: number
           updated_at?: string
+          weight_kg?: number | null
+          width_cm?: number | null
         }
         Update: {
           category_id?: string | null
           created_at?: string
+          depth_cm?: number | null
           description?: string | null
+          height_cm?: number | null
           id?: string
           image_url?: string | null
           is_active?: boolean
@@ -414,6 +424,8 @@ export type Database = {
           price?: number
           stock?: number
           updated_at?: string
+          weight_kg?: number | null
+          width_cm?: number | null
         }
         Relationships: [
           {

@@ -10,6 +10,10 @@ export interface Product {
   image_url: string | null;
   is_active: boolean;
   metadata: Record<string, unknown>;
+  weight_kg: number | null;
+  width_cm: number | null;
+  height_cm: number | null;
+  depth_cm: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -34,6 +38,10 @@ export interface CreateProductData {
   image_url?: string;
   is_active?: boolean;
   metadata?: Record<string, unknown>;
+  weight_kg?: number;
+  width_cm?: number;
+  height_cm?: number;
+  depth_cm?: number;
 }
 
 export const productsService = {
@@ -68,6 +76,10 @@ export const productsService = {
       image_url: input.image_url || null,
       is_active: input.is_active ?? true,
       metadata: input.metadata || {},
+      weight_kg: input.weight_kg ?? null,
+      width_cm: input.width_cm ?? null,
+      height_cm: input.height_cm ?? null,
+      depth_cm: input.depth_cm ?? null,
     };
 
     const { data, error } = await supabase
@@ -93,6 +105,10 @@ export const productsService = {
     if (input.image_url !== undefined) updateData.image_url = input.image_url;
     if (input.is_active !== undefined) updateData.is_active = input.is_active;
     if (input.metadata !== undefined) updateData.metadata = input.metadata;
+    if (input.weight_kg !== undefined) updateData.weight_kg = input.weight_kg;
+    if (input.width_cm !== undefined) updateData.width_cm = input.width_cm;
+    if (input.height_cm !== undefined) updateData.height_cm = input.height_cm;
+    if (input.depth_cm !== undefined) updateData.depth_cm = input.depth_cm;
 
     const { data, error } = await supabase
       .from('products')
