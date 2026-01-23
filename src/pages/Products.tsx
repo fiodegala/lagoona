@@ -64,6 +64,7 @@ const Products = () => {
   const [importOpen, setImportOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -99,8 +100,12 @@ const Products = () => {
       const matchesCategory = selectedCategory === 'all' ||
         (selectedCategory === 'none' && !product.category_id) ||
         product.category_id === selectedCategory;
+
+      const matchesStatus = selectedStatus === 'all' ||
+        (selectedStatus === 'active' && product.is_active) ||
+        (selectedStatus === 'inactive' && !product.is_active);
       
-      return matchesSearch && matchesCategory;
+      return matchesSearch && matchesCategory && matchesStatus;
     });
 
     // Apply sorting
@@ -125,12 +130,12 @@ const Products = () => {
     }
 
     return result;
-  }, [products, searchQuery, selectedCategory, sortField, sortDirection]);
+  }, [products, searchQuery, selectedCategory, selectedStatus, sortField, sortDirection]);
 
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, selectedCategory, sortField, sortDirection]);
+  }, [searchQuery, selectedCategory, selectedStatus, sortField, sortDirection]);
 
   // Pagination calculations
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
@@ -411,11 +416,10 @@ const Products = () => {
           <div className="flex items-center gap-3 flex-wrap">
             <div className="flex items-center gap-2 text-muted-foreground">
               <Filter className="h-4 w-4" />
-              <span className="text-sm font-medium">Categoria:</span>
             </div>
             <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="Todas" />
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Categoria" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todas as categorias</SelectItem>
@@ -427,12 +431,23 @@ const Products = () => {
                 ))}
               </SelectContent>
             </Select>
-            {(selectedCategory !== 'all' || searchQuery) && (
+            <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+              <SelectTrigger className="w-[140px]">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os status</SelectItem>
+                <SelectItem value="active">Ativos</SelectItem>
+                <SelectItem value="inactive">Inativos</SelectItem>
+              </SelectContent>
+            </Select>
+            {(selectedCategory !== 'all' || selectedStatus !== 'all' || searchQuery) && (
               <Button 
                 variant="ghost" 
                 size="sm" 
                 onClick={() => {
                   setSelectedCategory('all');
+                  setSelectedStatus('all');
                   setSearchQuery('');
                 }}
               >
