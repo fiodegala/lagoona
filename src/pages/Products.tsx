@@ -22,32 +22,57 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Package, Plus, Pencil, Trash2, Loader2, Eye, EyeOff } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Package, Plus, Pencil, Trash2, Loader2, Eye, EyeOff, Filter } from 'lucide-react';
 import { toast } from 'sonner';
-import { productsService, Product } from '@/services/products';
+import { productsService, Product, categoriesService, Category } from '@/services/products';
 import ProductFormModal from '@/components/ProductFormModal';
 
 const Products = () => {
   const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [formOpen, setFormOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
-  const loadProducts = async () => {
+  const loadData = async () => {
     try {
-      const data = await productsService.getAll();
-      setProducts(data);
+      const [productsData, categoriesData] = await Promise.all([
+        productsService.getAll(),
+        categoriesService.getAll(),
+      ]);
+      setProducts(productsData);
+      setCategories(categoriesData);
     } catch (error) {
-      console.error('Error loading products:', error);
-      toast.error('Erro ao carregar produtos');
+      console.error('Error loading data:', error);
+      toast.error('Erro ao carregar dados');
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    loadProducts();
+    loadData();
   }, []);
+
+  const filteredProducts = selectedCategory === 'all'
+    ? products
+    : selectedCategory === 'none'
+      ? products.filter(p => !p.category_id)
+      : products.filter(p => p.category_id === selectedCategory);
+
+  const getCategoryName = (categoryId: string | null) => {
+    if (!categoryId) return null;
+    const category = categories.find(c => c.id === categoryId);
+    return category?.name || null;
+  };
 
   const handleCreate = () => {
     setEditingProduct(null);
@@ -63,7 +88,7 @@ const Products = () => {
     try {
       await productsService.delete(id);
       toast.success('Produto excluído com sucesso');
-      loadProducts();
+      loadData();
     } catch (error) {
       toast.error('Erro ao excluir produto');
     }
@@ -73,7 +98,7 @@ const Products = () => {
     try {
       await productsService.toggleActive(product.id, !product.is_active);
       toast.success(product.is_active ? 'Produto desativado' : 'Produto ativado');
-      loadProducts();
+      loadData();
     } catch (error) {
       toast.error('Erro ao atualizar produto');
     }
@@ -100,22 +125,61 @@ const Products = () => {
           </Button>
         </div>
 
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Filter className="h-4 w-4" />
+            <span className="text-sm font-medium">Filtrar por categoria:</span>
+          </div>
+          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+            <SelectTrigger className="w-[220px]">
+              <SelectValue placeholder="Todas as categorias" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas as categorias</SelectItem>
+              <SelectItem value="none">Sem categoria</SelectItem>
+              {categories.map((cat) => (
+                <SelectItem key={cat.id} value={cat.id}>
+                  {cat.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {selectedCategory !== 'all' && (
+            <Button variant="ghost" size="sm" onClick={() => setSelectedCategory('all')}>
+              Limpar filtro
+            </Button>
+          )}
+          <span className="text-sm text-muted-foreground ml-auto">
+            {filteredProducts.length} produto{filteredProducts.length !== 1 ? 's' : ''}
+          </span>
+        </div>
+
         <Card className="card-elevated">
           {isLoading ? (
             <CardContent className="flex items-center justify-center py-16">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </CardContent>
-          ) : products.length === 0 ? (
+          ) : filteredProducts.length === 0 ? (
             <CardContent className="flex flex-col items-center justify-center py-16">
               <Package className="h-12 w-12 text-muted-foreground mb-4" />
-              <CardTitle className="text-lg mb-2">Nenhum produto cadastrado</CardTitle>
+              <CardTitle className="text-lg mb-2">
+                {products.length === 0 ? 'Nenhum produto cadastrado' : 'Nenhum produto encontrado'}
+              </CardTitle>
               <CardDescription className="text-center mb-4">
-                Comece adicionando seu primeiro produto
+                {products.length === 0 
+                  ? 'Comece adicionando seu primeiro produto' 
+                  : 'Tente ajustar o filtro de categoria'}
               </CardDescription>
-              <Button className="gap-2" onClick={handleCreate}>
-                <Plus className="h-4 w-4" />
-                Adicionar Produto
-              </Button>
+              {products.length === 0 ? (
+                <Button className="gap-2" onClick={handleCreate}>
+                  <Plus className="h-4 w-4" />
+                  Adicionar Produto
+                </Button>
+              ) : (
+                <Button variant="outline" onClick={() => setSelectedCategory('all')}>
+                  Limpar filtro
+                </Button>
+              )}
             </CardContent>
           ) : (
             <CardContent className="p-0">
@@ -124,6 +188,7 @@ const Products = () => {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Produto</TableHead>
+                      <TableHead>Categoria</TableHead>
                       <TableHead>Preço</TableHead>
                       <TableHead>Estoque</TableHead>
                       <TableHead>Status</TableHead>
@@ -131,7 +196,7 @@ const Products = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {products.map((product) => (
+                    {filteredProducts.map((product) => (
                       <TableRow key={product.id}>
                         <TableCell>
                           <div className="flex items-center gap-3">
@@ -155,6 +220,13 @@ const Products = () => {
                               )}
                             </div>
                           </div>
+                        </TableCell>
+                        <TableCell>
+                          {getCategoryName(product.category_id) ? (
+                            <Badge variant="outline">{getCategoryName(product.category_id)}</Badge>
+                          ) : (
+                            <span className="text-muted-foreground text-sm">—</span>
+                          )}
                         </TableCell>
                         <TableCell className="font-medium">
                           {formatCurrency(product.price)}
@@ -244,7 +316,7 @@ const Products = () => {
       <ProductFormModal
         open={formOpen}
         onClose={() => setFormOpen(false)}
-        onSuccess={loadProducts}
+        onSuccess={loadData}
         product={editingProduct}
       />
     </AdminLayout>
