@@ -20,9 +20,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2 } from 'lucide-react';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Loader2, Package, Layers } from 'lucide-react';
 import { toast } from 'sonner';
 import { productsService, categoriesService, Product, Category, CreateProductData } from '@/services/products';
+import { variationsService } from '@/services/variations';
 import ImageUpload from './ImageUpload';
 import ProductVariationsEditor from './ProductVariationsEditor';
 
@@ -45,6 +47,8 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
   const [categoryId, setCategoryId] = useState<string>('none');
   const [imageUrl, setImageUrl] = useState('');
   const [isActive, setIsActive] = useState(true);
+  const [productType, setProductType] = useState<'simple' | 'variable'>('simple');
+  const [hasVariations, setHasVariations] = useState(false);
 
   const isEditing = !!product;
 
@@ -59,11 +63,27 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
         setCategoryId(product.category_id || 'none');
         setImageUrl(product.image_url || '');
         setIsActive(product.is_active);
+        // Check if product has variations
+        checkProductVariations(product.id);
       } else {
         resetForm();
       }
     }
   }, [open, product]);
+
+  const checkProductVariations = async (productId: string) => {
+    try {
+      const [attributes, variations] = await Promise.all([
+        variationsService.getAttributesByProduct(productId),
+        variationsService.getVariationsByProduct(productId),
+      ]);
+      const hasVars = attributes.length > 0 || variations.length > 0;
+      setHasVariations(hasVars);
+      setProductType(hasVars ? 'variable' : 'simple');
+    } catch (error) {
+      console.error('Error checking variations:', error);
+    }
+  };
 
   const loadCategories = async () => {
     try {
@@ -83,6 +103,8 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
     setImageUrl('');
     setIsActive(true);
     setActiveTab('details');
+    setProductType('simple');
+    setHasVariations(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -132,6 +154,53 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
 
   const renderForm = () => (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {/* Product Type Selector - Only show when creating */}
+      {!isEditing && (
+        <div className="space-y-3">
+          <Label>Tipo de Produto</Label>
+          <RadioGroup
+            value={productType}
+            onValueChange={(value: 'simple' | 'variable') => setProductType(value)}
+            className="grid grid-cols-2 gap-4"
+          >
+            <div>
+              <RadioGroupItem
+                value="simple"
+                id="simple"
+                className="peer sr-only"
+              />
+              <Label
+                htmlFor="simple"
+                className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
+              >
+                <Package className="mb-3 h-6 w-6" />
+                <span className="font-medium">Produto Simples</span>
+                <span className="text-xs text-muted-foreground text-center mt-1">
+                  Sem variações de tamanho, cor, etc.
+                </span>
+              </Label>
+            </div>
+            <div>
+              <RadioGroupItem
+                value="variable"
+                id="variable"
+                className="peer sr-only"
+              />
+              <Label
+                htmlFor="variable"
+                className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
+              >
+                <Layers className="mb-3 h-6 w-6" />
+                <span className="font-medium">Produto Variável</span>
+                <span className="text-xs text-muted-foreground text-center mt-1">
+                  Com variações de tamanho, cor, etc.
+                </span>
+              </Label>
+            </div>
+          </RadioGroup>
+        </div>
+      )}
+
       <div className="space-y-2">
         <Label htmlFor="name">Nome *</Label>
         <Input
@@ -156,7 +225,7 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="price">Preço (R$) *</Label>
+          <Label htmlFor="price">Preço {productType === 'simple' ? '(R$) *' : 'Base (R$) *'}</Label>
           <Input
             id="price"
             type="number"
@@ -167,9 +236,14 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
             onChange={(e) => setPrice(e.target.value)}
             required
           />
+          {productType === 'variable' && (
+            <p className="text-xs text-muted-foreground">
+              Preço base usado para novas variações
+            </p>
+          )}
         </div>
         <div className="space-y-2">
-          <Label htmlFor="stock">Estoque</Label>
+          <Label htmlFor="stock">{productType === 'simple' ? 'Estoque' : 'Estoque Base'}</Label>
           <Input
             id="stock"
             type="number"
@@ -178,6 +252,11 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
             value={stock}
             onChange={(e) => setStock(e.target.value)}
           />
+          {productType === 'variable' && (
+            <p className="text-xs text-muted-foreground">
+              Gerenciado por variação
+            </p>
+          )}
         </div>
       </div>
 
@@ -259,9 +338,11 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
     </form>
   );
 
+  const showVariationsTabs = isEditing ? (productType === 'variable' || hasVariations) : productType === 'variable';
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className={`max-h-[90vh] flex flex-col ${isEditing ? 'max-w-3xl' : 'max-w-lg'}`}>
+      <DialogContent className={`max-h-[90vh] flex flex-col ${showVariationsTabs ? 'max-w-3xl' : 'max-w-lg'}`}>
         <DialogHeader>
           <DialogTitle>{isEditing ? 'Editar Produto' : 'Novo Produto'}</DialogTitle>
           <DialogDescription>
@@ -269,7 +350,7 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
           </DialogDescription>
         </DialogHeader>
 
-        {isEditing ? (
+        {showVariationsTabs ? (
           <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="details">Detalhes</TabsTrigger>
@@ -281,11 +362,19 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
             </TabsContent>
             
             <TabsContent value="variations" className="flex-1 overflow-y-auto mt-4 pr-2">
-              {product && (
+              {isEditing && product ? (
                 <ProductVariationsEditor 
                   productId={product.id} 
-                  basePrice={product.price}
+                  basePrice={parseFloat(price) || product.price}
                 />
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Layers className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p className="font-medium">Salve o produto primeiro</p>
+                  <p className="text-sm mt-1">
+                    Após criar o produto, você poderá adicionar as variações aqui.
+                  </p>
+                </div>
               )}
             </TabsContent>
           </Tabs>

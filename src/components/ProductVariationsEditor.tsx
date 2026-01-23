@@ -23,7 +23,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Switch } from '@/components/ui/switch';
 import { Plus, Trash2, X, Loader2, Wand2 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -31,6 +30,7 @@ import {
   ProductAttribute,
   ProductVariation,
 } from '@/services/variations';
+import VariationRow from './VariationRow';
 
 interface ProductVariationsEditorProps {
   productId: string;
@@ -190,7 +190,7 @@ const ProductVariationsEditor = ({ productId, basePrice }: ProductVariationsEdit
 
   const handleUpdateVariation = async (
     variationId: string,
-    field: 'price' | 'stock' | 'sku' | 'is_active',
+    field: 'price' | 'stock' | 'sku' | 'is_active' | 'image_url',
     value: string | number | boolean
   ) => {
     try {
@@ -385,90 +385,12 @@ const ProductVariationsEditor = ({ productId, basePrice }: ProductVariationsEdit
                 </TableHeader>
                 <TableBody>
                   {variations.map((variation) => (
-                    <TableRow key={variation.id}>
-                      <TableCell>
-                        <div className="flex gap-1">
-                          {variation.attribute_values?.map((av, idx) => (
-                            <Badge key={idx} variant="outline" className="text-xs">
-                              {av.value}
-                            </Badge>
-                          ))}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Input
-                          value={variation.sku || ''}
-                          onChange={(e) =>
-                            handleUpdateVariation(variation.id, 'sku', e.target.value)
-                          }
-                          placeholder="SKU"
-                          className="h-8 w-24"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          value={variation.price ?? ''}
-                          onChange={(e) =>
-                            handleUpdateVariation(
-                              variation.id,
-                              'price',
-                              parseFloat(e.target.value) || 0
-                            )
-                          }
-                          className="h-8 w-24"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Input
-                          type="number"
-                          value={variation.stock}
-                          onChange={(e) =>
-                            handleUpdateVariation(
-                              variation.id,
-                              'stock',
-                              parseInt(e.target.value) || 0
-                            )
-                          }
-                          className="h-8 w-20"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Switch
-                          checked={variation.is_active}
-                          onCheckedChange={(checked) =>
-                            handleUpdateVariation(variation.id, 'is_active', checked)
-                          }
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Remover variação?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Esta ação não pode ser desfeita.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => handleDeleteVariation(variation.id)}
-                                className="bg-destructive text-destructive-foreground"
-                              >
-                                Remover
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </TableCell>
-                    </TableRow>
+                    <VariationRow 
+                      key={variation.id}
+                      variation={variation}
+                      onUpdate={handleUpdateVariation}
+                      onDelete={handleDeleteVariation}
+                    />
                   ))}
                 </TableBody>
               </Table>
