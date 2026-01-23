@@ -19,9 +19,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { productsService, categoriesService, Product, Category, CreateProductData } from '@/services/products';
+import ImageUpload from './ImageUpload';
 
 interface ProductFormModalProps {
   open: boolean;
@@ -203,14 +205,30 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="imageUrl">URL da Imagem</Label>
-            <Input
-              id="imageUrl"
-              type="url"
-              placeholder="https://exemplo.com/imagem.jpg"
-              value={imageUrl}
-              onChange={(e) => setImageUrl(e.target.value)}
-            />
+            <Label>Imagem do Produto</Label>
+            <Tabs defaultValue="upload" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="upload">Upload</TabsTrigger>
+                <TabsTrigger value="url">URL</TabsTrigger>
+              </TabsList>
+              <TabsContent value="upload" className="mt-3">
+                <ImageUpload
+                  value={imageUrl}
+                  onChange={(url) => setImageUrl(url || '')}
+                  bucket="product-images"
+                  folder="products"
+                />
+              </TabsContent>
+              <TabsContent value="url" className="mt-3">
+                <Input
+                  id="imageUrl"
+                  type="url"
+                  placeholder="https://exemplo.com/imagem.jpg"
+                  value={imageUrl}
+                  onChange={(e) => setImageUrl(e.target.value)}
+                />
+              </TabsContent>
+            </Tabs>
           </div>
 
           <div className="flex items-center justify-between rounded-lg border p-3">
