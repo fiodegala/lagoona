@@ -56,7 +56,11 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
   const [heightCm, setHeightCm] = useState('');
   const [depthCm, setDepthCm] = useState('');
 
+  // Auto-created product for variable products
+  const [autoCreatedProductId, setAutoCreatedProductId] = useState<string | null>(null);
+
   const isEditing = !!product;
+  const effectiveProductId = product?.id || autoCreatedProductId;
 
   useEffect(() => {
     if (open) {
@@ -119,6 +123,54 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
     setWidthCm('');
     setHeightCm('');
     setDepthCm('');
+    setAutoCreatedProductId(null);
+  };
+
+  // Auto-save product when switching to variations tab for new variable products
+  const handleTabChange = async (tab: string) => {
+    if (tab === 'variations' && !isEditing && !autoCreatedProductId) {
+      // Validate minimum required fields
+      if (!name.trim()) {
+        toast.error('Preencha o nome do produto primeiro');
+        return;
+      }
+      
+      const priceValue = parseFloat(price);
+      if (isNaN(priceValue) || priceValue < 0) {
+        toast.error('Preencha um preço válido primeiro');
+        return;
+      }
+
+      // Auto-create the product
+      setIsLoading(true);
+      try {
+        const data: CreateProductData = {
+          name: name.trim(),
+          description: description.trim() || undefined,
+          price: priceValue,
+          stock: parseInt(stock) || 0,
+          category_id: categoryId === 'none' ? undefined : categoryId,
+          image_url: imageUrl.trim() || undefined,
+          is_active: isActive,
+          weight_kg: weightKg ? parseFloat(weightKg) : undefined,
+          width_cm: widthCm ? parseFloat(widthCm) : undefined,
+          height_cm: heightCm ? parseFloat(heightCm) : undefined,
+          depth_cm: depthCm ? parseFloat(depthCm) : undefined,
+        };
+
+        const newProduct = await productsService.create(data);
+        setAutoCreatedProductId(newProduct.id);
+        toast.success('Produto criado! Agora adicione as variações.');
+        setActiveTab(tab);
+      } catch (error) {
+        console.error('Error auto-creating product:', error);
+        toast.error('Erro ao criar produto');
+      } finally {
+        setIsLoading(false);
+      }
+    } else {
+      setActiveTab(tab);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -155,6 +207,10 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
       if (isEditing && product) {
         await productsService.update(product.id, data);
         toast.success('Produto atualizado com sucesso!');
+      } else if (autoCreatedProductId) {
+        // Update the auto-created product
+        await productsService.update(autoCreatedProductId, data);
+        toast.success('Produto atualizado com sucesso!');
       } else {
         await productsService.create(data);
         toast.success('Produto criado com sucesso!');
@@ -164,10 +220,18 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
       onClose();
     } catch (error) {
       console.error('Error saving product:', error);
-      toast.error(isEditing ? 'Erro ao atualizar produto' : 'Erro ao criar produto');
+      toast.error(isEditing || autoCreatedProductId ? 'Erro ao atualizar produto' : 'Erro ao criar produto');
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleClose = () => {
+    if (autoCreatedProductId) {
+      // Product was auto-created, refresh the list
+      onSuccess();
+    }
+    onClose();
   };
 
   const renderForm = () => (
@@ -395,7 +459,7 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
       </div>
 
       <DialogFooter className="pt-4">
-        <Button type="button" variant="outline" onClick={onClose}>
+        <Button type="button" variant="outline" onClick={handleClose}>
           Cancelar
         </Button>
         <Button type="submit" disabled={isLoading}>
@@ -404,7 +468,7 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               Salvando...
             </>
-          ) : isEditing ? (
+          ) : isEditing || autoCreatedProductId ? (
             'Atualizar'
           ) : (
             'Criar Produto'
@@ -414,23 +478,38 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
     </form>
   );
 
-  const showVariationsTabs = isEditing ? (productType === 'variable' || hasVariations) : productType === 'variable';
+  const showVariationsTabs = isEditing ? (productType === 'variable' || hasVariations) : (productType === 'variable' || !!autoCreatedProductId);
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className={`max-h-[90vh] flex flex-col ${showVariationsTabs ? 'max-w-3xl' : 'max-w-lg'}`}>
         <DialogHeader>
-          <DialogTitle>{isEditing ? 'Editar Produto' : 'Novo Produto'}</DialogTitle>
+          <DialogTitle>
+            {isEditing ? 'Editar Produto' : autoCreatedProductId ? 'Novo Produto (Variável)' : 'Novo Produto'}
+          </DialogTitle>
           <DialogDescription>
-            {isEditing ? 'Atualize as informações do produto' : 'Preencha os dados do novo produto'}
+            {isEditing 
+              ? 'Atualize as informações do produto' 
+              : autoCreatedProductId 
+                ? 'Configure as variações do produto'
+                : 'Preencha os dados do novo produto'}
           </DialogDescription>
         </DialogHeader>
 
         {showVariationsTabs ? (
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
+          <Tabs value={activeTab} onValueChange={handleTabChange} className="flex-1 flex flex-col overflow-hidden">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="details">Detalhes</TabsTrigger>
-              <TabsTrigger value="variations">Variações</TabsTrigger>
+              <TabsTrigger value="variations" disabled={isLoading}>
+                {isLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Criando...
+                  </>
+                ) : (
+                  'Variações'
+                )}
+              </TabsTrigger>
             </TabsList>
             
             <TabsContent value="details" className="flex-1 overflow-y-auto mt-4 pr-2">
@@ -438,17 +517,17 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
             </TabsContent>
             
             <TabsContent value="variations" className="flex-1 overflow-y-auto mt-4 pr-2">
-              {isEditing && product ? (
+              {effectiveProductId ? (
                 <ProductVariationsEditor 
-                  productId={product.id} 
-                  basePrice={parseFloat(price) || product.price}
+                  productId={effectiveProductId} 
+                  basePrice={parseFloat(price) || product?.price || 0}
                 />
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
                   <Layers className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p className="font-medium">Salve o produto primeiro</p>
+                  <p className="font-medium">Clique na aba Variações</p>
                   <p className="text-sm mt-1">
-                    Após criar o produto, você poderá adicionar as variações aqui.
+                    O produto será criado automaticamente e você poderá adicionar as variações.
                   </p>
                 </div>
               )}
