@@ -230,14 +230,14 @@ const ApiKeys = () => {
                 Nova Chave
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-lg max-h-[90vh] flex flex-col">
+            <DialogContent className="max-w-lg max-h-[90vh] flex flex-col min-h-0">
               <DialogHeader className="flex-shrink-0">
                 <DialogTitle>Criar Nova API Key</DialogTitle>
                 <DialogDescription>
                   A chave secreta será exibida apenas uma vez. Guarde em local seguro.
                 </DialogDescription>
               </DialogHeader>
-              <div className="flex-1 overflow-y-auto space-y-4 py-4 pr-2">
+              <div className="flex-1 min-h-0 overflow-y-auto space-y-4 py-4 pr-2">
                 <div className="space-y-2">
                   <Label htmlFor="name">Nome da integração *</Label>
                   <Input
