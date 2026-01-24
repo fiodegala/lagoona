@@ -1,15 +1,24 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { ArrowLeft, Package, Loader2, ShoppingCart } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { 
+  ArrowLeft, Package, Loader2, ShoppingCart, Heart, Share2, 
+  Minus, Plus, Star, Check, Truck, ShieldCheck, RotateCcw 
+} from 'lucide-react';
 import { productsService, Product } from '@/services/products';
 import { categoriesService, Category } from '@/services/categories';
-import MeasurementTableDisplay from '@/components/MeasurementTableDisplay';
+import { ProductVariation } from '@/services/variations';
 import StoreLayout from '@/components/store/StoreLayout';
+import ProductVariationSelector from '@/components/store/ProductVariationSelector';
+import ShippingCalculator from '@/components/store/ShippingCalculator';
+import ProductReviews from '@/components/store/ProductReviews';
+import SizeGuideModal from '@/components/store/SizeGuideModal';
 import { useCart } from '@/contexts/CartContext';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
 const ProductDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -17,6 +26,10 @@ const ProductDetails = () => {
   const [category, setCategory] = useState<Category | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedVariation, setSelectedVariation] = useState<ProductVariation | null>(null);
+  const [quantity, setQuantity] = useState(1);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [isWishlisted, setIsWishlisted] = useState(false);
   const { addItem } = useCart();
 
   useEffect(() => {
@@ -37,8 +50,8 @@ const ProductDetails = () => {
         }
 
         setProduct(productData);
+        setSelectedImage(productData.image_url);
 
-        // Load category if product has one
         if (productData.category_id) {
           const categories = await categoriesService.getAll();
           const productCategory = categories.find(c => c.id === productData.category_id);
@@ -54,6 +67,67 @@ const ProductDetails = () => {
 
     loadProduct();
   }, [id]);
+
+  const handleVariationSelect = useCallback((variation: ProductVariation | null) => {
+    setSelectedVariation(variation);
+    if (variation?.image_url) {
+      setSelectedImage(variation.image_url);
+    } else if (product?.image_url) {
+      setSelectedImage(product.image_url);
+    }
+  }, [product?.image_url]);
+
+  const currentPrice = selectedVariation?.price ?? product?.price ?? 0;
+  const currentStock = selectedVariation?.stock ?? product?.stock ?? 0;
+  const isOutOfStock = currentStock <= 0;
+
+  const handleAddToCart = () => {
+    if (!product) return;
+    
+    if (isOutOfStock) {
+      toast.error('Produto fora de estoque');
+      return;
+    }
+
+    const variationLabel = selectedVariation?.attribute_values
+      ?.map(av => av.value).join(' / ');
+
+    addItem({
+      id: selectedVariation?.id || product.id,
+      productId: product.id,
+      name: variationLabel ? `${product.name} - ${variationLabel}` : product.name,
+      price: currentPrice,
+      imageUrl: selectedImage || product.image_url || undefined,
+      stock: currentStock,
+      quantity,
+    });
+
+    toast.success('Produto adicionado ao carrinho!', {
+      action: {
+        label: 'Ver carrinho',
+        onClick: () => window.location.href = '/carrinho',
+      },
+    });
+  };
+
+  const handleShare = async () => {
+    try {
+      await navigator.share({
+        title: product?.name,
+        url: window.location.href,
+      });
+    } catch {
+      navigator.clipboard.writeText(window.location.href);
+      toast.success('Link copiado!');
+    }
+  };
+
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    }).format(price);
+  };
 
   if (isLoading) {
     return (
@@ -82,159 +156,318 @@ const ProductDetails = () => {
     );
   }
 
-  const handleAddToCart = () => {
-    if (product.stock <= 0) {
-      toast.error('Produto fora de estoque');
-      return;
-    }
-
-    addItem({
-      id: product.id,
-      productId: product.id,
-      name: product.name,
-      price: product.price,
-      imageUrl: product.image_url || undefined,
-      stock: product.stock,
-    });
-
-    toast.success('Produto adicionado ao carrinho');
-  };
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    }).format(price);
-  };
+  // Simulated original price for discount display
+  const originalPrice = currentPrice * 1.2;
+  const discountPercent = Math.round(((originalPrice - currentPrice) / originalPrice) * 100);
 
   return (
     <StoreLayout>
       <div className="container mx-auto px-4 py-8">
         {/* Breadcrumb */}
         <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
-          <Link to="/" className="hover:text-foreground transition-colors">
+          <Link to="/" className="hover:text-store-primary transition-colors">
             Início
           </Link>
           <span>/</span>
-          <Link to="/loja" className="hover:text-foreground transition-colors">
+          <Link to="/loja" className="hover:text-store-primary transition-colors">
             Loja
           </Link>
           {category && (
             <>
               <span>/</span>
-              <Link to={`/loja/categoria/${category.slug}`} className="hover:text-foreground transition-colors">
+              <Link to={`/loja/categoria/${category.slug}`} className="hover:text-store-primary transition-colors">
                 {category.name}
               </Link>
             </>
           )}
           <span>/</span>
-          <span className="text-foreground">{product.name}</span>
+          <span className="text-foreground line-clamp-1">{product.name}</span>
         </nav>
 
-        <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
-          {/* Product Image */}
-          <div className="aspect-square rounded-lg overflow-hidden bg-muted">
-            {product.image_url ? (
-              <img
-                src={product.image_url}
-                alt={product.name}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <Package className="h-24 w-24 text-muted-foreground/50" />
-              </div>
-            )}
+        <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
+          {/* Product Images */}
+          <div className="space-y-4">
+            <div className="aspect-square rounded-xl overflow-hidden bg-muted border">
+              {selectedImage ? (
+                <img
+                  src={selectedImage}
+                  alt={product.name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <Package className="h-24 w-24 text-muted-foreground/30" />
+                </div>
+              )}
+            </div>
+            
+            {/* Thumbnail gallery placeholder */}
+            <div className="flex gap-2 overflow-x-auto pb-2">
+              <button 
+                onClick={() => setSelectedImage(product.image_url)}
+                className={cn(
+                  "w-20 h-20 rounded-lg overflow-hidden border-2 shrink-0 transition-all",
+                  selectedImage === product.image_url ? "border-store-primary" : "border-transparent hover:border-muted-foreground/30"
+                )}
+              >
+                {product.image_url ? (
+                  <img src={product.image_url} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full bg-muted flex items-center justify-center">
+                    <Package className="h-6 w-6 text-muted-foreground/30" />
+                  </div>
+                )}
+              </button>
+            </div>
           </div>
 
           {/* Product Info */}
           <div className="space-y-6">
-            {category && (
-              <Badge variant="secondary" className="mb-2">
-                {category.name}
-              </Badge>
-            )}
-
-            <h1 className="text-3xl font-bold">{product.name}</h1>
-
-            <p className="text-3xl font-semibold text-primary">
-              {formatPrice(product.price)}
-            </p>
-
-            {product.description && (
-              <div className="space-y-2">
-                <h2 className="font-semibold">Descrição</h2>
-                <p className="text-muted-foreground leading-relaxed">
-                  {product.description}
-                </p>
-              </div>
-            )}
-
-            <Separator />
-
-            {/* Stock Status */}
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">Disponibilidade:</span>
-              {product.stock > 0 ? (
-                <Badge className="bg-success/10 text-success">
-                  Em estoque ({product.stock} unidades)
+            {/* Category & Badges */}
+            <div className="flex items-center gap-2 flex-wrap">
+              {category && (
+                <Badge variant="secondary">{category.name}</Badge>
+              )}
+              {discountPercent > 0 && (
+                <Badge className="bg-store-deal text-white">-{discountPercent}% OFF</Badge>
+              )}
+              {currentStock <= 5 && currentStock > 0 && (
+                <Badge variant="outline" className="text-warning border-warning">
+                  Últimas unidades!
                 </Badge>
-              ) : (
-                <Badge variant="destructive">Fora de estoque</Badge>
               )}
             </div>
 
-            {/* Add to Cart */}
-            <Button
-              size="lg"
-              className="w-full gap-2"
-              onClick={handleAddToCart}
-              disabled={product.stock <= 0}
-            >
-              <ShoppingCart className="h-5 w-5" />
-              {product.stock > 0 ? 'Adicionar ao Carrinho' : 'Produto Indisponível'}
-            </Button>
+            {/* Title */}
+            <h1 className="text-2xl md:text-3xl font-display font-bold text-store-accent">
+              {product.name}
+            </h1>
 
-            {/* Measurement Table */}
+            {/* Rating Summary */}
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Star
+                    key={star}
+                    className={cn(
+                      "h-4 w-4",
+                      star <= 4 ? "fill-warning text-warning" : "text-muted-foreground/30"
+                    )}
+                  />
+                ))}
+              </div>
+              <span className="text-sm text-muted-foreground">(0 avaliações)</span>
+            </div>
+
+            {/* Pricing */}
+            <div className="space-y-1">
+              {discountPercent > 0 && (
+                <p className="text-sm text-muted-foreground line-through">
+                  {formatPrice(originalPrice)}
+                </p>
+              )}
+              <p className="text-3xl font-bold text-store-accent">
+                {formatPrice(currentPrice)}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                em até <span className="font-semibold text-foreground">12x de {formatPrice(currentPrice / 12)}</span> sem juros
+              </p>
+              <p className="text-sm text-success font-medium">
+                {formatPrice(currentPrice * 0.95)} à vista no Pix (5% off)
+              </p>
+            </div>
+
+            <Separator />
+
+            {/* Variations Selector */}
+            <ProductVariationSelector
+              productId={product.id}
+              onVariationSelect={handleVariationSelect}
+            />
+
+            {/* Size Guide */}
             {product.category_id && (
-              <div className="pt-4">
-                <MeasurementTableDisplay categoryId={product.category_id} />
+              <div>
+                <SizeGuideModal categoryId={product.category_id} />
               </div>
             )}
 
-            {/* Product Dimensions (if available) */}
-            {(product.weight_kg || product.width_cm || product.height_cm || product.depth_cm) && (
-              <div className="space-y-2 pt-4">
-                <h2 className="font-semibold">Dimensões do Produto</h2>
-                <div className="grid grid-cols-2 gap-2 text-sm">
-                  {product.weight_kg && (
-                    <div>
-                      <span className="text-muted-foreground">Peso:</span>{' '}
-                      <span>{product.weight_kg} kg</span>
-                    </div>
-                  )}
-                  {product.width_cm && (
-                    <div>
-                      <span className="text-muted-foreground">Largura:</span>{' '}
-                      <span>{product.width_cm} cm</span>
-                    </div>
-                  )}
-                  {product.height_cm && (
-                    <div>
-                      <span className="text-muted-foreground">Altura:</span>{' '}
-                      <span>{product.height_cm} cm</span>
-                    </div>
-                  )}
-                  {product.depth_cm && (
-                    <div>
-                      <span className="text-muted-foreground">Profundidade:</span>{' '}
-                      <span>{product.depth_cm} cm</span>
-                    </div>
-                  )}
+            {/* Quantity Selector */}
+            <div className="space-y-2">
+              <span className="font-medium text-sm">Quantidade:</span>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center border rounded-lg">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-10 w-10"
+                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                    disabled={quantity <= 1}
+                  >
+                    <Minus className="h-4 w-4" />
+                  </Button>
+                  <span className="w-12 text-center font-medium">{quantity}</span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-10 w-10"
+                    onClick={() => setQuantity(Math.min(currentStock, quantity + 1))}
+                    disabled={quantity >= currentStock}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
                 </div>
+                <span className="text-sm text-muted-foreground">
+                  {currentStock > 0 ? `${currentStock} disponíveis` : 'Indisponível'}
+                </span>
               </div>
-            )}
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3">
+              <Button
+                size="lg"
+                className="flex-1 gap-2 bg-store-primary text-store-accent hover:bg-store-primary/90 font-semibold"
+                onClick={handleAddToCart}
+                disabled={isOutOfStock}
+              >
+                <ShoppingCart className="h-5 w-5" />
+                {isOutOfStock ? 'Produto Indisponível' : 'Adicionar ao Carrinho'}
+              </Button>
+              <Button
+                variant="outline"
+                size="lg"
+                className={cn(
+                  "px-4",
+                  isWishlisted && "bg-store-primary/10 border-store-primary text-store-primary"
+                )}
+                onClick={() => {
+                  setIsWishlisted(!isWishlisted);
+                  toast.success(isWishlisted ? 'Removido dos favoritos' : 'Adicionado aos favoritos');
+                }}
+              >
+                <Heart className={cn("h-5 w-5", isWishlisted && "fill-current")} />
+              </Button>
+              <Button variant="outline" size="lg" className="px-4" onClick={handleShare}>
+                <Share2 className="h-5 w-5" />
+              </Button>
+            </div>
+
+            <Separator />
+
+            {/* Shipping Calculator */}
+            <ShippingCalculator productWeight={product.weight_kg || 0.5} />
+
+            {/* Trust Badges */}
+            <div className="grid grid-cols-3 gap-4 py-4">
+              <div className="text-center">
+                <Truck className="h-6 w-6 mx-auto mb-1 text-store-primary" />
+                <span className="text-xs text-muted-foreground">Entrega Rápida</span>
+              </div>
+              <div className="text-center">
+                <ShieldCheck className="h-6 w-6 mx-auto mb-1 text-store-primary" />
+                <span className="text-xs text-muted-foreground">Compra Segura</span>
+              </div>
+              <div className="text-center">
+                <RotateCcw className="h-6 w-6 mx-auto mb-1 text-store-primary" />
+                <span className="text-xs text-muted-foreground">30 dias p/ troca</span>
+              </div>
+            </div>
           </div>
+        </div>
+
+        {/* Product Details Tabs */}
+        <div className="mt-12">
+          <Tabs defaultValue="description" className="w-full">
+            <TabsList className="w-full justify-start border-b rounded-none h-auto p-0 bg-transparent">
+              <TabsTrigger 
+                value="description" 
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-store-primary data-[state=active]:text-store-primary px-6 py-3"
+              >
+                Descrição
+              </TabsTrigger>
+              <TabsTrigger 
+                value="specs" 
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-store-primary data-[state=active]:text-store-primary px-6 py-3"
+              >
+                Especificações
+              </TabsTrigger>
+              <TabsTrigger 
+                value="reviews" 
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-store-primary data-[state=active]:text-store-primary px-6 py-3"
+              >
+                Avaliações
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="description" className="pt-6">
+              <div className="prose prose-gray max-w-none">
+                {product.description ? (
+                  <div className="space-y-4">
+                    <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                      {product.description}
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground">
+                    Descrição não disponível para este produto.
+                  </p>
+                )}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="specs" className="pt-6">
+              <div className="grid md:grid-cols-2 gap-4">
+                {product.weight_kg && (
+                  <div className="flex justify-between py-3 border-b">
+                    <span className="text-muted-foreground">Peso</span>
+                    <span className="font-medium">{product.weight_kg} kg</span>
+                  </div>
+                )}
+                {product.width_cm && (
+                  <div className="flex justify-between py-3 border-b">
+                    <span className="text-muted-foreground">Largura</span>
+                    <span className="font-medium">{product.width_cm} cm</span>
+                  </div>
+                )}
+                {product.height_cm && (
+                  <div className="flex justify-between py-3 border-b">
+                    <span className="text-muted-foreground">Altura</span>
+                    <span className="font-medium">{product.height_cm} cm</span>
+                  </div>
+                )}
+                {product.depth_cm && (
+                  <div className="flex justify-between py-3 border-b">
+                    <span className="text-muted-foreground">Profundidade</span>
+                    <span className="font-medium">{product.depth_cm} cm</span>
+                  </div>
+                )}
+                {category && (
+                  <div className="flex justify-between py-3 border-b">
+                    <span className="text-muted-foreground">Categoria</span>
+                    <span className="font-medium">{category.name}</span>
+                  </div>
+                )}
+                {selectedVariation?.sku && (
+                  <div className="flex justify-between py-3 border-b">
+                    <span className="text-muted-foreground">SKU</span>
+                    <span className="font-medium">{selectedVariation.sku}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Measurement Table in Specs */}
+              {product.category_id && (
+                <div className="mt-6">
+                  <SizeGuideModal categoryId={product.category_id} />
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="reviews" className="pt-6">
+              <ProductReviews productId={product.id} />
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
     </StoreLayout>
