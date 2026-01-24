@@ -227,11 +227,11 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
       {/* Main content */}
       <main
         className={cn(
-          'transition-all duration-300 pt-14 lg:pt-0',
+          'transition-all duration-300 pt-14 lg:pt-0 min-h-screen',
           collapsed ? 'lg:pl-16' : 'lg:pl-64'
         )}
       >
-        <div className="p-6 lg:p-8">{children}</div>
+        <div className="p-6 lg:p-8 h-full overflow-y-auto">{children}</div>
       </main>
     </div>
   );
