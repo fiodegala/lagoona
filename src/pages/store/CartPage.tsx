@@ -1,13 +1,29 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Trash2, Plus, Minus, ShoppingBag, ArrowRight, Package } from 'lucide-react';
+import { Trash2, Plus, Minus, ShoppingBag, ArrowRight, Package, Tag, X, Loader2, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import StoreLayout from '@/components/store/StoreLayout';
 import { useCart } from '@/contexts/CartContext';
+import { toast } from 'sonner';
 
 const CartPage = () => {
-  const { items, updateQuantity, removeItem, clearCart, getTotal } = useCart();
+  const { 
+    items, 
+    updateQuantity, 
+    removeItem, 
+    clearCart, 
+    getSubtotal, 
+    getTotal,
+    appliedCoupon,
+    applyCoupon,
+    removeCoupon,
+    couponLoading,
+  } = useCart();
+  
+  const [couponCode, setCouponCode] = useState('');
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -16,7 +32,29 @@ const CartPage = () => {
     }).format(price);
   };
 
+  const subtotal = getSubtotal();
   const total = getTotal();
+
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) {
+      toast.error('Digite um código de cupom');
+      return;
+    }
+
+    const result = await applyCoupon(couponCode.trim());
+    
+    if (result.valid) {
+      toast.success(`Cupom aplicado! Desconto de ${formatPrice(result.discount || 0)}`);
+      setCouponCode('');
+    } else {
+      toast.error(result.error || 'Cupom inválido');
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    removeCoupon();
+    toast.success('Cupom removido');
+  };
 
   if (items.length === 0) {
     return (
@@ -140,12 +178,72 @@ const CartPage = () => {
                 <CardTitle>Resumo do Pedido</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
+                {/* Coupon Section */}
+                <div className="space-y-3">
+                  <label className="text-sm font-medium flex items-center gap-2">
+                    <Tag className="h-4 w-4" />
+                    Cupom de desconto
+                  </label>
+                  
+                  {appliedCoupon ? (
+                    <div className="flex items-center justify-between p-3 bg-success/10 border border-success/30 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="h-4 w-4 text-success" />
+                        <div>
+                          <p className="font-mono font-bold text-sm">{appliedCoupon.coupon.code}</p>
+                          <p className="text-xs text-success">
+                            -{formatPrice(appliedCoupon.discount)}
+                          </p>
+                        </div>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                        onClick={handleRemoveCoupon}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Digite o código"
+                        value={couponCode}
+                        onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                        className="font-mono uppercase"
+                        onKeyDown={(e) => e.key === 'Enter' && handleApplyCoupon()}
+                      />
+                      <Button 
+                        variant="outline" 
+                        onClick={handleApplyCoupon}
+                        disabled={couponLoading}
+                      >
+                        {couponLoading ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          'Aplicar'
+                        )}
+                      </Button>
+                    </div>
+                  )}
+                </div>
+
+                <Separator />
+
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">
                     Subtotal ({items.length} {items.length === 1 ? 'item' : 'itens'})
                   </span>
-                  <span>{formatPrice(total)}</span>
+                  <span>{formatPrice(subtotal)}</span>
                 </div>
+
+                {appliedCoupon && (
+                  <div className="flex justify-between text-sm text-success">
+                    <span>Desconto ({appliedCoupon.coupon.code})</span>
+                    <span>-{formatPrice(appliedCoupon.discount)}</span>
+                  </div>
+                )}
                 
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Frete</span>

@@ -19,6 +19,7 @@ import Settings from "./pages/Settings";
 import ApiKeys from "./pages/ApiKeys";
 import ApiDocs from "./pages/ApiDocs";
 import Reviews from "./pages/Reviews";
+import Coupons from "./pages/Coupons";
 import NotFound from "./pages/NotFound";
 import ProductDetails from "./pages/ProductDetails";
 
@@ -87,6 +88,14 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <Reviews />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/coupons"
+                element={
+                  <ProtectedRoute>
+                    <Coupons />
                   </ProtectedRoute>
                 }
               />

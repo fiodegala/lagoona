@@ -17,6 +17,7 @@ import {
   X,
   Shield,
   Star,
+  Tag,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -41,6 +42,7 @@ const navItems = [
   { icon: FolderTree, label: 'Categorias', path: '/admin/categories' },
   { icon: ShoppingCart, label: 'Pedidos', path: '/admin/orders' },
   { icon: Star, label: 'Avaliações', path: '/admin/reviews' },
+  { icon: Tag, label: 'Cupons', path: '/admin/coupons' },
   { icon: BarChart3, label: 'Relatórios', path: '/admin/reports' },
   { icon: Users, label: 'Usuários', path: '/admin/users', requireAdmin: true },
 ];
