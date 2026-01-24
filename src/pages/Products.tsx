@@ -694,6 +694,7 @@ const Products = () => {
                         product={product}
                         isSelected={selectedProducts.has(product.id)}
                         onSelect={(checked) => handleSelectProduct(product.id, checked)}
+                        onView={() => window.open(`/produto/${product.id}`, '_blank')}
                         onEdit={() => handleEdit(product)}
                         onDelete={() => handleDelete(product.id)}
                         onToggleActive={() => handleToggleActive(product)}

@@ -19,7 +19,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import { Package, Pencil, Trash2, Eye, EyeOff, ChevronDown, ChevronRight, Layers } from 'lucide-react';
+import { Package, Pencil, Trash2, Eye, Power, ChevronDown, ChevronRight, Layers } from 'lucide-react';
 import { Product } from '@/services/products';
 import { variationsService, ProductVariation } from '@/services/variations';
 
@@ -27,6 +27,7 @@ interface ProductTableRowProps {
   product: Product;
   isSelected: boolean;
   onSelect: (checked: boolean) => void;
+  onView: () => void;
   onEdit: () => void;
   onDelete: () => void;
   onToggleActive: () => void;
@@ -38,6 +39,7 @@ const ProductTableRow = ({
   product,
   isSelected,
   onSelect,
+  onView,
   onEdit,
   onDelete,
   onToggleActive,
@@ -195,14 +197,19 @@ const ProductTableRow = ({
                 variant="ghost"
                 size="icon"
                 className="h-8 w-8"
+                onClick={onView}
+                title="Visualizar"
+              >
+                <Eye className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className={`h-8 w-8 ${product.is_active ? 'text-success hover:text-success' : 'text-muted-foreground'}`}
                 onClick={onToggleActive}
                 title={product.is_active ? 'Desativar' : 'Ativar'}
               >
-                {product.is_active ? (
-                  <EyeOff className="h-4 w-4" />
-                ) : (
-                  <Eye className="h-4 w-4" />
-                )}
+                <Power className="h-4 w-4" />
               </Button>
               <Button
                 variant="ghost"
