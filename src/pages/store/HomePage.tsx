@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Loader2, ShoppingBag, ChevronLeft, ChevronRight, Zap, Clock, Flame, TrendingUp, Sparkles, Gift, Star } from 'lucide-react';
+import { ArrowRight, Loader2, ShoppingBag, ChevronLeft, ChevronRight, Zap, Clock, Flame, TrendingUp, Sparkles, Gift } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import StoreLayout from '@/components/store/StoreLayout';
 import ProductCard from '@/components/store/ProductCard';
 import { productsService, Product } from '@/services/products';
 import { categoriesService, Category } from '@/services/categories';
-
+import bannerLancamentos from '@/assets/banner-lancamentos.jpg';
 const HomePage = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -224,38 +224,46 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* Lançamentos Section */}
-      <section className="py-12 bg-store-secondary/30">
+      {/* Lançamentos Banner Section */}
+      <section className="py-8">
         <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-store-primary/10 rounded-lg">
-                <Star className="h-6 w-6 text-store-primary" />
+          <Link 
+            to="/loja?ordenar=recentes"
+            className="group relative block overflow-hidden rounded-2xl h-[200px] md:h-[280px] lg:h-[320px]"
+          >
+            {/* Background Image */}
+            <img 
+              src={bannerLancamentos} 
+              alt="Lançamentos - Novidades Lagoona"
+              className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+            />
+            
+            {/* Overlay */}
+            <div className="absolute inset-0 bg-gradient-to-r from-store-accent/90 via-store-accent/60 to-transparent" />
+            
+            {/* Content */}
+            <div className="relative h-full flex items-center">
+              <div className="px-8 md:px-12 lg:px-16 max-w-2xl">
+                <Badge className="mb-4 bg-store-primary text-store-accent border-0 font-semibold">
+                  <Sparkles className="h-3 w-3 mr-1" />
+                  Novidades
+                </Badge>
+                <h2 className="text-3xl md:text-4xl lg:text-5xl font-display font-bold text-white mb-3 drop-shadow-lg">
+                  Lançamentos
+                </h2>
+                <p className="text-white/90 text-lg md:text-xl mb-6 max-w-md">
+                  Descubra as novidades fresquinhas que acabaram de chegar
+                </p>
+                <Button 
+                  size="lg" 
+                  className="gap-2 bg-store-primary text-store-accent hover:bg-store-primary/90 font-display font-semibold group-hover:gap-3 transition-all"
+                >
+                  Ver Coleção
+                  <ArrowRight className="h-5 w-5" />
+                </Button>
               </div>
-              <div>
-                <h2 className="text-2xl font-display font-bold text-store-accent">Lançamentos</h2>
-                <p className="text-sm text-muted-foreground">Novidades fresquinhas para você</p>
-              </div>
             </div>
-            <Button variant="outline" asChild className="gap-2 border-store-accent text-store-accent hover:bg-store-accent hover:text-white">
-              <Link to="/loja?ordenar=recentes">
-                Ver Todos
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </Button>
-          </div>
-
-          {isLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-              {newProducts.slice(0, 5).map((product) => (
-                <ProductCard key={product.id} product={product} showDiscount={false} />
-              ))}
-            </div>
-          )}
+          </Link>
         </div>
       </section>
 
