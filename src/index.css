@@ -69,6 +69,13 @@
     --shadow-lg: 0 10px 15px -3px hsl(222 47% 11% / 0.1), 0 4px 6px -4px hsl(222 47% 11% / 0.1);
     --shadow-xl: 0 20px 25px -5px hsl(222 47% 11% / 0.1), 0 8px 10px -6px hsl(222 47% 11% / 0.1);
     --shadow-card: 0 1px 3px 0 hsl(222 47% 11% / 0.04), 0 1px 2px -1px hsl(222 47% 11% / 0.04);
+
+    /* Store-specific tokens */
+    --store-primary: 16 100% 50%;
+    --store-primary-foreground: 0 0% 100%;
+    --store-secondary: 142 71% 45%;
+    --store-accent: 280 100% 60%;
+    --store-deal: 0 84% 60%;
   }
 
   .dark {

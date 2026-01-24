@@ -51,6 +51,13 @@ export default {
           DEFAULT: "hsl(var(--warning))",
           foreground: "hsl(var(--warning-foreground))",
         },
+        store: {
+          primary: "hsl(var(--store-primary))",
+          "primary-foreground": "hsl(var(--store-primary-foreground))",
+          secondary: "hsl(var(--store-secondary))",
+          accent: "hsl(var(--store-accent))",
+          deal: "hsl(var(--store-deal))",
+        },
         popover: {
           DEFAULT: "hsl(var(--popover))",
           foreground: "hsl(var(--popover-foreground))",
