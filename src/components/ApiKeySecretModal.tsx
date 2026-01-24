@@ -18,15 +18,17 @@ interface ApiKeySecretModalProps {
   onClose: () => void;
   publicKey: string;
   secretKey: string;
+  accessToken: string;
+  webhookSecret: string;
   name: string;
 }
 
-const ApiKeySecretModal = ({ open, onClose, publicKey, secretKey, name }: ApiKeySecretModalProps) => {
+const ApiKeySecretModal = ({ open, onClose, publicKey, secretKey, accessToken, webhookSecret, name }: ApiKeySecretModalProps) => {
   const [copied, setCopied] = useState(false);
 
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
-    toast.success(`${label} copiada!`);
+    toast.success(`${label} copiado!`);
     setCopied(true);
   };
 
@@ -34,7 +36,9 @@ const ApiKeySecretModal = ({ open, onClose, publicKey, secretKey, name }: ApiKey
     const envContent = `# API Keys para: ${name}
 API_BASE_URL=https://krlnrzwshjwupiklzblz.supabase.co/functions/v1
 PUBLIC_API_KEY=${publicKey}
-SECRET_API_KEY=${secretKey}`;
+SECRET_API_KEY=${secretKey}
+ACCESS_TOKEN=${accessToken}
+WEBHOOK_SECRET=${webhookSecret}`;
     navigator.clipboard.writeText(envContent);
     toast.success('Todas as variáveis copiadas!');
     setCopied(true);
@@ -61,7 +65,7 @@ SECRET_API_KEY=${secretKey}`;
             <div className="text-sm">
               <p className="font-semibold text-warning">Atenção!</p>
               <p className="text-foreground/80">
-                A <strong>SECRET_API_KEY</strong> só é exibida uma vez. Copie e guarde em local seguro antes de fechar.
+                As chaves secretas só são exibidas uma vez. Copie e guarde em local seguro antes de fechar.
               </p>
             </div>
           </div>
@@ -106,6 +110,46 @@ SECRET_API_KEY=${secretKey}`;
                 </Button>
               </div>
             </div>
+
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold text-destructive uppercase tracking-wide">
+                Access Token (ACCESS_TOKEN) ⚠️
+              </Label>
+              <div className="flex gap-2">
+                <Input
+                  readOnly
+                  value={accessToken}
+                  className="font-mono text-sm bg-destructive/5 border-destructive/30"
+                />
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => copyToClipboard(accessToken, 'Access Token')}
+                >
+                  <Copy className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold text-destructive uppercase tracking-wide">
+                Webhook Secret (WEBHOOK_SECRET) ⚠️
+              </Label>
+              <div className="flex gap-2">
+                <Input
+                  readOnly
+                  value={webhookSecret}
+                  className="font-mono text-sm bg-destructive/5 border-destructive/30"
+                />
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => copyToClipboard(webhookSecret, 'Webhook Secret')}
+                >
+                  <Copy className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
           </div>
 
           <div className="border-t pt-4">
@@ -114,7 +158,9 @@ SECRET_API_KEY=${secretKey}`;
 {`# Adicione ao seu .env ou configuração do host
 API_BASE_URL=https://krlnrzwshjwupiklzblz.supabase.co/functions/v1
 PUBLIC_API_KEY=${publicKey}
-SECRET_API_KEY=${secretKey}`}
+SECRET_API_KEY=${secretKey}
+ACCESS_TOKEN=${accessToken}
+WEBHOOK_SECRET=${webhookSecret}`}
             </pre>
             <Button variant="outline" className="w-full mt-2" onClick={copyAll}>
               <Copy className="h-4 w-4 mr-2" />
