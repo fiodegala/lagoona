@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -6,7 +6,7 @@ import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   ArrowLeft, Package, Loader2, ShoppingCart, Heart, Share2, 
-  Minus, Plus, Star, Check, Truck, ShieldCheck, RotateCcw 
+  Minus, Plus, Star, Truck, ShieldCheck, RotateCcw 
 } from 'lucide-react';
 import { productsService, Product } from '@/services/products';
 import { categoriesService, Category } from '@/services/categories';
@@ -16,6 +16,7 @@ import ProductVariationSelector from '@/components/store/ProductVariationSelecto
 import ShippingCalculator from '@/components/store/ShippingCalculator';
 import ProductReviews from '@/components/store/ProductReviews';
 import SizeGuideModal from '@/components/store/SizeGuideModal';
+import ProductImageGallery from '@/components/store/ProductImageGallery';
 import { useCart } from '@/contexts/CartContext';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -76,6 +77,28 @@ const ProductDetails = () => {
       setSelectedImage(product.image_url);
     }
   }, [product?.image_url]);
+
+  // Build gallery images array from product and variations
+  const galleryImages = useMemo(() => {
+    const images: string[] = [];
+    
+    // Add main product image
+    if (product?.image_url) {
+      images.push(product.image_url);
+    }
+    
+    // Add additional images from metadata if available
+    const metadata = product?.metadata as { gallery_images?: string[] } | null;
+    if (metadata?.gallery_images && Array.isArray(metadata.gallery_images)) {
+      metadata.gallery_images.forEach((img: string) => {
+        if (img && !images.includes(img)) {
+          images.push(img);
+        }
+      });
+    }
+    
+    return images;
+  }, [product]);
 
   const currentPrice = selectedVariation?.price ?? product?.price ?? 0;
   const currentStock = selectedVariation?.stock ?? product?.stock ?? 0;
@@ -185,41 +208,13 @@ const ProductDetails = () => {
         </nav>
 
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
-          {/* Product Images */}
-          <div className="space-y-4">
-            <div className="aspect-square rounded-xl overflow-hidden bg-muted border">
-              {selectedImage ? (
-                <img
-                  src={selectedImage}
-                  alt={product.name}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center">
-                  <Package className="h-24 w-24 text-muted-foreground/30" />
-                </div>
-              )}
-            </div>
-            
-            {/* Thumbnail gallery placeholder */}
-            <div className="flex gap-2 overflow-x-auto pb-2">
-              <button 
-                onClick={() => setSelectedImage(product.image_url)}
-                className={cn(
-                  "w-20 h-20 rounded-lg overflow-hidden border-2 shrink-0 transition-all",
-                  selectedImage === product.image_url ? "border-store-primary" : "border-transparent hover:border-muted-foreground/30"
-                )}
-              >
-                {product.image_url ? (
-                  <img src={product.image_url} alt="" className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full bg-muted flex items-center justify-center">
-                    <Package className="h-6 w-6 text-muted-foreground/30" />
-                  </div>
-                )}
-              </button>
-            </div>
-          </div>
+          {/* Product Images Gallery */}
+          <ProductImageGallery
+            images={galleryImages}
+            productName={product.name}
+            selectedImage={selectedImage || undefined}
+            onImageChange={setSelectedImage}
+          />
 
           {/* Product Info */}
           <div className="space-y-6">
