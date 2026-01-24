@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingCart, Search, Menu, X, User, Heart, ChevronDown, Zap } from 'lucide-react';
+import { ShoppingCart, Search, Menu, X, User, Heart, ChevronDown, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -37,11 +37,11 @@ const StoreHeader = ({ categories }: StoreHeaderProps) => {
   return (
     <header className="sticky top-0 z-50">
       {/* Announcement Bar */}
-      <div className="bg-gradient-to-r from-[hsl(var(--store-primary))] to-[hsl(var(--store-accent))] text-white py-2 px-4">
-        <div className="container mx-auto flex items-center justify-center gap-2 text-sm font-medium">
-          <Zap className="h-4 w-4" />
-          <span>🔥 FRETE GRÁTIS em compras acima de R$199 | Use o cupom: PRIMEIRA10</span>
-          <Zap className="h-4 w-4" />
+      <div className="bg-store-accent text-white py-2.5 px-4">
+        <div className="container mx-auto flex items-center justify-center gap-2 text-sm font-medium tracking-wide">
+          <Sparkles className="h-4 w-4 text-store-primary" />
+          <span>FRETE GRÁTIS em compras acima de R$199 | Use o cupom: <span className="font-bold text-store-primary">PRIMEIRA10</span></span>
+          <Sparkles className="h-4 w-4 text-store-primary" />
         </div>
       </div>
 
@@ -58,8 +58,8 @@ const StoreHeader = ({ categories }: StoreHeaderProps) => {
               </SheetTrigger>
               <SheetContent side="left" className="w-80 p-0">
                 <div className="flex flex-col h-full">
-                  <div className="p-4 border-b bg-gradient-to-r from-[hsl(var(--store-primary))] to-[hsl(var(--store-accent))]">
-                    <span className="font-bold text-xl text-white">Minha Loja</span>
+                  <div className="p-4 border-b bg-store-accent">
+                    <span className="font-display font-bold text-xl text-white">Lagoona</span>
                   </div>
                   
                   {/* Mobile Search */}
@@ -83,7 +83,7 @@ const StoreHeader = ({ categories }: StoreHeaderProps) => {
                     <div className="space-y-1">
                       <Link
                         to="/loja"
-                        className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-accent transition-colors font-medium"
+                        className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-store-secondary transition-colors font-medium"
                         onClick={() => setMobileMenuOpen(false)}
                       >
                         Todos os Produtos
@@ -95,7 +95,7 @@ const StoreHeader = ({ categories }: StoreHeaderProps) => {
                         <Link
                           key={category.id}
                           to={`/loja/categoria/${category.slug}`}
-                          className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-accent transition-colors"
+                          className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-store-secondary transition-colors"
                           onClick={() => setMobileMenuOpen(false)}
                         >
                           {category.name}
@@ -109,11 +109,11 @@ const StoreHeader = ({ categories }: StoreHeaderProps) => {
 
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2 shrink-0">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[hsl(var(--store-primary))] to-[hsl(var(--store-accent))] flex items-center justify-center">
-                <span className="text-white font-bold text-lg">M</span>
+              <div className="w-10 h-10 rounded-xl bg-store-primary flex items-center justify-center">
+                <span className="text-store-accent font-display font-bold text-xl">L</span>
               </div>
-              <span className="hidden sm:block font-bold text-xl bg-gradient-to-r from-[hsl(var(--store-primary))] to-[hsl(var(--store-accent))] bg-clip-text text-transparent">
-                Minha Loja
+              <span className="hidden sm:block font-display font-bold text-2xl text-store-accent">
+                Lagoona
               </span>
             </Link>
 
@@ -125,11 +125,11 @@ const StoreHeader = ({ categories }: StoreHeaderProps) => {
                   placeholder="Buscar produtos, marcas e muito mais..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full rounded-r-none border-r-0 h-11 text-base focus-visible:ring-[hsl(var(--store-primary))]"
+                  className="w-full rounded-r-none border-r-0 h-11 text-base focus-visible:ring-store-primary border-store-secondary"
                 />
                 <Button 
                   type="submit" 
-                  className="rounded-l-none h-11 px-6 bg-[hsl(var(--store-primary))] hover:bg-[hsl(var(--store-primary))]/90"
+                  className="rounded-l-none h-11 px-6 bg-store-primary hover:bg-store-primary/90 text-store-accent"
                 >
                   <Search className="h-5 w-5" />
                 </Button>
@@ -139,13 +139,13 @@ const StoreHeader = ({ categories }: StoreHeaderProps) => {
             {/* Actions */}
             <div className="flex items-center gap-1 ml-auto">
               {/* Account */}
-              <Button variant="ghost" size="sm" className="hidden sm:flex gap-2 text-muted-foreground hover:text-foreground">
+              <Button variant="ghost" size="sm" className="hidden sm:flex gap-2 text-muted-foreground hover:text-store-accent">
                 <User className="h-5 w-5" />
                 <span className="hidden md:inline">Entrar</span>
               </Button>
 
               {/* Wishlist */}
-              <Button variant="ghost" size="icon" className="hidden sm:flex text-muted-foreground hover:text-foreground">
+              <Button variant="ghost" size="icon" className="hidden sm:flex text-muted-foreground hover:text-store-accent">
                 <Heart className="h-5 w-5" />
               </Button>
 
@@ -154,7 +154,7 @@ const StoreHeader = ({ categories }: StoreHeaderProps) => {
                 <Link to="/carrinho">
                   <ShoppingCart className="h-5 w-5" />
                   {itemCount > 0 && (
-                    <Badge className="absolute -top-1 -right-1 h-5 min-w-5 flex items-center justify-center p-0 text-xs bg-[hsl(var(--store-primary))]">
+                    <Badge className="absolute -top-1 -right-1 h-5 min-w-5 flex items-center justify-center p-0 text-xs bg-store-primary text-store-accent">
                       {itemCount > 99 ? '99+' : itemCount}
                     </Badge>
                   )}
@@ -171,7 +171,7 @@ const StoreHeader = ({ categories }: StoreHeaderProps) => {
           <div className="flex items-center gap-1 h-12 overflow-x-auto">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="gap-2 font-semibold text-[hsl(var(--store-primary))]">
+                <Button variant="ghost" className="gap-2 font-semibold text-store-accent hover:text-store-primary">
                   <Menu className="h-4 w-4" />
                   Categorias
                   <ChevronDown className="h-4 w-4" />
@@ -180,7 +180,7 @@ const StoreHeader = ({ categories }: StoreHeaderProps) => {
               <DropdownMenuContent align="start" className="w-56">
                 {activeCategories.map((category) => (
                   <DropdownMenuItem key={category.id} asChild>
-                    <Link to={`/loja/categoria/${category.slug}`}>
+                    <Link to={`/loja/categoria/${category.slug}`} className="hover:text-store-primary">
                       {category.name}
                     </Link>
                   </DropdownMenuItem>
@@ -192,19 +192,19 @@ const StoreHeader = ({ categories }: StoreHeaderProps) => {
 
             <Link
               to="/loja"
-              className="px-4 py-2 text-sm font-medium rounded-md hover:bg-accent transition-colors whitespace-nowrap"
+              className="px-4 py-2 text-sm font-medium rounded-md hover:bg-store-secondary hover:text-store-accent transition-colors whitespace-nowrap"
             >
               Ofertas do Dia
             </Link>
             <Link
               to="/loja?ordenar=recentes"
-              className="px-4 py-2 text-sm rounded-md hover:bg-accent transition-colors whitespace-nowrap"
+              className="px-4 py-2 text-sm rounded-md hover:bg-store-secondary hover:text-store-accent transition-colors whitespace-nowrap"
             >
               Novidades
             </Link>
             <Link
               to="/loja?ordenar=preco-menor"
-              className="px-4 py-2 text-sm rounded-md hover:bg-accent transition-colors whitespace-nowrap"
+              className="px-4 py-2 text-sm rounded-md hover:bg-store-secondary hover:text-store-accent transition-colors whitespace-nowrap"
             >
               Mais Vendidos
             </Link>
@@ -212,7 +212,7 @@ const StoreHeader = ({ categories }: StoreHeaderProps) => {
               <Link
                 key={category.id}
                 to={`/loja/categoria/${category.slug}`}
-                className="px-4 py-2 text-sm rounded-md hover:bg-accent transition-colors whitespace-nowrap"
+                className="px-4 py-2 text-sm rounded-md hover:bg-store-secondary hover:text-store-accent transition-colors whitespace-nowrap"
               >
                 {category.name}
               </Link>

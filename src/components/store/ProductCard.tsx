@@ -71,9 +71,9 @@ const ProductCard = ({ product, showDiscount = true }: ProductCardProps) => {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="relative bg-card rounded-xl border overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+      <div className="relative bg-card rounded-xl border overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-store-primary/30">
         {/* Image Container */}
-        <div className="relative aspect-square overflow-hidden bg-muted">
+        <div className="relative aspect-square overflow-hidden bg-store-secondary/30">
           {product.image_url ? (
             <img
               src={product.image_url}
@@ -84,7 +84,7 @@ const ProductCard = ({ product, showDiscount = true }: ProductCardProps) => {
               )}
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
+            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-store-secondary to-store-secondary/50">
               <Package className="h-16 w-16 text-muted-foreground/30" />
             </div>
           )}
@@ -92,7 +92,7 @@ const ProductCard = ({ product, showDiscount = true }: ProductCardProps) => {
           {/* Badges */}
           <div className="absolute top-2 left-2 flex flex-col gap-1">
             {showDiscount && discountPercent > 0 && (
-              <Badge className="bg-[hsl(var(--store-deal))] hover:bg-[hsl(var(--store-deal))] text-white font-bold px-2 py-1">
+              <Badge className="bg-store-deal hover:bg-store-deal text-white font-bold px-2 py-1">
                 -{discountPercent}%
               </Badge>
             )}
@@ -113,7 +113,7 @@ const ProductCard = ({ product, showDiscount = true }: ProductCardProps) => {
               variant="secondary"
               className={cn(
                 "h-9 w-9 rounded-full shadow-lg",
-                isWishlisted && "bg-[hsl(var(--store-primary))] text-white hover:bg-[hsl(var(--store-primary))]/90"
+                isWishlisted && "bg-store-primary text-store-accent hover:bg-store-primary/90"
               )}
               onClick={handleWishlist}
             >
@@ -139,13 +139,13 @@ const ProductCard = ({ product, showDiscount = true }: ProductCardProps) => {
 
           {/* Add to Cart Button */}
           <div className={cn(
-            "absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/60 to-transparent transition-all duration-300",
+            "absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-store-accent/80 to-transparent transition-all duration-300",
             isHovered ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
           )}>
             <Button
               onClick={handleAddToCart}
               disabled={isOutOfStock}
-              className="w-full gap-2 bg-[hsl(var(--store-primary))] hover:bg-[hsl(var(--store-primary))]/90 text-white"
+              className="w-full gap-2 bg-store-primary hover:bg-store-primary/90 text-store-accent font-semibold"
             >
               <ShoppingCart className="h-4 w-4" />
               Adicionar
@@ -170,7 +170,7 @@ const ProductCard = ({ product, showDiscount = true }: ProductCardProps) => {
           </div>
 
           {/* Title */}
-          <h3 className="font-medium text-sm line-clamp-2 min-h-[2.5rem] group-hover:text-[hsl(var(--store-primary))] transition-colors">
+          <h3 className="font-medium text-sm line-clamp-2 min-h-[2.5rem] group-hover:text-store-primary transition-colors">
             {product.name}
           </h3>
           
@@ -181,7 +181,7 @@ const ProductCard = ({ product, showDiscount = true }: ProductCardProps) => {
                 {formatPrice(originalPrice)}
               </p>
             )}
-            <p className="text-xl font-bold text-[hsl(var(--store-primary))]">
+            <p className="text-xl font-bold text-store-accent">
               {formatPrice(product.price)}
             </p>
             <p className="text-xs text-muted-foreground">
@@ -191,7 +191,7 @@ const ProductCard = ({ product, showDiscount = true }: ProductCardProps) => {
 
           {/* Free shipping badge */}
           {product.price >= 199 && (
-            <Badge variant="outline" className="mt-2 text-[hsl(var(--store-secondary))] border-[hsl(var(--store-secondary))] text-xs">
+            <Badge variant="outline" className="mt-2 text-store-primary border-store-primary text-xs">
               Frete Grátis
             </Badge>
           )}
