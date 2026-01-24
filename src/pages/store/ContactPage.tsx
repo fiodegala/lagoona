@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Mail, Phone, MapPin, Clock, Send, MessageCircle, Instagram, Facebook } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -240,8 +241,8 @@ const ContactPage = () => {
                   <p className="text-muted-foreground text-sm mb-4">
                     Confira nossa seção de perguntas frequentes para respostas rápidas.
                   </p>
-                  <Button variant="outline" className="border-store-primary text-store-primary hover:bg-store-primary hover:text-store-accent">
-                    Ver FAQ
+                  <Button asChild variant="outline" className="border-store-primary text-store-primary hover:bg-store-primary hover:text-store-accent">
+                    <Link to="/faq">Ver FAQ</Link>
                   </Button>
                 </div>
               </div>
