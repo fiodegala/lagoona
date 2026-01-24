@@ -22,16 +22,18 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { FolderTree, Plus, Pencil, Trash2, Loader2, Eye, EyeOff } from 'lucide-react';
+import { FolderTree, Plus, Pencil, Trash2, Loader2, Eye, EyeOff, Ruler } from 'lucide-react';
 import { toast } from 'sonner';
 import { categoriesService, Category } from '@/services/categories';
 import CategoryFormModal from '@/components/CategoryFormModal';
+import MeasurementTableEditor from '@/components/MeasurementTableEditor';
 
 const Categories = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [formOpen, setFormOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [measurementCategory, setMeasurementCategory] = useState<Category | null>(null);
 
   const loadCategories = async () => {
     try {
@@ -178,6 +180,15 @@ const Categories = () => {
                               variant="ghost"
                               size="icon"
                               className="h-8 w-8"
+                              onClick={() => setMeasurementCategory(category)}
+                              title="Tabela de Medidas"
+                            >
+                              <Ruler className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
                               onClick={() => handleToggleActive(category)}
                               title={category.is_active ? 'Desativar' : 'Ativar'}
                             >
@@ -244,6 +255,15 @@ const Categories = () => {
         category={editingCategory}
         categories={categories}
       />
+
+      {measurementCategory && (
+        <MeasurementTableEditor
+          open={!!measurementCategory}
+          onClose={() => setMeasurementCategory(null)}
+          categoryId={measurementCategory.id}
+          categoryName={measurementCategory.name}
+        />
+      )}
     </AdminLayout>
   );
 };

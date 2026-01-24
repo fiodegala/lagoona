@@ -156,6 +156,44 @@ export type Database = {
           },
         ]
       }
+      measurement_tables: {
+        Row: {
+          category_id: string
+          columns: Json
+          created_at: string
+          id: string
+          name: string
+          rows: Json
+          updated_at: string
+        }
+        Insert: {
+          category_id: string
+          columns?: Json
+          created_at?: string
+          id?: string
+          name?: string
+          rows?: Json
+          updated_at?: string
+        }
+        Update: {
+          category_id?: string
+          columns?: Json
+          created_at?: string
+          id?: string
+          name?: string
+          rows?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "measurement_tables_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: true
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orders: {
         Row: {
           created_at: string
