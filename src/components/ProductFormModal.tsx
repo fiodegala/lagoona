@@ -21,11 +21,12 @@ import {
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Loader2, Package, Layers, Weight, Ruler } from 'lucide-react';
+import { Loader2, Package, Layers, Weight } from 'lucide-react';
 import { toast } from 'sonner';
 import { productsService, categoriesService, Product, Category, CreateProductData } from '@/services/products';
 import { variationsService } from '@/services/variations';
 import ImageUpload from './ImageUpload';
+import MultiImageUpload from './MultiImageUpload';
 import ProductVariationsEditor from './ProductVariationsEditor';
 
 interface ProductFormModalProps {
@@ -46,6 +47,7 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
   const [stock, setStock] = useState('0');
   const [categoryId, setCategoryId] = useState<string>('none');
   const [imageUrl, setImageUrl] = useState('');
+  const [galleryImages, setGalleryImages] = useState<string[]>([]);
   const [isActive, setIsActive] = useState(true);
   const [productType, setProductType] = useState<'simple' | 'variable'>('simple');
   const [hasVariations, setHasVariations] = useState(false);
@@ -72,6 +74,9 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
         setStock(product.stock.toString());
         setCategoryId(product.category_id || 'none');
         setImageUrl(product.image_url || '');
+        // Load gallery images from metadata
+        const metadata = product.metadata as { gallery_images?: string[] } | null;
+        setGalleryImages(metadata?.gallery_images || []);
         setIsActive(product.is_active);
         setWeightKg(product.weight_kg?.toString() || '');
         setWidthCm(product.width_cm?.toString() || '');
@@ -115,6 +120,7 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
     setStock('0');
     setCategoryId('none');
     setImageUrl('');
+    setGalleryImages([]);
     setIsActive(true);
     setActiveTab('details');
     setProductType('simple');
@@ -156,6 +162,7 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
           width_cm: widthCm ? parseFloat(widthCm) : undefined,
           height_cm: heightCm ? parseFloat(heightCm) : undefined,
           depth_cm: depthCm ? parseFloat(depthCm) : undefined,
+          metadata: { gallery_images: galleryImages },
         };
 
         const newProduct = await productsService.create(data);
@@ -202,6 +209,7 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
         width_cm: widthCm ? parseFloat(widthCm) : undefined,
         height_cm: heightCm ? parseFloat(heightCm) : undefined,
         depth_cm: depthCm ? parseFloat(depthCm) : undefined,
+        metadata: { gallery_images: galleryImages },
       };
 
       if (isEditing && product) {
@@ -360,7 +368,7 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
       </div>
 
       <div className="space-y-2">
-        <Label>Imagem do Produto</Label>
+        <Label>Imagem Principal</Label>
         <Tabs defaultValue="upload" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="upload">Upload</TabsTrigger>
@@ -384,6 +392,20 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
             />
           </TabsContent>
         </Tabs>
+      </div>
+
+      <div className="space-y-2">
+        <Label>Galeria de Imagens</Label>
+        <p className="text-xs text-muted-foreground mb-2">
+          Adicione imagens extras que serão exibidas na galeria do produto
+        </p>
+        <MultiImageUpload
+          values={galleryImages}
+          onChange={setGalleryImages}
+          bucket="product-images"
+          folder="gallery"
+          maxImages={10}
+        />
       </div>
 
       {/* Shipping Section */}
