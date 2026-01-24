@@ -35,17 +35,17 @@ interface AdminLayoutProps {
 }
 
 const navItems = [
-  { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
-  { icon: Package, label: 'Produtos', path: '/products' },
-  { icon: FolderTree, label: 'Categorias', path: '/categories' },
-  { icon: ShoppingCart, label: 'Pedidos', path: '/orders' },
-  { icon: BarChart3, label: 'Relatórios', path: '/reports' },
-  { icon: Users, label: 'Usuários', path: '/users', requireAdmin: true },
+  { icon: LayoutDashboard, label: 'Dashboard', path: '/admin' },
+  { icon: Package, label: 'Produtos', path: '/admin/products' },
+  { icon: FolderTree, label: 'Categorias', path: '/admin/categories' },
+  { icon: ShoppingCart, label: 'Pedidos', path: '/admin/orders' },
+  { icon: BarChart3, label: 'Relatórios', path: '/admin/reports' },
+  { icon: Users, label: 'Usuários', path: '/admin/users', requireAdmin: true },
 ];
 
 const settingsItems = [
-  { icon: Key, label: 'API Keys', path: '/settings/api-keys' },
-  { icon: Settings, label: 'Configurações', path: '/settings' },
+  { icon: Key, label: 'API Keys', path: '/admin/settings/api-keys' },
+  { icon: Settings, label: 'Configurações', path: '/admin/settings' },
 ];
 
 const AdminLayout = ({ children }: AdminLayoutProps) => {
@@ -171,7 +171,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel>Minha conta</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => navigate('/settings')}>
+            <DropdownMenuItem onClick={() => navigate('/admin/settings')}>
               <Settings className="mr-2 h-4 w-4" />
               Configurações
             </DropdownMenuItem>

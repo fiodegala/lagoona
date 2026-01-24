@@ -1,0 +1,360 @@
+import { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { ArrowLeft, Loader2, Package, CheckCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import { toast } from 'sonner';
+import StoreLayout from '@/components/store/StoreLayout';
+import { useCart } from '@/contexts/CartContext';
+import { supabase } from '@/integrations/supabase/client';
+
+const CheckoutPage = () => {
+  const navigate = useNavigate();
+  const { items, getTotal, clearCart } = useCart();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [orderComplete, setOrderComplete] = useState(false);
+  const [orderId, setOrderId] = useState<string | null>(null);
+
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    address: '',
+    city: '',
+    state: '',
+    zipCode: '',
+    complement: '',
+  });
+
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    }).format(price);
+  };
+
+  const total = getTotal();
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (items.length === 0) {
+      toast.error('Seu carrinho está vazio');
+      return;
+    }
+
+    // Basic validation
+    if (!formData.name || !formData.email || !formData.phone || !formData.address || !formData.city || !formData.state || !formData.zipCode) {
+      toast.error('Preencha todos os campos obrigatórios');
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      // Create order in database
+      const orderItems = items.map(item => ({
+        product_id: item.productId,
+        variation_id: item.variationId || null,
+        name: item.name,
+        variation_label: item.variationLabel || null,
+        price: item.price,
+        quantity: item.quantity,
+      }));
+
+      const { data, error } = await supabase
+        .from('orders')
+        .insert({
+          customer_email: formData.email,
+          customer_name: formData.name,
+          customer_phone: formData.phone,
+          shipping_address: {
+            address: formData.address,
+            city: formData.city,
+            state: formData.state,
+            zip_code: formData.zipCode,
+            complement: formData.complement,
+          },
+          items: orderItems,
+          total: total,
+          status: 'pending',
+        })
+        .select('id')
+        .single();
+
+      if (error) throw error;
+
+      setOrderId(data.id);
+      setOrderComplete(true);
+      clearCart();
+      toast.success('Pedido realizado com sucesso!');
+    } catch (error) {
+      console.error('Error creating order:', error);
+      toast.error('Erro ao processar pedido. Tente novamente.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (items.length === 0 && !orderComplete) {
+    return (
+      <StoreLayout>
+        <div className="container mx-auto px-4 py-24 text-center">
+          <Package className="h-16 w-16 mx-auto text-muted-foreground/30 mb-4" />
+          <h1 className="text-2xl font-bold mb-2">Carrinho vazio</h1>
+          <p className="text-muted-foreground mb-6">
+            Adicione produtos ao carrinho para continuar.
+          </p>
+          <Button asChild>
+            <Link to="/loja">Ver Produtos</Link>
+          </Button>
+        </div>
+      </StoreLayout>
+    );
+  }
+
+  if (orderComplete && orderId) {
+    return (
+      <StoreLayout>
+        <div className="container mx-auto px-4 py-24 text-center max-w-lg">
+          <div className="p-4 rounded-full bg-success/10 w-fit mx-auto mb-6">
+            <CheckCircle className="h-12 w-12 text-success" />
+          </div>
+          <h1 className="text-2xl font-bold mb-2">Pedido Realizado!</h1>
+          <p className="text-muted-foreground mb-2">
+            Seu pedido foi registrado com sucesso.
+          </p>
+          <p className="text-sm font-mono bg-muted px-3 py-1 rounded inline-block mb-6">
+            Pedido #{orderId.slice(0, 8).toUpperCase()}
+          </p>
+          <p className="text-sm text-muted-foreground mb-8">
+            Enviamos um email de confirmação para {formData.email}
+          </p>
+          <div className="flex flex-col gap-3">
+            <Button asChild>
+              <Link to="/loja">Continuar Comprando</Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link to="/">Voltar ao Início</Link>
+            </Button>
+          </div>
+        </div>
+      </StoreLayout>
+    );
+  }
+
+  return (
+    <StoreLayout>
+      <div className="container mx-auto px-4 py-8">
+        {/* Back button */}
+        <Button variant="ghost" asChild className="mb-6">
+          <Link to="/carrinho">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Voltar ao Carrinho
+          </Link>
+        </Button>
+
+        <h1 className="text-3xl font-bold mb-8">Finalizar Compra</h1>
+
+        <form onSubmit={handleSubmit}>
+          <div className="grid lg:grid-cols-3 gap-8">
+            {/* Customer info */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* Personal data */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Dados Pessoais</CardTitle>
+                </CardHeader>
+                <CardContent className="grid sm:grid-cols-2 gap-4">
+                  <div className="sm:col-span-2">
+                    <Label htmlFor="name">Nome Completo *</Label>
+                    <Input
+                      id="name"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="email">E-mail *</Label>
+                    <Input
+                      id="email"
+                      name="email"
+                      type="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="phone">Telefone *</Label>
+                    <Input
+                      id="phone"
+                      name="phone"
+                      type="tel"
+                      placeholder="(00) 00000-0000"
+                      value={formData.phone}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Shipping address */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Endereço de Entrega</CardTitle>
+                </CardHeader>
+                <CardContent className="grid sm:grid-cols-2 gap-4">
+                  <div className="sm:col-span-2">
+                    <Label htmlFor="address">Endereço *</Label>
+                    <Input
+                      id="address"
+                      name="address"
+                      placeholder="Rua, número"
+                      value={formData.address}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <Label htmlFor="complement">Complemento</Label>
+                    <Input
+                      id="complement"
+                      name="complement"
+                      placeholder="Apartamento, bloco, etc."
+                      value={formData.complement}
+                      onChange={handleInputChange}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="city">Cidade *</Label>
+                    <Input
+                      id="city"
+                      name="city"
+                      value={formData.city}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="state">Estado *</Label>
+                    <Input
+                      id="state"
+                      name="state"
+                      placeholder="SP"
+                      maxLength={2}
+                      value={formData.state}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="zipCode">CEP *</Label>
+                    <Input
+                      id="zipCode"
+                      name="zipCode"
+                      placeholder="00000-000"
+                      value={formData.zipCode}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Order summary */}
+            <div className="lg:col-span-1">
+              <Card className="sticky top-24">
+                <CardHeader>
+                  <CardTitle>Resumo do Pedido</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Items list */}
+                  <div className="space-y-3 max-h-64 overflow-y-auto">
+                    {items.map((item) => (
+                      <div key={item.id} className="flex gap-3">
+                        <div className="w-12 h-12 shrink-0 rounded bg-muted overflow-hidden">
+                          {item.imageUrl ? (
+                            <img
+                              src={item.imageUrl}
+                              alt={item.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <Package className="h-4 w-4 text-muted-foreground/30" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium line-clamp-1">{item.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {item.quantity}x {formatPrice(item.price)}
+                          </p>
+                        </div>
+                        <p className="text-sm font-medium">
+                          {formatPrice(item.price * item.quantity)}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+
+                  <Separator />
+
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Subtotal</span>
+                      <span>{formatPrice(total)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Frete</span>
+                      <span className="text-success">Grátis</span>
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  <div className="flex justify-between font-semibold text-lg">
+                    <span>Total</span>
+                    <span className="text-primary">{formatPrice(total)}</span>
+                  </div>
+                </CardContent>
+                <CardFooter>
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    size="lg"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Processando...
+                      </>
+                    ) : (
+                      'Confirmar Pedido'
+                    )}
+                  </Button>
+                </CardFooter>
+              </Card>
+            </div>
+          </div>
+        </form>
+      </div>
+    </StoreLayout>
+  );
+};
+
+export default CheckoutPage;
