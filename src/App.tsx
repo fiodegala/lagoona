@@ -18,6 +18,7 @@ import Settings from "./pages/Settings";
 import ApiKeys from "./pages/ApiKeys";
 import ApiDocs from "./pages/ApiDocs";
 import NotFound from "./pages/NotFound";
+import ProductDetails from "./pages/ProductDetails";
 
 const queryClient = new QueryClient();
 
@@ -102,6 +103,8 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
+            {/* Public Product Details Page */}
+            <Route path="/produto/:id" element={<ProductDetails />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
