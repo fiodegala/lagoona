@@ -46,7 +46,7 @@ WEBHOOK_SECRET=${webhookSecret}`;
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-xl">
+      <DialogContent className="max-w-xl max-h-[90vh] flex flex-col min-h-0">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <div className="gradient-primary p-1.5 rounded-lg">
@@ -59,7 +59,7 @@ WEBHOOK_SECRET=${webhookSecret}`;
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
+        <div className="flex-1 min-h-0 overflow-y-auto space-y-4 py-4 pr-2">
           <div className="bg-warning/10 border border-warning/30 rounded-lg p-4 flex items-start gap-3">
             <AlertTriangle className="h-5 w-5 text-warning flex-shrink-0 mt-0.5" />
             <div className="text-sm">
@@ -75,15 +75,16 @@ WEBHOOK_SECRET=${webhookSecret}`;
               <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                 Chave Pública (PUBLIC_API_KEY)
               </Label>
-              <div className="flex gap-2">
+              <div className="flex items-center gap-2 min-w-0">
                 <Input
                   readOnly
                   value={publicKey}
-                  className="font-mono text-sm bg-muted"
+                  className="basis-0 flex-1 min-w-0 font-mono text-sm bg-muted"
                 />
                 <Button
                   variant="outline"
                   size="icon"
+                  className="shrink-0"
                   onClick={() => copyToClipboard(publicKey, 'Chave pública')}
                 >
                   <Copy className="h-4 w-4" />
@@ -95,15 +96,16 @@ WEBHOOK_SECRET=${webhookSecret}`;
               <Label className="text-xs font-semibold text-destructive uppercase tracking-wide">
                 Chave Secreta (SECRET_API_KEY) ⚠️
               </Label>
-              <div className="flex gap-2">
+              <div className="flex items-center gap-2 min-w-0">
                 <Input
                   readOnly
                   value={secretKey}
-                  className="font-mono text-sm bg-destructive/5 border-destructive/30"
+                  className="basis-0 flex-1 min-w-0 font-mono text-sm bg-destructive/5 border-destructive/30"
                 />
                 <Button
                   variant="outline"
                   size="icon"
+                  className="shrink-0"
                   onClick={() => copyToClipboard(secretKey, 'Chave secreta')}
                 >
                   <Copy className="h-4 w-4" />
@@ -115,15 +117,16 @@ WEBHOOK_SECRET=${webhookSecret}`;
               <Label className="text-xs font-semibold text-destructive uppercase tracking-wide">
                 Access Token (ACCESS_TOKEN) ⚠️
               </Label>
-              <div className="flex gap-2">
+              <div className="flex items-center gap-2 min-w-0">
                 <Input
                   readOnly
                   value={accessToken}
-                  className="font-mono text-sm bg-destructive/5 border-destructive/30"
+                  className="basis-0 flex-1 min-w-0 font-mono text-sm bg-destructive/5 border-destructive/30"
                 />
                 <Button
                   variant="outline"
                   size="icon"
+                  className="shrink-0"
                   onClick={() => copyToClipboard(accessToken, 'Access Token')}
                 >
                   <Copy className="h-4 w-4" />
@@ -135,15 +138,16 @@ WEBHOOK_SECRET=${webhookSecret}`;
               <Label className="text-xs font-semibold text-destructive uppercase tracking-wide">
                 Webhook Secret (WEBHOOK_SECRET) ⚠️
               </Label>
-              <div className="flex gap-2">
+              <div className="flex items-center gap-2 min-w-0">
                 <Input
                   readOnly
                   value={webhookSecret}
-                  className="font-mono text-sm bg-destructive/5 border-destructive/30"
+                  className="basis-0 flex-1 min-w-0 font-mono text-sm bg-destructive/5 border-destructive/30"
                 />
                 <Button
                   variant="outline"
                   size="icon"
+                  className="shrink-0"
                   onClick={() => copyToClipboard(webhookSecret, 'Webhook Secret')}
                 >
                   <Copy className="h-4 w-4" />
@@ -169,7 +173,7 @@ WEBHOOK_SECRET=${webhookSecret}`}
           </div>
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="flex-shrink-0">
           <Button onClick={onClose} className="w-full sm:w-auto">
             {copied ? (
               <>
