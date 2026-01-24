@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useCart } from '@/contexts/CartContext';
 import { Category } from '@/services/categories';
-
+import logoLagoona from '@/assets/logo-lagoona.png';
 interface StoreHeaderProps {
   categories: Category[];
 }
@@ -58,8 +58,8 @@ const StoreHeader = ({ categories }: StoreHeaderProps) => {
               </SheetTrigger>
               <SheetContent side="left" className="w-80 p-0">
                 <div className="flex flex-col h-full">
-                  <div className="p-4 border-b bg-store-accent">
-                    <span className="font-display font-bold text-xl text-white">Lagoona</span>
+                  <div className="p-4 border-b bg-store-accent flex items-center justify-center">
+                    <img src={logoLagoona} alt="Lagoona Store" className="h-8" />
                   </div>
                   
                   {/* Mobile Search */}
@@ -108,13 +108,12 @@ const StoreHeader = ({ categories }: StoreHeaderProps) => {
             </Sheet>
 
             {/* Logo */}
-            <Link to="/" className="flex items-center gap-2 shrink-0">
-              <div className="w-10 h-10 rounded-xl bg-store-primary flex items-center justify-center">
-                <span className="text-store-accent font-display font-bold text-xl">L</span>
-              </div>
-              <span className="hidden sm:block font-display font-bold text-2xl text-store-accent">
-                Lagoona
-              </span>
+            <Link to="/" className="flex items-center shrink-0">
+              <img 
+                src={logoLagoona} 
+                alt="Lagoona Store" 
+                className="h-8 sm:h-10"
+              />
             </Link>
 
             {/* Search - Desktop */}
