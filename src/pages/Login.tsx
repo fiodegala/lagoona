@@ -30,7 +30,7 @@ const Login = () => {
       setIsLoading(false);
     } else {
       toast.success('Login realizado com sucesso!');
-      navigate('/');
+      navigate('/admin');
     }
   };
 
