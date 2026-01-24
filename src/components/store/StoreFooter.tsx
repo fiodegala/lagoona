@@ -108,8 +108,8 @@ const StoreFooter = () => {
               <Link to="/faq" className="text-muted-foreground hover:text-store-primary transition-colors">
                 Perguntas Frequentes
               </Link>
-              <Link to="/contato" className="text-muted-foreground hover:text-store-primary transition-colors">
-                Fale Conosco
+              <Link to="/trocas-devolucoes" className="text-muted-foreground hover:text-store-primary transition-colors">
+                Trocas e Devoluções
               </Link>
               <Link to="/privacidade" className="text-muted-foreground hover:text-store-primary transition-colors">
                 Política de Privacidade
