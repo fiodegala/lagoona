@@ -40,23 +40,19 @@ export interface CreateApiKeyData {
 }
 
 // Generate secure random keys
-const generatePublicKey = () => {
+const generateKey = (prefix: string, length: number) => {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let result = 'pk_';
-  for (let i = 0; i < 32; i++) {
+  let result = prefix;
+  for (let i = 0; i < length; i++) {
     result += chars.charAt(Math.floor(Math.random() * chars.length));
   }
   return result;
 };
 
-const generateSecretKey = () => {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let result = 'sk_';
-  for (let i = 0; i < 48; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return result;
-};
+const generatePublicKey = () => generateKey('pk_', 32);
+const generateSecretKey = () => generateKey('sk_', 48);
+const generateAccessToken = () => generateKey('at_', 64);
+const generateWebhookSecret = () => generateKey('whsec_', 32);
 
 // Simple hash function (for demo - in production use bcrypt via edge function)
 const hashSecretKey = async (secret: string): Promise<string> => {
@@ -89,9 +85,16 @@ export const apiKeysService = {
     return data as ApiKey;
   },
 
-  async create(input: CreateApiKeyData): Promise<{ apiKey: ApiKey; secretKey: string }> {
+  async create(input: CreateApiKeyData): Promise<{ 
+    apiKey: ApiKey; 
+    secretKey: string;
+    accessToken: string;
+    webhookSecret: string;
+  }> {
     const publicKey = generatePublicKey();
     const secretKey = generateSecretKey();
+    const accessToken = generateAccessToken();
+    const webhookSecret = generateWebhookSecret();
     const secretKeyHash = await hashSecretKey(secretKey);
 
     const { data: user } = await supabase.auth.getUser();
@@ -113,7 +116,7 @@ export const apiKeysService = {
       .single();
 
     if (error) throw error;
-    return { apiKey: data as ApiKey, secretKey };
+    return { apiKey: data as ApiKey, secretKey, accessToken, webhookSecret };
   },
 
   async revoke(id: string): Promise<void> {
@@ -125,9 +128,11 @@ export const apiKeysService = {
     if (error) throw error;
   },
 
-  async rotate(id: string): Promise<{ publicKey: string; secretKey: string }> {
+  async rotate(id: string): Promise<{ publicKey: string; secretKey: string; accessToken: string; webhookSecret: string }> {
     const publicKey = generatePublicKey();
     const secretKey = generateSecretKey();
+    const accessToken = generateAccessToken();
+    const webhookSecret = generateWebhookSecret();
     const secretKeyHash = await hashSecretKey(secretKey);
 
     const { error } = await supabase
@@ -140,7 +145,7 @@ export const apiKeysService = {
       .eq('id', id);
 
     if (error) throw error;
-    return { publicKey, secretKey };
+    return { publicKey, secretKey, accessToken, webhookSecret };
   },
 
   async update(id: string, input: Partial<CreateApiKeyData>): Promise<ApiKey> {

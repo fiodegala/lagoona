@@ -70,6 +70,8 @@ const ApiKeys = () => {
   const [newKeyData, setNewKeyData] = useState({
     publicKey: '',
     secretKey: '',
+    accessToken: '',
+    webhookSecret: '',
     name: '',
   });
 
@@ -108,7 +110,7 @@ const ApiKeys = () => {
 
     setIsCreating(true);
     try {
-      const { apiKey, secretKey } = await apiKeysService.create({
+      const { apiKey, secretKey, accessToken, webhookSecret } = await apiKeysService.create({
         name: name.trim(),
         description: description.trim() || undefined,
         scopes: selectedScopes,
@@ -119,6 +121,8 @@ const ApiKeys = () => {
       setNewKeyData({
         publicKey: apiKey.public_key,
         secretKey,
+        accessToken,
+        webhookSecret,
         name: apiKey.name,
       });
 
@@ -152,10 +156,12 @@ const ApiKeys = () => {
 
   const handleRotate = async (id: string, keyName: string) => {
     try {
-      const { publicKey, secretKey } = await apiKeysService.rotate(id);
+      const { publicKey, secretKey, accessToken, webhookSecret } = await apiKeysService.rotate(id);
       setNewKeyData({
         publicKey,
         secretKey,
+        accessToken,
+        webhookSecret,
         name: keyName,
       });
       setSecretModalOpen(true);
@@ -556,6 +562,8 @@ const ApiKeys = () => {
         onClose={() => setSecretModalOpen(false)}
         publicKey={newKeyData.publicKey}
         secretKey={newKeyData.secretKey}
+        accessToken={newKeyData.accessToken}
+        webhookSecret={newKeyData.webhookSecret}
         name={newKeyData.name}
       />
 
