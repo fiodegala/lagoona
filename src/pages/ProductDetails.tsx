@@ -3,10 +3,13 @@ import { useParams, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { ArrowLeft, Package, Loader2 } from 'lucide-react';
+import { ArrowLeft, Package, Loader2, ShoppingCart } from 'lucide-react';
 import { productsService, Product } from '@/services/products';
 import { categoriesService, Category } from '@/services/categories';
 import MeasurementTableDisplay from '@/components/MeasurementTableDisplay';
+import StoreLayout from '@/components/store/StoreLayout';
+import { useCart } from '@/contexts/CartContext';
+import { toast } from 'sonner';
 
 const ProductDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -14,6 +17,7 @@ const ProductDetails = () => {
   const [category, setCategory] = useState<Category | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { addItem } = useCart();
 
   useEffect(() => {
     const loadProduct = async () => {
@@ -53,26 +57,48 @@ const ProductDetails = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
+      <StoreLayout>
+        <div className="flex items-center justify-center py-24">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </StoreLayout>
     );
   }
 
   if (error || !product) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
-        <Package className="h-16 w-16 text-muted-foreground" />
-        <h1 className="text-xl font-semibold">{error || 'Produto não encontrado'}</h1>
-        <Button asChild variant="outline">
-          <Link to="/">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Voltar
-          </Link>
-        </Button>
-      </div>
+      <StoreLayout>
+        <div className="container mx-auto px-4 py-24 text-center">
+          <Package className="h-16 w-16 mx-auto text-muted-foreground/30 mb-4" />
+          <h1 className="text-xl font-semibold mb-4">{error || 'Produto não encontrado'}</h1>
+          <Button asChild variant="outline">
+            <Link to="/loja">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Voltar para Loja
+            </Link>
+          </Button>
+        </div>
+      </StoreLayout>
     );
   }
+
+  const handleAddToCart = () => {
+    if (product.stock <= 0) {
+      toast.error('Produto fora de estoque');
+      return;
+    }
+
+    addItem({
+      id: product.id,
+      productId: product.id,
+      name: product.name,
+      price: product.price,
+      imageUrl: product.image_url || undefined,
+      stock: product.stock,
+    });
+
+    toast.success('Produto adicionado ao carrinho');
+  };
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -82,21 +108,29 @@ const ProductDetails = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b">
-        <div className="container mx-auto px-4 py-4">
-          <Button asChild variant="ghost" size="sm">
-            <Link to="/">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Voltar
-            </Link>
-          </Button>
-        </div>
-      </header>
+    <StoreLayout>
+      <div className="container mx-auto px-4 py-8">
+        {/* Breadcrumb */}
+        <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
+          <Link to="/" className="hover:text-foreground transition-colors">
+            Início
+          </Link>
+          <span>/</span>
+          <Link to="/loja" className="hover:text-foreground transition-colors">
+            Loja
+          </Link>
+          {category && (
+            <>
+              <span>/</span>
+              <Link to={`/loja/categoria/${category.slug}`} className="hover:text-foreground transition-colors">
+                {category.name}
+              </Link>
+            </>
+          )}
+          <span>/</span>
+          <span className="text-foreground">{product.name}</span>
+        </nav>
 
-      {/* Product Content */}
-      <main className="container mx-auto px-4 py-8">
         <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
           {/* Product Image */}
           <div className="aspect-square rounded-lg overflow-hidden bg-muted">
@@ -150,6 +184,17 @@ const ProductDetails = () => {
               )}
             </div>
 
+            {/* Add to Cart */}
+            <Button
+              size="lg"
+              className="w-full gap-2"
+              onClick={handleAddToCart}
+              disabled={product.stock <= 0}
+            >
+              <ShoppingCart className="h-5 w-5" />
+              {product.stock > 0 ? 'Adicionar ao Carrinho' : 'Produto Indisponível'}
+            </Button>
+
             {/* Measurement Table */}
             {product.category_id && (
               <div className="pt-4">
@@ -191,8 +236,8 @@ const ProductDetails = () => {
             )}
           </div>
         </div>
-      </main>
-    </div>
+      </div>
+    </StoreLayout>
   );
 };
 

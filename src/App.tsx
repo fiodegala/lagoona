@@ -4,9 +4,10 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
+import { CartProvider } from "./contexts/CartContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 
-// Pages
+// Admin Pages
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Products from "./pages/Products";
@@ -20,95 +21,122 @@ import ApiDocs from "./pages/ApiDocs";
 import NotFound from "./pages/NotFound";
 import ProductDetails from "./pages/ProductDetails";
 
+// Store Pages
+import HomePage from "./pages/store/HomePage";
+import StorePage from "./pages/store/StorePage";
+import CategoryPage from "./pages/store/CategoryPage";
+import CartPage from "./pages/store/CartPage";
+import CheckoutPage from "./pages/store/CheckoutPage";
+
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route
-              path="/"
-              element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/products"
-              element={
-                <ProtectedRoute>
-                  <Products />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/categories"
-              element={
-                <ProtectedRoute>
-                  <Categories />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/orders"
-              element={
-                <ProtectedRoute>
-                  <Orders />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/reports"
-              element={
-                <ProtectedRoute>
-                  <Reports />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/users"
-              element={
-                <ProtectedRoute requiredRole="admin">
-                  <UsersPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/settings"
-              element={
-                <ProtectedRoute>
-                  <Settings />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/settings/api-keys"
-              element={
-                <ProtectedRoute requiredRole="manager">
-                  <ApiKeys />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/settings/api-docs"
-              element={
-                <ProtectedRoute requiredRole="manager">
-                  <ApiDocs />
-                </ProtectedRoute>
-              }
-            />
-            {/* Public Product Details Page */}
-            <Route path="/produto/:id" element={<ProductDetails />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
+      <CartProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              {/* Public Store Routes */}
+              <Route path="/" element={<HomePage />} />
+              <Route path="/loja" element={<StorePage />} />
+              <Route path="/loja/categoria/:slug" element={<CategoryPage />} />
+              <Route path="/carrinho" element={<CartPage />} />
+              <Route path="/checkout" element={<CheckoutPage />} />
+              <Route path="/produto/:id" element={<ProductDetails />} />
+
+              {/* Admin Routes */}
+              <Route path="/login" element={<Login />} />
+              <Route
+                path="/admin"
+                element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/products"
+                element={
+                  <ProtectedRoute>
+                    <Products />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/categories"
+                element={
+                  <ProtectedRoute>
+                    <Categories />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/orders"
+                element={
+                  <ProtectedRoute>
+                    <Orders />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/reports"
+                element={
+                  <ProtectedRoute>
+                    <Reports />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/users"
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <UsersPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/settings"
+                element={
+                  <ProtectedRoute>
+                    <Settings />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/settings/api-keys"
+                element={
+                  <ProtectedRoute requiredRole="manager">
+                    <ApiKeys />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/settings/api-docs"
+                element={
+                  <ProtectedRoute requiredRole="manager">
+                    <ApiDocs />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Legacy redirects for admin routes */}
+              <Route path="/products" element={<Navigate to="/admin/products" replace />} />
+              <Route path="/categories" element={<Navigate to="/admin/categories" replace />} />
+              <Route path="/orders" element={<Navigate to="/admin/orders" replace />} />
+              <Route path="/reports" element={<Navigate to="/admin/reports" replace />} />
+              <Route path="/users" element={<Navigate to="/admin/users" replace />} />
+              <Route path="/settings" element={<Navigate to="/admin/settings" replace />} />
+              <Route path="/settings/api-keys" element={<Navigate to="/admin/settings/api-keys" replace />} />
+              <Route path="/settings/api-docs" element={<Navigate to="/admin/settings/api-docs" replace />} />
+
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </CartProvider>
     </AuthProvider>
   </QueryClientProvider>
 );
