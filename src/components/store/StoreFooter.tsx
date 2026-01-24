@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom';
 import { Mail, Phone, MapPin, CreditCard, Truck, Shield, Headphones, Facebook, Instagram, Twitter, MessageCircle } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
-import logoLagoona from '@/assets/logo-lagoona.png';
+import logoLagoonaDark from '@/assets/logo-lagoona-dark.png';
+
 const StoreFooter = () => {
   const currentYear = new Date().getFullYear();
 
@@ -60,7 +61,7 @@ const StoreFooter = () => {
           <div className="space-y-4">
             <Link to="/" className="inline-block">
               <img 
-                src={logoLagoona} 
+                src={logoLagoonaDark} 
                 alt="Lagoona Store" 
                 className="h-10"
               />

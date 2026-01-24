@@ -14,6 +14,8 @@ import {
 import { useCart } from '@/contexts/CartContext';
 import { Category } from '@/services/categories';
 import logoLagoona from '@/assets/logo-lagoona.png';
+import logoLagoonaDark from '@/assets/logo-lagoona-dark.png';
+
 interface StoreHeaderProps {
   categories: Category[];
 }
@@ -110,7 +112,7 @@ const StoreHeader = ({ categories }: StoreHeaderProps) => {
             {/* Logo */}
             <Link to="/" className="flex items-center shrink-0">
               <img 
-                src={logoLagoona} 
+                src={logoLagoonaDark} 
                 alt="Lagoona Store" 
                 className="h-8 sm:h-10"
               />
