@@ -105,17 +105,17 @@ const StoreFooter = () => {
           <div className="space-y-4">
             <h4 className="font-display font-semibold text-store-accent">Ajuda</h4>
             <nav className="flex flex-col gap-2 text-sm">
-              <Link to="/como-comprar" className="text-muted-foreground hover:text-store-primary transition-colors">
-                Como Comprar
+              <Link to="/faq" className="text-muted-foreground hover:text-store-primary transition-colors">
+                Perguntas Frequentes
               </Link>
-              <Link to="/formas-pagamento" className="text-muted-foreground hover:text-store-primary transition-colors">
-                Formas de Pagamento
+              <Link to="/contato" className="text-muted-foreground hover:text-store-primary transition-colors">
+                Fale Conosco
               </Link>
-              <Link to="/trocas-devolucoes" className="text-muted-foreground hover:text-store-primary transition-colors">
-                Trocas e Devoluções
-              </Link>
-              <Link to="/politica-privacidade" className="text-muted-foreground hover:text-store-primary transition-colors">
+              <Link to="/privacidade" className="text-muted-foreground hover:text-store-primary transition-colors">
                 Política de Privacidade
+              </Link>
+              <Link to="/termos" className="text-muted-foreground hover:text-store-primary transition-colors">
+                Termos de Uso
               </Link>
             </nav>
           </div>
