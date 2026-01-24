@@ -34,6 +34,7 @@ import ContactPage from "./pages/store/ContactPage";
 import FaqPage from "./pages/store/FaqPage";
 import PrivacyPolicyPage from "./pages/store/PrivacyPolicyPage";
 import TermsPage from "./pages/store/TermsPage";
+import ExchangesReturnsPage from "./pages/store/ExchangesReturnsPage";
 
 const queryClient = new QueryClient();
 
@@ -58,6 +59,7 @@ const App = () => (
               <Route path="/faq" element={<FaqPage />} />
               <Route path="/privacidade" element={<PrivacyPolicyPage />} />
               <Route path="/termos" element={<TermsPage />} />
+              <Route path="/trocas-devolucoes" element={<ExchangesReturnsPage />} />
 
               {/* Admin Routes */}
               <Route path="/login" element={<Login />} />
