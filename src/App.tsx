@@ -31,6 +31,7 @@ import CartPage from "./pages/store/CartPage";
 import CheckoutPage from "./pages/store/CheckoutPage";
 import AboutPage from "./pages/store/AboutPage";
 import ContactPage from "./pages/store/ContactPage";
+import FaqPage from "./pages/store/FaqPage";
 
 const queryClient = new QueryClient();
 
@@ -52,6 +53,7 @@ const App = () => (
               <Route path="/produto/:id" element={<ProductDetails />} />
               <Route path="/sobre" element={<AboutPage />} />
               <Route path="/contato" element={<ContactPage />} />
+              <Route path="/faq" element={<FaqPage />} />
 
               {/* Admin Routes */}
               <Route path="/login" element={<Login />} />
