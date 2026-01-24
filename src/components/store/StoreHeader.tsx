@@ -169,7 +169,7 @@ const StoreHeader = ({ categories }: StoreHeaderProps) => {
       {/* Categories Navigation - Desktop */}
       <nav className="hidden lg:block bg-card border-b">
         <div className="container mx-auto px-4">
-          <div className="flex items-center gap-1 h-12 overflow-x-auto">
+          <div className="flex items-center justify-center gap-1 h-12">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="gap-2 font-semibold text-store-accent hover:text-store-primary">
@@ -192,32 +192,41 @@ const StoreHeader = ({ categories }: StoreHeaderProps) => {
             <div className="h-6 w-px bg-border mx-2" />
 
             <Link
-              to="/loja"
-              className="px-4 py-2 text-sm font-medium rounded-md hover:bg-store-secondary hover:text-store-accent transition-colors whitespace-nowrap"
+              to="/loja?ofertas=true"
+              className="px-4 py-2 text-sm font-medium rounded-md hover:bg-store-secondary hover:text-store-accent transition-colors"
             >
-              Ofertas do Dia
+              Ofertas
             </Link>
             <Link
               to="/loja?ordenar=recentes"
-              className="px-4 py-2 text-sm rounded-md hover:bg-store-secondary hover:text-store-accent transition-colors whitespace-nowrap"
+              className="px-4 py-2 text-sm font-medium rounded-md hover:bg-store-secondary hover:text-store-accent transition-colors"
             >
-              Novidades
+              Lançamentos
             </Link>
             <Link
-              to="/loja?ordenar=preco-menor"
-              className="px-4 py-2 text-sm rounded-md hover:bg-store-secondary hover:text-store-accent transition-colors whitespace-nowrap"
+              to="/loja?ordenar=vendidos"
+              className="px-4 py-2 text-sm font-medium rounded-md hover:bg-store-secondary hover:text-store-accent transition-colors"
             >
               Mais Vendidos
             </Link>
-            {activeCategories.slice(0, 5).map((category) => (
-              <Link
-                key={category.id}
-                to={`/loja/categoria/${category.slug}`}
-                className="px-4 py-2 text-sm rounded-md hover:bg-store-secondary hover:text-store-accent transition-colors whitespace-nowrap"
-              >
-                {category.name}
-              </Link>
-            ))}
+            <Link
+              to="/loja"
+              className="px-4 py-2 text-sm font-medium rounded-md hover:bg-store-secondary hover:text-store-accent transition-colors"
+            >
+              Loja
+            </Link>
+            <Link
+              to="/sobre"
+              className="px-4 py-2 text-sm font-medium rounded-md hover:bg-store-secondary hover:text-store-accent transition-colors"
+            >
+              Sobre
+            </Link>
+            <Link
+              to="/contato"
+              className="px-4 py-2 text-sm font-medium rounded-md hover:bg-store-secondary hover:text-store-accent transition-colors"
+            >
+              Contato
+            </Link>
           </div>
         </div>
       </nav>
