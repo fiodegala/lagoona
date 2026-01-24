@@ -1,6 +1,7 @@
 import { ReactNode, useEffect, useState } from 'react';
 import StoreHeader from './StoreHeader';
 import StoreFooter from './StoreFooter';
+import WhatsAppButton from './WhatsAppButton';
 import { categoriesService, Category } from '@/services/categories';
 
 interface StoreLayoutProps {
@@ -29,6 +30,7 @@ const StoreLayout = ({ children }: StoreLayoutProps) => {
         {children}
       </main>
       <StoreFooter />
+      <WhatsAppButton />
     </div>
   );
 };
