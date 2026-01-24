@@ -23,7 +23,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Plus, Trash2, X, Loader2, Wand2 } from 'lucide-react';
+import { Plus, Trash2, X, Loader2, Wand2, PlusCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   variationsService,
@@ -31,6 +31,7 @@ import {
   ProductVariation,
 } from '@/services/variations';
 import VariationRow from './VariationRow';
+import ManualVariationModal from './ManualVariationModal';
 
 interface ProductVariationsEditorProps {
   productId: string;
@@ -50,6 +51,9 @@ const ProductVariationsEditor = ({ productId, basePrice }: ProductVariationsEdit
   // New value for existing attribute
   const [addingValueTo, setAddingValueTo] = useState<string | null>(null);
   const [newValueInput, setNewValueInput] = useState('');
+
+  // Manual variation modal
+  const [isManualModalOpen, setIsManualModalOpen] = useState(false);
 
   const loadData = async () => {
     try {
@@ -186,6 +190,49 @@ const ProductVariationsEditor = ({ productId, basePrice }: ProductVariationsEdit
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleManualVariation = async (data: {
+    attributeValueIds: string[];
+    sku?: string;
+    price?: number;
+    stock?: number;
+  }) => {
+    // Check if variation already exists
+    const existingValueIds = variations.map((v) =>
+      (v.attribute_values || [])
+        .map((av) => {
+          // Find the attribute value ID from our attributes
+          for (const attr of attributes) {
+            const found = attr.values?.find((val) => val.value === av.value);
+            if (found) return found.id;
+          }
+          return '';
+        })
+        .filter(Boolean)
+        .sort()
+    );
+
+    const newValueIds = [...data.attributeValueIds].sort();
+    const alreadyExists = existingValueIds.some(
+      (existing) => JSON.stringify(existing) === JSON.stringify(newValueIds)
+    );
+
+    if (alreadyExists) {
+      toast.error('Esta combinação já existe');
+      throw new Error('Combination already exists');
+    }
+
+    await variationsService.createVariation({
+      product_id: productId,
+      sku: data.sku,
+      price: data.price ?? basePrice,
+      stock: data.stock ?? 0,
+      attribute_value_ids: data.attributeValueIds,
+    });
+
+    toast.success('Variação adicionada!');
+    await loadData();
   };
 
   const handleUpdateVariation = async (
@@ -348,20 +395,31 @@ const ProductVariationsEditor = ({ productId, basePrice }: ProductVariationsEdit
           <div className="flex items-center justify-between">
             <CardTitle className="text-base">Variações ({variations.length})</CardTitle>
             {attributes.length > 0 && (
-              <Button
-                size="sm"
-                variant="outline"
-                className="gap-2"
-                onClick={handleGenerateVariations}
-                disabled={isSaving}
-              >
-                {isSaving ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Wand2 className="h-4 w-4" />
-                )}
-                Gerar Combinações
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-2"
+                  onClick={() => setIsManualModalOpen(true)}
+                >
+                  <PlusCircle className="h-4 w-4" />
+                  Adicionar Manual
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-2"
+                  onClick={handleGenerateVariations}
+                  disabled={isSaving}
+                >
+                  {isSaving ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Wand2 className="h-4 w-4" />
+                  )}
+                  Gerar Combinações
+                </Button>
+              </div>
             )}
           </div>
         </CardHeader>
@@ -398,6 +456,15 @@ const ProductVariationsEditor = ({ productId, basePrice }: ProductVariationsEdit
           )}
         </CardContent>
       </Card>
+
+      {/* Manual Variation Modal */}
+      <ManualVariationModal
+        open={isManualModalOpen}
+        onClose={() => setIsManualModalOpen(false)}
+        onConfirm={handleManualVariation}
+        attributes={attributes}
+        basePrice={basePrice}
+      />
     </div>
   );
 };
