@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Loader2, Search, SlidersHorizontal, X, Package } from 'lucide-react';
+import { Loader2, Search, SlidersHorizontal, X, Package, Grid3X3, LayoutList } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -8,6 +8,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/co
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { Slider } from '@/components/ui/slider';
 import StoreLayout from '@/components/store/StoreLayout';
 import ProductCard from '@/components/store/ProductCard';
 import { productsService, Product } from '@/services/products';
@@ -21,6 +22,7 @@ const StorePage = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   // Filter states
   const [searchQuery, setSearchQuery] = useState(searchParams.get('busca') || '');
@@ -29,6 +31,7 @@ const StorePage = () => {
   );
   const [sortBy, setSortBy] = useState(searchParams.get('ordenar') || 'recentes');
   const [showInStock, setShowInStock] = useState(searchParams.get('estoque') === 'true');
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
   const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
@@ -85,6 +88,9 @@ const StorePage = () => {
       result = result.filter(p => p.stock > 0);
     }
 
+    // Price filter
+    result = result.filter(p => p.price >= priceRange[0] && p.price <= priceRange[1]);
+
     // Sorting
     switch (sortBy) {
       case 'preco-menor':
@@ -105,7 +111,7 @@ const StorePage = () => {
     }
 
     return result;
-  }, [products, searchQuery, selectedCategories, sortBy, showInStock]);
+  }, [products, searchQuery, selectedCategories, sortBy, showInStock, priceRange]);
 
   // Pagination
   const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
@@ -127,6 +133,7 @@ const StorePage = () => {
     setSelectedCategories([]);
     setSortBy('recentes');
     setShowInStock(false);
+    setPriceRange([0, 10000]);
   };
 
   const activeFiltersCount = 
@@ -135,12 +142,35 @@ const StorePage = () => {
     (sortBy !== 'recentes' ? 1 : 0) + 
     (showInStock ? 1 : 0);
 
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    }).format(price);
+  };
+
   const FiltersContent = () => (
     <div className="space-y-6">
+      {/* Price Range */}
+      <div className="space-y-4">
+        <h4 className="font-semibold">Faixa de Preço</h4>
+        <Slider
+          value={priceRange}
+          onValueChange={(value) => setPriceRange(value as [number, number])}
+          max={10000}
+          step={50}
+          className="w-full"
+        />
+        <div className="flex items-center justify-between text-sm text-muted-foreground">
+          <span>{formatPrice(priceRange[0])}</span>
+          <span>{formatPrice(priceRange[1])}</span>
+        </div>
+      </div>
+
       {/* Categories */}
       <div className="space-y-3">
-        <h4 className="font-medium">Categorias</h4>
-        <div className="space-y-2">
+        <h4 className="font-semibold">Categorias</h4>
+        <div className="space-y-2 max-h-48 overflow-y-auto">
           {categories.map((category) => (
             <div key={category.id} className="flex items-center gap-2">
               <Checkbox
@@ -148,7 +178,7 @@ const StorePage = () => {
                 checked={selectedCategories.includes(category.id)}
                 onCheckedChange={() => toggleCategory(category.id)}
               />
-              <Label htmlFor={`cat-${category.id}`} className="cursor-pointer">
+              <Label htmlFor={`cat-${category.id}`} className="cursor-pointer text-sm">
                 {category.name}
               </Label>
             </div>
@@ -158,14 +188,14 @@ const StorePage = () => {
 
       {/* Stock filter */}
       <div className="space-y-3">
-        <h4 className="font-medium">Disponibilidade</h4>
+        <h4 className="font-semibold">Disponibilidade</h4>
         <div className="flex items-center gap-2">
           <Checkbox
             id="in-stock"
             checked={showInStock}
             onCheckedChange={(checked) => setShowInStock(checked as boolean)}
           />
-          <Label htmlFor="in-stock" className="cursor-pointer">
+          <Label htmlFor="in-stock" className="cursor-pointer text-sm">
             Apenas em estoque
           </Label>
         </div>
@@ -174,7 +204,7 @@ const StorePage = () => {
       {/* Clear filters */}
       {activeFiltersCount > 0 && (
         <Button variant="outline" onClick={clearFilters} className="w-full">
-          Limpar Filtros
+          Limpar Filtros ({activeFiltersCount})
         </Button>
       )}
     </div>
@@ -182,23 +212,23 @@ const StorePage = () => {
 
   return (
     <StoreLayout>
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-6">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold">Produtos</h1>
+        <div className="mb-6">
+          <h1 className="text-2xl md:text-3xl font-bold">Todos os Produtos</h1>
           <p className="text-muted-foreground mt-1">
             {filteredProducts.length} produto{filteredProducts.length !== 1 ? 's' : ''} encontrado{filteredProducts.length !== 1 ? 's' : ''}
           </p>
         </div>
 
         {/* Filters bar */}
-        <div className="flex flex-col sm:flex-row gap-4 mb-6">
+        <div className="flex flex-col sm:flex-row gap-3 mb-4 p-4 bg-card rounded-xl border">
           {/* Search */}
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               type="search"
-              placeholder="Buscar produtos..."
+              placeholder="Buscar nesta lista..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
@@ -207,7 +237,7 @@ const StorePage = () => {
 
           {/* Sort */}
           <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="w-full sm:w-48">
+            <SelectTrigger className="w-full sm:w-52">
               <SelectValue placeholder="Ordenar por" />
             </SelectTrigger>
             <SelectContent>
@@ -219,6 +249,26 @@ const StorePage = () => {
             </SelectContent>
           </Select>
 
+          {/* View mode toggle */}
+          <div className="hidden md:flex border rounded-lg overflow-hidden">
+            <Button
+              variant={viewMode === 'grid' ? 'default' : 'ghost'}
+              size="icon"
+              onClick={() => setViewMode('grid')}
+              className="rounded-none"
+            >
+              <Grid3X3 className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={viewMode === 'list' ? 'default' : 'ghost'}
+              size="icon"
+              onClick={() => setViewMode('list')}
+              className="rounded-none"
+            >
+              <LayoutList className="h-4 w-4" />
+            </Button>
+          </div>
+
           {/* Mobile filters button */}
           <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
             <SheetTrigger asChild className="lg:hidden">
@@ -226,7 +276,7 @@ const StorePage = () => {
                 <SlidersHorizontal className="h-4 w-4" />
                 Filtros
                 {activeFiltersCount > 0 && (
-                  <Badge className="ml-1">{activeFiltersCount}</Badge>
+                  <Badge variant="secondary" className="ml-1">{activeFiltersCount}</Badge>
                 )}
               </Button>
             </SheetTrigger>
@@ -243,24 +293,24 @@ const StorePage = () => {
 
         {/* Active filters badges */}
         {(selectedCategories.length > 0 || showInStock) && (
-          <div className="flex flex-wrap gap-2 mb-6">
+          <div className="flex flex-wrap gap-2 mb-4">
             {selectedCategories.map(catId => {
               const cat = categories.find(c => c.id === catId);
               return cat ? (
-                <Badge key={catId} variant="secondary" className="gap-1">
+                <Badge key={catId} variant="secondary" className="gap-1 pl-3">
                   {cat.name}
                   <X
-                    className="h-3 w-3 cursor-pointer"
+                    className="h-3 w-3 cursor-pointer ml-1"
                     onClick={() => toggleCategory(catId)}
                   />
                 </Badge>
               ) : null;
             })}
             {showInStock && (
-              <Badge variant="secondary" className="gap-1">
+              <Badge variant="secondary" className="gap-1 pl-3">
                 Em estoque
                 <X
-                  className="h-3 w-3 cursor-pointer"
+                  className="h-3 w-3 cursor-pointer ml-1"
                   onClick={() => setShowInStock(false)}
                 />
               </Badge>
@@ -268,11 +318,11 @@ const StorePage = () => {
           </div>
         )}
 
-        <div className="flex gap-8">
+        <div className="flex gap-6">
           {/* Desktop sidebar filters */}
           <aside className="hidden lg:block w-64 shrink-0">
-            <div className="sticky top-24">
-              <h3 className="font-semibold mb-4">Filtros</h3>
+            <div className="sticky top-36 bg-card rounded-xl border p-5">
+              <h3 className="font-semibold text-lg mb-4">Filtrar por</h3>
               <FiltersContent />
             </div>
           </aside>
@@ -285,7 +335,11 @@ const StorePage = () => {
               </div>
             ) : paginatedProducts.length > 0 ? (
               <>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+                <div className={
+                  viewMode === 'grid' 
+                    ? "grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4"
+                    : "flex flex-col gap-4"
+                }>
                   {paginatedProducts.map((product) => (
                     <ProductCard key={product.id} product={product} />
                   ))}
@@ -301,9 +355,30 @@ const StorePage = () => {
                     >
                       Anterior
                     </Button>
-                    <span className="text-sm text-muted-foreground px-4">
-                      Página {currentPage} de {totalPages}
-                    </span>
+                    <div className="flex gap-1">
+                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                        let page: number;
+                        if (totalPages <= 5) {
+                          page = i + 1;
+                        } else if (currentPage <= 3) {
+                          page = i + 1;
+                        } else if (currentPage >= totalPages - 2) {
+                          page = totalPages - 4 + i;
+                        } else {
+                          page = currentPage - 2 + i;
+                        }
+                        return (
+                          <Button
+                            key={page}
+                            variant={currentPage === page ? 'default' : 'outline'}
+                            size="icon"
+                            onClick={() => setCurrentPage(page)}
+                          >
+                            {page}
+                          </Button>
+                        );
+                      })}
+                    </div>
                     <Button
                       variant="outline"
                       disabled={currentPage === totalPages}
@@ -315,9 +390,9 @@ const StorePage = () => {
                 )}
               </>
             ) : (
-              <div className="text-center py-24">
+              <div className="text-center py-24 bg-card rounded-xl border">
                 <Package className="h-16 w-16 mx-auto text-muted-foreground/30 mb-4" />
-                <h3 className="font-medium text-lg mb-2">Nenhum produto encontrado</h3>
+                <h3 className="font-semibold text-lg mb-2">Nenhum produto encontrado</h3>
                 <p className="text-muted-foreground mb-4">
                   Tente ajustar os filtros ou buscar por outro termo.
                 </p>
