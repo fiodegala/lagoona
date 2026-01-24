@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Mail, Phone, MapPin, CreditCard, Truck, Shield, Headphones, Facebook, Instagram, Twitter, MessageCircle } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
-
+import logoLagoona from '@/assets/logo-lagoona.png';
 const StoreFooter = () => {
   const currentYear = new Date().getFullYear();
 
@@ -58,11 +58,12 @@ const StoreFooter = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="space-y-4">
-            <Link to="/" className="flex items-center gap-2">
-              <div className="w-10 h-10 rounded-xl bg-store-primary flex items-center justify-center">
-                <span className="text-store-accent font-display font-bold text-xl">L</span>
-              </div>
-              <span className="font-display font-bold text-2xl text-store-accent">Lagoona</span>
+            <Link to="/" className="inline-block">
+              <img 
+                src={logoLagoona} 
+                alt="Lagoona Store" 
+                className="h-10"
+              />
             </Link>
             <p className="text-sm text-muted-foreground">
               Sua loja online com os melhores produtos, preços imbatíveis e entrega para todo Brasil.
