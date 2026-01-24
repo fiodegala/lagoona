@@ -15,10 +15,10 @@ import {
   BarChart3,
   Menu,
   X,
-  Shield,
   Star,
   Tag,
 } from 'lucide-react';
+import logoLagoona from '@/assets/logo-lagoona-white.png';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
@@ -107,10 +107,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
       <div className="flex items-center justify-between h-16 px-4 border-b border-sidebar-border">
         {!collapsed && (
           <div className="flex items-center gap-2">
-            <div className="gradient-primary p-1.5 rounded-lg">
-              <Shield className="h-5 w-5 text-sidebar-primary-foreground" />
-            </div>
-            <span className="font-bold text-sidebar-foreground">Admin</span>
+            <img src={logoLagoona} alt="Lagoona" className="h-8 w-auto" />
           </div>
         )}
         {!isMobile && (
@@ -195,10 +192,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
       {/* Mobile header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 h-14 bg-card border-b z-40 flex items-center justify-between px-4">
         <div className="flex items-center gap-2">
-          <div className="gradient-primary p-1.5 rounded-lg">
-            <Shield className="h-4 w-4 text-primary-foreground" />
-          </div>
-          <span className="font-bold">Admin</span>
+          <img src={logoLagoona} alt="Lagoona" className="h-6 w-auto" />
         </div>
         <Button variant="ghost" size="icon" onClick={() => setMobileOpen(!mobileOpen)}>
           {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
