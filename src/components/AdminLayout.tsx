@@ -19,6 +19,7 @@ import {
   Tag,
   Monitor,
   Target,
+  UserPlus,
 } from 'lucide-react';
 import logoLagoona from '@/assets/logo-lagoona-white.png';
 import { Button } from '@/components/ui/button';
@@ -43,6 +44,7 @@ const navItems = [
   { icon: Monitor, label: 'PDV', path: '/admin/pos' },
   { icon: Package, label: 'Produtos', path: '/admin/products' },
   { icon: FolderTree, label: 'Categorias', path: '/admin/categories' },
+  { icon: UserPlus, label: 'Clientes', path: '/admin/customers' },
   { icon: ShoppingCart, label: 'Pedidos', path: '/admin/orders' },
   { icon: Star, label: 'Avaliações', path: '/admin/reviews' },
   { icon: Tag, label: 'Cupons', path: '/admin/coupons' },
