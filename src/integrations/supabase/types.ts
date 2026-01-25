@@ -702,6 +702,7 @@ export type Database = {
       }
       product_variations: {
         Row: {
+          barcode: string | null
           created_at: string
           id: string
           image_url: string | null
@@ -714,6 +715,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          barcode?: string | null
           created_at?: string
           id?: string
           image_url?: string | null
@@ -726,6 +728,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          barcode?: string | null
           created_at?: string
           id?: string
           image_url?: string | null

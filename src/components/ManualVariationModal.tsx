@@ -25,6 +25,7 @@ interface ManualVariationModalProps {
   onConfirm: (data: {
     attributeValueIds: string[];
     sku?: string;
+    barcode?: string;
     price?: number;
     stock?: number;
   }) => Promise<void>;
@@ -41,6 +42,7 @@ const ManualVariationModal = ({
 }: ManualVariationModalProps) => {
   const [selectedValues, setSelectedValues] = useState<Record<string, string>>({});
   const [sku, setSku] = useState('');
+  const [barcode, setBarcode] = useState('');
   const [price, setPrice] = useState(basePrice.toString());
   const [stock, setStock] = useState('0');
   const [isSaving, setIsSaving] = useState(false);
@@ -50,6 +52,7 @@ const ManualVariationModal = ({
       // Reset form when opening
       setSelectedValues({});
       setSku('');
+      setBarcode('');
       setPrice(basePrice.toString());
       setStock('0');
     }
@@ -67,6 +70,7 @@ const ManualVariationModal = ({
       await onConfirm({
         attributeValueIds,
         sku: sku || undefined,
+        barcode: barcode || undefined,
         price: parseFloat(price) || undefined,
         stock: parseInt(stock) || 0,
       });
@@ -112,13 +116,23 @@ const ManualVariationModal = ({
 
           {/* Optional fields */}
           <div className="border-t pt-4 space-y-3">
-            <div className="space-y-2">
-              <Label>SKU (opcional)</Label>
-              <Input
-                value={sku}
-                onChange={(e) => setSku(e.target.value)}
-                placeholder="Ex: CAM-AZL-P"
-              />
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>SKU (opcional)</Label>
+                <Input
+                  value={sku}
+                  onChange={(e) => setSku(e.target.value)}
+                  placeholder="Ex: CAM-AZL-P"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Código de Barras</Label>
+                <Input
+                  value={barcode}
+                  onChange={(e) => setBarcode(e.target.value)}
+                  placeholder="Ex: 7891234567890"
+                />
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">

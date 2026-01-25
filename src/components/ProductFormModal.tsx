@@ -51,6 +51,7 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
   const [isActive, setIsActive] = useState(true);
   const [productType, setProductType] = useState<'simple' | 'variable'>('simple');
   const [hasVariations, setHasVariations] = useState(false);
+  const [barcode, setBarcode] = useState('');
   
   // Shipping fields
   const [weightKg, setWeightKg] = useState('');
@@ -78,6 +79,7 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
         const metadata = product.metadata as { gallery_images?: string[] } | null;
         setGalleryImages(metadata?.gallery_images || []);
         setIsActive(product.is_active);
+        setBarcode((product as { barcode?: string }).barcode || '');
         setWeightKg(product.weight_kg?.toString() || '');
         setWidthCm(product.width_cm?.toString() || '');
         setHeightCm(product.height_cm?.toString() || '');
@@ -125,6 +127,7 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
     setActiveTab('details');
     setProductType('simple');
     setHasVariations(false);
+    setBarcode('');
     setWeightKg('');
     setWidthCm('');
     setHeightCm('');
@@ -158,6 +161,7 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
           category_id: categoryId === 'none' ? undefined : categoryId,
           image_url: imageUrl.trim() || undefined,
           is_active: isActive,
+          barcode: barcode.trim() || undefined,
           weight_kg: weightKg ? parseFloat(weightKg) : undefined,
           width_cm: widthCm ? parseFloat(widthCm) : undefined,
           height_cm: heightCm ? parseFloat(heightCm) : undefined,
@@ -205,6 +209,7 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
         category_id: categoryId === 'none' ? undefined : categoryId,
         image_url: imageUrl.trim() || undefined,
         is_active: isActive,
+        barcode: barcode.trim() || undefined,
         weight_kg: weightKg ? parseFloat(weightKg) : undefined,
         width_cm: widthCm ? parseFloat(widthCm) : undefined,
         height_cm: heightCm ? parseFloat(heightCm) : undefined,
@@ -349,6 +354,22 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
           )}
         </div>
       </div>
+
+      {/* Barcode field - only for simple products */}
+      {productType === 'simple' && (
+        <div className="space-y-2">
+          <Label htmlFor="barcode">Código de Barras</Label>
+          <Input
+            id="barcode"
+            placeholder="Ex: 7891234567890"
+            value={barcode}
+            onChange={(e) => setBarcode(e.target.value)}
+          />
+          <p className="text-xs text-muted-foreground">
+            EAN-13, EAN-8 ou código interno
+          </p>
+        </div>
+      )}
 
       <div className="space-y-2">
         <Label htmlFor="category">Categoria</Label>
