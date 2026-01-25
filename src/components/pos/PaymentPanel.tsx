@@ -3,6 +3,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   Banknote,
   CreditCard,
@@ -17,7 +25,7 @@ interface PaymentPanelProps {
   onPayment: (
     method: 'cash' | 'card' | 'pix' | 'mixed',
     amountReceived?: number,
-    paymentDetails?: Record<string, number>
+    paymentDetails?: Record<string, unknown>
   ) => void;
   isProcessing: boolean;
   disabled?: boolean;
@@ -31,6 +39,8 @@ const PaymentPanel = ({
 }: PaymentPanelProps) => {
   const [selectedMethod, setSelectedMethod] = useState<'cash' | 'card' | 'pix' | 'mixed' | null>(null);
   const [cashReceived, setCashReceived] = useState('');
+  const [cardType, setCardType] = useState<'credit' | 'debit'>('credit');
+  const [installments, setInstallments] = useState('1');
   const [mixedAmounts, setMixedAmounts] = useState({
     cash: '',
     card: '',
@@ -59,11 +69,19 @@ const PaymentPanel = ({
 
   const mixedRemaining = total - mixedTotal;
 
+  const installmentValue = total / parseInt(installments);
+
   const handlePayment = () => {
     if (!selectedMethod) return;
 
     if (selectedMethod === 'cash') {
       onPayment('cash', parseCurrency(cashReceived));
+    } else if (selectedMethod === 'card') {
+      onPayment('card', undefined, {
+        cardType,
+        installments: cardType === 'credit' ? parseInt(installments) : 1,
+        installmentValue: cardType === 'credit' ? installmentValue : total,
+      });
     } else if (selectedMethod === 'mixed') {
       onPayment('mixed', undefined, {
         cash: parseCurrency(mixedAmounts.cash),
@@ -94,6 +112,15 @@ const PaymentPanel = ({
     Math.ceil(total / 100) * 100,
   ].filter((v, i, arr) => arr.indexOf(v) === i);
 
+  // Reset card options when switching methods
+  const handleMethodChange = (method: 'cash' | 'card' | 'pix' | 'mixed') => {
+    setSelectedMethod(method);
+    if (method !== 'card') {
+      setCardType('credit');
+      setInstallments('1');
+    }
+  };
+
   return (
     <div className="p-4 space-y-4">
       <div>
@@ -102,7 +129,7 @@ const PaymentPanel = ({
           <Button
             variant={selectedMethod === 'cash' ? 'default' : 'outline'}
             className="h-16 flex-col gap-1"
-            onClick={() => setSelectedMethod('cash')}
+            onClick={() => handleMethodChange('cash')}
             disabled={disabled}
           >
             <Banknote className="h-6 w-6" />
@@ -111,7 +138,7 @@ const PaymentPanel = ({
           <Button
             variant={selectedMethod === 'card' ? 'default' : 'outline'}
             className="h-16 flex-col gap-1"
-            onClick={() => setSelectedMethod('card')}
+            onClick={() => handleMethodChange('card')}
             disabled={disabled}
           >
             <CreditCard className="h-6 w-6" />
@@ -120,7 +147,7 @@ const PaymentPanel = ({
           <Button
             variant={selectedMethod === 'pix' ? 'default' : 'outline'}
             className="h-16 flex-col gap-1"
-            onClick={() => setSelectedMethod('pix')}
+            onClick={() => handleMethodChange('pix')}
             disabled={disabled}
           >
             <QrCode className="h-6 w-6" />
@@ -129,7 +156,7 @@ const PaymentPanel = ({
           <Button
             variant={selectedMethod === 'mixed' ? 'default' : 'outline'}
             className="h-16 flex-col gap-1"
-            onClick={() => setSelectedMethod('mixed')}
+            onClick={() => handleMethodChange('mixed')}
             disabled={disabled}
           >
             <Split className="h-6 w-6" />
@@ -170,6 +197,89 @@ const PaymentPanel = ({
               <div className="text-sm text-muted-foreground">Troco</div>
               <div className="text-2xl font-bold text-primary">
                 {formatCurrency(cashChange)}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Card payment details */}
+      {selectedMethod === 'card' && (
+        <div className="space-y-4">
+          <Separator />
+          
+          {/* Credit/Debit selection */}
+          <div className="space-y-2">
+            <Label>Tipo de Cartão</Label>
+            <RadioGroup
+              value={cardType}
+              onValueChange={(value) => {
+                setCardType(value as 'credit' | 'debit');
+                if (value === 'debit') {
+                  setInstallments('1');
+                }
+              }}
+              className="flex gap-4"
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="credit" id="credit" />
+                <Label htmlFor="credit" className="cursor-pointer font-normal">
+                  Crédito
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="debit" id="debit" />
+                <Label htmlFor="debit" className="cursor-pointer font-normal">
+                  Débito
+                </Label>
+              </div>
+            </RadioGroup>
+          </div>
+
+          {/* Installments (credit only) */}
+          {cardType === 'credit' && (
+            <div className="space-y-2">
+              <Label>Parcelas</Label>
+              <Select value={installments} onValueChange={setInstallments}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Selecione as parcelas" />
+                </SelectTrigger>
+                <SelectContent className="bg-popover">
+                  {Array.from({ length: 10 }, (_, i) => i + 1).map((num) => {
+                    const value = total / num;
+                    return (
+                      <SelectItem key={num} value={num.toString()}>
+                        {num}x de {formatCurrency(value)}
+                        {num === 1 && ' (à vista)'}
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+              
+              {/* Installment summary */}
+              <div className="bg-primary/10 rounded-lg p-3 text-center mt-3">
+                <div className="text-sm text-muted-foreground">
+                  {parseInt(installments) === 1 ? 'Pagamento à vista' : `${installments}x de`}
+                </div>
+                <div className="text-2xl font-bold text-primary">
+                  {formatCurrency(installmentValue)}
+                </div>
+                {parseInt(installments) > 1 && (
+                  <div className="text-xs text-muted-foreground mt-1">
+                    Total: {formatCurrency(total)}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Debit summary */}
+          {cardType === 'debit' && (
+            <div className="bg-primary/10 rounded-lg p-3 text-center">
+              <div className="text-sm text-muted-foreground">Débito à vista</div>
+              <div className="text-2xl font-bold text-primary">
+                {formatCurrency(total)}
               </div>
             </div>
           )}
