@@ -1,10 +1,11 @@
 import AdminLayout from '@/components/AdminLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Settings as SettingsIcon, User, Bell, Shield } from 'lucide-react';
+import { User, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
+import SalesGoalsSettings from '@/components/settings/SalesGoalsSettings';
 
 const Settings = () => {
   const { profile } = useAuth();
@@ -16,6 +17,8 @@ const Settings = () => {
           <h1 className="text-2xl font-bold text-foreground">Configurações</h1>
           <p className="text-muted-foreground mt-1">Gerencie suas preferências e conta</p>
         </div>
+
+        <SalesGoalsSettings />
 
         <div className="grid gap-6 lg:grid-cols-2">
           <Card className="card-elevated">
