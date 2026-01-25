@@ -7,11 +7,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Progress } from '@/components/ui/progress';
 import { 
   Package, ShoppingCart, Key, TrendingUp, Users, DollarSign, 
   Star, Tag, ArrowUpRight, ArrowDownRight, Clock, CheckCircle,
   XCircle, AlertCircle, Store, CreditCard, Banknote, QrCode, Percent,
-  Calendar, CalendarRange
+  Calendar, CalendarRange, Target, TrendingDown
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Link } from 'react-router-dom';
@@ -92,6 +93,13 @@ interface RawPOSSale {
   created_at: string;
 }
 
+interface SalesGoal {
+  id: string;
+  type: 'daily' | 'monthly';
+  target_amount: number;
+  is_active: boolean;
+}
+
 const Dashboard = () => {
   const { profile, roles } = useAuth();
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('all');
@@ -102,6 +110,7 @@ const Dashboard = () => {
   const [reviews, setReviews] = useState<{ id: string; is_approved: boolean }[]>([]);
   const [coupons, setCoupons] = useState<{ id: string; is_active: boolean }[]>([]);
   const [categories, setCategories] = useState<{ id: string; is_active: boolean }[]>([]);
+  const [salesGoals, setSalesGoals] = useState<SalesGoal[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -119,7 +128,8 @@ const Dashboard = () => {
         reviewsRes,
         couponsRes,
         categoriesRes,
-        posSalesRes
+        posSalesRes,
+        goalsRes
       ] = await Promise.all([
         supabase.from('products').select('id, is_active'),
         supabase.from('orders').select('id, status, total, customer_name, customer_email, created_at'),
@@ -127,6 +137,7 @@ const Dashboard = () => {
         supabase.from('coupons').select('id, is_active'),
         supabase.from('categories').select('id, is_active'),
         supabase.from('pos_sales').select('*').order('created_at', { ascending: false }),
+        supabase.from('sales_goals').select('*').eq('is_active', true),
       ]);
 
       setProducts(productsRes.data || []);
@@ -134,6 +145,7 @@ const Dashboard = () => {
       setReviews(reviewsRes.data || []);
       setCoupons(couponsRes.data || []);
       setCategories(categoriesRes.data || []);
+      setSalesGoals((goalsRes.data || []) as SalesGoal[]);
       setRawPOSSales((posSalesRes.data || []).map(sale => ({
         id: sale.id,
         customer_name: sale.customer_name,
@@ -272,6 +284,69 @@ const Dashboard = () => {
       installmentSales,
     };
   }, [filteredPOSSales, isLoading]);
+
+  // Calculate goal progress
+  const goalProgress = useMemo(() => {
+    const dailyGoal = salesGoals.find(g => g.type === 'daily');
+    const monthlyGoal = salesGoals.find(g => g.type === 'monthly');
+
+    // Get today's sales (online + POS)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const todayOnlineSales = rawOrders
+      .filter(o => {
+        const orderDate = new Date(o.created_at);
+        return orderDate >= today && orderDate < tomorrow && (o.status === 'completed' || o.status === 'delivered');
+      })
+      .reduce((sum, o) => sum + Number(o.total), 0);
+
+    const todayPOSSales = rawPOSSales
+      .filter(s => {
+        const saleDate = new Date(s.created_at);
+        return saleDate >= today && saleDate < tomorrow;
+      })
+      .reduce((sum, s) => sum + Number(s.total), 0);
+
+    const todayTotal = todayOnlineSales + todayPOSSales;
+
+    // Get current month's sales (online + POS)
+    const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+    const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59, 999);
+
+    const monthOnlineSales = rawOrders
+      .filter(o => {
+        const orderDate = new Date(o.created_at);
+        return orderDate >= monthStart && orderDate <= monthEnd && (o.status === 'completed' || o.status === 'delivered');
+      })
+      .reduce((sum, o) => sum + Number(o.total), 0);
+
+    const monthPOSSales = rawPOSSales
+      .filter(s => {
+        const saleDate = new Date(s.created_at);
+        return saleDate >= monthStart && saleDate <= monthEnd;
+      })
+      .reduce((sum, s) => sum + Number(s.total), 0);
+
+    const monthTotal = monthOnlineSales + monthPOSSales;
+
+    return {
+      daily: {
+        target: dailyGoal?.target_amount || 0,
+        current: todayTotal,
+        percentage: dailyGoal?.target_amount ? Math.min((todayTotal / dailyGoal.target_amount) * 100, 100) : 0,
+        isComplete: dailyGoal?.target_amount ? todayTotal >= dailyGoal.target_amount : false,
+      },
+      monthly: {
+        target: monthlyGoal?.target_amount || 0,
+        current: monthTotal,
+        percentage: monthlyGoal?.target_amount ? Math.min((monthTotal / monthlyGoal.target_amount) * 100, 100) : 0,
+        isComplete: monthlyGoal?.target_amount ? monthTotal >= monthlyGoal.target_amount : false,
+      },
+    };
+  }, [rawOrders, rawPOSSales, salesGoals]);
 
   // Recent orders (always show latest 5 within period)
   const recentOrders = useMemo(() => {
@@ -490,6 +565,133 @@ const Dashboard = () => {
             </div>
           </div>
         </div>
+
+        {/* Sales Goals Progress */}
+        {(goalProgress.daily.target > 0 || goalProgress.monthly.target > 0) && (
+          <div className="grid gap-4 md:grid-cols-2">
+            {/* Daily Goal */}
+            {goalProgress.daily.target > 0 && (
+              <Card className={cn(
+                "card-elevated transition-all",
+                goalProgress.daily.isComplete && "border-success/50 bg-success/5"
+              )}>
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className={cn(
+                        "p-3 rounded-xl",
+                        goalProgress.daily.isComplete ? "bg-success/20" : "bg-primary/10"
+                      )}>
+                        <Target className={cn(
+                          "h-6 w-6",
+                          goalProgress.daily.isComplete ? "text-success" : "text-primary"
+                        )} />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Meta Diária</p>
+                        <p className="text-2xl font-bold">{formatCurrency(goalProgress.daily.current)}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm text-muted-foreground">Meta</p>
+                      <p className="text-lg font-semibold">{formatCurrency(goalProgress.daily.target)}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Progresso</span>
+                      <span className={cn(
+                        "font-medium",
+                        goalProgress.daily.isComplete ? "text-success" : goalProgress.daily.percentage >= 70 ? "text-warning" : "text-foreground"
+                      )}>
+                        {goalProgress.daily.percentage.toFixed(1)}%
+                      </span>
+                    </div>
+                    <Progress 
+                      value={goalProgress.daily.percentage} 
+                      className={cn(
+                        "h-3",
+                        goalProgress.daily.isComplete && "[&>div]:bg-success"
+                      )}
+                    />
+                    {goalProgress.daily.isComplete ? (
+                      <p className="text-xs text-success flex items-center gap-1 mt-2">
+                        <CheckCircle className="h-3 w-3" />
+                        Meta alcançada! Parabéns! 🎉
+                      </p>
+                    ) : (
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Faltam {formatCurrency(goalProgress.daily.target - goalProgress.daily.current)} para atingir a meta
+                      </p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Monthly Goal */}
+            {goalProgress.monthly.target > 0 && (
+              <Card className={cn(
+                "card-elevated transition-all",
+                goalProgress.monthly.isComplete && "border-success/50 bg-success/5"
+              )}>
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className={cn(
+                        "p-3 rounded-xl",
+                        goalProgress.monthly.isComplete ? "bg-success/20" : "bg-warning/10"
+                      )}>
+                        <TrendingUp className={cn(
+                          "h-6 w-6",
+                          goalProgress.monthly.isComplete ? "text-success" : "text-warning"
+                        )} />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Meta Mensal</p>
+                        <p className="text-2xl font-bold">{formatCurrency(goalProgress.monthly.current)}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm text-muted-foreground">Meta</p>
+                      <p className="text-lg font-semibold">{formatCurrency(goalProgress.monthly.target)}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Progresso</span>
+                      <span className={cn(
+                        "font-medium",
+                        goalProgress.monthly.isComplete ? "text-success" : goalProgress.monthly.percentage >= 70 ? "text-warning" : "text-foreground"
+                      )}>
+                        {goalProgress.monthly.percentage.toFixed(1)}%
+                      </span>
+                    </div>
+                    <Progress 
+                      value={goalProgress.monthly.percentage} 
+                      className={cn(
+                        "h-3",
+                        goalProgress.monthly.isComplete && "[&>div]:bg-success"
+                      )}
+                    />
+                    {goalProgress.monthly.isComplete ? (
+                      <p className="text-xs text-success flex items-center gap-1 mt-2">
+                        <CheckCircle className="h-3 w-3" />
+                        Meta alcançada! Excelente mês! 🎉
+                      </p>
+                    ) : (
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Faltam {formatCurrency(goalProgress.monthly.target - goalProgress.monthly.current)} para atingir a meta
+                      </p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        )}
 
         {/* Main Stats Grid */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
