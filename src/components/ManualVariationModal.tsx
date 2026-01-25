@@ -130,6 +130,11 @@ const ManualVariationModal = ({
                 <Input
                   value={barcode}
                   onChange={(e) => setBarcode(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                    }
+                  }}
                   placeholder="Ex: 7891234567890"
                 />
               </div>
