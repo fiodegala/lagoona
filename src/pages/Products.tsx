@@ -737,6 +737,7 @@ const Products = () => {
                         onToggleActive={() => handleToggleActive(product)}
                         getCategoryName={getCategoryName}
                         formatCurrency={formatCurrency}
+                        highlightBarcode={barcodeSearch}
                       />
                     ))}
                   </TableBody>

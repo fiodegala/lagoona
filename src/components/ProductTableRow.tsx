@@ -33,6 +33,7 @@ interface ProductTableRowProps {
   onToggleActive: () => void;
   getCategoryName: (categoryId: string | null) => string | null;
   formatCurrency: (value: number) => string;
+  highlightBarcode?: string;
 }
 
 const ProductTableRow = ({
@@ -45,6 +46,7 @@ const ProductTableRow = ({
   onToggleActive,
   getCategoryName,
   formatCurrency,
+  highlightBarcode = '',
 }: ProductTableRowProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [variations, setVariations] = useState<ProductVariation[]>([]);
@@ -67,6 +69,18 @@ const ProductTableRow = ({
   }, [product.id]);
 
   const hasVariations = variationCount !== null && variationCount > 0;
+  
+  // Check if any variation matches the barcode search
+  const hasMatchingBarcode = highlightBarcode && variations.some(v => 
+    v.barcode?.toLowerCase().includes(highlightBarcode.toLowerCase())
+  );
+
+  // Auto-expand when there's a matching barcode in variations
+  useEffect(() => {
+    if (hasMatchingBarcode && !isExpanded) {
+      setIsExpanded(true);
+    }
+  }, [hasMatchingBarcode]);
 
   const handleExpandToggle = async () => {
     if (!isExpanded && variations.length === 0) {
@@ -256,8 +270,19 @@ const ProductTableRow = ({
         {/* Expanded Variations */}
         <CollapsibleContent asChild>
           <>
-            {variations.map((variation) => (
-              <TableRow key={variation.id} className="bg-muted/30 hover:bg-muted/50">
+            {variations.map((variation) => {
+              const isHighlighted = highlightBarcode && 
+                variation.barcode?.toLowerCase().includes(highlightBarcode.toLowerCase());
+              
+              return (
+              <TableRow 
+                key={variation.id} 
+                className={`hover:bg-muted/50 ${
+                  isHighlighted 
+                    ? 'bg-primary/10 ring-2 ring-primary/30 ring-inset' 
+                    : 'bg-muted/30'
+                }`}
+              >
                 <TableCell></TableCell>
                 <TableCell>
                   <div className="flex items-center gap-3 pl-10">
@@ -265,10 +290,10 @@ const ProductTableRow = ({
                       <img
                         src={variation.image_url}
                         alt="Variação"
-                        className="h-8 w-8 rounded-md object-cover"
+                        className={`h-8 w-8 rounded-md object-cover ${isHighlighted ? 'ring-2 ring-primary' : ''}`}
                       />
                     ) : (
-                      <div className="h-8 w-8 rounded-md bg-muted flex items-center justify-center">
+                      <div className={`h-8 w-8 rounded-md bg-muted flex items-center justify-center ${isHighlighted ? 'ring-2 ring-primary' : ''}`}>
                         <Layers className="h-4 w-4 text-muted-foreground" />
                       </div>
                     )}
@@ -278,6 +303,11 @@ const ProductTableRow = ({
                           {av.attribute_name}: {av.value}
                         </Badge>
                       ))}
+                      {isHighlighted && (
+                        <Badge className="text-xs bg-primary/20 text-primary border-primary/30">
+                          Código encontrado
+                        </Badge>
+                      )}
                     </div>
                   </div>
                 </TableCell>
@@ -310,7 +340,8 @@ const ProductTableRow = ({
                 </TableCell>
                 <TableCell></TableCell>
               </TableRow>
-            ))}
+              );
+            })}
           </>
         </CollapsibleContent>
       </>
