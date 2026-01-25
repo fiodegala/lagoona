@@ -10,6 +10,7 @@ export interface Product {
   image_url: string | null;
   is_active: boolean;
   metadata: Record<string, unknown>;
+  barcode: string | null;
   weight_kg: number | null;
   width_cm: number | null;
   height_cm: number | null;
