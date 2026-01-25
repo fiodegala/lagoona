@@ -889,7 +889,7 @@ const Dashboard = () => {
               </CardContent>
             </Card>
 
-            {/* Payment Methods Breakdown */}
+            {/* Payment Methods Pie Chart */}
             <Card className="card-elevated">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -902,81 +902,124 @@ const Dashboard = () => {
               </CardHeader>
               <CardContent>
                 {isLoading ? (
-                  <Skeleton className="h-[200px] w-full" />
-                ) : posStats ? (
+                  <Skeleton className="h-[280px] w-full" />
+                ) : posStats && posStats.totalSales > 0 ? (
                   <div className="space-y-4">
-                    {/* Cash */}
-                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                      <div className="flex items-center gap-3">
-                        <div className="bg-green-500/10 p-2 rounded-lg">
-                          <Banknote className="h-4 w-4 text-green-600" />
+                    {/* Pie Chart */}
+                    <ResponsiveContainer width="100%" height={180}>
+                      <PieChart>
+                        <Pie
+                          data={[
+                            { name: 'Dinheiro', value: posStats.paymentMethods.cash.total, color: 'hsl(142, 76%, 36%)' },
+                            { name: 'Crédito', value: posStats.paymentMethods.card.credit > 0 ? (posStats.paymentMethods.card.total * posStats.paymentMethods.card.credit / posStats.paymentMethods.card.count) || 0 : 0, color: 'hsl(221, 83%, 53%)' },
+                            { name: 'Débito', value: posStats.paymentMethods.card.debit > 0 ? (posStats.paymentMethods.card.total * posStats.paymentMethods.card.debit / posStats.paymentMethods.card.count) || 0 : 0, color: 'hsl(199, 89%, 48%)' },
+                            { name: 'PIX', value: posStats.paymentMethods.pix.total, color: 'hsl(172, 66%, 50%)' },
+                            { name: 'Misto', value: posStats.paymentMethods.mixed.total, color: 'hsl(271, 91%, 65%)' },
+                          ].filter(d => d.value > 0)}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={45}
+                          outerRadius={75}
+                          paddingAngle={3}
+                          dataKey="value"
+                        >
+                          {[
+                            { name: 'Dinheiro', value: posStats.paymentMethods.cash.total, color: 'hsl(142, 76%, 36%)' },
+                            { name: 'Crédito', value: posStats.paymentMethods.card.credit > 0 ? (posStats.paymentMethods.card.total * posStats.paymentMethods.card.credit / posStats.paymentMethods.card.count) || 0 : 0, color: 'hsl(221, 83%, 53%)' },
+                            { name: 'Débito', value: posStats.paymentMethods.card.debit > 0 ? (posStats.paymentMethods.card.total * posStats.paymentMethods.card.debit / posStats.paymentMethods.card.count) || 0 : 0, color: 'hsl(199, 89%, 48%)' },
+                            { name: 'PIX', value: posStats.paymentMethods.pix.total, color: 'hsl(172, 66%, 50%)' },
+                            { name: 'Misto', value: posStats.paymentMethods.mixed.total, color: 'hsl(271, 91%, 65%)' },
+                          ].filter(d => d.value > 0).map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip 
+                          formatter={(value: number) => formatCurrency(value)}
+                          contentStyle={{ 
+                            backgroundColor: 'hsl(var(--card))', 
+                            border: '1px solid hsl(var(--border))',
+                            borderRadius: '8px'
+                          }}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                    
+                    {/* Legend with details */}
+                    <div className="space-y-2 pt-2 border-t">
+                      <div className="flex items-center justify-between text-sm">
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: 'hsl(142, 76%, 36%)' }} />
+                          <span className="text-muted-foreground">Dinheiro</span>
                         </div>
-                        <div>
-                          <p className="text-sm font-medium">Dinheiro</p>
-                          <p className="text-xs text-muted-foreground">{posStats.paymentMethods.cash.count} vendas</p>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-muted-foreground">{posStats.paymentMethods.cash.count}x</span>
+                          <span className="font-medium">{formatCurrency(posStats.paymentMethods.cash.total)}</span>
                         </div>
                       </div>
-                      <p className="font-semibold">{formatCurrency(posStats.paymentMethods.cash.total)}</p>
-                    </div>
-
-                    {/* Card */}
-                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                      <div className="flex items-center gap-3">
-                        <div className="bg-blue-500/10 p-2 rounded-lg">
-                          <CreditCard className="h-4 w-4 text-blue-600" />
+                      
+                      {posStats.paymentMethods.card.credit > 0 && (
+                        <div className="flex items-center justify-between text-sm">
+                          <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: 'hsl(221, 83%, 53%)' }} />
+                            <span className="text-muted-foreground">Crédito</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-muted-foreground">{posStats.paymentMethods.card.credit}x</span>
+                            <span className="font-medium">{formatCurrency((posStats.paymentMethods.card.total * posStats.paymentMethods.card.credit / posStats.paymentMethods.card.count) || 0)}</span>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-sm font-medium">Cartão</p>
+                      )}
+                      
+                      {posStats.paymentMethods.card.debit > 0 && (
+                        <div className="flex items-center justify-between text-sm">
+                          <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: 'hsl(199, 89%, 48%)' }} />
+                            <span className="text-muted-foreground">Débito</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-muted-foreground">{posStats.paymentMethods.card.debit}x</span>
+                            <span className="font-medium">{formatCurrency((posStats.paymentMethods.card.total * posStats.paymentMethods.card.debit / posStats.paymentMethods.card.count) || 0)}</span>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {posStats.paymentMethods.pix.count > 0 && (
+                        <div className="flex items-center justify-between text-sm">
+                          <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: 'hsl(172, 66%, 50%)' }} />
+                            <span className="text-muted-foreground">PIX</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-muted-foreground">{posStats.paymentMethods.pix.count}x</span>
+                            <span className="font-medium">{formatCurrency(posStats.paymentMethods.pix.total)}</span>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {posStats.paymentMethods.mixed.count > 0 && (
+                        <div className="flex items-center justify-between text-sm">
+                          <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: 'hsl(271, 91%, 65%)' }} />
+                            <span className="text-muted-foreground">Misto</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-muted-foreground">{posStats.paymentMethods.mixed.count}x</span>
+                            <span className="font-medium">{formatCurrency(posStats.paymentMethods.mixed.total)}</span>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {posStats.installmentSales > 0 && (
+                        <div className="pt-2 mt-2 border-t">
                           <p className="text-xs text-muted-foreground">
-                            {posStats.paymentMethods.card.count} vendas 
-                            ({posStats.paymentMethods.card.credit} créd, {posStats.paymentMethods.card.debit} déb)
+                            <span className="font-medium text-foreground">{posStats.installmentSales}</span> vendas parceladas no crédito
                           </p>
                         </div>
-                      </div>
-                      <p className="font-semibold">{formatCurrency(posStats.paymentMethods.card.total)}</p>
+                      )}
                     </div>
-
-                    {/* PIX */}
-                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                      <div className="flex items-center gap-3">
-                        <div className="bg-teal-500/10 p-2 rounded-lg">
-                          <QrCode className="h-4 w-4 text-teal-600" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium">PIX</p>
-                          <p className="text-xs text-muted-foreground">{posStats.paymentMethods.pix.count} vendas</p>
-                        </div>
-                      </div>
-                      <p className="font-semibold">{formatCurrency(posStats.paymentMethods.pix.total)}</p>
-                    </div>
-
-                    {/* Mixed */}
-                    {posStats.paymentMethods.mixed.count > 0 && (
-                      <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                        <div className="flex items-center gap-3">
-                          <div className="bg-purple-500/10 p-2 rounded-lg">
-                            <DollarSign className="h-4 w-4 text-purple-600" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium">Misto</p>
-                            <p className="text-xs text-muted-foreground">{posStats.paymentMethods.mixed.count} vendas</p>
-                          </div>
-                        </div>
-                        <p className="font-semibold">{formatCurrency(posStats.paymentMethods.mixed.total)}</p>
-                      </div>
-                    )}
-
-                    {/* Installment info */}
-                    {posStats.installmentSales > 0 && (
-                      <div className="pt-2 border-t">
-                        <p className="text-xs text-muted-foreground">
-                          <span className="font-medium text-foreground">{posStats.installmentSales}</span> vendas parceladas no crédito
-                        </p>
-                      </div>
-                    )}
                   </div>
                 ) : (
-                  <div className="h-[200px] flex items-center justify-center text-muted-foreground text-sm">
+                  <div className="h-[280px] flex items-center justify-center text-muted-foreground text-sm">
                     Nenhuma venda registrada
                   </div>
                 )}
