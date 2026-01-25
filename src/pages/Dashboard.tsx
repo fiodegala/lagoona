@@ -288,7 +288,7 @@ const Dashboard = () => {
   }, [filteredPOSSales]);
 
   // Chart data based on period
-  const { salesData, posSalesData } = useMemo(() => {
+  const { salesData, posSalesData, comparisonData } = useMemo(() => {
     const getDaysCount = () => {
       if (periodFilter === 'custom' && customDateRange?.from) {
         const endDate = customDateRange.to || customDateRange.from;
@@ -357,7 +357,16 @@ const Dashboard = () => {
       });
     }
     
-    return { salesData: chartData, posSalesData: chartDataPOS };
+    // Create combined data for comparison chart
+    const comparisonData = chartData.map((online, index) => ({
+      name: online.name,
+      online: online.receita,
+      pdv: chartDataPOS[index]?.receita || 0,
+      onlineVendas: online.vendas,
+      pdvVendas: chartDataPOS[index]?.vendas || 0,
+    }));
+
+    return { salesData: chartData, posSalesData: chartDataPOS, comparisonData };
   }, [rawOrders, rawPOSSales, periodFilter, customDateRange]);
 
   // Order status data for pie chart
@@ -567,6 +576,85 @@ const Dashboard = () => {
           )}
         </div>
 
+        {/* Comparison Chart - PDV vs Online */}
+        <Card className="card-elevated">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-primary" />
+              Comparativo: PDV vs Online
+            </CardTitle>
+            <CardDescription>
+              Receita comparativa entre vendas na loja física e online - {getPeriodLabel(periodFilter)}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <Skeleton className="h-[300px] w-full" />
+            ) : (
+              <div className="space-y-4">
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={comparisonData} barGap={8}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis dataKey="name" className="text-xs" />
+                    <YAxis className="text-xs" tickFormatter={(value) => `R$${value}`} />
+                    <Tooltip 
+                      formatter={(value: number, name: string) => [
+                        formatCurrency(value), 
+                        name === 'online' ? 'Online' : 'PDV'
+                      ]}
+                      contentStyle={{ 
+                        backgroundColor: 'hsl(var(--card))', 
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px'
+                      }}
+                    />
+                    <Bar 
+                      dataKey="online" 
+                      name="Online"
+                      fill="hsl(var(--primary))" 
+                      radius={[4, 4, 0, 0]}
+                    />
+                    <Bar 
+                      dataKey="pdv" 
+                      name="PDV"
+                      fill="hsl(var(--success))" 
+                      radius={[4, 4, 0, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+                
+                {/* Legend and Summary */}
+                <div className="flex flex-wrap justify-center gap-6 pt-2 border-t">
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 rounded bg-primary" />
+                    <div className="text-sm">
+                      <span className="text-muted-foreground">Online: </span>
+                      <span className="font-semibold">{formatCurrency(stats?.totalRevenue || 0)}</span>
+                      <span className="text-muted-foreground text-xs ml-1">({stats?.totalOrders || 0} pedidos)</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 rounded bg-success" />
+                    <div className="text-sm">
+                      <span className="text-muted-foreground">PDV: </span>
+                      <span className="font-semibold">{formatCurrency(posStats?.totalRevenue || 0)}</span>
+                      <span className="text-muted-foreground text-xs ml-1">({posStats?.totalSales || 0} vendas)</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 pl-4 border-l">
+                    <div className="text-sm">
+                      <span className="text-muted-foreground">Total: </span>
+                      <span className="font-bold text-lg">
+                        {formatCurrency((stats?.totalRevenue || 0) + (posStats?.totalRevenue || 0))}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         {/* Charts Row */}
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Sales Chart */}
@@ -574,7 +662,7 @@ const Dashboard = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <TrendingUp className="h-5 w-5 text-primary" />
-                Vendas dos Últimos 7 Dias
+                Vendas Online - {getPeriodLabel(periodFilter)}
               </CardTitle>
               <CardDescription>
                 Acompanhe o desempenho de vendas diário
