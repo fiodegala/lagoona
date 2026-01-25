@@ -355,21 +355,21 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
         </div>
       </div>
 
-      {/* Barcode field - show for simple products or when editing a product without variations */}
-      {(productType === 'simple' || (isEditing && !hasVariations)) && (
-        <div className="space-y-2">
-          <Label htmlFor="barcode">Código de Barras</Label>
-          <Input
-            id="barcode"
-            placeholder="Ex: 7891234567890"
-            value={barcode}
-            onChange={(e) => setBarcode(e.target.value)}
-          />
-          <p className="text-xs text-muted-foreground">
-            EAN-13, EAN-8 ou código interno
-          </p>
-        </div>
-      )}
+      {/* Barcode field */}
+      <div className="space-y-2">
+        <Label htmlFor="barcode">Código de Barras</Label>
+        <Input
+          id="barcode"
+          placeholder="Ex: 7891234567890"
+          value={barcode}
+          onChange={(e) => setBarcode(e.target.value)}
+        />
+        <p className="text-xs text-muted-foreground">
+          {productType === 'variable' || hasVariations
+            ? 'Código do produto principal. Variações têm códigos próprios.'
+            : 'EAN-13, EAN-8 ou código interno'}
+        </p>
+      </div>
 
       <div className="space-y-2">
         <Label htmlFor="category">Categoria</Label>
