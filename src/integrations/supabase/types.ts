@@ -877,6 +877,33 @@ export type Database = {
           },
         ]
       }
+      sales_goals: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          target_amount: number
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          target_amount?: number
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          target_amount?: number
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       store_config: {
         Row: {
           created_at: string
