@@ -22,6 +22,7 @@ import Reviews from "./pages/Reviews";
 import Coupons from "./pages/Coupons";
 import NotFound from "./pages/NotFound";
 import ProductDetails from "./pages/ProductDetails";
+import POSPage from "./pages/POSPage";
 
 // Store Pages
 import HomePage from "./pages/store/HomePage";
@@ -71,6 +72,13 @@ const App = () => (
                   </ProtectedRoute>
                 }
               />
+              <Route
+                path="/admin/pos"
+                element={
+                  <ProtectedRoute>
+                    <POSPage />
+                  </ProtectedRoute>
+                }
               <Route
                 path="/admin/products"
                 element={
