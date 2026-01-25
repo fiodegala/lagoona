@@ -17,6 +17,7 @@ import {
   X,
   Star,
   Tag,
+  Monitor,
 } from 'lucide-react';
 import logoLagoona from '@/assets/logo-lagoona-white.png';
 import { Button } from '@/components/ui/button';
@@ -38,6 +39,7 @@ interface AdminLayoutProps {
 
 const navItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/admin' },
+  { icon: Monitor, label: 'PDV', path: '/admin/pos' },
   { icon: Package, label: 'Produtos', path: '/admin/products' },
   { icon: FolderTree, label: 'Categorias', path: '/admin/categories' },
   { icon: ShoppingCart, label: 'Pedidos', path: '/admin/orders' },

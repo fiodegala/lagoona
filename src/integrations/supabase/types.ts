@@ -380,6 +380,182 @@ export type Database = {
         }
         Relationships: []
       }
+      pos_sales: {
+        Row: {
+          amount_received: number | null
+          change_amount: number | null
+          coupon_code: string | null
+          coupon_id: string | null
+          created_at: string
+          customer_document: string | null
+          customer_name: string | null
+          discount_amount: number | null
+          discount_type: string | null
+          discount_value: number | null
+          id: string
+          items: Json
+          local_id: string
+          notes: string | null
+          payment_details: Json | null
+          payment_method: string
+          session_id: string | null
+          subtotal: number
+          synced: boolean
+          total: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount_received?: number | null
+          change_amount?: number | null
+          coupon_code?: string | null
+          coupon_id?: string | null
+          created_at?: string
+          customer_document?: string | null
+          customer_name?: string | null
+          discount_amount?: number | null
+          discount_type?: string | null
+          discount_value?: number | null
+          id?: string
+          items?: Json
+          local_id: string
+          notes?: string | null
+          payment_details?: Json | null
+          payment_method: string
+          session_id?: string | null
+          subtotal: number
+          synced?: boolean
+          total: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount_received?: number | null
+          change_amount?: number | null
+          coupon_code?: string | null
+          coupon_id?: string | null
+          created_at?: string
+          customer_document?: string | null
+          customer_name?: string | null
+          discount_amount?: number | null
+          discount_type?: string | null
+          discount_value?: number | null
+          id?: string
+          items?: Json
+          local_id?: string
+          notes?: string | null
+          payment_details?: Json | null
+          payment_method?: string
+          session_id?: string | null
+          subtotal?: number
+          synced?: boolean
+          total?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pos_sales_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "coupons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pos_sales_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "pos_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pos_sessions: {
+        Row: {
+          closed_at: string | null
+          closing_balance: number | null
+          created_at: string
+          difference: number | null
+          expected_balance: number | null
+          id: string
+          notes: string | null
+          opened_at: string
+          opening_balance: number
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          closed_at?: string | null
+          closing_balance?: number | null
+          created_at?: string
+          difference?: number | null
+          expected_balance?: number | null
+          id?: string
+          notes?: string | null
+          opened_at?: string
+          opening_balance?: number
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          closed_at?: string | null
+          closing_balance?: number | null
+          created_at?: string
+          difference?: number | null
+          expected_balance?: number | null
+          id?: string
+          notes?: string | null
+          opened_at?: string
+          opening_balance?: number
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      pos_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          payment_method: string | null
+          session_id: string
+          type: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          payment_method?: string | null
+          session_id: string
+          type: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          payment_method?: string | null
+          session_id?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pos_transactions_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "pos_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_attribute_values: {
         Row: {
           attribute_id: string
@@ -573,6 +749,7 @@ export type Database = {
       }
       products: {
         Row: {
+          barcode: string | null
           category_id: string | null
           created_at: string
           depth_cm: number | null
@@ -590,6 +767,7 @@ export type Database = {
           width_cm: number | null
         }
         Insert: {
+          barcode?: string | null
           category_id?: string | null
           created_at?: string
           depth_cm?: number | null
@@ -607,6 +785,7 @@ export type Database = {
           width_cm?: number | null
         }
         Update: {
+          barcode?: string | null
           category_id?: string | null
           created_at?: string
           depth_cm?: number | null
