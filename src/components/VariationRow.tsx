@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { TableRow, TableCell } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -41,6 +41,38 @@ interface VariationRowProps {
 const VariationRow = ({ variation, onUpdate, onDelete }: VariationRowProps) => {
   const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
   const [localImageUrl, setLocalImageUrl] = useState(variation.image_url || '');
+  const [localBarcode, setLocalBarcode] = useState(variation.barcode || '');
+  const barcodeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Sync local barcode with prop
+  useEffect(() => {
+    setLocalBarcode(variation.barcode || '');
+  }, [variation.barcode]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (barcodeTimeoutRef.current) {
+        clearTimeout(barcodeTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const handleBarcodeChange = (value: string) => {
+    setLocalBarcode(value);
+    
+    // Clear existing timeout
+    if (barcodeTimeoutRef.current) {
+      clearTimeout(barcodeTimeoutRef.current);
+    }
+    
+    // Debounce: save after 500ms of no typing (barcode scanners type fast then stop)
+    barcodeTimeoutRef.current = setTimeout(() => {
+      if (value !== variation.barcode) {
+        onUpdate(variation.id, 'barcode', value);
+      }
+    }, 500);
+  };
 
   const {
     attributes,
@@ -166,12 +198,28 @@ const VariationRow = ({ variation, onUpdate, onDelete }: VariationRowProps) => {
       </TableCell>
       <TableCell>
         <Input
-          value={variation.barcode || ''}
-          onChange={(e) => onUpdate(variation.id, 'barcode', e.target.value)}
+          value={localBarcode}
+          onChange={(e) => handleBarcodeChange(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === 'Enter') {
               e.preventDefault();
+              // Save immediately on Enter (barcode scanner finished)
+              if (barcodeTimeoutRef.current) {
+                clearTimeout(barcodeTimeoutRef.current);
+              }
+              if (localBarcode !== variation.barcode) {
+                onUpdate(variation.id, 'barcode', localBarcode);
+              }
               e.currentTarget.blur();
+            }
+          }}
+          onBlur={() => {
+            // Save on blur if changed
+            if (barcodeTimeoutRef.current) {
+              clearTimeout(barcodeTimeoutRef.current);
+            }
+            if (localBarcode !== variation.barcode) {
+              onUpdate(variation.id, 'barcode', localBarcode);
             }
           }}
           placeholder="Código"
