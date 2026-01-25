@@ -5,11 +5,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { 
   Package, ShoppingCart, Key, TrendingUp, Users, DollarSign, 
   Star, Tag, ArrowUpRight, ArrowDownRight, Clock, CheckCircle,
   XCircle, AlertCircle, Store, CreditCard, Banknote, QrCode, Percent,
-  Calendar
+  Calendar, CalendarRange
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Link } from 'react-router-dom';
@@ -17,8 +19,12 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, 
   ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell 
 } from 'recharts';
+import { format, differenceInDays } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
+import { DateRange } from 'react-day-picker';
 
-type PeriodFilter = 'today' | 'week' | 'month' | 'all';
+type PeriodFilter = 'today' | 'week' | 'month' | 'all' | 'custom';
 
 interface DashboardStats {
   totalProducts: number;
@@ -89,6 +95,7 @@ interface RawPOSSale {
 const Dashboard = () => {
   const { profile, roles } = useAuth();
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('all');
+  const [customDateRange, setCustomDateRange] = useState<DateRange | undefined>(undefined);
   const [rawOrders, setRawOrders] = useState<RawOrder[]>([]);
   const [rawPOSSales, setRawPOSSales] = useState<RawPOSSale[]>([]);
   const [products, setProducts] = useState<{ id: string; is_active: boolean }[]>([]);
@@ -144,40 +151,58 @@ const Dashboard = () => {
     }
   };
 
-  // Get period start date based on filter
-  const getPeriodStartDate = (filter: PeriodFilter): Date | null => {
+  // Get period date range based on filter
+  const getDateRange = (filter: PeriodFilter): { start: Date | null; end: Date | null } => {
+    if (filter === 'custom' && customDateRange?.from) {
+      const start = new Date(customDateRange.from);
+      start.setHours(0, 0, 0, 0);
+      const end = customDateRange.to ? new Date(customDateRange.to) : new Date(customDateRange.from);
+      end.setHours(23, 59, 59, 999);
+      return { start, end };
+    }
+
     const now = new Date();
     now.setHours(0, 0, 0, 0);
     
     switch (filter) {
       case 'today':
-        return now;
+        return { start: now, end: null };
       case 'week':
         const weekStart = new Date(now);
         weekStart.setDate(weekStart.getDate() - 7);
-        return weekStart;
+        return { start: weekStart, end: null };
       case 'month':
         const monthStart = new Date(now);
         monthStart.setDate(monthStart.getDate() - 30);
-        return monthStart;
+        return { start: monthStart, end: null };
       case 'all':
       default:
-        return null;
+        return { start: null, end: null };
     }
   };
 
-  const periodStartDate = getPeriodStartDate(periodFilter);
+  const { start: periodStartDate, end: periodEndDate } = getDateRange(periodFilter);
 
   // Filter data by period
   const filteredOrders = useMemo(() => {
     if (!periodStartDate) return rawOrders;
-    return rawOrders.filter(o => new Date(o.created_at) >= periodStartDate);
-  }, [rawOrders, periodStartDate]);
+    return rawOrders.filter(o => {
+      const orderDate = new Date(o.created_at);
+      const afterStart = orderDate >= periodStartDate;
+      const beforeEnd = !periodEndDate || orderDate <= periodEndDate;
+      return afterStart && beforeEnd;
+    });
+  }, [rawOrders, periodStartDate, periodEndDate]);
 
   const filteredPOSSales = useMemo(() => {
     if (!periodStartDate) return rawPOSSales;
-    return rawPOSSales.filter(s => new Date(s.created_at) >= periodStartDate);
-  }, [rawPOSSales, periodStartDate]);
+    return rawPOSSales.filter(s => {
+      const saleDate = new Date(s.created_at);
+      const afterStart = saleDate >= periodStartDate;
+      const beforeEnd = !periodEndDate || saleDate <= periodEndDate;
+      return afterStart && beforeEnd;
+    });
+  }, [rawPOSSales, periodStartDate, periodEndDate]);
 
   // Calculate online stats based on filtered data
   const stats: DashboardStats | null = useMemo(() => {
@@ -265,21 +290,40 @@ const Dashboard = () => {
   // Chart data based on period
   const { salesData, posSalesData } = useMemo(() => {
     const getDaysCount = () => {
+      if (periodFilter === 'custom' && customDateRange?.from) {
+        const endDate = customDateRange.to || customDateRange.from;
+        const days = differenceInDays(endDate, customDateRange.from) + 1;
+        return Math.min(days, 60); // Limit to 60 days for readability
+      }
       switch (periodFilter) {
         case 'today': return 1;
         case 'week': return 7;
         case 'month': return 30;
         case 'all': return 7; // Default to 7 days for chart readability
+        default: return 7;
       }
+    };
+
+    const getStartDate = () => {
+      if (periodFilter === 'custom' && customDateRange?.from) {
+        const start = new Date(customDateRange.from);
+        start.setHours(0, 0, 0, 0);
+        return start;
+      }
+      const now = new Date();
+      now.setHours(0, 0, 0, 0);
+      now.setDate(now.getDate() - (getDaysCount() - 1));
+      return now;
     };
     
     const daysCount = getDaysCount();
-    const last7Days = [];
-    const last7DaysPOS = [];
+    const startDate = getStartDate();
+    const chartData = [];
+    const chartDataPOS = [];
     
-    for (let i = daysCount - 1; i >= 0; i--) {
-      const date = new Date();
-      date.setDate(date.getDate() - i);
+    for (let i = 0; i < daysCount; i++) {
+      const date = new Date(startDate);
+      date.setDate(date.getDate() + i);
       date.setHours(0, 0, 0, 0);
       const nextDate = new Date(date);
       nextDate.setDate(nextDate.getDate() + 1);
@@ -300,21 +344,21 @@ const Dashboard = () => {
           ? date.toLocaleDateString('pt-BR', { weekday: 'short' })
           : date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
 
-      last7Days.push({
+      chartData.push({
         name: dayName,
         vendas: dayOrders.length,
         receita: dayOrders.reduce((sum, o) => sum + Number(o.total), 0),
       });
 
-      last7DaysPOS.push({
+      chartDataPOS.push({
         name: dayName,
         vendas: dayPOSSales.length,
         receita: dayPOSSales.reduce((sum, s) => sum + Number(s.total), 0),
       });
     }
     
-    return { salesData: last7Days, posSalesData: last7DaysPOS };
-  }, [rawOrders, rawPOSSales, periodFilter]);
+    return { salesData: chartData, posSalesData: chartDataPOS };
+  }, [rawOrders, rawPOSSales, periodFilter, customDateRange]);
 
   // Order status data for pie chart
   const orderStatusData = stats ? [
@@ -351,6 +395,24 @@ const Dashboard = () => {
       case 'week': return 'Últimos 7 dias';
       case 'month': return 'Últimos 30 dias';
       case 'all': return 'Todo período';
+      case 'custom': 
+        if (customDateRange?.from) {
+          const fromStr = format(customDateRange.from, 'dd/MM/yy', { locale: ptBR });
+          const toStr = customDateRange.to 
+            ? format(customDateRange.to, 'dd/MM/yy', { locale: ptBR })
+            : fromStr;
+          return customDateRange.to && customDateRange.from.getTime() !== customDateRange.to.getTime()
+            ? `${fromStr} - ${toStr}`
+            : fromStr;
+        }
+        return 'Período personalizado';
+    }
+  };
+
+  const handleCustomDateSelect = (range: DateRange | undefined) => {
+    setCustomDateRange(range);
+    if (range?.from) {
+      setPeriodFilter('custom');
     }
   };
 
@@ -377,12 +439,45 @@ const Dashboard = () => {
                   key={period}
                   variant={periodFilter === period ? 'default' : 'ghost'}
                   size="sm"
-                  onClick={() => setPeriodFilter(period)}
+                  onClick={() => {
+                    setPeriodFilter(period);
+                    if (period !== 'custom') {
+                      setCustomDateRange(undefined);
+                    }
+                  }}
                   className="text-xs px-3"
                 >
                   {getPeriodLabel(period)}
                 </Button>
               ))}
+              
+              {/* Custom Date Range Picker */}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant={periodFilter === 'custom' ? 'default' : 'ghost'}
+                    size="sm"
+                    className={cn(
+                      "text-xs px-3 gap-1",
+                      periodFilter === 'custom' && "min-w-[120px]"
+                    )}
+                  >
+                    <CalendarRange className="h-3 w-3" />
+                    {periodFilter === 'custom' ? getPeriodLabel('custom') : 'Personalizado'}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="end">
+                  <CalendarComponent
+                    mode="range"
+                    selected={customDateRange}
+                    onSelect={handleCustomDateSelect}
+                    numberOfMonths={2}
+                    disabled={(date) => date > new Date()}
+                    className="pointer-events-auto"
+                    locale={ptBR}
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
         </div>
