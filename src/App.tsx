@@ -23,6 +23,7 @@ import Coupons from "./pages/Coupons";
 import NotFound from "./pages/NotFound";
 import ProductDetails from "./pages/ProductDetails";
 import POSPage from "./pages/POSPage";
+import Customers from "./pages/Customers";
 
 // Store Pages
 import HomePage from "./pages/store/HomePage";
@@ -93,6 +94,14 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <Categories />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/customers"
+                element={
+                  <ProtectedRoute>
+                    <Customers />
                   </ProtectedRoute>
                 }
               />
