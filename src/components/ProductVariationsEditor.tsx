@@ -32,6 +32,21 @@ import {
 } from '@/services/variations';
 import VariationRow from './VariationRow';
 import ManualVariationModal from './ManualVariationModal';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
 
 interface ProductVariationsEditorProps {
   productId: string;
@@ -55,6 +70,18 @@ const ProductVariationsEditor = ({ productId, basePrice }: ProductVariationsEdit
   // Manual variation modal
   const [isManualModalOpen, setIsManualModalOpen] = useState(false);
 
+  // Drag and drop sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
   const loadData = async () => {
     try {
       setIsLoading(true);
@@ -77,6 +104,29 @@ const ProductVariationsEditor = ({ productId, basePrice }: ProductVariationsEdit
       loadData();
     }
   }, [productId]);
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const oldIndex = variations.findIndex((v) => v.id === active.id);
+      const newIndex = variations.findIndex((v) => v.id === over.id);
+
+      const newVariations = arrayMove(variations, oldIndex, newIndex);
+      setVariations(newVariations);
+
+      // Persist the new order
+      try {
+        await variationsService.reorderVariations(newVariations.map((v) => v.id));
+        toast.success('Ordem atualizada');
+      } catch (error) {
+        console.error('Error reordering variations:', error);
+        toast.error('Erro ao reordenar variações');
+        // Revert on error
+        await loadData();
+      }
+    }
+  };
 
   const handleAddAttribute = async () => {
     if (!newAttrName.trim()) {
@@ -430,28 +480,40 @@ const ProductVariationsEditor = ({ productId, basePrice }: ProductVariationsEdit
             </p>
           ) : (
             <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Variação</TableHead>
-                    <TableHead>SKU</TableHead>
-                    <TableHead>Preço</TableHead>
-                    <TableHead>Estoque</TableHead>
-                    <TableHead>Ativo</TableHead>
-                    <TableHead className="w-10"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {variations.map((variation) => (
-                    <VariationRow 
-                      key={variation.id}
-                      variation={variation}
-                      onUpdate={handleUpdateVariation}
-                      onDelete={handleDeleteVariation}
-                    />
-                  ))}
-                </TableBody>
-              </Table>
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-10"></TableHead>
+                      <TableHead>Variação</TableHead>
+                      <TableHead>SKU</TableHead>
+                      <TableHead>Preço</TableHead>
+                      <TableHead>Estoque</TableHead>
+                      <TableHead>Ativo</TableHead>
+                      <TableHead className="w-10"></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    <SortableContext
+                      items={variations.map((v) => v.id)}
+                      strategy={verticalListSortingStrategy}
+                    >
+                      {variations.map((variation) => (
+                        <VariationRow
+                          key={variation.id}
+                          variation={variation}
+                          onUpdate={handleUpdateVariation}
+                          onDelete={handleDeleteVariation}
+                        />
+                      ))}
+                    </SortableContext>
+                  </TableBody>
+                </Table>
+              </DndContext>
             </div>
           )}
         </CardContent>

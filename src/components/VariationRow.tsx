@@ -22,9 +22,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Trash2, ImagePlus, X } from 'lucide-react';
+import { Trash2, ImagePlus, X, GripVertical } from 'lucide-react';
 import { ProductVariation } from '@/services/variations';
 import ImageUpload from './ImageUpload';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface VariationRowProps {
   variation: ProductVariation;
@@ -40,6 +42,21 @@ const VariationRow = ({ variation, onUpdate, onDelete }: VariationRowProps) => {
   const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
   const [localImageUrl, setLocalImageUrl] = useState(variation.image_url || '');
 
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: variation.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
   const handleImageSave = async () => {
     await onUpdate(variation.id, 'image_url', localImageUrl);
     setIsImageDialogOpen(false);
@@ -51,7 +68,17 @@ const VariationRow = ({ variation, onUpdate, onDelete }: VariationRowProps) => {
   };
 
   return (
-    <TableRow>
+    <TableRow ref={setNodeRef} style={style} className={isDragging ? 'bg-muted/50' : ''}>
+      <TableCell className="w-10">
+        <button
+          type="button"
+          className="cursor-grab active:cursor-grabbing p-1 hover:bg-muted rounded touch-none"
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical className="h-4 w-4 text-muted-foreground" />
+        </button>
+      </TableCell>
       <TableCell>
         <div className="flex items-center gap-2">
           {/* Image thumbnail */}

@@ -23,6 +23,7 @@ export interface ProductVariation {
   stock: number;
   image_url: string | null;
   is_active: boolean;
+  sort_order: number;
   created_at: string;
   updated_at: string;
   attribute_values?: { attribute_name: string; value: string }[];
@@ -144,7 +145,7 @@ export const variationsService = {
       .from('product_variations')
       .select('*')
       .eq('product_id', productId)
-      .order('created_at', { ascending: true });
+      .order('sort_order', { ascending: true });
 
     if (varError) throw varError;
 
@@ -184,6 +185,17 @@ export const variationsService = {
   },
 
   async createVariation(data: CreateVariationData): Promise<ProductVariation> {
+    // Get max sort_order for this product
+    const { data: maxOrderData } = await supabase
+      .from('product_variations')
+      .select('sort_order')
+      .eq('product_id', data.product_id)
+      .order('sort_order', { ascending: false })
+      .limit(1)
+      .single();
+
+    const nextSortOrder = (maxOrderData?.sort_order ?? -1) + 1;
+
     // Create variation
     const { data: variation, error: varError } = await supabase
       .from('product_variations')
@@ -194,6 +206,7 @@ export const variationsService = {
         stock: data.stock ?? 0,
         image_url: data.image_url || null,
         is_active: data.is_active ?? true,
+        sort_order: nextSortOrder,
       })
       .select()
       .single();
@@ -248,6 +261,20 @@ export const variationsService = {
       .delete()
       .eq('id', variationId);
 
+    if (error) throw error;
+  },
+
+  async reorderVariations(variationIds: string[]): Promise<void> {
+    // Update sort_order for each variation based on new order
+    const updates = variationIds.map((id, index) => 
+      supabase
+        .from('product_variations')
+        .update({ sort_order: index, updated_at: new Date().toISOString() })
+        .eq('id', id)
+    );
+
+    const results = await Promise.all(updates);
+    const error = results.find((r) => r.error)?.error;
     if (error) throw error;
   },
 
