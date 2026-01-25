@@ -1,13 +1,15 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import AdminLayout from '@/components/AdminLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
 import { 
   Package, ShoppingCart, Key, TrendingUp, Users, DollarSign, 
   Star, Tag, ArrowUpRight, ArrowDownRight, Clock, CheckCircle,
-  XCircle, AlertCircle, Store, CreditCard, Banknote, QrCode, Percent
+  XCircle, AlertCircle, Store, CreditCard, Banknote, QrCode, Percent,
+  Calendar
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Link } from 'react-router-dom';
@@ -15,6 +17,8 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, 
   ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell 
 } from 'recharts';
+
+type PeriodFilter = 'today' | 'week' | 'month' | 'all';
 
 interface DashboardStats {
   totalProducts: number;
@@ -24,7 +28,6 @@ interface DashboardStats {
   completedOrders: number;
   cancelledOrders: number;
   totalRevenue: number;
-  todayRevenue: number;
   totalReviews: number;
   pendingReviews: number;
   activeCoupons: number;
@@ -33,11 +36,8 @@ interface DashboardStats {
 
 interface POSStats {
   totalSales: number;
-  todaySales: number;
   totalRevenue: number;
-  todayRevenue: number;
   totalDiscount: number;
-  todayDiscount: number;
   paymentMethods: {
     cash: { count: number; total: number };
     card: { count: number; total: number; credit: number; debit: number };
@@ -67,14 +67,34 @@ interface RecentPOSSale {
   created_at: string;
 }
 
+interface RawOrder {
+  id: string;
+  status: string;
+  total: number;
+  customer_name: string | null;
+  customer_email: string;
+  created_at: string;
+}
+
+interface RawPOSSale {
+  id: string;
+  customer_name: string | null;
+  total: number;
+  payment_method: string;
+  payment_details: Record<string, unknown> | null;
+  discount_amount: number | null;
+  created_at: string;
+}
+
 const Dashboard = () => {
   const { profile, roles } = useAuth();
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [posStats, setPosStats] = useState<POSStats | null>(null);
-  const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
-  const [recentPOSSales, setRecentPOSSales] = useState<RecentPOSSale[]>([]);
-  const [salesData, setSalesData] = useState<{ name: string; vendas: number; receita: number }[]>([]);
-  const [posSalesData, setPosSalesData] = useState<{ name: string; vendas: number; receita: number }[]>([]);
+  const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('all');
+  const [rawOrders, setRawOrders] = useState<RawOrder[]>([]);
+  const [rawPOSSales, setRawPOSSales] = useState<RawPOSSale[]>([]);
+  const [products, setProducts] = useState<{ id: string; is_active: boolean }[]>([]);
+  const [reviews, setReviews] = useState<{ id: string; is_approved: boolean }[]>([]);
+  const [coupons, setCoupons] = useState<{ id: string; is_active: boolean }[]>([]);
+  const [categories, setCategories] = useState<{ id: string; is_active: boolean }[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -102,142 +122,20 @@ const Dashboard = () => {
         supabase.from('pos_sales').select('*').order('created_at', { ascending: false }),
       ]);
 
-      const products = productsRes.data || [];
-      const orders = ordersRes.data || [];
-      const reviews = reviewsRes.data || [];
-      const coupons = couponsRes.data || [];
-      const categories = categoriesRes.data || [];
-      const posSales = posSalesRes.data || [];
-
-      // Calculate stats
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-
-      const todayOrders = orders.filter(o => new Date(o.created_at) >= today);
-      const completedOrders = orders.filter(o => o.status === 'completed' || o.status === 'delivered');
-      const pendingOrders = orders.filter(o => o.status === 'pending' || o.status === 'processing');
-      const cancelledOrders = orders.filter(o => o.status === 'cancelled');
-
-      setStats({
-        totalProducts: products.length,
-        activeProducts: products.filter(p => p.is_active).length,
-        totalOrders: orders.length,
-        pendingOrders: pendingOrders.length,
-        completedOrders: completedOrders.length,
-        cancelledOrders: cancelledOrders.length,
-        totalRevenue: completedOrders.reduce((sum, o) => sum + Number(o.total), 0),
-        todayRevenue: todayOrders.filter(o => o.status !== 'cancelled').reduce((sum, o) => sum + Number(o.total), 0),
-        totalReviews: reviews.length,
-        pendingReviews: reviews.filter(r => !r.is_approved).length,
-        activeCoupons: coupons.filter(c => c.is_active).length,
-        totalCategories: categories.filter(c => c.is_active).length,
-      });
-
-      // Calculate POS Stats
-      const todayPOSSales = posSales.filter(s => new Date(s.created_at) >= today);
-      
-      const paymentMethods = {
-        cash: { count: 0, total: 0 },
-        card: { count: 0, total: 0, credit: 0, debit: 0 },
-        pix: { count: 0, total: 0 },
-        mixed: { count: 0, total: 0 },
-      };
-
-      let installmentSales = 0;
-
-      posSales.forEach(sale => {
-        const method = sale.payment_method as keyof typeof paymentMethods;
-        if (paymentMethods[method]) {
-          paymentMethods[method].count++;
-          paymentMethods[method].total += Number(sale.total);
-          
-          if (method === 'card' && sale.payment_details) {
-            const details = sale.payment_details as Record<string, unknown>;
-            if (details.cardType === 'credit') {
-              paymentMethods.card.credit++;
-              if ((details.installments as number) > 1) {
-                installmentSales++;
-              }
-            } else if (details.cardType === 'debit') {
-              paymentMethods.card.debit++;
-            }
-          }
-        }
-      });
-
-      const totalPOSRevenue = posSales.reduce((sum, s) => sum + Number(s.total), 0);
-      const totalPOSDiscount = posSales.reduce((sum, s) => sum + Number(s.discount_amount || 0), 0);
-      const todayPOSRevenue = todayPOSSales.reduce((sum, s) => sum + Number(s.total), 0);
-      const todayPOSDiscount = todayPOSSales.reduce((sum, s) => sum + Number(s.discount_amount || 0), 0);
-
-      setPosStats({
-        totalSales: posSales.length,
-        todaySales: todayPOSSales.length,
-        totalRevenue: totalPOSRevenue,
-        todayRevenue: todayPOSRevenue,
-        totalDiscount: totalPOSDiscount,
-        todayDiscount: todayPOSDiscount,
-        paymentMethods,
-        averageTicket: posSales.length > 0 ? totalPOSRevenue / posSales.length : 0,
-        installmentSales,
-      });
-
-      // Recent orders
-      setRecentOrders(
-        orders
-          .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-          .slice(0, 5)
-      );
-
-      // Recent POS sales
-      setRecentPOSSales(
-        posSales.slice(0, 5).map(sale => ({
-          id: sale.id,
-          customer_name: sale.customer_name,
-          total: Number(sale.total),
-          payment_method: sale.payment_method,
-          payment_details: sale.payment_details as Record<string, unknown> | null,
-          discount_amount: sale.discount_amount ? Number(sale.discount_amount) : null,
-          created_at: sale.created_at,
-        }))
-      );
-
-      // Sales data for chart (last 7 days) - Online
-      const last7Days = [];
-      const last7DaysPOS = [];
-      for (let i = 6; i >= 0; i--) {
-        const date = new Date();
-        date.setDate(date.getDate() - i);
-        date.setHours(0, 0, 0, 0);
-        const nextDate = new Date(date);
-        nextDate.setDate(nextDate.getDate() + 1);
-
-        const dayOrders = orders.filter(o => {
-          const orderDate = new Date(o.created_at);
-          return orderDate >= date && orderDate < nextDate && o.status !== 'cancelled';
-        });
-
-        const dayPOSSales = posSales.filter(s => {
-          const saleDate = new Date(s.created_at);
-          return saleDate >= date && saleDate < nextDate;
-        });
-
-        const dayName = date.toLocaleDateString('pt-BR', { weekday: 'short' });
-
-        last7Days.push({
-          name: dayName,
-          vendas: dayOrders.length,
-          receita: dayOrders.reduce((sum, o) => sum + Number(o.total), 0),
-        });
-
-        last7DaysPOS.push({
-          name: dayName,
-          vendas: dayPOSSales.length,
-          receita: dayPOSSales.reduce((sum, s) => sum + Number(s.total), 0),
-        });
-      }
-      setSalesData(last7Days);
-      setPosSalesData(last7DaysPOS);
+      setProducts(productsRes.data || []);
+      setRawOrders(ordersRes.data || []);
+      setReviews(reviewsRes.data || []);
+      setCoupons(couponsRes.data || []);
+      setCategories(categoriesRes.data || []);
+      setRawPOSSales((posSalesRes.data || []).map(sale => ({
+        id: sale.id,
+        customer_name: sale.customer_name,
+        total: Number(sale.total),
+        payment_method: sale.payment_method,
+        payment_details: sale.payment_details as Record<string, unknown> | null,
+        discount_amount: sale.discount_amount ? Number(sale.discount_amount) : null,
+        created_at: sale.created_at,
+      })));
 
     } catch (error) {
       console.error('Error loading dashboard:', error);
@@ -245,6 +143,185 @@ const Dashboard = () => {
       setIsLoading(false);
     }
   };
+
+  // Get period start date based on filter
+  const getPeriodStartDate = (filter: PeriodFilter): Date | null => {
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    
+    switch (filter) {
+      case 'today':
+        return now;
+      case 'week':
+        const weekStart = new Date(now);
+        weekStart.setDate(weekStart.getDate() - 7);
+        return weekStart;
+      case 'month':
+        const monthStart = new Date(now);
+        monthStart.setDate(monthStart.getDate() - 30);
+        return monthStart;
+      case 'all':
+      default:
+        return null;
+    }
+  };
+
+  const periodStartDate = getPeriodStartDate(periodFilter);
+
+  // Filter data by period
+  const filteredOrders = useMemo(() => {
+    if (!periodStartDate) return rawOrders;
+    return rawOrders.filter(o => new Date(o.created_at) >= periodStartDate);
+  }, [rawOrders, periodStartDate]);
+
+  const filteredPOSSales = useMemo(() => {
+    if (!periodStartDate) return rawPOSSales;
+    return rawPOSSales.filter(s => new Date(s.created_at) >= periodStartDate);
+  }, [rawPOSSales, periodStartDate]);
+
+  // Calculate online stats based on filtered data
+  const stats: DashboardStats | null = useMemo(() => {
+    if (isLoading) return null;
+    
+    const completedOrders = filteredOrders.filter(o => o.status === 'completed' || o.status === 'delivered');
+    const pendingOrders = filteredOrders.filter(o => o.status === 'pending' || o.status === 'processing');
+    const cancelledOrders = filteredOrders.filter(o => o.status === 'cancelled');
+
+    return {
+      totalProducts: products.length,
+      activeProducts: products.filter(p => p.is_active).length,
+      totalOrders: filteredOrders.length,
+      pendingOrders: pendingOrders.length,
+      completedOrders: completedOrders.length,
+      cancelledOrders: cancelledOrders.length,
+      totalRevenue: completedOrders.reduce((sum, o) => sum + Number(o.total), 0),
+      totalReviews: reviews.length,
+      pendingReviews: reviews.filter(r => !r.is_approved).length,
+      activeCoupons: coupons.filter(c => c.is_active).length,
+      totalCategories: categories.filter(c => c.is_active).length,
+    };
+  }, [filteredOrders, products, reviews, coupons, categories, isLoading]);
+
+  // Calculate POS stats based on filtered data
+  const posStats: POSStats | null = useMemo(() => {
+    if (isLoading) return null;
+
+    const paymentMethods = {
+      cash: { count: 0, total: 0 },
+      card: { count: 0, total: 0, credit: 0, debit: 0 },
+      pix: { count: 0, total: 0 },
+      mixed: { count: 0, total: 0 },
+    };
+
+    let installmentSales = 0;
+
+    filteredPOSSales.forEach(sale => {
+      const method = sale.payment_method as keyof typeof paymentMethods;
+      if (paymentMethods[method]) {
+        paymentMethods[method].count++;
+        paymentMethods[method].total += Number(sale.total);
+        
+        if (method === 'card' && sale.payment_details) {
+          const details = sale.payment_details;
+          if (details.cardType === 'credit') {
+            paymentMethods.card.credit++;
+            if ((details.installments as number) > 1) {
+              installmentSales++;
+            }
+          } else if (details.cardType === 'debit') {
+            paymentMethods.card.debit++;
+          }
+        }
+      }
+    });
+
+    const totalPOSRevenue = filteredPOSSales.reduce((sum, s) => sum + Number(s.total), 0);
+    const totalPOSDiscount = filteredPOSSales.reduce((sum, s) => sum + Number(s.discount_amount || 0), 0);
+
+    return {
+      totalSales: filteredPOSSales.length,
+      totalRevenue: totalPOSRevenue,
+      totalDiscount: totalPOSDiscount,
+      paymentMethods,
+      averageTicket: filteredPOSSales.length > 0 ? totalPOSRevenue / filteredPOSSales.length : 0,
+      installmentSales,
+    };
+  }, [filteredPOSSales, isLoading]);
+
+  // Recent orders (always show latest 5 within period)
+  const recentOrders = useMemo(() => {
+    return [...filteredOrders]
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      .slice(0, 5);
+  }, [filteredOrders]);
+
+  // Recent POS sales (always show latest 5 within period)
+  const recentPOSSales = useMemo(() => {
+    return [...filteredPOSSales]
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      .slice(0, 5);
+  }, [filteredPOSSales]);
+
+  // Chart data based on period
+  const { salesData, posSalesData } = useMemo(() => {
+    const getDaysCount = () => {
+      switch (periodFilter) {
+        case 'today': return 1;
+        case 'week': return 7;
+        case 'month': return 30;
+        case 'all': return 7; // Default to 7 days for chart readability
+      }
+    };
+    
+    const daysCount = getDaysCount();
+    const last7Days = [];
+    const last7DaysPOS = [];
+    
+    for (let i = daysCount - 1; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      date.setHours(0, 0, 0, 0);
+      const nextDate = new Date(date);
+      nextDate.setDate(nextDate.getDate() + 1);
+
+      const dayOrders = rawOrders.filter(o => {
+        const orderDate = new Date(o.created_at);
+        return orderDate >= date && orderDate < nextDate && o.status !== 'cancelled';
+      });
+
+      const dayPOSSales = rawPOSSales.filter(s => {
+        const saleDate = new Date(s.created_at);
+        return saleDate >= date && saleDate < nextDate;
+      });
+
+      const dayName = daysCount === 1 
+        ? 'Hoje' 
+        : daysCount <= 7 
+          ? date.toLocaleDateString('pt-BR', { weekday: 'short' })
+          : date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+
+      last7Days.push({
+        name: dayName,
+        vendas: dayOrders.length,
+        receita: dayOrders.reduce((sum, o) => sum + Number(o.total), 0),
+      });
+
+      last7DaysPOS.push({
+        name: dayName,
+        vendas: dayPOSSales.length,
+        receita: dayPOSSales.reduce((sum, s) => sum + Number(s.total), 0),
+      });
+    }
+    
+    return { salesData: last7Days, posSalesData: last7DaysPOS };
+  }, [rawOrders, rawPOSSales, periodFilter]);
+
+  // Order status data for pie chart
+  const orderStatusData = stats ? [
+    { name: 'Pendentes', value: stats.pendingOrders, color: 'hsl(var(--warning))' },
+    { name: 'Concluídos', value: stats.completedOrders, color: 'hsl(var(--success))' },
+    { name: 'Cancelados', value: stats.cancelledOrders, color: 'hsl(var(--destructive))' },
+  ].filter(d => d.value > 0) : [];
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
@@ -268,23 +345,46 @@ const Dashboard = () => {
     );
   };
 
-  const orderStatusData = stats ? [
-    { name: 'Pendentes', value: stats.pendingOrders, color: 'hsl(var(--warning))' },
-    { name: 'Concluídos', value: stats.completedOrders, color: 'hsl(var(--success))' },
-    { name: 'Cancelados', value: stats.cancelledOrders, color: 'hsl(var(--destructive))' },
-  ].filter(d => d.value > 0) : [];
+  const getPeriodLabel = (filter: PeriodFilter) => {
+    switch (filter) {
+      case 'today': return 'Hoje';
+      case 'week': return 'Últimos 7 dias';
+      case 'month': return 'Últimos 30 dias';
+      case 'all': return 'Todo período';
+    }
+  };
 
   return (
     <AdminLayout>
       <div className="space-y-8 animate-fade-in">
-        {/* Header */}
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">
-            Olá, {profile?.full_name?.split(' ')[0] || 'Admin'}! 👋
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Aqui está um resumo do seu painel administrativo.
-          </p>
+        {/* Header with Period Filter */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">
+              Olá, {profile?.full_name?.split(' ')[0] || 'Admin'}! 👋
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              Aqui está um resumo do seu painel administrativo.
+            </p>
+          </div>
+          
+          {/* Period Filter */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <div className="flex bg-muted rounded-lg p-1 gap-1">
+              {(['today', 'week', 'month', 'all'] as PeriodFilter[]).map((period) => (
+                <Button
+                  key={period}
+                  variant={periodFilter === period ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setPeriodFilter(period)}
+                  className="text-xs px-3"
+                >
+                  {getPeriodLabel(period)}
+                </Button>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* Main Stats Grid */}
@@ -305,10 +405,10 @@ const Dashboard = () => {
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground">Receita Total</p>
+                      <p className="text-sm font-medium text-muted-foreground">Receita Online</p>
                       <p className="text-2xl font-bold mt-1">{formatCurrency(stats?.totalRevenue || 0)}</p>
                       <p className="text-xs text-muted-foreground mt-1">
-                        Hoje: {formatCurrency(stats?.todayRevenue || 0)}
+                        {getPeriodLabel(periodFilter)}
                       </p>
                     </div>
                     <div className="bg-success/10 p-3 rounded-xl">
@@ -502,7 +602,7 @@ const Dashboard = () => {
                         <p className="text-sm font-medium text-muted-foreground">Receita PDV</p>
                         <p className="text-2xl font-bold mt-1">{formatCurrency(posStats?.totalRevenue || 0)}</p>
                         <p className="text-xs text-muted-foreground mt-1">
-                          Hoje: {formatCurrency(posStats?.todayRevenue || 0)}
+                          {getPeriodLabel(periodFilter)}
                         </p>
                       </div>
                       <div className="bg-success/10 p-3 rounded-xl">
@@ -519,7 +619,7 @@ const Dashboard = () => {
                         <p className="text-sm font-medium text-muted-foreground">Vendas PDV</p>
                         <p className="text-2xl font-bold mt-1">{posStats?.totalSales || 0}</p>
                         <p className="text-xs text-muted-foreground mt-1">
-                          Hoje: {posStats?.todaySales || 0} vendas
+                          {getPeriodLabel(periodFilter)}
                         </p>
                       </div>
                       <div className="bg-primary/10 p-3 rounded-xl">
@@ -553,7 +653,7 @@ const Dashboard = () => {
                         <p className="text-sm font-medium text-muted-foreground">Descontos</p>
                         <p className="text-2xl font-bold mt-1">{formatCurrency(posStats?.totalDiscount || 0)}</p>
                         <p className="text-xs text-muted-foreground mt-1">
-                          Hoje: {formatCurrency(posStats?.todayDiscount || 0)}
+                          {getPeriodLabel(periodFilter)}
                         </p>
                       </div>
                       <div className="bg-destructive/10 p-3 rounded-xl">
