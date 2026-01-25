@@ -42,6 +42,7 @@ export interface CreateProductData {
   width_cm?: number;
   height_cm?: number;
   depth_cm?: number;
+  barcode?: string;
 }
 
 export const productsService = {
@@ -80,6 +81,7 @@ export const productsService = {
       width_cm: input.width_cm ?? null,
       height_cm: input.height_cm ?? null,
       depth_cm: input.depth_cm ?? null,
+      barcode: input.barcode || null,
     };
 
     const { data, error } = await supabase
@@ -109,6 +111,7 @@ export const productsService = {
     if (input.width_cm !== undefined) updateData.width_cm = input.width_cm;
     if (input.height_cm !== undefined) updateData.height_cm = input.height_cm;
     if (input.depth_cm !== undefined) updateData.depth_cm = input.depth_cm;
+    if (input.barcode !== undefined) updateData.barcode = input.barcode;
 
     const { data, error } = await supabase
       .from('products')

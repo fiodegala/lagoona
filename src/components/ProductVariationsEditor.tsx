@@ -245,6 +245,7 @@ const ProductVariationsEditor = ({ productId, basePrice }: ProductVariationsEdit
   const handleManualVariation = async (data: {
     attributeValueIds: string[];
     sku?: string;
+    barcode?: string;
     price?: number;
     stock?: number;
   }) => {
@@ -276,6 +277,7 @@ const ProductVariationsEditor = ({ productId, basePrice }: ProductVariationsEdit
     await variationsService.createVariation({
       product_id: productId,
       sku: data.sku,
+      barcode: data.barcode,
       price: data.price ?? basePrice,
       stock: data.stock ?? 0,
       attribute_value_ids: data.attributeValueIds,
@@ -287,7 +289,7 @@ const ProductVariationsEditor = ({ productId, basePrice }: ProductVariationsEdit
 
   const handleUpdateVariation = async (
     variationId: string,
-    field: 'price' | 'stock' | 'sku' | 'is_active' | 'image_url',
+    field: 'price' | 'stock' | 'sku' | 'barcode' | 'is_active' | 'image_url',
     value: string | number | boolean
   ) => {
     try {
@@ -491,6 +493,7 @@ const ProductVariationsEditor = ({ productId, basePrice }: ProductVariationsEdit
                       <TableHead className="w-10"></TableHead>
                       <TableHead>Variação</TableHead>
                       <TableHead>SKU</TableHead>
+                      <TableHead>Código de Barras</TableHead>
                       <TableHead>Preço</TableHead>
                       <TableHead>Estoque</TableHead>
                       <TableHead>Ativo</TableHead>

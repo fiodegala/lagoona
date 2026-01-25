@@ -19,6 +19,7 @@ export interface ProductVariation {
   id: string;
   product_id: string;
   sku: string | null;
+  barcode: string | null;
   price: number | null;
   stock: number;
   image_url: string | null;
@@ -38,6 +39,7 @@ export interface CreateAttributeData {
 export interface CreateVariationData {
   product_id: string;
   sku?: string;
+  barcode?: string;
   price?: number;
   stock?: number;
   image_url?: string;
@@ -202,6 +204,7 @@ export const variationsService = {
       .insert({
         product_id: data.product_id,
         sku: data.sku || null,
+        barcode: data.barcode || null,
         price: data.price ?? null,
         stock: data.stock ?? 0,
         image_url: data.image_url || null,
@@ -239,6 +242,7 @@ export const variationsService = {
     };
 
     if (data.sku !== undefined) updateData.sku = data.sku;
+    if ((data as { barcode?: string }).barcode !== undefined) updateData.barcode = (data as { barcode?: string }).barcode;
     if (data.price !== undefined) updateData.price = data.price;
     if (data.stock !== undefined) updateData.stock = data.stock;
     if (data.image_url !== undefined) updateData.image_url = data.image_url;
