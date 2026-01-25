@@ -168,6 +168,12 @@ const VariationRow = ({ variation, onUpdate, onDelete }: VariationRowProps) => {
         <Input
           value={variation.barcode || ''}
           onChange={(e) => onUpdate(variation.id, 'barcode', e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              e.currentTarget.blur();
+            }
+          }}
           placeholder="Código"
           className="h-8 w-28"
         />

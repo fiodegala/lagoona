@@ -363,6 +363,11 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
           placeholder="Ex: 7891234567890"
           value={barcode}
           onChange={(e) => setBarcode(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+            }
+          }}
         />
         <p className="text-xs text-muted-foreground">
           {productType === 'variable' || hasVariations
