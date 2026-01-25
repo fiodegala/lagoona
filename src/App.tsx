@@ -79,6 +79,7 @@ const App = () => (
                     <POSPage />
                   </ProtectedRoute>
                 }
+              />
               <Route
                 path="/admin/products"
                 element={
