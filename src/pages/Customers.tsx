@@ -32,7 +32,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Search, Pencil, Trash2, UserPlus, Loader2, Phone, Mail } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2, UserPlus, Loader2, Phone, Mail, MapPin } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Textarea } from '@/components/ui/textarea';
@@ -74,6 +74,7 @@ const Customers = () => {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [formData, setFormData] = useState<CustomerFormData>(emptyFormData);
+  const [isLoadingCep, setIsLoadingCep] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -180,6 +181,58 @@ const Customers = () => {
   const handleOpenDelete = (customer: Customer) => {
     setSelectedCustomer(customer);
     setIsDeleteOpen(true);
+  };
+
+  const handleCepChange = async (cep: string) => {
+    // Remove non-digits
+    const cleanCep = cep.replace(/\D/g, '');
+    
+    // Format CEP with mask
+    let formattedCep = cleanCep;
+    if (cleanCep.length > 5) {
+      formattedCep = `${cleanCep.slice(0, 5)}-${cleanCep.slice(5, 8)}`;
+    }
+    
+    setFormData(prev => ({ ...prev, zip_code: formattedCep }));
+
+    // Only search if we have 8 digits
+    if (cleanCep.length === 8) {
+      setIsLoadingCep(true);
+      try {
+        const response = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
+        const data = await response.json();
+        
+        if (data.erro) {
+          toast({
+            title: 'CEP não encontrado',
+            description: 'Verifique o CEP informado e tente novamente.',
+            variant: 'destructive',
+          });
+          return;
+        }
+
+        setFormData(prev => ({
+          ...prev,
+          address: data.logradouro || prev.address,
+          city: data.localidade || prev.city,
+          state: data.uf || prev.state,
+        }));
+
+        toast({
+          title: 'Endereço encontrado',
+          description: `${data.logradouro}, ${data.localidade}/${data.uf}`,
+        });
+      } catch (error) {
+        console.error('Error fetching CEP:', error);
+        toast({
+          title: 'Erro ao buscar CEP',
+          description: 'Não foi possível consultar o CEP. Tente novamente.',
+          variant: 'destructive',
+        });
+      } finally {
+        setIsLoadingCep(false);
+      }
+    }
   };
 
   const filteredCustomers = customers.filter(
@@ -367,17 +420,30 @@ const Customers = () => {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="address">Endereço</Label>
-                <Input
-                  id="address"
-                  value={formData.address || ''}
-                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                  placeholder="Rua, número, complemento"
-                />
-              </div>
-
               <div className="grid gap-4 sm:grid-cols-3">
+                <div className="space-y-2">
+                  <Label htmlFor="zip_code" className="flex items-center gap-2">
+                    CEP
+                    {isLoadingCep && <Loader2 className="h-3 w-3 animate-spin" />}
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="zip_code"
+                      value={formData.zip_code || ''}
+                      onChange={(e) => handleCepChange(e.target.value)}
+                      placeholder="00000-000"
+                      maxLength={9}
+                    />
+                    {isLoadingCep && (
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        <MapPin className="h-4 w-4 text-muted-foreground animate-pulse" />
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Digite o CEP para preencher automaticamente
+                  </p>
+                </div>
                 <div className="space-y-2">
                   <Label htmlFor="city">Cidade</Label>
                   <Input
@@ -397,15 +463,16 @@ const Customers = () => {
                     maxLength={2}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="zip_code">CEP</Label>
-                  <Input
-                    id="zip_code"
-                    value={formData.zip_code || ''}
-                    onChange={(e) => setFormData({ ...formData, zip_code: e.target.value })}
-                    placeholder="00000-000"
-                  />
-                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="address">Endereço</Label>
+                <Input
+                  id="address"
+                  value={formData.address || ''}
+                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                  placeholder="Rua, número, complemento"
+                />
               </div>
 
               <div className="space-y-2">
