@@ -355,8 +355,8 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
         </div>
       </div>
 
-      {/* Barcode field - only for simple products */}
-      {productType === 'simple' && (
+      {/* Barcode field - show for simple products or when editing a product without variations */}
+      {(productType === 'simple' || (isEditing && !hasVariations)) && (
         <div className="space-y-2">
           <Label htmlFor="barcode">Código de Barras</Label>
           <Input
