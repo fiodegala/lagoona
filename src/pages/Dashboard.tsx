@@ -7,7 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { 
   Package, ShoppingCart, Key, TrendingUp, Users, DollarSign, 
   Star, Tag, ArrowUpRight, ArrowDownRight, Clock, CheckCircle,
-  XCircle, AlertCircle
+  XCircle, AlertCircle, Store, CreditCard, Banknote, QrCode, Percent
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Link } from 'react-router-dom';
@@ -31,6 +31,23 @@ interface DashboardStats {
   totalCategories: number;
 }
 
+interface POSStats {
+  totalSales: number;
+  todaySales: number;
+  totalRevenue: number;
+  todayRevenue: number;
+  totalDiscount: number;
+  todayDiscount: number;
+  paymentMethods: {
+    cash: { count: number; total: number };
+    card: { count: number; total: number; credit: number; debit: number };
+    pix: { count: number; total: number };
+    mixed: { count: number; total: number };
+  };
+  averageTicket: number;
+  installmentSales: number;
+}
+
 interface RecentOrder {
   id: string;
   customer_name: string | null;
@@ -40,11 +57,24 @@ interface RecentOrder {
   created_at: string;
 }
 
+interface RecentPOSSale {
+  id: string;
+  customer_name: string | null;
+  total: number;
+  payment_method: string;
+  payment_details: Record<string, unknown> | null;
+  discount_amount: number | null;
+  created_at: string;
+}
+
 const Dashboard = () => {
   const { profile, roles } = useAuth();
   const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [posStats, setPosStats] = useState<POSStats | null>(null);
   const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
+  const [recentPOSSales, setRecentPOSSales] = useState<RecentPOSSale[]>([]);
   const [salesData, setSalesData] = useState<{ name: string; vendas: number; receita: number }[]>([]);
+  const [posSalesData, setPosSalesData] = useState<{ name: string; vendas: number; receita: number }[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -61,13 +91,15 @@ const Dashboard = () => {
         ordersRes,
         reviewsRes,
         couponsRes,
-        categoriesRes
+        categoriesRes,
+        posSalesRes
       ] = await Promise.all([
         supabase.from('products').select('id, is_active'),
         supabase.from('orders').select('id, status, total, customer_name, customer_email, created_at'),
         supabase.from('product_reviews').select('id, is_approved'),
         supabase.from('coupons').select('id, is_active'),
         supabase.from('categories').select('id, is_active'),
+        supabase.from('pos_sales').select('*').order('created_at', { ascending: false }),
       ]);
 
       const products = productsRes.data || [];
@@ -75,6 +107,7 @@ const Dashboard = () => {
       const reviews = reviewsRes.data || [];
       const coupons = couponsRes.data || [];
       const categories = categoriesRes.data || [];
+      const posSales = posSalesRes.data || [];
 
       // Calculate stats
       const today = new Date();
@@ -100,6 +133,55 @@ const Dashboard = () => {
         totalCategories: categories.filter(c => c.is_active).length,
       });
 
+      // Calculate POS Stats
+      const todayPOSSales = posSales.filter(s => new Date(s.created_at) >= today);
+      
+      const paymentMethods = {
+        cash: { count: 0, total: 0 },
+        card: { count: 0, total: 0, credit: 0, debit: 0 },
+        pix: { count: 0, total: 0 },
+        mixed: { count: 0, total: 0 },
+      };
+
+      let installmentSales = 0;
+
+      posSales.forEach(sale => {
+        const method = sale.payment_method as keyof typeof paymentMethods;
+        if (paymentMethods[method]) {
+          paymentMethods[method].count++;
+          paymentMethods[method].total += Number(sale.total);
+          
+          if (method === 'card' && sale.payment_details) {
+            const details = sale.payment_details as Record<string, unknown>;
+            if (details.cardType === 'credit') {
+              paymentMethods.card.credit++;
+              if ((details.installments as number) > 1) {
+                installmentSales++;
+              }
+            } else if (details.cardType === 'debit') {
+              paymentMethods.card.debit++;
+            }
+          }
+        }
+      });
+
+      const totalPOSRevenue = posSales.reduce((sum, s) => sum + Number(s.total), 0);
+      const totalPOSDiscount = posSales.reduce((sum, s) => sum + Number(s.discount_amount || 0), 0);
+      const todayPOSRevenue = todayPOSSales.reduce((sum, s) => sum + Number(s.total), 0);
+      const todayPOSDiscount = todayPOSSales.reduce((sum, s) => sum + Number(s.discount_amount || 0), 0);
+
+      setPosStats({
+        totalSales: posSales.length,
+        todaySales: todayPOSSales.length,
+        totalRevenue: totalPOSRevenue,
+        todayRevenue: todayPOSRevenue,
+        totalDiscount: totalPOSDiscount,
+        todayDiscount: todayPOSDiscount,
+        paymentMethods,
+        averageTicket: posSales.length > 0 ? totalPOSRevenue / posSales.length : 0,
+        installmentSales,
+      });
+
       // Recent orders
       setRecentOrders(
         orders
@@ -107,8 +189,22 @@ const Dashboard = () => {
           .slice(0, 5)
       );
 
-      // Sales data for chart (last 7 days)
+      // Recent POS sales
+      setRecentPOSSales(
+        posSales.slice(0, 5).map(sale => ({
+          id: sale.id,
+          customer_name: sale.customer_name,
+          total: Number(sale.total),
+          payment_method: sale.payment_method,
+          payment_details: sale.payment_details as Record<string, unknown> | null,
+          discount_amount: sale.discount_amount ? Number(sale.discount_amount) : null,
+          created_at: sale.created_at,
+        }))
+      );
+
+      // Sales data for chart (last 7 days) - Online
       const last7Days = [];
+      const last7DaysPOS = [];
       for (let i = 6; i >= 0; i--) {
         const date = new Date();
         date.setDate(date.getDate() - i);
@@ -121,13 +217,27 @@ const Dashboard = () => {
           return orderDate >= date && orderDate < nextDate && o.status !== 'cancelled';
         });
 
+        const dayPOSSales = posSales.filter(s => {
+          const saleDate = new Date(s.created_at);
+          return saleDate >= date && saleDate < nextDate;
+        });
+
+        const dayName = date.toLocaleDateString('pt-BR', { weekday: 'short' });
+
         last7Days.push({
-          name: date.toLocaleDateString('pt-BR', { weekday: 'short' }),
+          name: dayName,
           vendas: dayOrders.length,
           receita: dayOrders.reduce((sum, o) => sum + Number(o.total), 0),
         });
+
+        last7DaysPOS.push({
+          name: dayName,
+          vendas: dayPOSSales.length,
+          receita: dayPOSSales.reduce((sum, s) => sum + Number(s.total), 0),
+        });
       }
       setSalesData(last7Days);
+      setPosSalesData(last7DaysPOS);
 
     } catch (error) {
       console.error('Error loading dashboard:', error);
@@ -358,6 +468,321 @@ const Dashboard = () => {
               ) : (
                 <div className="h-[200px] flex items-center justify-center text-muted-foreground text-sm">
                   Nenhum pedido registrado
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* POS Sales Section */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Store className="h-5 w-5 text-primary" />
+            <h2 className="text-lg font-semibold">Vendas PDV (Loja Física)</h2>
+          </div>
+          
+          {/* POS Stats Grid */}
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {isLoading ? (
+              Array.from({ length: 4 }).map((_, i) => (
+                <Card key={i} className="card-elevated">
+                  <CardContent className="p-6">
+                    <Skeleton className="h-4 w-24 mb-2" />
+                    <Skeleton className="h-8 w-20 mb-1" />
+                    <Skeleton className="h-3 w-16" />
+                  </CardContent>
+                </Card>
+              ))
+            ) : (
+              <>
+                <Card className="card-elevated border-l-4 border-l-success">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Receita PDV</p>
+                        <p className="text-2xl font-bold mt-1">{formatCurrency(posStats?.totalRevenue || 0)}</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Hoje: {formatCurrency(posStats?.todayRevenue || 0)}
+                        </p>
+                      </div>
+                      <div className="bg-success/10 p-3 rounded-xl">
+                        <DollarSign className="h-6 w-6 text-success" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="card-elevated border-l-4 border-l-primary">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Vendas PDV</p>
+                        <p className="text-2xl font-bold mt-1">{posStats?.totalSales || 0}</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Hoje: {posStats?.todaySales || 0} vendas
+                        </p>
+                      </div>
+                      <div className="bg-primary/10 p-3 rounded-xl">
+                        <Store className="h-6 w-6 text-primary" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="card-elevated border-l-4 border-l-warning">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Ticket Médio</p>
+                        <p className="text-2xl font-bold mt-1">{formatCurrency(posStats?.averageTicket || 0)}</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Por venda no PDV
+                        </p>
+                      </div>
+                      <div className="bg-warning/10 p-3 rounded-xl">
+                        <TrendingUp className="h-6 w-6 text-warning" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="card-elevated border-l-4 border-l-destructive">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Descontos</p>
+                        <p className="text-2xl font-bold mt-1">{formatCurrency(posStats?.totalDiscount || 0)}</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Hoje: {formatCurrency(posStats?.todayDiscount || 0)}
+                        </p>
+                      </div>
+                      <div className="bg-destructive/10 p-3 rounded-xl">
+                        <Percent className="h-6 w-6 text-destructive" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </>
+            )}
+          </div>
+
+          {/* POS Charts and Details */}
+          <div className="grid gap-6 lg:grid-cols-3">
+            {/* POS Sales Chart */}
+            <Card className="card-elevated lg:col-span-2">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Store className="h-5 w-5 text-primary" />
+                  Vendas PDV - Últimos 7 Dias
+                </CardTitle>
+                <CardDescription>
+                  Acompanhe o desempenho das vendas da loja física
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {isLoading ? (
+                  <Skeleton className="h-[250px] w-full" />
+                ) : (
+                  <ResponsiveContainer width="100%" height={250}>
+                    <BarChart data={posSalesData}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                      <XAxis dataKey="name" className="text-xs" />
+                      <YAxis className="text-xs" tickFormatter={(value) => `R$${value}`} />
+                      <Tooltip 
+                        formatter={(value: number, name: string) => [
+                          name === 'receita' ? formatCurrency(value) : value, 
+                          name === 'receita' ? 'Receita' : 'Vendas'
+                        ]}
+                        contentStyle={{ 
+                          backgroundColor: 'hsl(var(--card))', 
+                          border: '1px solid hsl(var(--border))',
+                          borderRadius: '8px'
+                        }}
+                      />
+                      <Bar dataKey="receita" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Payment Methods Breakdown */}
+            <Card className="card-elevated">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <CreditCard className="h-5 w-5 text-primary" />
+                  Formas de Pagamento
+                </CardTitle>
+                <CardDescription>
+                  Distribuição por tipo de pagamento
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {isLoading ? (
+                  <Skeleton className="h-[200px] w-full" />
+                ) : posStats ? (
+                  <div className="space-y-4">
+                    {/* Cash */}
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                      <div className="flex items-center gap-3">
+                        <div className="bg-green-500/10 p-2 rounded-lg">
+                          <Banknote className="h-4 w-4 text-green-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">Dinheiro</p>
+                          <p className="text-xs text-muted-foreground">{posStats.paymentMethods.cash.count} vendas</p>
+                        </div>
+                      </div>
+                      <p className="font-semibold">{formatCurrency(posStats.paymentMethods.cash.total)}</p>
+                    </div>
+
+                    {/* Card */}
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                      <div className="flex items-center gap-3">
+                        <div className="bg-blue-500/10 p-2 rounded-lg">
+                          <CreditCard className="h-4 w-4 text-blue-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">Cartão</p>
+                          <p className="text-xs text-muted-foreground">
+                            {posStats.paymentMethods.card.count} vendas 
+                            ({posStats.paymentMethods.card.credit} créd, {posStats.paymentMethods.card.debit} déb)
+                          </p>
+                        </div>
+                      </div>
+                      <p className="font-semibold">{formatCurrency(posStats.paymentMethods.card.total)}</p>
+                    </div>
+
+                    {/* PIX */}
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                      <div className="flex items-center gap-3">
+                        <div className="bg-teal-500/10 p-2 rounded-lg">
+                          <QrCode className="h-4 w-4 text-teal-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">PIX</p>
+                          <p className="text-xs text-muted-foreground">{posStats.paymentMethods.pix.count} vendas</p>
+                        </div>
+                      </div>
+                      <p className="font-semibold">{formatCurrency(posStats.paymentMethods.pix.total)}</p>
+                    </div>
+
+                    {/* Mixed */}
+                    {posStats.paymentMethods.mixed.count > 0 && (
+                      <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                        <div className="flex items-center gap-3">
+                          <div className="bg-purple-500/10 p-2 rounded-lg">
+                            <DollarSign className="h-4 w-4 text-purple-600" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium">Misto</p>
+                            <p className="text-xs text-muted-foreground">{posStats.paymentMethods.mixed.count} vendas</p>
+                          </div>
+                        </div>
+                        <p className="font-semibold">{formatCurrency(posStats.paymentMethods.mixed.total)}</p>
+                      </div>
+                    )}
+
+                    {/* Installment info */}
+                    {posStats.installmentSales > 0 && (
+                      <div className="pt-2 border-t">
+                        <p className="text-xs text-muted-foreground">
+                          <span className="font-medium text-foreground">{posStats.installmentSales}</span> vendas parceladas no crédito
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="h-[200px] flex items-center justify-center text-muted-foreground text-sm">
+                    Nenhuma venda registrada
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Recent POS Sales */}
+          <Card className="card-elevated">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Clock className="h-5 w-5 text-primary" />
+                  Vendas Recentes no PDV
+                </CardTitle>
+                <CardDescription>
+                  Últimas vendas realizadas na loja física
+                </CardDescription>
+              </div>
+              <Link 
+                to="/admin/pos" 
+                className="text-sm text-primary hover:underline flex items-center gap-1"
+              >
+                Ir para PDV <ArrowUpRight className="h-3 w-3" />
+              </Link>
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                <div className="space-y-4">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <div key={i} className="flex items-center justify-between">
+                      <div className="space-y-1">
+                        <Skeleton className="h-4 w-32" />
+                        <Skeleton className="h-3 w-24" />
+                      </div>
+                      <Skeleton className="h-6 w-20" />
+                    </div>
+                  ))}
+                </div>
+              ) : recentPOSSales.length > 0 ? (
+                <div className="space-y-3">
+                  {recentPOSSales.map((sale) => {
+                    const paymentDetails = sale.payment_details;
+                    const cardType = paymentDetails?.cardType as string | undefined;
+                    const installments = paymentDetails?.installments as number | undefined;
+                    
+                    return (
+                      <div key={sale.id} className="flex items-center justify-between py-3 border-b last:border-0">
+                        <div className="flex items-center gap-3">
+                          <div className={`p-2 rounded-lg ${
+                            sale.payment_method === 'cash' ? 'bg-green-500/10' :
+                            sale.payment_method === 'card' ? 'bg-blue-500/10' :
+                            sale.payment_method === 'pix' ? 'bg-teal-500/10' : 'bg-purple-500/10'
+                          }`}>
+                            {sale.payment_method === 'cash' && <Banknote className="h-4 w-4 text-green-600" />}
+                            {sale.payment_method === 'card' && <CreditCard className="h-4 w-4 text-blue-600" />}
+                            {sale.payment_method === 'pix' && <QrCode className="h-4 w-4 text-teal-600" />}
+                            {sale.payment_method === 'mixed' && <DollarSign className="h-4 w-4 text-purple-600" />}
+                          </div>
+                          <div>
+                            <p className="font-medium text-sm">
+                              {sale.customer_name || 'Cliente não identificado'}
+                            </p>
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                              <span>{new Date(sale.created_at).toLocaleString('pt-BR', { 
+                                day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' 
+                              })}</span>
+                              {sale.payment_method === 'card' && cardType && (
+                                <Badge variant="outline" className="text-xs py-0">
+                                  {cardType === 'credit' ? 'Crédito' : 'Débito'}
+                                  {installments && installments > 1 && ` ${installments}x`}
+                                </Badge>
+                              )}
+                              {sale.discount_amount && sale.discount_amount > 0 && (
+                                <Badge variant="secondary" className="text-xs py-0">
+                                  -{formatCurrency(sale.discount_amount)}
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <p className="font-semibold">{formatCurrency(sale.total)}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="py-8 text-center text-muted-foreground text-sm">
+                  Nenhuma venda no PDV ainda
                 </div>
               )}
             </CardContent>
