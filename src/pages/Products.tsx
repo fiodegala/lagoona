@@ -38,7 +38,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
-import { Package, Plus, Trash2, Loader2, Eye, EyeOff, Filter, Search, ChevronLeft, ChevronRight, Download, FileSpreadsheet, Upload, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { Package, Plus, Trash2, Loader2, Eye, EyeOff, Filter, Search, ChevronLeft, ChevronRight, Download, FileSpreadsheet, Upload, ArrowUpDown, ArrowUp, ArrowDown, ScanBarcode } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -49,6 +49,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
 import { productsService, Product, categoriesService, Category } from '@/services/products';
+import { variationsService } from '@/services/variations';
 import ProductFormModal from '@/components/ProductFormModal';
 import ProductImportModal from '@/components/ProductImportModal';
 import ProductTableRow from '@/components/ProductTableRow';
@@ -68,6 +69,8 @@ const Products = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [barcodeSearch, setBarcodeSearch] = useState('');
+  const [productVariationBarcodes, setProductVariationBarcodes] = useState<Record<string, string[]>>({});
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [sortField, setSortField] = useState<SortField>(null);
@@ -83,6 +86,24 @@ const Products = () => {
       ]);
       setProducts(productsData);
       setCategories(categoriesData);
+      
+      // Load variation barcodes for barcode search (in parallel)
+      const variationPromises = productsData.map(async (product) => {
+        const variations = await variationsService.getVariationsByProduct(product.id);
+        const barcodes = variations
+          .map(v => v.barcode)
+          .filter((b): b is string => !!b);
+        return { productId: product.id, barcodes };
+      });
+      
+      const variationResults = await Promise.all(variationPromises);
+      const barcodeMap: Record<string, string[]> = {};
+      for (const { productId, barcodes } of variationResults) {
+        if (barcodes.length > 0) {
+          barcodeMap[productId] = barcodes;
+        }
+      }
+      setProductVariationBarcodes(barcodeMap);
     } catch (error) {
       console.error('Error loading data:', error);
       toast.error('Erro ao carregar dados');
@@ -101,6 +122,13 @@ const Products = () => {
         product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         product.description?.toLowerCase().includes(searchQuery.toLowerCase());
       
+      // Barcode search - check product barcode and variation barcodes
+      const matchesBarcode = barcodeSearch === '' || 
+        product.barcode?.toLowerCase().includes(barcodeSearch.toLowerCase()) ||
+        productVariationBarcodes[product.id]?.some(b => 
+          b.toLowerCase().includes(barcodeSearch.toLowerCase())
+        );
+      
       const matchesCategory = selectedCategory === 'all' ||
         (selectedCategory === 'none' && !product.category_id) ||
         product.category_id === selectedCategory;
@@ -109,7 +137,7 @@ const Products = () => {
         (selectedStatus === 'active' && product.is_active) ||
         (selectedStatus === 'inactive' && !product.is_active);
       
-      return matchesSearch && matchesCategory && matchesStatus;
+      return matchesSearch && matchesBarcode && matchesCategory && matchesStatus;
     });
 
     // Apply sorting
@@ -134,12 +162,12 @@ const Products = () => {
     }
 
     return result;
-  }, [products, searchQuery, selectedCategory, selectedStatus, sortField, sortDirection]);
+  }, [products, searchQuery, barcodeSearch, productVariationBarcodes, selectedCategory, selectedStatus, sortField, sortDirection]);
 
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, selectedCategory, selectedStatus, sortField, sortDirection]);
+  }, [searchQuery, barcodeSearch, selectedCategory, selectedStatus, sortField, sortDirection]);
 
   // Pagination calculations
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
@@ -490,12 +518,21 @@ const Products = () => {
         </div>
 
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-          <div className="relative w-full sm:w-[280px]">
+          <div className="relative w-full sm:w-[240px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Buscar produtos..."
+              placeholder="Buscar por nome..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+          <div className="relative w-full sm:w-[200px]">
+            <ScanBarcode className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Código de barras..."
+              value={barcodeSearch}
+              onChange={(e) => setBarcodeSearch(e.target.value)}
               className="pl-9"
             />
           </div>
