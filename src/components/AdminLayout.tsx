@@ -18,6 +18,7 @@ import {
   Star,
   Tag,
   Monitor,
+  Target,
 } from 'lucide-react';
 import logoLagoona from '@/assets/logo-lagoona-white.png';
 import { Button } from '@/components/ui/button';
@@ -51,6 +52,7 @@ const navItems = [
 
 const settingsItems = [
   { icon: Key, label: 'API Keys', path: '/admin/settings/api-keys' },
+  { icon: Target, label: 'Metas de Vendas', path: '/admin/settings' },
   { icon: Settings, label: 'Configurações', path: '/admin/settings' },
 ];
 
