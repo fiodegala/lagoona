@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import AdminLayout from '@/components/AdminLayout';
 import { Card, CardContent, CardDescription, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -60,6 +61,7 @@ type SortField = 'name' | 'price' | 'stock' | null;
 type SortDirection = 'asc' | 'desc';
 
 const Products = () => {
+  const { canManageProducts } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -488,10 +490,12 @@ const Products = () => {
             <p className="text-muted-foreground mt-1">Gerencie seu catálogo de produtos</p>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" className="gap-2" onClick={() => setImportOpen(true)}>
-              <Upload className="h-4 w-4" />
-              Importar
-            </Button>
+            {canManageProducts && (
+              <Button variant="outline" className="gap-2" onClick={() => setImportOpen(true)}>
+                <Upload className="h-4 w-4" />
+                Importar
+              </Button>
+            )}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="gap-2" disabled={filteredProducts.length === 0}>
@@ -510,10 +514,12 @@ const Products = () => {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Button className="gap-2" onClick={handleCreate}>
-              <Plus className="h-4 w-4" />
-              Novo Produto
-            </Button>
+            {canManageProducts && (
+              <Button className="gap-2" onClick={handleCreate}>
+                <Plus className="h-4 w-4" />
+                Novo Produto
+              </Button>
+            )}
           </div>
         </div>
 
@@ -738,6 +744,7 @@ const Products = () => {
                         getCategoryName={getCategoryName}
                         formatCurrency={formatCurrency}
                         highlightBarcode={barcodeSearch}
+                        canManageProducts={canManageProducts}
                       />
                     ))}
                   </TableBody>

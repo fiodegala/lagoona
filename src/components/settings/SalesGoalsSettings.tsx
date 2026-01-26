@@ -3,9 +3,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Target, TrendingUp, Calendar, Loader2 } from 'lucide-react';
+import { Target, TrendingUp, Calendar, Loader2, Lock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface SalesGoal {
   id: string;
@@ -15,6 +16,7 @@ interface SalesGoal {
 }
 
 const SalesGoalsSettings = () => {
+  const { canManageGoals } = useAuth();
   const [goals, setGoals] = useState<SalesGoal[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -156,6 +158,14 @@ const SalesGoalsSettings = () => {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
+        {!canManageGoals && (
+          <div className="flex items-center gap-2 p-4 bg-muted rounded-lg">
+            <Lock className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">
+              Você não tem permissão para editar as metas de vendas
+            </span>
+          </div>
+        )}
         <div className="grid gap-6 sm:grid-cols-2">
           <div className="space-y-3">
             <div className="flex items-center gap-2">
@@ -175,6 +185,7 @@ const SalesGoalsSettings = () => {
                 onChange={(e) => setDailyGoal(e.target.value)}
                 className="pl-10"
                 placeholder="1000"
+                disabled={!canManageGoals}
               />
             </div>
             <p className="text-xs text-muted-foreground">
@@ -200,6 +211,7 @@ const SalesGoalsSettings = () => {
                 onChange={(e) => setMonthlyGoal(e.target.value)}
                 className="pl-10"
                 placeholder="30000"
+                disabled={!canManageGoals}
               />
             </div>
             <p className="text-xs text-muted-foreground">
@@ -212,7 +224,7 @@ const SalesGoalsSettings = () => {
           <p className="text-sm text-muted-foreground">
             As metas são usadas para calcular o progresso no dashboard
           </p>
-          <Button onClick={handleSave} disabled={saving}>
+          <Button onClick={handleSave} disabled={saving || !canManageGoals}>
             {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Salvar metas
           </Button>
