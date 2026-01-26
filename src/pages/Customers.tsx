@@ -32,7 +32,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Search, Pencil, Trash2, UserPlus, Loader2, Phone, Mail, MapPin, History } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2, UserPlus, Loader2, Phone, Mail, MapPin, History, Check, X } from 'lucide-react';
 import CustomerPurchaseHistory from '@/components/customers/CustomerPurchaseHistory';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -538,12 +538,33 @@ const Customers = () => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="document">CPF/CNPJ</Label>
-                  <Input
-                    id="document"
-                    value={formData.document || ''}
-                    onChange={(e) => handleDocumentChange(e.target.value)}
-                    placeholder="000.000.000-00"
-                  />
+                  <div className="relative">
+                    <Input
+                      id="document"
+                      value={formData.document || ''}
+                      onChange={(e) => handleDocumentChange(e.target.value)}
+                      placeholder="000.000.000-00"
+                      className={formData.document ? (
+                        validateDocument(formData.document).valid 
+                          ? 'pr-10 border-primary focus-visible:ring-primary' 
+                          : 'pr-10 border-destructive focus-visible:ring-destructive'
+                      ) : ''}
+                    />
+                    {formData.document && formData.document.replace(/\D/g, '').length >= 11 && (
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        {validateDocument(formData.document).valid ? (
+                          <Check className="h-4 w-4 text-primary" />
+                        ) : (
+                          <X className="h-4 w-4 text-destructive" />
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  {formData.document && formData.document.replace(/\D/g, '').length >= 11 && !validateDocument(formData.document).valid && (
+                    <p className="text-xs text-destructive">
+                      {validateDocument(formData.document).message}
+                    </p>
+                  )}
                 </div>
               </div>
 
