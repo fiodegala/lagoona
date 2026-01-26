@@ -5,6 +5,7 @@ import ProductSearch, { ProductResult } from '@/components/pos/ProductSearch';
 import ProductGrid from '@/components/pos/ProductGrid';
 import POSCart, { CartItem } from '@/components/pos/POSCart';
 import PaymentPanel from '@/components/pos/PaymentPanel';
+import CustomerSelector, { Customer } from '@/components/pos/CustomerSelector';
 import { OpenSessionModal, CloseSessionModal, CashMovementModal } from '@/components/pos/CashDrawerModals';
 import { posService, POSSession, CreateSaleData } from '@/services/posService';
 import { offlineService } from '@/services/offlineService';
@@ -25,6 +26,7 @@ const POSPage = () => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [generalDiscount, setGeneralDiscount] = useState<{ type: 'percentage' | 'fixed'; value: number }>({ type: 'percentage', value: 0 });
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
 
   // Modals
   const [openSessionModal, setOpenSessionModal] = useState(false);
@@ -130,6 +132,9 @@ const POSPage = () => {
     const saleData: CreateSaleData = {
       local_id: offlineService.generateLocalId(),
       session_id: session?.id,
+      customer_id: selectedCustomer?.id,
+      customer_name: selectedCustomer?.name,
+      customer_document: selectedCustomer?.document || undefined,
       items: cartItems.map((item) => ({
         product_id: item.product_id,
         variation_id: item.variation_id,
@@ -159,9 +164,10 @@ const POSPage = () => {
       } else {
         await offlineService.savePendingSale(saleData);
       }
-      toast({ title: 'Venda finalizada!', description: `Total: R$ ${total.toFixed(2)}` });
+      toast({ title: 'Venda finalizada!', description: `Total: R$ ${total.toFixed(2)}${selectedCustomer ? ` • Cliente: ${selectedCustomer.name}` : ''}` });
       setCartItems([]);
       setGeneralDiscount({ type: 'percentage', value: 0 });
+      setSelectedCustomer(null);
     } catch (error) {
       console.error('Error processing sale:', error);
       toast({ title: 'Erro ao processar venda', variant: 'destructive' });
@@ -213,8 +219,12 @@ const POSPage = () => {
       <div className="h-full flex">
         {/* Left side - Products */}
         <div className="flex-1 flex flex-col">
-          <div className="p-4 border-b">
+          <div className="p-4 border-b space-y-3">
             <ProductSearch onProductSelect={handleProductSelect} isOnline={isOnline} />
+            <CustomerSelector 
+              selectedCustomer={selectedCustomer} 
+              onSelectCustomer={setSelectedCustomer} 
+            />
           </div>
           <ProductGrid selectedCategoryId={selectedCategoryId} onCategoryChange={setSelectedCategoryId} onProductSelect={handleProductSelect} isOnline={isOnline} />
         </div>
