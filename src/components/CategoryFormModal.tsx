@@ -139,7 +139,7 @@ const CategoryFormModal = ({ open, onClose, onSuccess, category, categories }: C
               <ImageUpload
                 value={formData.image_url || ''}
                 onChange={(url) => setFormData((prev) => ({ ...prev, image_url: url || '' }))}
-                bucket="products"
+                bucket="product-images"
                 folder="categories"
               />
               <p className="text-xs text-muted-foreground">
