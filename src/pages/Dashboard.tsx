@@ -24,6 +24,7 @@ import { format, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { DateRange } from 'react-day-picker';
+import BrazilSalesMap from '@/components/dashboard/BrazilSalesMap';
 
 type PeriodFilter = 'today' | 'week' | 'month' | 'all' | 'custom';
 
@@ -81,16 +82,37 @@ interface RawOrder {
   customer_name: string | null;
   customer_email: string;
   created_at: string;
+  shipping_address: { state?: string; city?: string } | null;
 }
 
 interface RawPOSSale {
   id: string;
   customer_name: string | null;
+  customer_id: string | null;
   total: number;
   payment_method: string;
   payment_details: Record<string, unknown> | null;
   discount_amount: number | null;
   created_at: string;
+}
+
+interface CustomerWithLocation {
+  id: string;
+  state: string | null;
+  city: string | null;
+}
+
+interface SalesByState {
+  [stateCode: string]: {
+    total: number;
+    count: number;
+    cities: {
+      [city: string]: {
+        total: number;
+        count: number;
+      };
+    };
+  };
 }
 
 interface SalesGoal {
@@ -111,6 +133,7 @@ const Dashboard = () => {
   const [coupons, setCoupons] = useState<{ id: string; is_active: boolean }[]>([]);
   const [categories, setCategories] = useState<{ id: string; is_active: boolean }[]>([]);
   const [salesGoals, setSalesGoals] = useState<SalesGoal[]>([]);
+  const [customers, setCustomers] = useState<CustomerWithLocation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -129,26 +152,33 @@ const Dashboard = () => {
         couponsRes,
         categoriesRes,
         posSalesRes,
-        goalsRes
+        goalsRes,
+        customersRes
       ] = await Promise.all([
         supabase.from('products').select('id, is_active'),
-        supabase.from('orders').select('id, status, total, customer_name, customer_email, created_at'),
+        supabase.from('orders').select('id, status, total, customer_name, customer_email, created_at, shipping_address'),
         supabase.from('product_reviews').select('id, is_approved'),
         supabase.from('coupons').select('id, is_active'),
         supabase.from('categories').select('id, is_active'),
         supabase.from('pos_sales').select('*').order('created_at', { ascending: false }),
         supabase.from('sales_goals').select('*').eq('is_active', true),
+        supabase.from('customers').select('id, state, city'),
       ]);
 
       setProducts(productsRes.data || []);
-      setRawOrders(ordersRes.data || []);
+      setRawOrders((ordersRes.data || []).map(order => ({
+        ...order,
+        shipping_address: order.shipping_address as { state?: string; city?: string } | null,
+      })));
       setReviews(reviewsRes.data || []);
       setCoupons(couponsRes.data || []);
       setCategories(categoriesRes.data || []);
       setSalesGoals((goalsRes.data || []) as SalesGoal[]);
+      setCustomers((customersRes.data || []) as CustomerWithLocation[]);
       setRawPOSSales((posSalesRes.data || []).map(sale => ({
         id: sale.id,
         customer_name: sale.customer_name,
+        customer_id: sale.customer_id,
         total: Number(sale.total),
         payment_method: sale.payment_method,
         payment_details: sale.payment_details as Record<string, unknown> | null,
@@ -443,6 +473,57 @@ const Dashboard = () => {
 
     return { salesData: chartData, posSalesData: chartDataPOS, comparisonData };
   }, [rawOrders, rawPOSSales, periodFilter, customDateRange]);
+
+  // Calculate sales by state/city for map
+  const salesByState = useMemo((): SalesByState => {
+    const stateData: SalesByState = {};
+
+    // Process POS sales (using customer location)
+    filteredPOSSales.forEach(sale => {
+      if (!sale.customer_id) return;
+      
+      const customer = customers.find(c => c.id === sale.customer_id);
+      if (!customer?.state) return;
+
+      const stateCode = customer.state.toUpperCase();
+      const city = customer.city || 'Não informado';
+
+      if (!stateData[stateCode]) {
+        stateData[stateCode] = { total: 0, count: 0, cities: {} };
+      }
+      stateData[stateCode].total += sale.total;
+      stateData[stateCode].count++;
+
+      if (!stateData[stateCode].cities[city]) {
+        stateData[stateCode].cities[city] = { total: 0, count: 0 };
+      }
+      stateData[stateCode].cities[city].total += sale.total;
+      stateData[stateCode].cities[city].count++;
+    });
+
+    // Process online orders (using shipping address)
+    filteredOrders.forEach(order => {
+      if (order.status === 'cancelled') return;
+      if (!order.shipping_address?.state) return;
+
+      const stateCode = order.shipping_address.state.toUpperCase();
+      const city = order.shipping_address.city || 'Não informado';
+
+      if (!stateData[stateCode]) {
+        stateData[stateCode] = { total: 0, count: 0, cities: {} };
+      }
+      stateData[stateCode].total += order.total;
+      stateData[stateCode].count++;
+
+      if (!stateData[stateCode].cities[city]) {
+        stateData[stateCode].cities[city] = { total: 0, count: 0 };
+      }
+      stateData[stateCode].cities[city].total += order.total;
+      stateData[stateCode].cities[city].count++;
+    });
+
+    return stateData;
+  }, [filteredPOSSales, filteredOrders, customers]);
 
   // Order status data for pie chart
   const orderStatusData = stats ? [
@@ -1316,6 +1397,9 @@ const Dashboard = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Sales by Region Map */}
+        <BrazilSalesMap salesByState={salesByState} isLoading={isLoading} />
 
         {/* Bottom Row */}
         <div className="grid gap-6 lg:grid-cols-2">
