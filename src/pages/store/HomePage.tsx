@@ -169,9 +169,9 @@ const HomePage = () => {
                   <Link
                     key={category.id}
                     to={`/loja/categoria/${category.slug}`}
-                    className="group w-24 sm:w-28 md:w-32 flex flex-col items-center gap-2 p-4 rounded-xl bg-background hover:shadow-lg transition-all hover:-translate-y-1"
+                    className="group w-32 sm:w-36 md:w-40 flex flex-col items-center gap-3 p-5 rounded-xl bg-background hover:shadow-lg transition-all hover:-translate-y-1"
                   >
-                    <div className="w-14 h-14 rounded-full bg-store-primary/10 flex items-center justify-center overflow-hidden group-hover:scale-110 group-hover:bg-store-primary/20 transition-all">
+                    <div className="w-20 h-20 rounded-full bg-store-primary/10 flex items-center justify-center overflow-hidden group-hover:scale-110 group-hover:bg-store-primary/20 transition-all">
                       {category.image_url ? (
                         <img
                           src={category.image_url}
@@ -179,10 +179,10 @@ const HomePage = () => {
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <span className="text-2xl">{categoryIcons[index % categoryIcons.length]}</span>
+                        <span className="text-3xl">{categoryIcons[index % categoryIcons.length]}</span>
                       )}
                     </div>
-                    <span className="text-xs font-medium text-center line-clamp-2">
+                    <span className="text-sm font-medium text-center line-clamp-2">
                       {category.name}
                     </span>
                   </Link>
