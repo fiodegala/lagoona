@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
-type AppRole = 'admin' | 'manager' | 'support';
+type AppRole = 'admin' | 'manager' | 'support' | 'seller';
 
 interface Profile {
   id: string;
@@ -19,6 +19,10 @@ interface AuthContextType {
   isLoading: boolean;
   isAdmin: boolean;
   isManager: boolean;
+  isSeller: boolean;
+  canManageProducts: boolean;
+  canManageUsers: boolean;
+  canManageGoals: boolean;
   hasRole: (role: AppRole) => boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: Error | null }>;
@@ -129,6 +133,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const hasRole = (role: AppRole) => roles.includes(role);
   const isAdmin = hasRole('admin');
   const isManager = hasRole('manager') || isAdmin;
+  const isSeller = hasRole('seller');
+  const canManageProducts = isAdmin || isManager;
+  const canManageUsers = isAdmin;
+  const canManageGoals = isAdmin || isManager;
 
   return (
     <AuthContext.Provider
@@ -140,6 +148,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isLoading,
         isAdmin,
         isManager,
+        isSeller,
+        canManageProducts,
+        canManageUsers,
+        canManageGoals,
         hasRole,
         signIn,
         signUp,

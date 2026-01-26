@@ -34,6 +34,7 @@ interface ProductTableRowProps {
   getCategoryName: (categoryId: string | null) => string | null;
   formatCurrency: (value: number) => string;
   highlightBarcode?: string;
+  canManageProducts?: boolean;
 }
 
 const ProductTableRow = ({
@@ -47,6 +48,7 @@ const ProductTableRow = ({
   getCategoryName,
   formatCurrency,
   highlightBarcode = '',
+  canManageProducts = true,
 }: ProductTableRowProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [variations, setVariations] = useState<ProductVariation[]>([]);
@@ -216,53 +218,57 @@ const ProductTableRow = ({
               >
                 <Eye className="h-4 w-4" />
               </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className={`h-8 w-8 ${product.is_active ? 'text-success hover:text-success' : 'text-muted-foreground'}`}
-                onClick={onToggleActive}
-                title={product.is_active ? 'Desativar' : 'Ativar'}
-              >
-                <Power className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
-                onClick={onEdit}
-                title="Editar"
-              >
-                <Pencil className="h-4 w-4" />
-              </Button>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
+              {canManageProducts && (
+                <>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 text-destructive hover:text-destructive"
-                    title="Excluir"
+                    className={`h-8 w-8 ${product.is_active ? 'text-success hover:text-success' : 'text-muted-foreground'}`}
+                    onClick={onToggleActive}
+                    title={product.is_active ? 'Desativar' : 'Ativar'}
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Power className="h-4 w-4" />
                   </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Excluir produto?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Esta ação não pode ser desfeita. O produto "{product.name}" será removido permanentemente.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={onDelete}
-                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                    >
-                      Excluir
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={onEdit}
+                    title="Editar"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-destructive hover:text-destructive"
+                        title="Excluir"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Excluir produto?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Esta ação não pode ser desfeita. O produto "{product.name}" será removido permanentemente.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={onDelete}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          Excluir
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </>
+              )}
             </div>
           </TableCell>
         </TableRow>

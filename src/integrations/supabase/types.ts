@@ -1055,6 +1055,9 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_manage_goals: { Args: { _user_id: string }; Returns: boolean }
+      can_manage_products: { Args: { _user_id: string }; Returns: boolean }
+      can_manage_users: { Args: { _user_id: string }; Returns: boolean }
       cleanup_old_nonces: { Args: never; Returns: undefined }
       has_any_admin_role: { Args: { _user_id: string }; Returns: boolean }
       has_role: {
@@ -1068,7 +1071,7 @@ export type Database = {
     }
     Enums: {
       api_key_status: "active" | "revoked" | "expired"
-      app_role: "admin" | "manager" | "support"
+      app_role: "admin" | "manager" | "support" | "seller"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1197,7 +1200,7 @@ export const Constants = {
   public: {
     Enums: {
       api_key_status: ["active", "revoked", "expired"],
-      app_role: ["admin", "manager", "support"],
+      app_role: ["admin", "manager", "support", "seller"],
     },
   },
 } as const
