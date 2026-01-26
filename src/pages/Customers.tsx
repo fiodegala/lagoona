@@ -190,6 +190,46 @@ const Customers = () => {
     setIsHistoryOpen(true);
   };
 
+  // Format phone with mask: (00) 00000-0000 or (00) 0000-0000
+  const formatPhone = (value: string): string => {
+    const digits = value.replace(/\D/g, '').slice(0, 11);
+    if (digits.length === 0) return '';
+    if (digits.length <= 2) return `(${digits}`;
+    if (digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+    if (digits.length <= 10) {
+      return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+    }
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+  };
+
+  // Format CPF/CNPJ with mask: 000.000.000-00 or 00.000.000/0000-00
+  const formatDocument = (value: string): string => {
+    const digits = value.replace(/\D/g, '').slice(0, 14);
+    if (digits.length === 0) return '';
+    
+    // CPF: 000.000.000-00
+    if (digits.length <= 11) {
+      if (digits.length <= 3) return digits;
+      if (digits.length <= 6) return `${digits.slice(0, 3)}.${digits.slice(3)}`;
+      if (digits.length <= 9) return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;
+      return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
+    }
+    
+    // CNPJ: 00.000.000/0000-00
+    if (digits.length <= 12) {
+      return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8)}`;
+    }
+    return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8, 12)}-${digits.slice(12)}`;
+  };
+
+  const handlePhoneChange = (value: string) => {
+    setFormData(prev => ({ ...prev, phone: formatPhone(value) }));
+  };
+
+  const handleDocumentChange = (value: string) => {
+    setFormData(prev => ({ ...prev, document: formatDocument(value) }));
+  };
+
   const handleCepChange = async (cep: string) => {
     // Remove non-digits
     const cleanCep = cep.replace(/\D/g, '');
@@ -409,7 +449,7 @@ const Customers = () => {
                   <Input
                     id="document"
                     value={formData.document || ''}
-                    onChange={(e) => setFormData({ ...formData, document: e.target.value })}
+                    onChange={(e) => handleDocumentChange(e.target.value)}
                     placeholder="000.000.000-00"
                   />
                 </div>
@@ -431,7 +471,7 @@ const Customers = () => {
                   <Input
                     id="phone"
                     value={formData.phone || ''}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    onChange={(e) => handlePhoneChange(e.target.value)}
                     placeholder="(00) 00000-0000"
                   />
                 </div>
