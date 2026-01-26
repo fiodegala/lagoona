@@ -167,8 +167,16 @@ const HomePage = () => {
                   to={`/loja/categoria/${category.slug}`}
                   className="group flex flex-col items-center gap-2 p-4 rounded-xl bg-background hover:shadow-lg transition-all hover:-translate-y-1"
                 >
-                  <div className="w-14 h-14 rounded-full bg-store-primary/10 flex items-center justify-center text-2xl group-hover:scale-110 group-hover:bg-store-primary/20 transition-all">
-                    {categoryIcons[index % categoryIcons.length]}
+                  <div className="w-14 h-14 rounded-full bg-store-primary/10 flex items-center justify-center overflow-hidden group-hover:scale-110 group-hover:bg-store-primary/20 transition-all">
+                    {category.image_url ? (
+                      <img 
+                        src={category.image_url} 
+                        alt={category.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-2xl">{categoryIcons[index % categoryIcons.length]}</span>
+                    )}
                   </div>
                   <span className="text-xs font-medium text-center line-clamp-2">
                     {category.name}
