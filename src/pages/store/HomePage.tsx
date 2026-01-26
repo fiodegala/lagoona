@@ -160,18 +160,21 @@ const HomePage = () => {
       {categories.length > 0 && (
         <section className="py-8 bg-store-secondary/30">
           <div className="container mx-auto px-4">
-            <div className="flex justify-center">
-              <div className="grid grid-cols-4 md:grid-cols-8 gap-4">
+              {/*
+                Flex-wrap + justify-center garante centralização real mesmo quando
+                houver menos itens do que “colunas” em desktop.
+              */}
+              <div className="flex flex-wrap justify-center gap-4">
                 {categories.slice(0, 8).map((category, index) => (
                   <Link
                     key={category.id}
                     to={`/loja/categoria/${category.slug}`}
-                    className="group flex flex-col items-center gap-2 p-4 rounded-xl bg-background hover:shadow-lg transition-all hover:-translate-y-1"
+                    className="group w-24 sm:w-28 md:w-32 flex flex-col items-center gap-2 p-4 rounded-xl bg-background hover:shadow-lg transition-all hover:-translate-y-1"
                   >
                     <div className="w-14 h-14 rounded-full bg-store-primary/10 flex items-center justify-center overflow-hidden group-hover:scale-110 group-hover:bg-store-primary/20 transition-all">
                       {category.image_url ? (
-                        <img 
-                          src={category.image_url} 
+                        <img
+                          src={category.image_url}
                           alt={category.name}
                           className="w-full h-full object-cover"
                         />
@@ -185,7 +188,6 @@ const HomePage = () => {
                   </Link>
                 ))}
               </div>
-            </div>
           </div>
         </section>
       )}
