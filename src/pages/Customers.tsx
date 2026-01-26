@@ -173,6 +173,15 @@ const Customers = () => {
       return;
     }
 
+    // Validate document if provided
+    if (formData.document) {
+      const documentValidation = validateDocument(formData.document);
+      if (!documentValidation.valid) {
+        toast({ title: documentValidation.message, variant: 'destructive' });
+        return;
+      }
+    }
+
     if (selectedCustomer) {
       updateMutation.mutate({ id: selectedCustomer.id, data: formData });
     } else {
@@ -188,6 +197,89 @@ const Customers = () => {
   const handleOpenHistory = (customer: Customer) => {
     setSelectedCustomer(customer);
     setIsHistoryOpen(true);
+  };
+
+  // Validate CPF
+  const validateCPF = (cpf: string): boolean => {
+    const digits = cpf.replace(/\D/g, '');
+    if (digits.length !== 11) return false;
+    
+    // Check for known invalid patterns
+    if (/^(\d)\1+$/.test(digits)) return false;
+    
+    // Validate first check digit
+    let sum = 0;
+    for (let i = 0; i < 9; i++) {
+      sum += parseInt(digits[i]) * (10 - i);
+    }
+    let remainder = (sum * 10) % 11;
+    if (remainder === 10 || remainder === 11) remainder = 0;
+    if (remainder !== parseInt(digits[9])) return false;
+    
+    // Validate second check digit
+    sum = 0;
+    for (let i = 0; i < 10; i++) {
+      sum += parseInt(digits[i]) * (11 - i);
+    }
+    remainder = (sum * 10) % 11;
+    if (remainder === 10 || remainder === 11) remainder = 0;
+    if (remainder !== parseInt(digits[10])) return false;
+    
+    return true;
+  };
+
+  // Validate CNPJ
+  const validateCNPJ = (cnpj: string): boolean => {
+    const digits = cnpj.replace(/\D/g, '');
+    if (digits.length !== 14) return false;
+    
+    // Check for known invalid patterns
+    if (/^(\d)\1+$/.test(digits)) return false;
+    
+    // Validate first check digit
+    const weights1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+    let sum = 0;
+    for (let i = 0; i < 12; i++) {
+      sum += parseInt(digits[i]) * weights1[i];
+    }
+    let remainder = sum % 11;
+    const firstDigit = remainder < 2 ? 0 : 11 - remainder;
+    if (firstDigit !== parseInt(digits[12])) return false;
+    
+    // Validate second check digit
+    const weights2 = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+    sum = 0;
+    for (let i = 0; i < 13; i++) {
+      sum += parseInt(digits[i]) * weights2[i];
+    }
+    remainder = sum % 11;
+    const secondDigit = remainder < 2 ? 0 : 11 - remainder;
+    if (secondDigit !== parseInt(digits[13])) return false;
+    
+    return true;
+  };
+
+  // Validate document (CPF or CNPJ)
+  const validateDocument = (document: string): { valid: boolean; message?: string } => {
+    const digits = document.replace(/\D/g, '');
+    
+    if (digits.length === 0) return { valid: true }; // Empty is valid (optional field)
+    
+    if (digits.length === 11) {
+      if (validateCPF(document)) {
+        return { valid: true };
+      }
+      return { valid: false, message: 'CPF inválido' };
+    }
+    
+    if (digits.length === 14) {
+      if (validateCNPJ(document)) {
+        return { valid: true };
+      }
+      return { valid: false, message: 'CNPJ inválido' };
+    }
+    
+    return { valid: false, message: 'Documento deve ter 11 dígitos (CPF) ou 14 dígitos (CNPJ)' };
   };
 
   // Format phone with mask: (00) 00000-0000 or (00) 0000-0000
