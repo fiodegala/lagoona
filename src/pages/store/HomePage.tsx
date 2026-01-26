@@ -160,29 +160,31 @@ const HomePage = () => {
       {categories.length > 0 && (
         <section className="py-8 bg-store-secondary/30">
           <div className="container mx-auto px-4">
-            <div className="grid grid-cols-4 md:grid-cols-8 gap-4">
-              {categories.slice(0, 8).map((category, index) => (
-                <Link
-                  key={category.id}
-                  to={`/loja/categoria/${category.slug}`}
-                  className="group flex flex-col items-center gap-2 p-4 rounded-xl bg-background hover:shadow-lg transition-all hover:-translate-y-1"
-                >
-                  <div className="w-14 h-14 rounded-full bg-store-primary/10 flex items-center justify-center overflow-hidden group-hover:scale-110 group-hover:bg-store-primary/20 transition-all">
-                    {category.image_url ? (
-                      <img 
-                        src={category.image_url} 
-                        alt={category.name}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <span className="text-2xl">{categoryIcons[index % categoryIcons.length]}</span>
-                    )}
-                  </div>
-                  <span className="text-xs font-medium text-center line-clamp-2">
-                    {category.name}
-                  </span>
-                </Link>
-              ))}
+            <div className="flex justify-center">
+              <div className="grid grid-cols-4 md:grid-cols-8 gap-4">
+                {categories.slice(0, 8).map((category, index) => (
+                  <Link
+                    key={category.id}
+                    to={`/loja/categoria/${category.slug}`}
+                    className="group flex flex-col items-center gap-2 p-4 rounded-xl bg-background hover:shadow-lg transition-all hover:-translate-y-1"
+                  >
+                    <div className="w-14 h-14 rounded-full bg-store-primary/10 flex items-center justify-center overflow-hidden group-hover:scale-110 group-hover:bg-store-primary/20 transition-all">
+                      {category.image_url ? (
+                        <img 
+                          src={category.image_url} 
+                          alt={category.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-2xl">{categoryIcons[index % categoryIcons.length]}</span>
+                      )}
+                    </div>
+                    <span className="text-xs font-medium text-center line-clamp-2">
+                      {category.name}
+                    </span>
+                  </Link>
+                ))}
+              </div>
             </div>
           </div>
         </section>
