@@ -32,7 +32,8 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Search, Pencil, Trash2, UserPlus, Loader2, Phone, Mail, MapPin } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2, UserPlus, Loader2, Phone, Mail, MapPin, History } from 'lucide-react';
+import CustomerPurchaseHistory from '@/components/customers/CustomerPurchaseHistory';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Textarea } from '@/components/ui/textarea';
@@ -72,6 +73,7 @@ const Customers = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [formData, setFormData] = useState<CustomerFormData>(emptyFormData);
   const [isLoadingCep, setIsLoadingCep] = useState(false);
@@ -181,6 +183,11 @@ const Customers = () => {
   const handleOpenDelete = (customer: Customer) => {
     setSelectedCustomer(customer);
     setIsDeleteOpen(true);
+  };
+
+  const handleOpenHistory = (customer: Customer) => {
+    setSelectedCustomer(customer);
+    setIsHistoryOpen(true);
   };
 
   const handleCepChange = async (cep: string) => {
@@ -338,7 +345,16 @@ const Customers = () => {
                             <Button
                               variant="ghost"
                               size="icon"
+                              onClick={() => handleOpenHistory(customer)}
+                              title="Histórico de compras"
+                            >
+                              <History className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
                               onClick={() => handleOpenForm(customer)}
+                              title="Editar"
                             >
                               <Pencil className="h-4 w-4" />
                             </Button>
@@ -346,6 +362,7 @@ const Customers = () => {
                               variant="ghost"
                               size="icon"
                               onClick={() => handleOpenDelete(customer)}
+                              title="Excluir"
                             >
                               <Trash2 className="h-4 w-4 text-destructive" />
                             </Button>
@@ -524,6 +541,24 @@ const Customers = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* History Dialog */}
+      <Dialog open={isHistoryOpen} onOpenChange={setIsHistoryOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Histórico de Compras</DialogTitle>
+            <DialogDescription>
+              {selectedCustomer?.name}
+            </DialogDescription>
+          </DialogHeader>
+          {selectedCustomer && (
+            <CustomerPurchaseHistory
+              customerId={selectedCustomer.id}
+              customerName={selectedCustomer.name}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </AdminLayout>
   );
 };

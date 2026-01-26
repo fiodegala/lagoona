@@ -348,6 +348,7 @@ export type Database = {
         Row: {
           created_at: string
           customer_email: string
+          customer_id: string | null
           customer_name: string | null
           external_id: string | null
           id: string
@@ -364,6 +365,7 @@ export type Database = {
         Insert: {
           created_at?: string
           customer_email: string
+          customer_id?: string | null
           customer_name?: string | null
           external_id?: string | null
           id?: string
@@ -380,6 +382,7 @@ export type Database = {
         Update: {
           created_at?: string
           customer_email?: string
+          customer_id?: string | null
           customer_name?: string | null
           external_id?: string | null
           id?: string
@@ -393,7 +396,15 @@ export type Database = {
           total?: number
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "orders_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       payment_webhooks: {
         Row: {
@@ -436,6 +447,7 @@ export type Database = {
           coupon_id: string | null
           created_at: string
           customer_document: string | null
+          customer_id: string | null
           customer_name: string | null
           discount_amount: number | null
           discount_type: string | null
@@ -460,6 +472,7 @@ export type Database = {
           coupon_id?: string | null
           created_at?: string
           customer_document?: string | null
+          customer_id?: string | null
           customer_name?: string | null
           discount_amount?: number | null
           discount_type?: string | null
@@ -484,6 +497,7 @@ export type Database = {
           coupon_id?: string | null
           created_at?: string
           customer_document?: string | null
+          customer_id?: string | null
           customer_name?: string | null
           discount_amount?: number | null
           discount_type?: string | null
@@ -507,6 +521,13 @@ export type Database = {
             columns: ["coupon_id"]
             isOneToOne: false
             referencedRelation: "coupons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pos_sales_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
             referencedColumns: ["id"]
           },
           {
