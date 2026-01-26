@@ -67,6 +67,7 @@ export interface POSSale {
 export interface CreateSaleData {
   local_id: string;
   session_id?: string;
+  customer_id?: string;
   customer_name?: string;
   customer_document?: string;
   items: POSSaleItem[];
@@ -261,6 +262,7 @@ export const posService = {
       local_id: saleData.local_id,
       session_id: saleData.session_id || null,
       user_id: user.id,
+      customer_id: saleData.customer_id || null,
       customer_name: saleData.customer_name || null,
       customer_document: saleData.customer_document || null,
       items: saleData.items as unknown as Record<string, unknown>[],
