@@ -8,6 +8,7 @@ export interface Category {
   image_url: string | null;
   parent_id: string | null;
   is_active: boolean;
+  sort_order: number;
   created_at: string;
   updated_at: string;
 }
@@ -26,7 +27,7 @@ export const categoriesService = {
     const { data, error } = await supabase
       .from('categories')
       .select('*')
-      .order('name', { ascending: true });
+      .order('sort_order', { ascending: true });
 
     if (error) throw error;
     return (data || []) as Category[];
@@ -102,5 +103,21 @@ export const categoriesService = {
       .eq('id', id);
 
     if (error) throw error;
+  },
+
+  async reorder(orderedIds: string[]): Promise<void> {
+    const updates = orderedIds.map((id, index) => ({
+      id,
+      sort_order: index,
+    }));
+
+    for (const update of updates) {
+      const { error } = await supabase
+        .from('categories')
+        .update({ sort_order: update.sort_order })
+        .eq('id', update.id);
+
+      if (error) throw error;
+    }
   },
 };
