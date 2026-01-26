@@ -22,6 +22,7 @@ import {
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { categoriesService, Category, CreateCategoryData } from '@/services/categories';
+import ImageUpload from './ImageUpload';
 
 interface CategoryFormModalProps {
   open: boolean;
@@ -37,6 +38,7 @@ const CategoryFormModal = ({ open, onClose, onSuccess, category, categories }: C
     name: '',
     slug: '',
     description: '',
+    image_url: '',
     parent_id: undefined,
     is_active: true,
   });
@@ -47,6 +49,7 @@ const CategoryFormModal = ({ open, onClose, onSuccess, category, categories }: C
         name: category.name,
         slug: category.slug,
         description: category.description || '',
+        image_url: category.image_url || '',
         parent_id: category.parent_id || undefined,
         is_active: category.is_active,
       });
@@ -55,6 +58,7 @@ const CategoryFormModal = ({ open, onClose, onSuccess, category, categories }: C
         name: '',
         slug: '',
         description: '',
+        image_url: '',
         parent_id: undefined,
         is_active: true,
       });
@@ -120,7 +124,7 @@ const CategoryFormModal = ({ open, onClose, onSuccess, category, categories }: C
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>{category ? 'Editar Categoria' : 'Nova Categoria'}</DialogTitle>
@@ -130,6 +134,19 @@ const CategoryFormModal = ({ open, onClose, onSuccess, category, categories }: C
           </DialogHeader>
 
           <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label>Imagem de Capa</Label>
+              <ImageUpload
+                value={formData.image_url || ''}
+                onChange={(url) => setFormData((prev) => ({ ...prev, image_url: url || '' }))}
+                bucket="products"
+                folder="categories"
+              />
+              <p className="text-xs text-muted-foreground">
+                Imagem exibida na loja para representar a categoria
+              </p>
+            </div>
+
             <div className="grid gap-2">
               <Label htmlFor="name">Nome *</Label>
               <Input

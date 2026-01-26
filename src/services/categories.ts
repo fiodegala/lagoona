@@ -5,6 +5,7 @@ export interface Category {
   name: string;
   slug: string;
   description: string | null;
+  image_url: string | null;
   parent_id: string | null;
   is_active: boolean;
   created_at: string;
@@ -15,6 +16,7 @@ export interface CreateCategoryData {
   name: string;
   slug: string;
   description?: string;
+  image_url?: string;
   parent_id?: string;
   is_active?: boolean;
 }
@@ -46,6 +48,7 @@ export const categoriesService = {
       name: input.name,
       slug: input.slug,
       description: input.description || null,
+      image_url: input.image_url || null,
       parent_id: input.parent_id || null,
       is_active: input.is_active ?? true,
     };
@@ -68,6 +71,7 @@ export const categoriesService = {
     if (input.name !== undefined) updateData.name = input.name;
     if (input.slug !== undefined) updateData.slug = input.slug;
     if (input.description !== undefined) updateData.description = input.description;
+    if (input.image_url !== undefined) updateData.image_url = input.image_url;
     if (input.parent_id !== undefined) updateData.parent_id = input.parent_id;
     if (input.is_active !== undefined) updateData.is_active = input.is_active;
 
