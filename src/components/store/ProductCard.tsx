@@ -4,6 +4,7 @@ import { Package, ShoppingCart, Heart, Star, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useCart } from '@/contexts/CartContext';
+import { useFavorites } from '@/contexts/FavoritesContext';
 import { toast } from 'sonner';
 import { Product } from '@/services/products';
 import { cn } from '@/lib/utils';
@@ -15,8 +16,10 @@ interface ProductCardProps {
 
 const ProductCard = ({ product, showDiscount = true }: ProductCardProps) => {
   const { addItem } = useCart();
+  const { isFavorite, toggleFavorite } = useFavorites();
   const [isHovered, setIsHovered] = useState(false);
-  const [isWishlisted, setIsWishlisted] = useState(false);
+  
+  const isWishlisted = isFavorite(product.id);
 
   // Simulated original price (20% higher for demo)
   const originalPrice = product.price * 1.2;
@@ -58,7 +61,7 @@ const ProductCard = ({ product, showDiscount = true }: ProductCardProps) => {
   const handleWishlist = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsWishlisted(!isWishlisted);
+    toggleFavorite(product.id);
     toast.success(isWishlisted ? 'Removido dos favoritos' : 'Adicionado aos favoritos');
   };
 
