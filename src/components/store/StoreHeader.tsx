@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useCart } from '@/contexts/CartContext';
+import { useFavorites } from '@/contexts/FavoritesContext';
 import { Category } from '@/services/categories';
 import logoLagoona from '@/assets/logo-lagoona.png';
 import logoLagoonaDark from '@/assets/logo-lagoona-dark.png';
@@ -25,7 +26,9 @@ const StoreHeader = ({ categories }: StoreHeaderProps) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
   const { getItemCount } = useCart();
+  const { favorites } = useFavorites();
   const itemCount = getItemCount();
+  const favoritesCount = favorites.length;
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -146,8 +149,15 @@ const StoreHeader = ({ categories }: StoreHeaderProps) => {
               </Button>
 
               {/* Wishlist */}
-              <Button variant="ghost" size="icon" className="hidden sm:flex text-muted-foreground hover:text-store-accent">
-                <Heart className="h-5 w-5" />
+              <Button variant="ghost" size="icon" asChild className="relative hidden sm:flex text-muted-foreground hover:text-store-accent">
+                <Link to="/favoritos">
+                  <Heart className="h-5 w-5" />
+                  {favoritesCount > 0 && (
+                    <Badge className="absolute -top-1 -right-1 h-5 min-w-5 flex items-center justify-center p-0 text-xs bg-store-primary text-store-accent">
+                      {favoritesCount > 99 ? '99+' : favoritesCount}
+                    </Badge>
+                  )}
+                </Link>
               </Button>
 
               {/* Cart */}
