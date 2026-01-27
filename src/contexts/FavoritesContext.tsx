@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from './AuthContext';
+import { User } from '@supabase/supabase-js';
 
 interface FavoritesContextType {
   favorites: string[];
@@ -17,9 +17,24 @@ const FavoritesContext = createContext<FavoritesContextType | undefined>(undefin
 const FAVORITES_STORAGE_KEY = 'lagoona-favorites';
 
 export const FavoritesProvider = ({ children }: { children: ReactNode }) => {
-  const { user } = useAuth();
+  const [user, setUser] = useState<User | null>(null);
   const [favorites, setFavorites] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Listen to auth state changes directly from Supabase
+  useEffect(() => {
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   // Load favorites from localStorage (for non-authenticated users or initial load)
   const loadLocalFavorites = useCallback(() => {
