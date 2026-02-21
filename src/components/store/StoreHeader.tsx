@@ -1,16 +1,10 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingCart, Search, Menu, X, User, Heart, ChevronDown, Sparkles } from 'lucide-react';
+import { ShoppingCart, Search, Menu, User, Heart, Sun, Moon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
 import { useCart } from '@/contexts/CartContext';
 import { useFavorites } from '@/contexts/FavoritesContext';
 import { Category } from '@/services/categories';
@@ -24,6 +18,8 @@ interface StoreHeaderProps {
 const StoreHeader = ({ categories }: StoreHeaderProps) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [isDark, setIsDark] = useState(false);
   const navigate = useNavigate();
   const { getItemCount } = useCart();
   const { favorites } = useFavorites();
@@ -34,47 +30,135 @@ const StoreHeader = ({ categories }: StoreHeaderProps) => {
     e.preventDefault();
     if (searchQuery.trim()) {
       navigate(`/loja?busca=${encodeURIComponent(searchQuery.trim())}`);
+      setSearchOpen(false);
+    }
+  };
+
+  const toggleTheme = () => {
+    const root = document.documentElement;
+    if (root.classList.contains('dark')) {
+      root.classList.remove('dark');
+      setIsDark(false);
+    } else {
+      root.classList.add('dark');
+      setIsDark(true);
     }
   };
 
   const activeCategories = categories.filter(c => c.is_active);
 
-  return (
-    <header className="sticky top-0 z-50">
-      {/* Announcement Bar */}
-      <div className="bg-store-accent text-white py-2.5 px-4">
-        <div className="container mx-auto flex items-center justify-center gap-2 text-sm font-medium tracking-wide">
-          <Sparkles className="h-4 w-4 text-store-primary" />
-          <span>FRETE GRÁTIS em compras acima de R$199 | Use o cupom: <span className="font-bold text-store-primary">PRIMEIRA10</span></span>
-          <Sparkles className="h-4 w-4 text-store-primary" />
-        </div>
-      </div>
+  const navLinks = [
+    { label: 'Home', to: '/' },
+    { label: 'Loja', to: '/loja' },
+    { label: 'Lançamentos', to: '/loja?ordenar=recentes' },
+    { label: 'Ofertas', to: '/loja?ofertas=true' },
+    { label: 'Categorias', to: '/loja' },
+    { label: 'Sobre', to: '/sobre' },
+    { label: 'Contato', to: '/contato' },
+  ];
 
-      {/* Main Header */}
-      <div className="bg-background border-b shadow-sm">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center gap-4 h-16">
-            {/* Mobile menu button */}
+  return (
+    <header className="sticky top-0 z-50 bg-background">
+      <div className="container mx-auto px-4">
+        <div className="flex items-center justify-between h-16">
+          {/* Logo */}
+          <Link to="/" className="flex items-center shrink-0">
+            <img
+              src={logoLagoonaDark}
+              alt="Lagoona Store"
+              className="h-8 sm:h-10 dark:hidden"
+            />
+            <img
+              src={logoLagoona}
+              alt="Lagoona Store"
+              className="h-8 sm:h-10 hidden dark:block"
+            />
+          </Link>
+
+          {/* Desktop Navigation */}
+          <nav className="hidden lg:flex items-center gap-1">
+            {navLinks.map((link) => (
+              <Link
+                key={link.label}
+                to={link.to}
+                className="px-4 py-2 text-sm font-medium text-foreground/80 hover:text-foreground transition-colors rounded-md hover:bg-muted"
+              >
+                {link.label}
+              </Link>
+            ))}
+          </nav>
+
+          {/* Right Actions */}
+          <div className="flex items-center gap-1">
+            {/* Search */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-foreground/70 hover:text-foreground"
+              onClick={() => setSearchOpen(!searchOpen)}
+            >
+              <Search className="h-5 w-5" />
+            </Button>
+
+            {/* Theme toggle */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-foreground/70 hover:text-foreground"
+              onClick={toggleTheme}
+            >
+              {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+            </Button>
+
+            {/* Favorites */}
+            <Button variant="ghost" size="icon" asChild className="relative text-foreground/70 hover:text-foreground hidden sm:flex">
+              <Link to="/favoritos">
+                <Heart className="h-5 w-5" />
+                {favoritesCount > 0 && (
+                  <Badge className="absolute -top-1 -right-1 h-5 min-w-5 flex items-center justify-center p-0 text-xs bg-store-primary text-store-primary-foreground">
+                    {favoritesCount > 99 ? '99+' : favoritesCount}
+                  </Badge>
+                )}
+              </Link>
+            </Button>
+
+            {/* Account */}
+            <Button variant="ghost" size="icon" className="hidden sm:flex text-foreground/70 hover:text-foreground">
+              <User className="h-5 w-5" />
+            </Button>
+
+            {/* Cart */}
+            <Button variant="ghost" size="icon" asChild className="relative text-foreground/70 hover:text-foreground">
+              <Link to="/carrinho">
+                <ShoppingCart className="h-5 w-5" />
+                {itemCount > 0 && (
+                  <Badge className="absolute -top-1 -right-1 h-5 min-w-5 flex items-center justify-center p-0 text-xs bg-store-primary text-store-primary-foreground">
+                    {itemCount > 99 ? '99+' : itemCount}
+                  </Badge>
+                )}
+              </Link>
+            </Button>
+
+            {/* Mobile menu */}
             <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
               <SheetTrigger asChild className="lg:hidden">
-                <Button variant="ghost" size="icon">
+                <Button variant="ghost" size="icon" className="text-foreground/70">
                   <Menu className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
               <SheetContent side="left" className="w-80 p-0">
                 <div className="flex flex-col h-full">
-                  <div className="p-4 border-b bg-store-accent flex items-center justify-center">
-                    <img src={logoLagoona} alt="Lagoona Store" className="h-8" />
+                  <div className="p-4 border-b flex items-center justify-center">
+                    <img src={logoLagoonaDark} alt="Lagoona Store" className="h-8" />
                   </div>
-                  
-                  {/* Mobile Search */}
+
                   <div className="p-4 border-b">
                     <form onSubmit={(e) => { handleSearch(e); setMobileMenuOpen(false); }}>
                       <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input
                           type="search"
-                          placeholder="O que você procura?"
+                          placeholder="Buscar..."
                           value={searchQuery}
                           onChange={(e) => setSearchQuery(e.target.value)}
                           className="pl-10"
@@ -83,24 +167,26 @@ const StoreHeader = ({ categories }: StoreHeaderProps) => {
                     </form>
                   </div>
 
-                  {/* Mobile Navigation */}
                   <nav className="flex-1 overflow-y-auto p-4">
                     <div className="space-y-1">
-                      <Link
-                        to="/loja"
-                        className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-store-secondary transition-colors font-medium"
-                        onClick={() => setMobileMenuOpen(false)}
-                      >
-                        Todos os Produtos
-                      </Link>
-                      <div className="pt-2 pb-1 px-4 text-xs font-semibold text-muted-foreground uppercase">
+                      {navLinks.map((link) => (
+                        <Link
+                          key={link.label}
+                          to={link.to}
+                          className="block px-4 py-3 rounded-lg hover:bg-muted transition-colors font-medium"
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
+                          {link.label}
+                        </Link>
+                      ))}
+                      <div className="pt-4 pb-1 px-4 text-xs font-semibold text-muted-foreground uppercase">
                         Categorias
                       </div>
                       {activeCategories.map((category) => (
                         <Link
                           key={category.id}
                           to={`/loja/categoria/${category.slug}`}
-                          className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-store-secondary transition-colors"
+                          className="block px-4 py-3 rounded-lg hover:bg-muted transition-colors text-sm"
                           onClick={() => setMobileMenuOpen(false)}
                         >
                           {category.name}
@@ -111,135 +197,30 @@ const StoreHeader = ({ categories }: StoreHeaderProps) => {
                 </div>
               </SheetContent>
             </Sheet>
-
-            {/* Logo */}
-            <Link to="/" className="flex items-center shrink-0">
-              <img 
-                src={logoLagoonaDark} 
-                alt="Lagoona Store" 
-                className="h-8 sm:h-10"
-              />
-            </Link>
-
-            {/* Search - Desktop */}
-            <form onSubmit={handleSearch} className="hidden lg:flex flex-1 max-w-2xl mx-4">
-              <div className="relative w-full flex">
-                <Input
-                  type="search"
-                  placeholder="Buscar produtos, marcas e muito mais..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full rounded-r-none border-r-0 h-11 text-base focus-visible:ring-store-primary border-store-secondary"
-                />
-                <Button 
-                  type="submit" 
-                  className="rounded-l-none h-11 px-6 bg-store-primary hover:bg-store-primary/90 text-store-accent"
-                >
-                  <Search className="h-5 w-5" />
-                </Button>
-              </div>
-            </form>
-
-            {/* Actions */}
-            <div className="flex items-center gap-1 ml-auto">
-              {/* Account */}
-              <Button variant="ghost" size="sm" className="hidden sm:flex gap-2 text-muted-foreground hover:text-store-accent">
-                <User className="h-5 w-5" />
-                <span className="hidden md:inline">Entrar</span>
-              </Button>
-
-              {/* Wishlist */}
-              <Button variant="ghost" size="icon" asChild className="relative hidden sm:flex text-muted-foreground hover:text-store-accent">
-                <Link to="/favoritos">
-                  <Heart className="h-5 w-5" />
-                  {favoritesCount > 0 && (
-                    <Badge className="absolute -top-1 -right-1 h-5 min-w-5 flex items-center justify-center p-0 text-xs bg-store-primary text-store-accent">
-                      {favoritesCount > 99 ? '99+' : favoritesCount}
-                    </Badge>
-                  )}
-                </Link>
-              </Button>
-
-              {/* Cart */}
-              <Button variant="ghost" size="icon" asChild className="relative">
-                <Link to="/carrinho">
-                  <ShoppingCart className="h-5 w-5" />
-                  {itemCount > 0 && (
-                    <Badge className="absolute -top-1 -right-1 h-5 min-w-5 flex items-center justify-center p-0 text-xs bg-store-primary text-store-accent">
-                      {itemCount > 99 ? '99+' : itemCount}
-                    </Badge>
-                  )}
-                </Link>
-              </Button>
-            </div>
           </div>
         </div>
       </div>
 
-      {/* Categories Navigation - Desktop */}
-      <nav className="hidden lg:block bg-card border-b">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-center gap-1 h-12">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="gap-2 font-semibold text-store-accent hover:text-store-primary">
-                  <Menu className="h-4 w-4" />
-                  Categorias
-                  <ChevronDown className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-56">
-                {activeCategories.map((category) => (
-                  <DropdownMenuItem key={category.id} asChild>
-                    <Link to={`/loja/categoria/${category.slug}`} className="hover:text-store-primary">
-                      {category.name}
-                    </Link>
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            <div className="h-6 w-px bg-border mx-2" />
-
-            <Link
-              to="/loja?ofertas=true"
-              className="px-4 py-2 text-sm font-medium rounded-md hover:bg-store-secondary hover:text-store-accent transition-colors"
-            >
-              Ofertas
-            </Link>
-            <Link
-              to="/loja?ordenar=recentes"
-              className="px-4 py-2 text-sm font-medium rounded-md hover:bg-store-secondary hover:text-store-accent transition-colors"
-            >
-              Lançamentos
-            </Link>
-            <Link
-              to="/loja?ordenar=vendidos"
-              className="px-4 py-2 text-sm font-medium rounded-md hover:bg-store-secondary hover:text-store-accent transition-colors"
-            >
-              Mais Vendidos
-            </Link>
-            <Link
-              to="/loja"
-              className="px-4 py-2 text-sm font-medium rounded-md hover:bg-store-secondary hover:text-store-accent transition-colors"
-            >
-              Loja
-            </Link>
-            <Link
-              to="/sobre"
-              className="px-4 py-2 text-sm font-medium rounded-md hover:bg-store-secondary hover:text-store-accent transition-colors"
-            >
-              Sobre
-            </Link>
-            <Link
-              to="/contato"
-              className="px-4 py-2 text-sm font-medium rounded-md hover:bg-store-secondary hover:text-store-accent transition-colors"
-            >
-              Contato
-            </Link>
+      {/* Search Bar Dropdown */}
+      {searchOpen && (
+        <div className="border-t bg-background">
+          <div className="container mx-auto px-4 py-3">
+            <form onSubmit={handleSearch} className="max-w-xl mx-auto">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="search"
+                  placeholder="O que você procura?"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                  autoFocus
+                />
+              </div>
+            </form>
           </div>
         </div>
-      </nav>
+      )}
     </header>
   );
 };

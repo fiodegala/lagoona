@@ -1,162 +1,95 @@
 import { Link } from 'react-router-dom';
-import { Mail, Phone, MapPin, CreditCard, Truck, Shield, Headphones, Facebook, Instagram, Twitter, MessageCircle } from 'lucide-react';
+import { Mail, Phone, MapPin, Instagram, Facebook, MessageCircle } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
-import logoLagoonaDark from '@/assets/logo-lagoona-dark.png';
+import logoLagoona from '@/assets/logo-lagoona.png';
 
 const StoreFooter = () => {
   const currentYear = new Date().getFullYear();
-
   const paymentMethods = ['Visa', 'Mastercard', 'Elo', 'Pix', 'Boleto'];
 
   return (
-    <footer className="bg-store-secondary/50 border-t mt-auto">
-      {/* Features bar */}
-      <div className="border-b bg-background">
-        <div className="container mx-auto px-4 py-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            <div className="flex items-center gap-3">
-              <div className="p-3 rounded-full bg-store-primary/10">
-                <Truck className="h-6 w-6 text-store-primary" />
-              </div>
-              <div>
-                <h4 className="font-semibold text-sm">Frete Grátis</h4>
-                <p className="text-xs text-muted-foreground">Acima de R$199</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="p-3 rounded-full bg-store-primary/10">
-                <Shield className="h-6 w-6 text-store-primary" />
-              </div>
-              <div>
-                <h4 className="font-semibold text-sm">Compra Segura</h4>
-                <p className="text-xs text-muted-foreground">Dados protegidos</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="p-3 rounded-full bg-store-primary/10">
-                <CreditCard className="h-6 w-6 text-store-primary" />
-              </div>
-              <div>
-                <h4 className="font-semibold text-sm">Parcele em 12x</h4>
-                <p className="text-xs text-muted-foreground">Sem juros</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="p-3 rounded-full bg-store-primary/10">
-                <Headphones className="h-6 w-6 text-store-primary" />
-              </div>
-              <div>
-                <h4 className="font-semibold text-sm">Suporte 24h</h4>
-                <p className="text-xs text-muted-foreground">Estamos aqui</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Main footer */}
+    <footer className="bg-store-accent text-background mt-auto">
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="space-y-4">
             <Link to="/" className="inline-block">
-              <img 
-                src={logoLagoonaDark} 
-                alt="Lagoona Store" 
-                className="h-10"
-              />
+              <img src={logoLagoona} alt="Lagoona Store" className="h-10" />
             </Link>
-            <p className="text-sm text-muted-foreground">
-              Sua loja online com os melhores produtos, preços imbatíveis e entrega para todo Brasil.
+            <p className="text-sm text-background/60">
+              Moda premium para o homem contemporâneo. Qualidade, elegância e estilo em cada peça.
             </p>
-            <div className="flex gap-3">
-              <a href="#" className="p-2 rounded-full bg-store-accent/10 hover:bg-store-primary hover:text-store-accent transition-colors">
-                <Facebook className="h-4 w-4" />
-              </a>
-              <a href="#" className="p-2 rounded-full bg-store-accent/10 hover:bg-store-primary hover:text-store-accent transition-colors">
-                <Instagram className="h-4 w-4" />
-              </a>
-              <a href="#" className="p-2 rounded-full bg-store-accent/10 hover:bg-store-primary hover:text-store-accent transition-colors">
-                <Twitter className="h-4 w-4" />
-              </a>
-            </div>
-          </div>
-
-          {/* Institutional */}
-          <div className="space-y-4">
-            <h4 className="font-display font-semibold text-store-accent">Institucional</h4>
-            <nav className="flex flex-col gap-2 text-sm">
-              <Link to="/sobre" className="text-muted-foreground hover:text-store-primary transition-colors">
-                Sobre Nós
-              </Link>
-              <Link to="/contato" className="text-muted-foreground hover:text-store-primary transition-colors">
-                Fale Conosco
-              </Link>
-              <Link to="/trabalhe-conosco" className="text-muted-foreground hover:text-store-primary transition-colors">
-                Trabalhe Conosco
-              </Link>
-              <Link to="/lojas" className="text-muted-foreground hover:text-store-primary transition-colors">
-                Nossas Lojas
-              </Link>
-            </nav>
-          </div>
-
-          {/* Help */}
-          <div className="space-y-4">
-            <h4 className="font-display font-semibold text-store-accent">Ajuda</h4>
-            <nav className="flex flex-col gap-2 text-sm">
-              <Link to="/faq" className="text-muted-foreground hover:text-store-primary transition-colors">
-                Perguntas Frequentes
-              </Link>
-              <Link to="/trocas-devolucoes" className="text-muted-foreground hover:text-store-primary transition-colors">
-                Trocas e Devoluções
-              </Link>
-              <Link to="/privacidade" className="text-muted-foreground hover:text-store-primary transition-colors">
-                Política de Privacidade
-              </Link>
-              <Link to="/termos" className="text-muted-foreground hover:text-store-primary transition-colors">
-                Termos de Uso
-              </Link>
-            </nav>
-          </div>
-
-          {/* Contact */}
-          <div className="space-y-4">
-            <h4 className="font-display font-semibold text-store-accent">Contato</h4>
-            <div className="flex flex-col gap-3 text-sm">
-              <a href="https://wa.me/5511999999999" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-muted-foreground hover:text-store-primary transition-colors">
-                <MessageCircle className="h-4 w-4" />
+            <div className="flex flex-col gap-2 text-sm text-background/60">
+              <span className="flex items-center gap-2">
+                <MapPin className="h-4 w-4 shrink-0" />
+                Av. Exemplo, 1234 - São Paulo, SP - CEP 01000-000
+              </span>
+              <a href="tel:+551199999999" className="flex items-center gap-2 hover:text-store-primary transition-colors">
+                <Phone className="h-4 w-4" />
                 (11) 99999-9999
               </a>
-              <a href="mailto:contato@lagoona.com.br" className="flex items-center gap-2 text-muted-foreground hover:text-store-primary transition-colors">
+              <a href="mailto:contato@lagoona.com.br" className="flex items-center gap-2 hover:text-store-primary transition-colors">
                 <Mail className="h-4 w-4" />
                 contato@lagoona.com.br
               </a>
-              <a href="tel:+551133334444" className="flex items-center gap-2 text-muted-foreground hover:text-store-primary transition-colors">
-                <Phone className="h-4 w-4" />
-                (11) 3333-4444
-              </a>
-              <span className="flex items-center gap-2 text-muted-foreground">
-                <MapPin className="h-4 w-4 shrink-0" />
-                Av. Exemplo, 1234 - São Paulo, SP
-              </span>
             </div>
+            <div className="flex gap-3 pt-2">
+              <a href="#" className="p-2.5 rounded-full border border-background/20 hover:bg-store-primary hover:border-store-primary hover:text-store-primary-foreground transition-colors">
+                <Instagram className="h-4 w-4" />
+              </a>
+              <a href="#" className="p-2.5 rounded-full border border-background/20 hover:bg-store-primary hover:border-store-primary hover:text-store-primary-foreground transition-colors">
+                <Facebook className="h-4 w-4" />
+              </a>
+              <a href="#" className="p-2.5 rounded-full border border-background/20 hover:bg-store-primary hover:border-store-primary hover:text-store-primary-foreground transition-colors">
+                <MessageCircle className="h-4 w-4" />
+              </a>
+            </div>
+          </div>
+
+          {/* Institucional */}
+          <div className="space-y-4">
+            <h4 className="font-display font-semibold text-background">Institucional</h4>
+            <nav className="flex flex-col gap-2 text-sm">
+              <Link to="/sobre" className="text-background/60 hover:text-store-primary transition-colors">Sobre a Lagoona</Link>
+              <Link to="/contato" className="text-background/60 hover:text-store-primary transition-colors">Contato</Link>
+              <Link to="/trabalhe-conosco" className="text-background/60 hover:text-store-primary transition-colors">Trabalhe Conosco</Link>
+            </nav>
+          </div>
+
+          {/* Ajuda */}
+          <div className="space-y-4">
+            <h4 className="font-display font-semibold text-background">Ajuda</h4>
+            <nav className="flex flex-col gap-2 text-sm">
+              <Link to="/trocas-devolucoes" className="text-background/60 hover:text-store-primary transition-colors">Trocas e Devoluções</Link>
+              <Link to="/privacidade" className="text-background/60 hover:text-store-primary transition-colors">Política de Privacidade</Link>
+              <Link to="/termos" className="text-background/60 hover:text-store-primary transition-colors">Termos de Uso</Link>
+              <Link to="/faq" className="text-background/60 hover:text-store-primary transition-colors">FAQ</Link>
+            </nav>
+          </div>
+
+          {/* Categorias */}
+          <div className="space-y-4">
+            <h4 className="font-display font-semibold text-background">Categorias</h4>
+            <nav className="flex flex-col gap-2 text-sm">
+              <Link to="/loja" className="text-background/60 hover:text-store-primary transition-colors">Todos os Produtos</Link>
+              <Link to="/loja?ordenar=recentes" className="text-background/60 hover:text-store-primary transition-colors">Lançamentos</Link>
+              <Link to="/loja?ofertas=true" className="text-background/60 hover:text-store-primary transition-colors">Ofertas</Link>
+            </nav>
           </div>
         </div>
 
-        <Separator className="my-8" />
+        <Separator className="my-8 bg-background/10" />
 
-        {/* Payment & Bottom */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2 flex-wrap justify-center">
-            <span className="text-xs text-muted-foreground mr-2">Formas de pagamento:</span>
+            <span className="text-xs text-background/40 mr-2">Cartão de Crédito, PIX, Boleto</span>
             {paymentMethods.map((method) => (
-              <span key={method} className="px-2 py-1 bg-background rounded text-xs font-medium border">
+              <span key={method} className="px-2 py-1 bg-background/10 rounded text-xs font-medium border border-background/10">
                 {method}
               </span>
             ))}
           </div>
-          <p className="text-xs text-muted-foreground text-center">
+          <p className="text-xs text-background/40 text-center">
             © {currentYear} Lagoona. Todos os direitos reservados. CNPJ: 00.000.000/0001-00
           </p>
         </div>
