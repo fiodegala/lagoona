@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 import POSLayout from '@/components/pos/POSLayout';
 import ProductSearch, { ProductResult } from '@/components/pos/ProductSearch';
 import ProductGrid from '@/components/pos/ProductGrid';
@@ -17,6 +18,7 @@ import { DollarSign, ArrowUpDown } from 'lucide-react';
 const POSPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { userStoreId } = useAuth();
   const [session, setSession] = useState<POSSession | null>(null);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [isLoading, setIsLoading] = useState(true);
@@ -132,6 +134,7 @@ const POSPage = () => {
     const saleData: CreateSaleData = {
       local_id: offlineService.generateLocalId(),
       session_id: session?.id,
+      store_id: userStoreId || undefined,
       customer_id: selectedCustomer?.id,
       customer_name: selectedCustomer?.name,
       customer_document: selectedCustomer?.document || undefined,
@@ -177,7 +180,7 @@ const POSPage = () => {
   };
 
   const handleOpenSession = async (openingBalance: number, notes?: string) => {
-    const newSession = await posService.openSession(openingBalance, notes);
+    const newSession = await posService.openSession(openingBalance, notes, userStoreId || undefined);
     setSession(newSession);
     await offlineService.saveCurrentSession({ id: newSession.id, user_id: newSession.user_id, opened_at: newSession.opened_at, opening_balance: newSession.opening_balance, status: 'open' });
     toast({ title: 'Caixa aberto!' });

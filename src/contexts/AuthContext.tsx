@@ -11,11 +11,21 @@ interface Profile {
   avatar_url: string | null;
 }
 
+export interface UserStore {
+  id: string;
+  name: string;
+  slug: string;
+  type: 'physical' | 'online';
+}
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   profile: Profile | null;
   roles: AppRole[];
+  userStore: UserStore | null;
+  userStoreId: string | null;
+  isOnlineStore: boolean;
   isLoading: boolean;
   isAdmin: boolean;
   isManager: boolean;
@@ -44,6 +54,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [roles, setRoles] = useState<AppRole[]>([]);
+  const [userStore, setUserStore] = useState<UserStore | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchUserData = async (userId: string) => {
@@ -59,14 +70,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setProfile(profileData as Profile);
       }
 
-      // Fetch roles
+      // Fetch roles with store_id
       const { data: rolesData } = await supabase
         .from('user_roles')
-        .select('role')
+        .select('role, store_id')
         .eq('user_id', userId);
 
       if (rolesData) {
         setRoles(rolesData.map(r => r.role as AppRole));
+        
+        // Fetch store info if user has a store_id
+        const storeId = rolesData[0]?.store_id;
+        if (storeId) {
+          const { data: storeData } = await supabase
+            .from('stores')
+            .select('id, name, slug, type')
+            .eq('id', storeId)
+            .single();
+          
+          if (storeData) {
+            setUserStore(storeData as UserStore);
+          }
+        } else {
+          setUserStore(null);
+        }
       }
     } catch (error) {
       console.error('Error fetching user data:', error);
@@ -84,8 +111,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           // Use setTimeout to avoid Supabase auth deadlock
           setTimeout(() => fetchUserData(newSession.user.id), 0);
         } else {
-          setProfile(null);
+        setProfile(null);
           setRoles([]);
+          setUserStore(null);
         }
         setIsLoading(false);
       }
@@ -128,6 +156,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setSession(null);
     setProfile(null);
     setRoles([]);
+    setUserStore(null);
   };
 
   const hasRole = (role: AppRole) => roles.includes(role);
@@ -137,6 +166,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const canManageProducts = isAdmin || isManager;
   const canManageUsers = isAdmin;
   const canManageGoals = isAdmin || isManager;
+  const userStoreId = userStore?.id || null;
+  const isOnlineStore = userStore?.type === 'online';
 
   return (
     <AuthContext.Provider
@@ -145,6 +176,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         session,
         profile,
         roles,
+        userStore,
+        userStoreId,
+        isOnlineStore,
         isLoading,
         isAdmin,
         isManager,
