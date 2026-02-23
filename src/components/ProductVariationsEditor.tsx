@@ -324,7 +324,7 @@ const ProductVariationsEditor = ({ productId, basePrice }: ProductVariationsEdit
 
   const handleUpdateVariation = async (
     variationId: string,
-    field: 'price' | 'wholesale_price' | 'exclusive_price' | 'stock' | 'sku' | 'barcode' | 'is_active' | 'image_url',
+    field: 'price' | 'wholesale_price' | 'exclusive_price' | 'promotional_price' | 'stock' | 'sku' | 'barcode' | 'is_active' | 'image_url',
     value: string | number | boolean
   ) => {
     try {
@@ -560,6 +560,7 @@ const ProductVariationsEditor = ({ productId, basePrice }: ProductVariationsEdit
                       <TableHead>SKU</TableHead>
                       <TableHead>Código de Barras</TableHead>
                       <TableHead>Varejo</TableHead>
+                      <TableHead className="text-store-deal">Promo</TableHead>
                       <TableHead>Atacado</TableHead>
                       <TableHead>Exclusivo</TableHead>
                       {stores.map((store) => (

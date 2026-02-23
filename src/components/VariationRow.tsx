@@ -40,7 +40,7 @@ interface VariationRowProps {
   storeStock: Record<string, number>;
   onUpdate: (
     variationId: string,
-    field: 'price' | 'wholesale_price' | 'exclusive_price' | 'stock' | 'sku' | 'barcode' | 'is_active' | 'image_url',
+    field: 'price' | 'wholesale_price' | 'exclusive_price' | 'promotional_price' | 'stock' | 'sku' | 'barcode' | 'is_active' | 'image_url',
     value: string | number | boolean
   ) => Promise<void>;
   onUpdateStoreStock: (variationId: string, storeId: string, quantity: number) => Promise<void>;
@@ -245,6 +245,18 @@ const VariationRow = ({ variation, stores, storeStock, onUpdate, onUpdateStoreSt
           }
           placeholder="Varejo"
           className="h-8 w-24"
+        />
+      </TableCell>
+      <TableCell>
+        <Input
+          type="number"
+          step="0.01"
+          value={(variation as any).promotional_price ?? ''}
+          onChange={(e) =>
+            onUpdate(variation.id, 'promotional_price', parseFloat(e.target.value) || 0)
+          }
+          placeholder="Promo"
+          className="h-8 w-24 border-store-deal/30"
         />
       </TableCell>
       <TableCell>
