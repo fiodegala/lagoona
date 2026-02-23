@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Loader2, ShoppingBag, Truck, RefreshCw, Shield, MessageCircle, TrendingUp } from 'lucide-react';
+import atacadoImg from '@/assets/atacado-fdg.jpg';
 import { Button } from '@/components/ui/button';
 import StoreLayout from '@/components/store/StoreLayout';
 import ProductCard from '@/components/store/ProductCard';
@@ -230,6 +231,38 @@ const HomePage = () => {
               <p>Nenhum produto disponível no momento.</p>
             </div>
           )}
+        </div>
+      </section>
+
+      {/* Atacado FDG */}
+      <section className="bg-store-accent">
+        <div className="container mx-auto px-4 py-12 md:py-16">
+          <div className="flex flex-col md:flex-row items-center gap-8 md:gap-16">
+            <div className="flex-1">
+              <span className="inline-block px-4 py-1.5 rounded-full bg-foreground/10 text-background text-xs font-semibold tracking-wider uppercase mb-4 backdrop-blur-sm border border-background/20">
+                Para Lojistas
+              </span>
+              <h2 className="text-3xl md:text-4xl font-display font-bold text-background mb-4">
+                Atacado FDG
+              </h2>
+              <p className="text-background/70 mb-6 max-w-lg">
+                Seja um revendedor autorizado e tenha acesso a condições exclusivas, suporte dedicado e produtos de alta qualidade para sua loja.
+              </p>
+              <Button asChild variant="outline" className="gap-2 border-background/30 text-background hover:bg-background/10 font-semibold">
+                <Link to="/contato">
+                  Saiba mais
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
+            <div className="flex-shrink-0">
+              <img
+                src={atacadoImg}
+                alt="Atacado Fio de Gala"
+                className="w-72 md:w-96 h-48 md:h-64 object-cover rounded-xl shadow-lg"
+              />
+            </div>
+          </div>
         </div>
       </section>
 
