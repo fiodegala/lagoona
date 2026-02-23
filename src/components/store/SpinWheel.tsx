@@ -126,8 +126,12 @@ const SpinWheel = () => {
   }, [coupons]);
 
   useEffect(() => {
-    drawWheel();
-  }, [drawWheel]);
+    if (isOpen) {
+      // Small delay to ensure canvas is mounted in DOM
+      const t = setTimeout(() => drawWheel(), 50);
+      return () => clearTimeout(t);
+    }
+  }, [drawWheel, isOpen]);
 
   const spin = () => {
     if (isSpinning || coupons.length === 0) return;
