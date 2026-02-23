@@ -21,9 +21,12 @@ const ProductCard = ({ product, showDiscount = true }: ProductCardProps) => {
   
   const isWishlisted = isFavorite(product.id);
 
-  // Simulated original price (20% higher for demo)
-  const originalPrice = product.price * 1.2;
-  const discountPercent = Math.round(((originalPrice - product.price) / originalPrice) * 100);
+  // Desconto real baseado em exclusive_price
+  const hasRealDiscount = product.exclusive_price != null && product.exclusive_price < product.price;
+  const discountPercent = hasRealDiscount
+    ? Math.round(((product.price - product.exclusive_price!) / product.price) * 100)
+    : 0;
+  const displayPrice = hasRealDiscount ? product.exclusive_price! : product.price;
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -94,7 +97,7 @@ const ProductCard = ({ product, showDiscount = true }: ProductCardProps) => {
           
           {/* Badges */}
           <div className="absolute top-2 left-2 flex flex-col gap-1">
-            {showDiscount && discountPercent > 0 && (
+            {showDiscount && hasRealDiscount && (
               <Badge className="bg-store-deal hover:bg-store-deal text-white font-bold px-2 py-1">
                 -{discountPercent}%
               </Badge>
@@ -179,16 +182,16 @@ const ProductCard = ({ product, showDiscount = true }: ProductCardProps) => {
           
           {/* Pricing */}
           <div className="mt-3 space-y-1">
-            {showDiscount && (
+            {showDiscount && hasRealDiscount && (
               <p className="text-xs text-muted-foreground line-through">
-                {formatPrice(originalPrice)}
+                {formatPrice(product.price)}
               </p>
             )}
             <p className="text-xl font-bold text-store-accent">
-              {formatPrice(product.price)}
+              {formatPrice(displayPrice)}
             </p>
             <p className="text-xs text-muted-foreground">
-              em até <span className="font-semibold text-foreground">12x de {formatPrice(product.price / 12)}</span>
+              em até <span className="font-semibold text-foreground">12x de {formatPrice(displayPrice / 12)}</span>
             </p>
           </div>
 
