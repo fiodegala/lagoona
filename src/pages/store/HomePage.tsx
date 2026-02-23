@@ -67,7 +67,7 @@ const HomePage = () => {
                     <ArrowRight className="h-5 w-5" />
                   </Link>
                 </Button>
-                <Button asChild size="lg" variant="outline" className="gap-2 border-white/30 text-white hover:bg-white/10 font-semibold text-base px-8 tracking-wide">
+                <Button asChild size="lg" className="gap-2 bg-store-primary text-store-primary-foreground hover:bg-store-gold font-semibold text-base px-8 tracking-wide">
                   <Link to="/loja?ordenar=recentes">
                     Ver lançamentos
                   </Link>
