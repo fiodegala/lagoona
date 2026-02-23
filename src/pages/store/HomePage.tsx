@@ -263,7 +263,7 @@ const HomePage = () => {
                 loop
                 muted
                 playsInline
-                className="w-72 md:w-96 h-48 md:h-64 object-cover rounded-xl shadow-lg"
+                className="w-80 md:w-[28rem] h-56 md:h-80 object-cover rounded-xl shadow-lg"
               />
             </div>
           </div>
