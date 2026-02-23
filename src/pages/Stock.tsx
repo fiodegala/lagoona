@@ -195,6 +195,7 @@ const Stock = () => {
   const totalProducts = products.length;
   const outOfStock = products.filter(p => p.total === 0).length;
   const lowStock = products.filter(p => p.total > 0 && p.total <= 5).length;
+  const totalOnlineStock = products.reduce((sum, p) => sum + p.total, 0);
 
   return (
     <AdminLayout>
@@ -235,6 +236,17 @@ const Stock = () => {
               </Card>
             );
           })}
+          <Card className="card-elevated">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <Package className="h-8 w-8 text-primary" />
+                <div>
+                  <p className="text-2xl font-bold">{totalOnlineStock}</p>
+                  <p className="text-xs text-muted-foreground">Estoque Online</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
           <Card className="card-elevated">
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
