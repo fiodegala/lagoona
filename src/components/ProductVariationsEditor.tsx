@@ -247,6 +247,8 @@ const ProductVariationsEditor = ({ productId, basePrice }: ProductVariationsEdit
     sku?: string;
     barcode?: string;
     price?: number;
+    wholesale_price?: number;
+    exclusive_price?: number;
     stock?: number;
   }) => {
     // Check if variation already exists
@@ -279,6 +281,8 @@ const ProductVariationsEditor = ({ productId, basePrice }: ProductVariationsEdit
       sku: data.sku,
       barcode: data.barcode,
       price: data.price ?? basePrice,
+      wholesale_price: data.wholesale_price,
+      exclusive_price: data.exclusive_price,
       stock: data.stock ?? 0,
       attribute_value_ids: data.attributeValueIds,
     });
