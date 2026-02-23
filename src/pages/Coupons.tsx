@@ -70,6 +70,7 @@ const Coupons = () => {
     starts_at: undefined,
     expires_at: undefined,
     is_active: true,
+    show_in_wheel: false,
   });
 
   useEffect(() => {
@@ -102,6 +103,7 @@ const Coupons = () => {
       starts_at: undefined,
       expires_at: undefined,
       is_active: true,
+      show_in_wheel: false,
     });
     setEditingCoupon(null);
   };
@@ -121,6 +123,7 @@ const Coupons = () => {
         starts_at: coupon.starts_at ? coupon.starts_at.split('T')[0] : undefined,
         expires_at: coupon.expires_at ? coupon.expires_at.split('T')[0] : undefined,
         is_active: coupon.is_active,
+        show_in_wheel: (coupon as any).show_in_wheel ?? false,
       });
     } else {
       resetForm();
@@ -635,6 +638,20 @@ const Coupons = () => {
                 id="is_active"
                 checked={formData.is_active}
                 onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_active: checked }))}
+              />
+            </div>
+
+            <div className="flex items-center justify-between rounded-lg border p-3">
+              <div>
+                <Label htmlFor="show_in_wheel" className="font-medium">Exibir na Roleta</Label>
+                <p className="text-sm text-muted-foreground">
+                  Mostrar este cupom na roleta de prêmios da loja
+                </p>
+              </div>
+              <Switch
+                id="show_in_wheel"
+                checked={formData.show_in_wheel ?? false}
+                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, show_in_wheel: checked }))}
               />
             </div>
 

@@ -16,6 +16,7 @@ export interface Coupon {
   is_active: boolean;
   applicable_categories: string[];
   applicable_products: string[];
+  show_in_wheel: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -43,6 +44,7 @@ export interface CreateCouponData {
   is_active?: boolean;
   applicable_categories?: string[];
   applicable_products?: string[];
+  show_in_wheel?: boolean;
 }
 
 export interface CouponValidationResult {
