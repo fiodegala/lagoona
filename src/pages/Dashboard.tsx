@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Progress } from '@/components/ui/progress';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   Package, ShoppingCart, Key, TrendingUp, Users, DollarSign, 
   Star, Tag, ArrowUpRight, ArrowDownRight, Clock, CheckCircle,
@@ -125,6 +126,8 @@ interface SalesGoal {
 const Dashboard = () => {
   const { profile, roles, isAdmin, userStoreId, userStore } = useAuth();
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('all');
+  const [selectedStoreId, setSelectedStoreId] = useState<string>('all');
+  const [stores, setStores] = useState<{ id: string; name: string; type: string }[]>([]);
   const [customDateRange, setCustomDateRange] = useState<DateRange | undefined>(undefined);
   const [rawOrders, setRawOrders] = useState<RawOrder[]>([]);
   const [rawPOSSales, setRawPOSSales] = useState<RawPOSSale[]>([]);
@@ -136,17 +139,28 @@ const Dashboard = () => {
   const [customers, setCustomers] = useState<CustomerWithLocation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Load stores for admin selector
+  useEffect(() => {
+    if (isAdmin) {
+      supabase.from('stores').select('id, name, type').eq('is_active', true).order('name').then(({ data }) => {
+        setStores(data || []);
+      });
+    }
+  }, [isAdmin]);
+
+  const activeStoreFilter = isAdmin ? (selectedStoreId === 'all' ? null : selectedStoreId) : userStoreId;
+
   useEffect(() => {
     loadDashboardData();
-  }, [userStoreId]);
+  }, [activeStoreFilter]);
 
   const loadDashboardData = async () => {
     try {
       setIsLoading(true);
 
       // Fetch all data in parallel
-      // Admin sees all stores; other users see only their store
-      const storeFilter = !isAdmin && userStoreId ? userStoreId : null;
+      // Use activeStoreFilter computed above
+      const storeFilter = activeStoreFilter;
 
       const [
         productsRes,
@@ -601,8 +615,25 @@ const Dashboard = () => {
               Aqui está um resumo do seu painel administrativo.
             </p>
           </div>
+
+          <div className="flex items-center gap-3 flex-wrap">
+            {/* Store Selector (admin only) */}
+            {isAdmin && stores.length > 0 && (
+              <Select value={selectedStoreId} onValueChange={setSelectedStoreId}>
+                <SelectTrigger className="w-[180px] h-9 text-xs">
+                  <Store className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
+                  <SelectValue placeholder="Todas as lojas" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas as lojas</SelectItem>
+                  {stores.map((store) => (
+                    <SelectItem key={store.id} value={store.id}>{store.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           
-          {/* Period Filter */}
+            {/* Period Filter */}
           <div className="flex items-center gap-2 flex-wrap">
             <Calendar className="h-4 w-4 text-muted-foreground" />
             <div className="flex bg-muted rounded-lg p-1 gap-1">
@@ -651,6 +682,7 @@ const Dashboard = () => {
                 </PopoverContent>
               </Popover>
             </div>
+          </div>
           </div>
         </div>
 
