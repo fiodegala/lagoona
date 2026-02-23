@@ -299,7 +299,7 @@ const Stock = () => {
                           {store.name}
                         </TableHead>
                       ))}
-                      <TableHead className="text-center font-bold">Total (Online)</TableHead>
+                      <TableHead className="text-center font-bold">Estoque Online (Geral)</TableHead>
                       {isAdmin && <TableHead className="text-right">Ações</TableHead>}
                     </TableRow>
                   </TableHeader>
@@ -427,7 +427,7 @@ const Stock = () => {
               </div>
             ))}
             <div className="flex items-center gap-4 pt-2 border-t">
-              <Label className="w-40 text-sm font-bold">Total (Online)</Label>
+              <Label className="w-40 text-sm font-bold">Estoque Online (Geral)</Label>
               <span className="text-lg font-bold">
                 {Object.values(editQuantities).reduce((a, b) => a + b, 0)}
               </span>
