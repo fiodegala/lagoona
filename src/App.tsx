@@ -25,6 +25,7 @@ import NotFound from "./pages/NotFound";
 import ProductDetails from "./pages/ProductDetails";
 import POSPage from "./pages/POSPage";
 import Customers from "./pages/Customers";
+import Stock from "./pages/Stock";
 
 // Store Pages
 import HomePage from "./pages/store/HomePage";
@@ -98,6 +99,14 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <Categories />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/stock"
+                element={
+                  <ProtectedRoute>
+                    <Stock />
                   </ProtectedRoute>
                 }
               />
