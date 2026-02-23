@@ -14,7 +14,7 @@ const StoreFooter = () => {
           {/* Brand */}
           <div className="space-y-4">
             <Link to="/" className="inline-block">
-              <img src={logoLagoona} alt="Lagoona Store" className="h-10" />
+              <img src={logoLagoona} alt="Fio de Gala" className="h-10" />
             </Link>
             <p className="text-sm text-background/60">
               Moda premium para o homem contemporâneo. Qualidade, elegância e estilo em cada peça.
@@ -28,9 +28,9 @@ const StoreFooter = () => {
                 <Phone className="h-4 w-4" />
                 (11) 99999-9999
               </a>
-              <a href="mailto:contato@lagoona.com.br" className="flex items-center gap-2 hover:text-store-primary transition-colors">
+              <a href="mailto:contato@fiodegala.com.br" className="flex items-center gap-2 hover:text-store-primary transition-colors">
                 <Mail className="h-4 w-4" />
-                contato@lagoona.com.br
+                contato@fiodegala.com.br
               </a>
             </div>
             <div className="flex gap-3 pt-2">
@@ -50,7 +50,7 @@ const StoreFooter = () => {
           <div className="space-y-4">
             <h4 className="font-display font-semibold text-background">Institucional</h4>
             <nav className="flex flex-col gap-2 text-sm">
-              <Link to="/sobre" className="text-background/60 hover:text-store-primary transition-colors">Sobre a Lagoona</Link>
+              <Link to="/sobre" className="text-background/60 hover:text-store-primary transition-colors">Sobre a Fio de Gala</Link>
               <Link to="/contato" className="text-background/60 hover:text-store-primary transition-colors">Contato</Link>
               <Link to="/trabalhe-conosco" className="text-background/60 hover:text-store-primary transition-colors">Trabalhe Conosco</Link>
             </nav>
@@ -90,7 +90,7 @@ const StoreFooter = () => {
             ))}
           </div>
           <p className="text-xs text-background/40 text-center">
-            © {currentYear} Lagoona. Todos os direitos reservados. CNPJ: 00.000.000/0001-00
+            © {currentYear} Fio de Gala. Todos os direitos reservados. CNPJ: 00.000.000/0001-00
           </p>
         </div>
       </div>

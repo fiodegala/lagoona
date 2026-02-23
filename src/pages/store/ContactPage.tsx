@@ -38,8 +38,8 @@ const ContactPage = () => {
     {
       icon: Mail,
       title: 'E-mail',
-      content: 'contato@lagoona.com.br',
-      link: 'mailto:contato@lagoona.com.br',
+      content: 'contato@fiodegala.com.br',
+      link: 'mailto:contato@fiodegala.com.br',
     },
     {
       icon: Phone,

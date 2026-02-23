@@ -53,7 +53,7 @@ const FaqPage = () => {
         },
         {
           question: 'Quem paga o frete da troca/devolução?',
-          answer: 'Em caso de defeito ou erro nosso, a Lagoona arca com o frete de devolução. Para trocas por outros motivos (tamanho, cor, etc.), o frete de devolução é por conta do cliente, mas oferecemos frete grátis no reenvio.',
+          answer: 'Em caso de defeito ou erro nosso, a Fio de Gala arca com o frete de devolução. Para trocas por outros motivos (tamanho, cor, etc.), o frete de devolução é por conta do cliente, mas oferecemos frete grátis no reenvio.',
         },
         {
           question: 'Posso trocar por um produto de valor diferente?',
