@@ -145,6 +145,9 @@ const Dashboard = () => {
       setIsLoading(true);
 
       // Fetch all data in parallel
+      // Admin sees all stores; other users see only their store
+      const storeFilter = !isAdmin && userStoreId ? userStoreId : null;
+
       const [
         productsRes,
         ordersRes,
@@ -156,16 +159,14 @@ const Dashboard = () => {
         customersRes
       ] = await Promise.all([
         supabase.from('products').select('id, is_active'),
-        // Filter orders by store if user has a store
-        userStoreId 
-          ? supabase.from('orders').select('id, status, total, customer_name, customer_email, created_at, shipping_address').eq('store_id', userStoreId)
+        storeFilter
+          ? supabase.from('orders').select('id, status, total, customer_name, customer_email, created_at, shipping_address').eq('store_id', storeFilter)
           : supabase.from('orders').select('id, status, total, customer_name, customer_email, created_at, shipping_address'),
         supabase.from('product_reviews').select('id, is_approved'),
         supabase.from('coupons').select('id, is_active'),
         supabase.from('categories').select('id, is_active'),
-        // Filter POS sales by store if user has a store
-        userStoreId
-          ? supabase.from('pos_sales').select('*').eq('store_id', userStoreId).order('created_at', { ascending: false })
+        storeFilter
+          ? supabase.from('pos_sales').select('*').eq('store_id', storeFilter).order('created_at', { ascending: false })
           : supabase.from('pos_sales').select('*').order('created_at', { ascending: false }),
         supabase.from('sales_goals').select('*').eq('is_active', true),
         supabase.from('customers').select('id, state, city'),
