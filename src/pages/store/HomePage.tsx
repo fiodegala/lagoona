@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Loader2, ShoppingBag, Truck, RefreshCw, Shield, MessageCircle, TrendingUp } from 'lucide-react';
-import atacadoImg from '@/assets/atacado-fdg.jpg';
+import atacadoVideo from '@/assets/atacado-fdg.mp4';
 import { Button } from '@/components/ui/button';
 import StoreLayout from '@/components/store/StoreLayout';
 import ProductCard from '@/components/store/ProductCard';
@@ -256,9 +256,12 @@ const HomePage = () => {
               </Button>
             </div>
             <div className="flex-shrink-0">
-              <img
-                src={atacadoImg}
-                alt="Atacado Fio de Gala"
+              <video
+                src={atacadoVideo}
+                autoPlay
+                loop
+                muted
+                playsInline
                 className="w-72 md:w-96 h-48 md:h-64 object-cover rounded-xl shadow-lg"
               />
             </div>
