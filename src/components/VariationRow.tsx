@@ -32,7 +32,7 @@ interface VariationRowProps {
   variation: ProductVariation;
   onUpdate: (
     variationId: string,
-    field: 'price' | 'stock' | 'sku' | 'barcode' | 'is_active' | 'image_url',
+    field: 'price' | 'wholesale_price' | 'exclusive_price' | 'stock' | 'sku' | 'barcode' | 'is_active' | 'image_url',
     value: string | number | boolean
   ) => Promise<void>;
   onDelete: (variationId: string) => Promise<void>;
@@ -234,6 +234,31 @@ const VariationRow = ({ variation, onUpdate, onDelete }: VariationRowProps) => {
           onChange={(e) =>
             onUpdate(variation.id, 'price', parseFloat(e.target.value) || 0)
           }
+          placeholder="Varejo"
+          className="h-8 w-24"
+        />
+      </TableCell>
+      <TableCell>
+        <Input
+          type="number"
+          step="0.01"
+          value={variation.wholesale_price ?? ''}
+          onChange={(e) =>
+            onUpdate(variation.id, 'wholesale_price', parseFloat(e.target.value) || 0)
+          }
+          placeholder="Atacado"
+          className="h-8 w-24"
+        />
+      </TableCell>
+      <TableCell>
+        <Input
+          type="number"
+          step="0.01"
+          value={variation.exclusive_price ?? ''}
+          onChange={(e) =>
+            onUpdate(variation.id, 'exclusive_price', parseFloat(e.target.value) || 0)
+          }
+          placeholder="Exclusivo"
           className="h-8 w-24"
         />
       </TableCell>

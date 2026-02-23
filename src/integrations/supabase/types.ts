@@ -810,6 +810,7 @@ export type Database = {
         Row: {
           barcode: string | null
           created_at: string
+          exclusive_price: number | null
           id: string
           image_url: string | null
           is_active: boolean
@@ -819,10 +820,12 @@ export type Database = {
           sort_order: number
           stock: number
           updated_at: string
+          wholesale_price: number | null
         }
         Insert: {
           barcode?: string | null
           created_at?: string
+          exclusive_price?: number | null
           id?: string
           image_url?: string | null
           is_active?: boolean
@@ -832,10 +835,12 @@ export type Database = {
           sort_order?: number
           stock?: number
           updated_at?: string
+          wholesale_price?: number | null
         }
         Update: {
           barcode?: string | null
           created_at?: string
+          exclusive_price?: number | null
           id?: string
           image_url?: string | null
           is_active?: boolean
@@ -845,6 +850,7 @@ export type Database = {
           sort_order?: number
           stock?: number
           updated_at?: string
+          wholesale_price?: number | null
         }
         Relationships: [
           {
@@ -863,6 +869,7 @@ export type Database = {
           created_at: string
           depth_cm: number | null
           description: string | null
+          exclusive_price: number | null
           height_cm: number | null
           id: string
           image_url: string | null
@@ -873,6 +880,7 @@ export type Database = {
           stock: number
           updated_at: string
           weight_kg: number | null
+          wholesale_price: number | null
           width_cm: number | null
         }
         Insert: {
@@ -881,6 +889,7 @@ export type Database = {
           created_at?: string
           depth_cm?: number | null
           description?: string | null
+          exclusive_price?: number | null
           height_cm?: number | null
           id?: string
           image_url?: string | null
@@ -891,6 +900,7 @@ export type Database = {
           stock?: number
           updated_at?: string
           weight_kg?: number | null
+          wholesale_price?: number | null
           width_cm?: number | null
         }
         Update: {
@@ -899,6 +909,7 @@ export type Database = {
           created_at?: string
           depth_cm?: number | null
           description?: string | null
+          exclusive_price?: number | null
           height_cm?: number | null
           id?: string
           image_url?: string | null
@@ -909,6 +920,7 @@ export type Database = {
           stock?: number
           updated_at?: string
           weight_kg?: number | null
+          wholesale_price?: number | null
           width_cm?: number | null
         }
         Relationships: [
