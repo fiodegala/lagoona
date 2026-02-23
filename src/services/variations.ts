@@ -210,6 +210,8 @@ export const variationsService = {
         sku: data.sku || null,
         barcode: data.barcode || null,
         price: data.price ?? null,
+        wholesale_price: data.wholesale_price ?? null,
+        exclusive_price: data.exclusive_price ?? null,
         stock: data.stock ?? 0,
         image_url: data.image_url || null,
         is_active: data.is_active ?? true,
@@ -248,6 +250,8 @@ export const variationsService = {
     if (data.sku !== undefined) updateData.sku = data.sku;
     if ((data as { barcode?: string }).barcode !== undefined) updateData.barcode = (data as { barcode?: string }).barcode;
     if (data.price !== undefined) updateData.price = data.price;
+    if (data.wholesale_price !== undefined) updateData.wholesale_price = data.wholesale_price;
+    if (data.exclusive_price !== undefined) updateData.exclusive_price = data.exclusive_price;
     if (data.stock !== undefined) updateData.stock = data.stock;
     if (data.image_url !== undefined) updateData.image_url = data.image_url;
     if (data.is_active !== undefined) updateData.is_active = data.is_active;
