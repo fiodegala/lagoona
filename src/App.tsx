@@ -41,6 +41,7 @@ import PrivacyPolicyPage from "./pages/store/PrivacyPolicyPage";
 import TermsPage from "./pages/store/TermsPage";
 import ExchangesReturnsPage from "./pages/store/ExchangesReturnsPage";
 import FavoritesPage from "./pages/store/FavoritesPage";
+import OrderTrackingPage from "./pages/store/OrderTrackingPage";
 
 const queryClient = new QueryClient();
 
@@ -68,6 +69,7 @@ const App = () => (
               <Route path="/termos" element={<TermsPage />} />
               <Route path="/trocas-devolucoes" element={<ExchangesReturnsPage />} />
               <Route path="/favoritos" element={<FavoritesPage />} />
+              <Route path="/rastrear-pedido" element={<OrderTrackingPage />} />
 
               {/* Admin Routes */}
               <Route path="/login" element={<Login />} />
