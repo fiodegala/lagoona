@@ -28,17 +28,26 @@ import ImageUpload from './ImageUpload';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
+interface StoreInfo {
+  id: string;
+  name: string;
+  type: string;
+}
+
 interface VariationRowProps {
   variation: ProductVariation;
+  stores: StoreInfo[];
+  storeStock: Record<string, number>;
   onUpdate: (
     variationId: string,
     field: 'price' | 'wholesale_price' | 'exclusive_price' | 'stock' | 'sku' | 'barcode' | 'is_active' | 'image_url',
     value: string | number | boolean
   ) => Promise<void>;
+  onUpdateStoreStock: (variationId: string, storeId: string, quantity: number) => Promise<void>;
   onDelete: (variationId: string) => Promise<void>;
 }
 
-const VariationRow = ({ variation, onUpdate, onDelete }: VariationRowProps) => {
+const VariationRow = ({ variation, stores, storeStock, onUpdate, onUpdateStoreStock, onDelete }: VariationRowProps) => {
   const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
   const [localImageUrl, setLocalImageUrl] = useState(variation.image_url || '');
   const [localBarcode, setLocalBarcode] = useState(variation.barcode || '');
@@ -262,16 +271,18 @@ const VariationRow = ({ variation, onUpdate, onDelete }: VariationRowProps) => {
           className="h-8 w-24"
         />
       </TableCell>
-      <TableCell>
-        <Input
-          type="number"
-          value={variation.stock}
-          onChange={(e) =>
-            onUpdate(variation.id, 'stock', parseInt(e.target.value) || 0)
-          }
-          className="h-8 w-20"
-        />
-      </TableCell>
+      {stores.map((store) => (
+        <TableCell key={store.id}>
+          <Input
+            type="number"
+            value={storeStock[store.id] ?? 0}
+            onChange={(e) =>
+              onUpdateStoreStock(variation.id, store.id, parseInt(e.target.value) || 0)
+            }
+            className="h-8 w-20"
+          />
+        </TableCell>
+      ))}
       <TableCell>
         <Switch
           checked={variation.is_active}

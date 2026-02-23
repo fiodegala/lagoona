@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { supabase } from '@/integrations/supabase/client';
 import {
   Table,
   TableBody,
@@ -48,6 +49,12 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 
+interface StoreInfo {
+  id: string;
+  name: string;
+  type: string;
+}
+
 interface ProductVariationsEditorProps {
   productId: string;
   basePrice: number;
@@ -56,6 +63,8 @@ interface ProductVariationsEditorProps {
 const ProductVariationsEditor = ({ productId, basePrice }: ProductVariationsEditorProps) => {
   const [attributes, setAttributes] = useState<ProductAttribute[]>([]);
   const [variations, setVariations] = useState<ProductVariation[]>([]);
+  const [stores, setStores] = useState<StoreInfo[]>([]);
+  const [storeStockMap, setStoreStockMap] = useState<Record<string, Record<string, number>>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -85,12 +94,34 @@ const ProductVariationsEditor = ({ productId, basePrice }: ProductVariationsEdit
   const loadData = async () => {
     try {
       setIsLoading(true);
-      const [attrs, vars] = await Promise.all([
+      const [attrs, vars, storesRes] = await Promise.all([
         variationsService.getAttributesByProduct(productId),
         variationsService.getVariationsByProduct(productId),
+        supabase.from('stores').select('id, name, type').eq('is_active', true).order('name'),
       ]);
       setAttributes(attrs);
       setVariations(vars);
+
+      const physicalStores = (storesRes.data || []).filter((s) => s.type === 'physical') as StoreInfo[];
+      setStores(physicalStores);
+
+      // Load store_stock for all variations
+      if (vars.length > 0 && physicalStores.length > 0) {
+        const { data: stockData } = await supabase
+          .from('store_stock')
+          .select('store_id, variation_id, quantity')
+          .eq('product_id', productId)
+          .not('variation_id', 'is', null);
+
+        const stockMap: Record<string, Record<string, number>> = {};
+        (stockData || []).forEach((s) => {
+          if (s.variation_id) {
+            if (!stockMap[s.variation_id]) stockMap[s.variation_id] = {};
+            stockMap[s.variation_id][s.store_id] = s.quantity;
+          }
+        });
+        setStoreStockMap(stockMap);
+      }
     } catch (error) {
       console.error('Error loading variations data:', error);
       toast.error('Erro ao carregar variações');
@@ -307,6 +338,36 @@ const ProductVariationsEditor = ({ productId, basePrice }: ProductVariationsEdit
     }
   };
 
+  const handleUpdateStoreStock = async (variationId: string, storeId: string, quantity: number) => {
+    try {
+      const { error } = await supabase
+        .from('store_stock')
+        .upsert(
+          {
+            store_id: storeId,
+            product_id: productId,
+            variation_id: variationId,
+            quantity,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: 'store_id,product_id,variation_id' }
+        );
+
+      if (error) throw error;
+
+      setStoreStockMap((prev) => ({
+        ...prev,
+        [variationId]: {
+          ...(prev[variationId] || {}),
+          [storeId]: quantity,
+        },
+      }));
+    } catch (error) {
+      console.error('Error updating store stock:', error);
+      toast.error('Erro ao atualizar estoque');
+    }
+  };
+
   const handleDeleteVariation = async (variationId: string) => {
     try {
       await variationsService.deleteVariation(variationId);
@@ -501,7 +562,9 @@ const ProductVariationsEditor = ({ productId, basePrice }: ProductVariationsEdit
                       <TableHead>Varejo</TableHead>
                       <TableHead>Atacado</TableHead>
                       <TableHead>Exclusivo</TableHead>
-                      <TableHead>Estoque</TableHead>
+                      {stores.map((store) => (
+                        <TableHead key={store.id}>{store.name}</TableHead>
+                      ))}
                       <TableHead>Ativo</TableHead>
                       <TableHead className="w-10"></TableHead>
                     </TableRow>
@@ -515,7 +578,10 @@ const ProductVariationsEditor = ({ productId, basePrice }: ProductVariationsEdit
                         <VariationRow
                           key={variation.id}
                           variation={variation}
+                          stores={stores}
+                          storeStock={storeStockMap[variation.id] || {}}
                           onUpdate={handleUpdateVariation}
+                          onUpdateStoreStock={handleUpdateStoreStock}
                           onDelete={handleDeleteVariation}
                         />
                       ))}
