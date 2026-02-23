@@ -123,7 +123,7 @@ interface SalesGoal {
 }
 
 const Dashboard = () => {
-  const { profile, roles } = useAuth();
+  const { profile, roles, isAdmin, userStoreId, userStore } = useAuth();
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('all');
   const [customDateRange, setCustomDateRange] = useState<DateRange | undefined>(undefined);
   const [rawOrders, setRawOrders] = useState<RawOrder[]>([]);
@@ -138,7 +138,7 @@ const Dashboard = () => {
 
   useEffect(() => {
     loadDashboardData();
-  }, []);
+  }, [userStoreId]);
 
   const loadDashboardData = async () => {
     try {
@@ -156,11 +156,17 @@ const Dashboard = () => {
         customersRes
       ] = await Promise.all([
         supabase.from('products').select('id, is_active'),
-        supabase.from('orders').select('id, status, total, customer_name, customer_email, created_at, shipping_address'),
+        // Filter orders by store if user has a store
+        userStoreId 
+          ? supabase.from('orders').select('id, status, total, customer_name, customer_email, created_at, shipping_address').eq('store_id', userStoreId)
+          : supabase.from('orders').select('id, status, total, customer_name, customer_email, created_at, shipping_address'),
         supabase.from('product_reviews').select('id, is_approved'),
         supabase.from('coupons').select('id, is_active'),
         supabase.from('categories').select('id, is_active'),
-        supabase.from('pos_sales').select('*').order('created_at', { ascending: false }),
+        // Filter POS sales by store if user has a store
+        userStoreId
+          ? supabase.from('pos_sales').select('*').eq('store_id', userStoreId).order('created_at', { ascending: false })
+          : supabase.from('pos_sales').select('*').order('created_at', { ascending: false }),
         supabase.from('sales_goals').select('*').eq('is_active', true),
         supabase.from('customers').select('id, state, city'),
       ]);

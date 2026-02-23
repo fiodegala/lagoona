@@ -64,7 +64,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { profile, roles, signOut, isAdmin } = useAuth();
+  const { profile, roles, signOut, isAdmin, userStore } = useAuth();
 
   const handleSignOut = async () => {
     await signOut();
@@ -186,8 +186,8 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
               {!collapsed && (
                 <div className="flex-1 text-left min-w-0">
                   <p className="text-sm font-medium truncate">{profile?.full_name || 'Usuário'}</p>
-                  <p className="text-xs text-sidebar-foreground/60 truncate capitalize">
-                    {roles[0] || 'Sem role'}
+                  <p className="text-xs text-sidebar-foreground/60 truncate">
+                    {userStore?.name || 'Todas as lojas'} • <span className="capitalize">{roles[0] || 'Sem role'}</span>
                   </p>
                 </div>
               )}

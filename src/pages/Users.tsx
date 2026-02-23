@@ -51,6 +51,8 @@ interface UserWithRole {
   id: string;
   user_id: string;
   role: AppRole;
+  store_id: string | null;
+  store_name?: string;
   created_at: string;
   profile?: {
     full_name: string;
@@ -93,11 +95,26 @@ const UsersPage = () => {
     password: '',
     fullName: '',
     role: 'seller' as AppRole,
+    store_id: '' as string,
   });
 
   if (!isAdmin) {
     return <Navigate to="/" replace />;
   }
+
+  // Fetch stores
+  const { data: stores = [] } = useQuery({
+    queryKey: ['stores'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('stores')
+        .select('id, name, slug, type')
+        .eq('is_active', true)
+        .order('name');
+      if (error) throw error;
+      return data || [];
+    },
+  });
 
   const { data: usersWithRoles = [], isLoading } = useQuery({
     queryKey: ['users-with-roles'],
@@ -125,10 +142,13 @@ const UsersPage = () => {
       
       roles?.forEach(role => {
         const profile = profiles?.find(p => p.user_id === role.user_id);
+        const store = stores.find(s => s.id === role.store_id);
         usersMap.set(role.user_id, {
           id: role.id,
           user_id: role.user_id,
           role: role.role as AppRole,
+          store_id: role.store_id || null,
+          store_name: store?.name,
           created_at: role.created_at,
           profile: profile ? {
             full_name: profile.full_name,
@@ -139,6 +159,7 @@ const UsersPage = () => {
 
       return Array.from(usersMap.values());
     },
+    enabled: stores.length > 0,
   });
 
   const createUserMutation = useMutation({
@@ -156,13 +177,14 @@ const UsersPage = () => {
       if (authError) throw authError;
       if (!authData.user) throw new Error('Falha ao criar usuário');
 
-      // Assign role
+      // Assign role with store
       const { error: roleError } = await supabase
         .from('user_roles')
         .insert({
           user_id: authData.user.id,
           role: data.role,
-        });
+          store_id: data.store_id || null,
+        } as never);
 
       if (roleError) throw roleError;
 
@@ -183,10 +205,10 @@ const UsersPage = () => {
   });
 
   const updateRoleMutation = useMutation({
-    mutationFn: async ({ userId, role }: { userId: string; role: AppRole }) => {
+    mutationFn: async ({ userId, role, store_id }: { userId: string; role: AppRole; store_id: string | null }) => {
       const { error } = await supabase
         .from('user_roles')
-        .update({ role })
+        .update({ role, store_id } as never)
         .eq('user_id', userId);
 
       if (error) throw error;
@@ -229,6 +251,7 @@ const UsersPage = () => {
         password: '',
         fullName: userRole.profile?.full_name || '',
         role: userRole.role,
+        store_id: userRole.store_id || '',
       });
     } else {
       setSelectedUser(null);
@@ -237,6 +260,7 @@ const UsersPage = () => {
         password: '',
         fullName: '',
         role: 'seller',
+        store_id: '',
       });
     }
     setIsFormOpen(true);
@@ -250,6 +274,7 @@ const UsersPage = () => {
       password: '',
       fullName: '',
       role: 'seller',
+      store_id: '',
     });
   };
 
@@ -257,7 +282,7 @@ const UsersPage = () => {
     e.preventDefault();
     
     if (selectedUser) {
-      updateRoleMutation.mutate({ userId: selectedUser.user_id, role: formData.role });
+      updateRoleMutation.mutate({ userId: selectedUser.user_id, role: formData.role, store_id: formData.store_id || null });
     } else {
       if (!formData.email || !formData.password || !formData.fullName) {
         toast({ title: 'Preencha todos os campos', variant: 'destructive' });
@@ -343,6 +368,7 @@ const UsersPage = () => {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Usuário</TableHead>
+                      <TableHead>Loja</TableHead>
                       <TableHead>Permissão</TableHead>
                       <TableHead>Acesso desde</TableHead>
                       <TableHead className="text-right">Ações</TableHead>
@@ -351,6 +377,11 @@ const UsersPage = () => {
                   <TableBody>
                     {usersWithRoles.map((userRole) => (
                       <TableRow key={userRole.id}>
+                        <TableCell>
+                          <span className="text-sm">
+                            {userRole.store_name || 'Todas'}
+                          </span>
+                        </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-3">
                             <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
@@ -501,6 +532,25 @@ const UsersPage = () => {
                         <span className="text-xs text-muted-foreground">Apenas vendas no PDV</span>
                       </div>
                     </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="store">Loja *</Label>
+                <Select
+                  value={formData.store_id}
+                  onValueChange={(value: string) => setFormData({ ...formData, store_id: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione uma loja" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {stores.map((store) => (
+                      <SelectItem key={store.id} value={store.id}>
+                        {store.name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

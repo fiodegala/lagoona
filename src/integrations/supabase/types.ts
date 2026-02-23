@@ -365,6 +365,7 @@ export type Database = {
           payment_status: string | null
           shipping_address: Json | null
           status: string
+          store_id: string | null
           total: number
           updated_at: string
         }
@@ -382,6 +383,7 @@ export type Database = {
           payment_status?: string | null
           shipping_address?: Json | null
           status?: string
+          store_id?: string | null
           total: number
           updated_at?: string
         }
@@ -399,6 +401,7 @@ export type Database = {
           payment_status?: string | null
           shipping_address?: Json | null
           status?: string
+          store_id?: string | null
           total?: number
           updated_at?: string
         }
@@ -408,6 +411,13 @@ export type Database = {
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
             referencedColumns: ["id"]
           },
         ]
@@ -465,6 +475,7 @@ export type Database = {
           payment_details: Json | null
           payment_method: string
           session_id: string | null
+          store_id: string | null
           subtotal: number
           synced: boolean
           total: number
@@ -490,6 +501,7 @@ export type Database = {
           payment_details?: Json | null
           payment_method: string
           session_id?: string | null
+          store_id?: string | null
           subtotal: number
           synced?: boolean
           total: number
@@ -515,6 +527,7 @@ export type Database = {
           payment_details?: Json | null
           payment_method?: string
           session_id?: string | null
+          store_id?: string | null
           subtotal?: number
           synced?: boolean
           total?: number
@@ -543,6 +556,13 @@ export type Database = {
             referencedRelation: "pos_sessions"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "pos_sales_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
         ]
       }
       pos_sessions: {
@@ -557,6 +577,7 @@ export type Database = {
           opened_at: string
           opening_balance: number
           status: string
+          store_id: string | null
           updated_at: string
           user_id: string
         }
@@ -571,6 +592,7 @@ export type Database = {
           opened_at?: string
           opening_balance?: number
           status?: string
+          store_id?: string | null
           updated_at?: string
           user_id: string
         }
@@ -585,10 +607,19 @@ export type Database = {
           opened_at?: string
           opening_balance?: number
           status?: string
+          store_id?: string | null
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "pos_sessions_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       pos_transactions: {
         Row: {
@@ -1006,6 +1037,82 @@ export type Database = {
         }
         Relationships: []
       }
+      store_stock: {
+        Row: {
+          id: string
+          product_id: string
+          quantity: number
+          store_id: string
+          updated_at: string
+          variation_id: string | null
+        }
+        Insert: {
+          id?: string
+          product_id: string
+          quantity?: number
+          store_id: string
+          updated_at?: string
+          variation_id?: string | null
+        }
+        Update: {
+          id?: string
+          product_id?: string
+          quantity?: number
+          store_id?: string
+          updated_at?: string
+          variation_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_stock_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "store_stock_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "store_stock_variation_id_fkey"
+            columns: ["variation_id"]
+            isOneToOne: false
+            referencedRelation: "product_variations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stores: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          slug: string
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          slug: string
+          type: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          slug?: string
+          type?: string
+        }
+        Relationships: []
+      }
       used_nonces: {
         Row: {
           api_key_id: string
@@ -1069,21 +1176,32 @@ export type Database = {
           created_at: string
           id: string
           role: Database["public"]["Enums"]["app_role"]
+          store_id: string | null
           user_id: string
         }
         Insert: {
           created_at?: string
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+          store_id?: string | null
           user_id: string
         }
         Update: {
           created_at?: string
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+          store_id?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
@@ -1103,6 +1221,8 @@ export type Database = {
         Returns: boolean
       }
       is_admin_or_manager: { Args: { _user_id: string }; Returns: boolean }
+      is_online_store_user: { Args: { _user_id: string }; Returns: boolean }
+      user_store_id: { Args: { _user_id: string }; Returns: string }
     }
     Enums: {
       api_key_status: "active" | "revoked" | "expired"
