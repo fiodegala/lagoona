@@ -39,7 +39,7 @@ const SpinWheel = () => {
       try {
         const all = await couponsService.getAll();
         const active = all.filter(c => {
-          if (!c.is_active) return false;
+          if (!c.is_active || !c.show_in_wheel) return false;
           const now = new Date();
           if (c.starts_at && new Date(c.starts_at) > now) return false;
           if (c.expires_at && new Date(c.expires_at) < now) return false;
