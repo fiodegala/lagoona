@@ -258,6 +258,7 @@ const HomePage = () => {
             <div className="flex-shrink-0">
               <video
                 src={atacadoVideo}
+                controls
                 autoPlay
                 loop
                 muted
