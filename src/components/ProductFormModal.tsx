@@ -690,7 +690,7 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
               {renderForm()}
             </TabsContent>
             
-            <TabsContent value="variations" className="flex-1 overflow-y-auto mt-4 pr-2">
+            <TabsContent value="variations" className="flex-1 overflow-y-auto mt-4 pr-2 min-h-0">
               {effectiveProductId ? (
                 <ProductVariationsEditor 
                   productId={effectiveProductId} 
