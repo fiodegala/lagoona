@@ -39,7 +39,7 @@ const HomePage = () => {
 
   return (
     <StoreLayout>
-      {/* Hero Section - Fullscreen with dark overlay */}
+      {/* Hero Section */}
       <section className="relative h-[500px] md:h-[600px] lg:h-[700px] overflow-hidden">
         <div
           className="absolute inset-0 bg-cover bg-center"
@@ -47,27 +47,27 @@ const HomePage = () => {
             backgroundImage: `url('https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=1920&q=80')`,
           }}
         />
-        <div className="absolute inset-0 bg-store-accent/70" />
+        <div className="absolute inset-0 bg-store-dark/75" />
         <div className="relative h-full flex items-center">
           <div className="container mx-auto px-4">
             <div className="max-w-2xl">
-              <span className="inline-block px-4 py-1.5 rounded-full bg-foreground/10 text-background text-sm font-medium tracking-wider uppercase mb-6 backdrop-blur-sm border border-background/20">
+              <span className="inline-block px-5 py-1.5 text-store-gold text-xs font-semibold tracking-[0.25em] uppercase mb-6 border border-store-gold/40">
                 Nova Coleção 2024
               </span>
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold text-background mb-6 leading-tight">
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold text-white mb-6 leading-tight italic">
                 Elegância que define o estilo moderno
               </h1>
-              <p className="text-lg md:text-xl text-background/80 mb-8 max-w-lg">
+              <p className="text-lg md:text-xl text-white/70 mb-8 max-w-lg font-light tracking-wide">
                 Descubra peças exclusivas confeccionadas com os melhores materiais. Qualidade premium para quem não abre mão de estilo.
               </p>
               <div className="flex flex-wrap gap-4">
-                <Button asChild size="lg" className="gap-2 bg-store-primary text-store-primary-foreground hover:bg-store-primary/90 font-semibold text-base px-8">
+                <Button asChild size="lg" className="gap-2 bg-store-gold text-store-dark hover:bg-store-gold/90 font-semibold text-base px-8 tracking-wide">
                   <Link to="/loja">
                     Comprar agora
                     <ArrowRight className="h-5 w-5" />
                   </Link>
                 </Button>
-                <Button asChild size="lg" variant="outline" className="gap-2 border-background/30 text-background hover:bg-background/10 font-semibold text-base px-8">
+                <Button asChild size="lg" variant="outline" className="gap-2 border-white/30 text-white hover:bg-white/10 font-semibold text-base px-8 tracking-wide">
                   <Link to="/loja?ordenar=recentes">
                     Ver lançamentos
                   </Link>
@@ -79,8 +79,8 @@ const HomePage = () => {
       </section>
 
       {/* Benefits Bar */}
-      <section className="border-b bg-background">
-        <div className="container mx-auto px-4 py-6">
+      <section className="border-b border-store-gold/10 bg-store-dark">
+        <div className="container mx-auto px-4 py-5">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {[
               { icon: Truck, title: 'Frete Grátis', desc: 'Acima de R$299,00' },
@@ -89,12 +89,12 @@ const HomePage = () => {
               { icon: MessageCircle, title: 'Atendimento', desc: 'Suporte rápido' },
             ].map(({ icon: Icon, title, desc }) => (
               <div key={title} className="flex items-center gap-3">
-                <div className="p-3 rounded-full bg-muted">
-                  <Icon className="h-5 w-5 text-foreground/70" />
+                <div className="p-2.5">
+                  <Icon className="h-5 w-5 text-store-gold" />
                 </div>
                 <div>
-                  <h4 className="font-semibold text-sm">{title}</h4>
-                  <p className="text-xs text-muted-foreground">{desc}</p>
+                  <h4 className="font-semibold text-sm text-white">{title}</h4>
+                  <p className="text-xs text-white/50">{desc}</p>
                 </div>
               </div>
             ))}
@@ -103,12 +103,12 @@ const HomePage = () => {
       </section>
 
       {/* Lançamentos */}
-      <section className="py-12 md:py-16">
+      <section className="py-16 md:py-20">
         <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center justify-between mb-10">
             <div>
-              <h2 className="text-2xl md:text-3xl font-display font-bold">Lançamentos</h2>
-              <p className="text-muted-foreground mt-1">As novidades que acabaram de chegar</p>
+              <h2 className="text-2xl md:text-3xl font-display font-bold italic">Lançamentos</h2>
+              <div className="w-12 h-0.5 bg-store-gold mt-2" />
             </div>
             <Button variant="outline" asChild className="gap-2 hidden sm:flex">
               <Link to="/loja?ordenar=recentes">
@@ -148,12 +148,12 @@ const HomePage = () => {
 
       {/* Categorias em Destaque */}
       {categories.length > 0 && (
-        <section className="py-12 md:py-16 bg-muted/30">
+        <section className="py-16 md:py-20 bg-store-secondary/50">
           <div className="container mx-auto px-4">
-            <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center justify-between mb-10">
               <div>
-                <h2 className="text-2xl md:text-3xl font-display font-bold">Categorias em destaque</h2>
-                <p className="text-muted-foreground mt-1">Explore nossa coleção por categoria</p>
+                <h2 className="text-2xl md:text-3xl font-display font-bold italic">Categorias em destaque</h2>
+                <div className="w-12 h-0.5 bg-store-gold mt-2" />
               </div>
               <Button variant="outline" asChild className="gap-2 hidden sm:flex">
                 <Link to="/loja">
@@ -195,16 +195,16 @@ const HomePage = () => {
       )}
 
       {/* Mais Vendidos */}
-      <section className="py-12 md:py-16">
+      <section className="py-16 md:py-20">
         <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center justify-between mb-10">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-muted">
-                <TrendingUp className="h-5 w-5 text-foreground/70" />
+              <div className="p-2 rounded-lg border border-store-gold/20">
+                <TrendingUp className="h-5 w-5 text-store-gold" />
               </div>
               <div>
-                <h2 className="text-2xl md:text-3xl font-display font-bold">Mais vendidos</h2>
-                <p className="text-sm text-muted-foreground">Os favoritos dos nossos clientes</p>
+                <h2 className="text-2xl md:text-3xl font-display font-bold italic">Mais vendidos</h2>
+                <div className="w-12 h-0.5 bg-store-gold mt-2" />
               </div>
             </div>
             <Button variant="outline" asChild className="gap-2 hidden sm:flex">
@@ -235,20 +235,20 @@ const HomePage = () => {
       </section>
 
       {/* Atacado FDG */}
-      <section className="bg-store-accent">
-        <div className="container mx-auto px-4 py-12 md:py-16">
+      <section className="bg-store-dark">
+        <div className="container mx-auto px-4 py-14 md:py-20">
           <div className="flex flex-col md:flex-row items-center gap-8 md:gap-16">
             <div className="flex-1">
-              <span className="inline-block px-4 py-1.5 rounded-full bg-foreground/10 text-background text-xs font-semibold tracking-wider uppercase mb-4 backdrop-blur-sm border border-background/20">
+              <span className="inline-block px-5 py-1.5 text-store-gold text-xs font-semibold tracking-[0.25em] uppercase mb-4 border border-store-gold/40">
                 Para Lojistas
               </span>
-              <h2 className="text-3xl md:text-4xl font-display font-bold text-background mb-4">
+              <h2 className="text-3xl md:text-4xl font-display font-bold text-white mb-4 italic">
                 Atacado FDG
               </h2>
-              <p className="text-background/70 mb-6 max-w-lg">
+              <p className="text-white/60 mb-6 max-w-lg font-light tracking-wide">
                 Seja um revendedor autorizado e tenha acesso a condições exclusivas, suporte dedicado e produtos de alta qualidade para sua loja.
               </p>
-              <Button asChild variant="outline" className="gap-2 border-background/30 text-background hover:bg-background/10 font-semibold">
+              <Button asChild variant="outline" className="gap-2 border-store-gold/40 text-store-gold hover:bg-store-gold/10 font-semibold tracking-wide">
                 <Link to="/contato">
                   Saiba mais
                   <ArrowRight className="h-4 w-4" />
@@ -271,21 +271,21 @@ const HomePage = () => {
       </section>
 
       {/* Newsletter */}
-      <section className="py-12 md:py-16 bg-store-accent">
+      <section className="py-14 md:py-20 bg-store-accent">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl font-display font-bold text-background mb-2">
+          <h2 className="text-3xl font-display font-bold text-white mb-2 italic">
             Ganhe 10% OFF na primeira compra!
           </h2>
-          <p className="text-background/70 mb-6 max-w-xl mx-auto">
+          <p className="text-white/50 mb-8 max-w-xl mx-auto font-light tracking-wide">
             Cadastre seu e-mail e receba ofertas exclusivas, novidades e promoções.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center max-w-md mx-auto">
             <input
               type="email"
               placeholder="Seu melhor e-mail"
-              className="flex-1 px-4 py-3 rounded-lg text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-store-primary"
+              className="flex-1 px-4 py-3 bg-white/5 border border-white/20 text-white placeholder:text-white/40 focus:outline-none focus:border-store-gold transition-colors"
             />
-            <Button size="lg" className="font-semibold bg-store-primary text-store-primary-foreground hover:bg-store-primary/90">
+            <Button size="lg" className="font-semibold bg-store-gold text-store-dark hover:bg-store-gold/90 tracking-wide">
               Quero meu cupom!
             </Button>
           </div>

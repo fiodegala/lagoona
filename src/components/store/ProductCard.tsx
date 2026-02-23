@@ -74,7 +74,7 @@ const ProductCard = ({ product, showDiscount = true }: ProductCardProps) => {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="relative bg-card rounded-xl border overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-store-primary/30">
+      <div className="relative bg-card rounded-none border overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-store-gold/30">
         {/* Image Container */}
         <div className="relative aspect-square overflow-hidden bg-store-secondary/30">
           {product.image_url ? (
@@ -116,7 +116,7 @@ const ProductCard = ({ product, showDiscount = true }: ProductCardProps) => {
               variant="secondary"
               className={cn(
                 "h-9 w-9 rounded-full shadow-lg",
-                isWishlisted && "bg-store-primary text-store-accent hover:bg-store-primary/90"
+                isWishlisted && "bg-store-gold text-store-dark hover:bg-store-gold/90"
               )}
               onClick={handleWishlist}
             >
@@ -142,13 +142,13 @@ const ProductCard = ({ product, showDiscount = true }: ProductCardProps) => {
 
           {/* Add to Cart Button */}
           <div className={cn(
-            "absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-store-accent/80 to-transparent transition-all duration-300",
+            "absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-store-dark/80 to-transparent transition-all duration-300",
             isHovered ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
           )}>
             <Button
               onClick={handleAddToCart}
               disabled={isOutOfStock}
-              className="w-full gap-2 bg-store-primary hover:bg-store-primary/90 text-store-accent font-semibold"
+              className="w-full gap-2 bg-store-gold hover:bg-store-gold/90 text-store-dark font-semibold"
             >
               <ShoppingCart className="h-4 w-4" />
               Adicionar
@@ -173,7 +173,7 @@ const ProductCard = ({ product, showDiscount = true }: ProductCardProps) => {
           </div>
 
           {/* Title */}
-          <h3 className="font-medium text-sm line-clamp-2 min-h-[2.5rem] group-hover:text-store-primary transition-colors">
+          <h3 className="font-medium text-sm line-clamp-2 min-h-[2.5rem] group-hover:text-store-gold transition-colors">
             {product.name}
           </h3>
           
@@ -194,7 +194,7 @@ const ProductCard = ({ product, showDiscount = true }: ProductCardProps) => {
 
           {/* Free shipping badge */}
           {product.price >= 199 && (
-            <Badge variant="outline" className="mt-2 text-store-primary border-store-primary text-xs">
+            <Badge variant="outline" className="mt-2 text-store-gold border-store-gold/40 text-xs">
               Frete Grátis
             </Badge>
           )}
