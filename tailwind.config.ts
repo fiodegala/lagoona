@@ -15,7 +15,7 @@ export default {
     extend: {
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
-        display: ['Clash Display', 'Inter', 'system-ui', 'sans-serif'],
+        display: ['Playfair Display', 'Georgia', 'serif'],
         mono: ['JetBrains Mono', 'monospace'],
       },
       colors: {
@@ -59,6 +59,7 @@ export default {
           accent: "hsl(var(--store-accent))",
           dark: "hsl(var(--store-dark))",
           deal: "hsl(var(--store-deal))",
+          gold: "hsl(var(--store-gold))",
         },
         popover: {
           DEFAULT: "hsl(var(--popover))",
