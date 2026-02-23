@@ -22,6 +22,7 @@ import {
   ExternalLink,
   UserPlus,
   Warehouse,
+  Truck,
 } from 'lucide-react';
 import logoLagoona from '@/assets/logo-lagoona-white.png';
 import { Button } from '@/components/ui/button';
@@ -51,6 +52,7 @@ const navItems = [
   { icon: ShoppingCart, label: 'Pedidos', path: '/admin/orders' },
   { icon: Star, label: 'Avaliações', path: '/admin/reviews' },
   { icon: Tag, label: 'Cupons', path: '/admin/coupons' },
+  { icon: Truck, label: 'Frete', path: '/admin/shipping' },
   { icon: BarChart3, label: 'Relatórios', path: '/admin/reports' },
   { icon: Users, label: 'Usuários', path: '/admin/users', requireAdmin: true },
 ];

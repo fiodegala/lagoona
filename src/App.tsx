@@ -26,6 +26,7 @@ import ProductDetails from "./pages/ProductDetails";
 import POSPage from "./pages/POSPage";
 import Customers from "./pages/Customers";
 import Stock from "./pages/Stock";
+import Shipping from "./pages/Shipping";
 
 // Store Pages
 import HomePage from "./pages/store/HomePage";
@@ -139,6 +140,14 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <Coupons />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/shipping"
+                element={
+                  <ProtectedRoute>
+                    <Shipping />
                   </ProtectedRoute>
                 }
               />
