@@ -27,6 +27,8 @@ interface ManualVariationModalProps {
     sku?: string;
     barcode?: string;
     price?: number;
+    wholesale_price?: number;
+    exclusive_price?: number;
     stock?: number;
   }) => Promise<void>;
   attributes: ProductAttribute[];
@@ -44,6 +46,8 @@ const ManualVariationModal = ({
   const [sku, setSku] = useState('');
   const [barcode, setBarcode] = useState('');
   const [price, setPrice] = useState(basePrice.toString());
+  const [wholesalePrice, setWholesalePrice] = useState('');
+  const [exclusivePrice, setExclusivePrice] = useState('');
   const [stock, setStock] = useState('0');
   const [isSaving, setIsSaving] = useState(false);
 
@@ -54,6 +58,8 @@ const ManualVariationModal = ({
       setSku('');
       setBarcode('');
       setPrice(basePrice.toString());
+      setWholesalePrice('');
+      setExclusivePrice('');
       setStock('0');
     }
   }, [open, basePrice]);
@@ -72,6 +78,8 @@ const ManualVariationModal = ({
         sku: sku || undefined,
         barcode: barcode || undefined,
         price: parseFloat(price) || undefined,
+        wholesale_price: parseFloat(wholesalePrice) || undefined,
+        exclusive_price: parseFloat(exclusivePrice) || undefined,
         stock: parseInt(stock) || 0,
       });
       onClose();
@@ -140,9 +148,9 @@ const ManualVariationModal = ({
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-3">
               <div className="space-y-2">
-                <Label>Preço</Label>
+                <Label>Preço Varejo</Label>
                 <Input
                   type="number"
                   step="0.01"
@@ -151,13 +159,34 @@ const ManualVariationModal = ({
                 />
               </div>
               <div className="space-y-2">
-                <Label>Estoque</Label>
+                <Label>Preço Atacado</Label>
                 <Input
                   type="number"
-                  value={stock}
-                  onChange={(e) => setStock(e.target.value)}
+                  step="0.01"
+                  value={wholesalePrice}
+                  onChange={(e) => setWholesalePrice(e.target.value)}
+                  placeholder="Opcional"
                 />
               </div>
+              <div className="space-y-2">
+                <Label>Preço Exclusivo</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={exclusivePrice}
+                  onChange={(e) => setExclusivePrice(e.target.value)}
+                  placeholder="Opcional"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Estoque</Label>
+              <Input
+                type="number"
+                value={stock}
+                onChange={(e) => setStock(e.target.value)}
+              />
             </div>
           </div>
         </div>
