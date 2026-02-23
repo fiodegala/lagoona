@@ -60,6 +60,7 @@ const StoreFooter = () => {
           <div className="space-y-4">
             <h4 className="font-display font-semibold text-store-gold text-sm tracking-[0.15em] uppercase">Ajuda</h4>
             <nav className="flex flex-col gap-2 text-sm">
+              <Link to="/rastrear-pedido" className="text-white/50 hover:text-store-gold transition-colors">Rastrear Pedido</Link>
               <Link to="/trocas-devolucoes" className="text-white/50 hover:text-store-gold transition-colors">Trocas e Devoluções</Link>
               <Link to="/privacidade" className="text-white/50 hover:text-store-gold transition-colors">Política de Privacidade</Link>
               <Link to="/termos" className="text-white/50 hover:text-store-gold transition-colors">Termos de Uso</Link>
