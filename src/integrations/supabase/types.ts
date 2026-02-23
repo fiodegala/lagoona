@@ -816,6 +816,7 @@ export type Database = {
           is_active: boolean
           price: number | null
           product_id: string
+          promotional_price: number | null
           sku: string | null
           sort_order: number
           stock: number
@@ -831,6 +832,7 @@ export type Database = {
           is_active?: boolean
           price?: number | null
           product_id: string
+          promotional_price?: number | null
           sku?: string | null
           sort_order?: number
           stock?: number
@@ -846,6 +848,7 @@ export type Database = {
           is_active?: boolean
           price?: number | null
           product_id?: string
+          promotional_price?: number | null
           sku?: string | null
           sort_order?: number
           stock?: number
@@ -877,6 +880,7 @@ export type Database = {
           metadata: Json | null
           name: string
           price: number
+          promotional_price: number | null
           stock: number
           updated_at: string
           weight_kg: number | null
@@ -897,6 +901,7 @@ export type Database = {
           metadata?: Json | null
           name: string
           price: number
+          promotional_price?: number | null
           stock?: number
           updated_at?: string
           weight_kg?: number | null
@@ -917,6 +922,7 @@ export type Database = {
           metadata?: Json | null
           name?: string
           price?: number
+          promotional_price?: number | null
           stock?: number
           updated_at?: string
           weight_kg?: number | null
