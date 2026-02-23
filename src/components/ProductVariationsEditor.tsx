@@ -546,7 +546,7 @@ const ProductVariationsEditor = ({ productId, basePrice }: ProductVariationsEdit
               Nenhuma variação criada. Adicione atributos e clique em "Gerar Combinações".
             </p>
           ) : (
-            <div className="overflow-x-scroll">
+            <div className="overflow-x-scroll scrollbar-always-visible">
               <DndContext
                 sensors={sensors}
                 collisionDetection={closestCenter}
