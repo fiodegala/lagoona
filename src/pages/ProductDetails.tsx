@@ -101,7 +101,10 @@ const ProductDetails = () => {
     return images;
   }, [product]);
 
-  const currentPrice = selectedVariation?.price ?? product?.price ?? 0;
+  const basePrice = selectedVariation?.price ?? product?.price ?? 0;
+  const promotionalPrice = selectedVariation?.promotional_price ?? product?.promotional_price ?? null;
+  const currentPrice = promotionalPrice && promotionalPrice < basePrice ? promotionalPrice : basePrice;
+  const hasRealDiscount = promotionalPrice !== null && promotionalPrice < basePrice;
   const currentStock = selectedVariation?.stock ?? product?.stock ?? 0;
   const isOutOfStock = currentStock <= 0;
 
@@ -180,9 +183,7 @@ const ProductDetails = () => {
     );
   }
 
-  // Simulated original price for discount display
-  const originalPrice = currentPrice * 1.2;
-  const discountPercent = Math.round(((originalPrice - currentPrice) / originalPrice) * 100);
+  const discountPercent = hasRealDiscount ? Math.round(((basePrice - currentPrice) / basePrice) * 100) : 0;
 
   return (
     <StoreLayout>
@@ -257,9 +258,9 @@ const ProductDetails = () => {
 
             {/* Pricing */}
             <div className="space-y-1">
-              {discountPercent > 0 && (
+              {hasRealDiscount && (
                 <p className="text-sm text-muted-foreground line-through">
-                  {formatPrice(originalPrice)}
+                  {formatPrice(basePrice)}
                 </p>
               )}
               <p className="text-3xl font-bold text-store-accent">
