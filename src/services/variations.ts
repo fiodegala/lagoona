@@ -23,6 +23,7 @@ export interface ProductVariation {
   price: number | null;
   wholesale_price: number | null;
   exclusive_price: number | null;
+  promotional_price: number | null;
   stock: number;
   image_url: string | null;
   is_active: boolean;
@@ -45,6 +46,7 @@ export interface CreateVariationData {
   price?: number;
   wholesale_price?: number;
   exclusive_price?: number;
+  promotional_price?: number;
   stock?: number;
   image_url?: string;
   is_active?: boolean;
@@ -212,6 +214,7 @@ export const variationsService = {
         price: data.price ?? null,
         wholesale_price: data.wholesale_price ?? null,
         exclusive_price: data.exclusive_price ?? null,
+        promotional_price: data.promotional_price ?? null,
         stock: data.stock ?? 0,
         image_url: data.image_url || null,
         is_active: data.is_active ?? true,
@@ -252,6 +255,7 @@ export const variationsService = {
     if (data.price !== undefined) updateData.price = data.price;
     if (data.wholesale_price !== undefined) updateData.wholesale_price = data.wholesale_price;
     if (data.exclusive_price !== undefined) updateData.exclusive_price = data.exclusive_price;
+    if ((data as any).promotional_price !== undefined) updateData.promotional_price = (data as any).promotional_price;
     if (data.stock !== undefined) updateData.stock = data.stock;
     if (data.image_url !== undefined) updateData.image_url = data.image_url;
     if (data.is_active !== undefined) updateData.is_active = data.is_active;
