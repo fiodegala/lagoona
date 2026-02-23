@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Truck, Loader2, MapPin } from 'lucide-react';
 import { toast } from 'sonner';
+import { shippingService } from '@/services/shipping';
 
 interface ShippingOption {
   name: string;
@@ -13,9 +14,10 @@ interface ShippingOption {
 
 interface ShippingCalculatorProps {
   productWeight?: number;
+  orderTotal?: number;
 }
 
-const ShippingCalculator = ({ productWeight = 0.5 }: ShippingCalculatorProps) => {
+const ShippingCalculator = ({ productWeight = 0.5, orderTotal = 0 }: ShippingCalculatorProps) => {
   const [cep, setCep] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [options, setOptions] = useState<ShippingOption[] | null>(null);
@@ -56,36 +58,20 @@ const ShippingCalculator = ({ productWeight = 0.5 }: ShippingCalculatorProps) =>
 
       setAddress(`${addressData.localidade} - ${addressData.uf}`);
 
-      // Simulated shipping options (in production, integrate with real carrier APIs)
-      const simulatedOptions: ShippingOption[] = [
-        {
-          name: 'PAC',
-          price: 15.90 + (productWeight * 2),
-          days: '8 a 12 dias úteis',
-          company: 'Correios',
-        },
-        {
-          name: 'SEDEX',
-          price: 29.90 + (productWeight * 3),
-          days: '3 a 5 dias úteis',
-          company: 'Correios',
-        },
-        {
-          name: 'Expresso',
-          price: 45.90 + (productWeight * 4),
-          days: '1 a 2 dias úteis',
-          company: 'Transportadora',
-        },
-      ];
+      // Calculate shipping using configured zones
+      const result = await shippingService.calculateShipping(cleanCep, productWeight, orderTotal);
 
-      // Add free shipping option if available
-      simulatedOptions.forEach(opt => {
-        if (opt.price > 199) {
-          opt.price = 0;
-        }
-      });
-
-      setOptions(simulatedOptions);
+      if (!result) {
+        setOptions([]);
+        toast.info('Não há opções de frete disponíveis para este CEP.');
+      } else {
+        setOptions([{
+          name: result.zone.name,
+          price: result.price,
+          days: result.estimatedDays,
+          company: result.isFreeShipping ? 'Frete Grátis' : 'Transportadora',
+        }]);
+      }
     } catch (error) {
       console.error('Error calculating shipping:', error);
       toast.error('Erro ao calcular frete. Tente novamente.');
