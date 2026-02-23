@@ -656,7 +656,7 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className={`max-h-[90vh] flex flex-col ${showVariationsTabs ? 'max-w-3xl' : 'max-w-lg'}`}>
+      <DialogContent className={`max-h-[90vh] flex flex-col ${showVariationsTabs ? 'max-w-5xl' : 'max-w-2xl'}`}>
         <DialogHeader>
           <DialogTitle>
             {isEditing ? 'Editar Produto' : autoCreatedProductId ? 'Novo Produto (Variável)' : 'Novo Produto'}
