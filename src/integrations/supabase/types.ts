@@ -1031,6 +1031,51 @@ export type Database = {
         }
         Relationships: []
       }
+      shipping_zones: {
+        Row: {
+          base_price: number
+          created_at: string
+          estimated_days_max: number
+          estimated_days_min: number
+          free_shipping_min_value: number | null
+          id: string
+          is_active: boolean
+          name: string
+          price_per_kg: number
+          updated_at: string
+          zip_end: string
+          zip_start: string
+        }
+        Insert: {
+          base_price?: number
+          created_at?: string
+          estimated_days_max?: number
+          estimated_days_min?: number
+          free_shipping_min_value?: number | null
+          id?: string
+          is_active?: boolean
+          name: string
+          price_per_kg?: number
+          updated_at?: string
+          zip_end: string
+          zip_start: string
+        }
+        Update: {
+          base_price?: number
+          created_at?: string
+          estimated_days_max?: number
+          estimated_days_min?: number
+          free_shipping_min_value?: number | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          price_per_kg?: number
+          updated_at?: string
+          zip_end?: string
+          zip_start?: string
+        }
+        Relationships: []
+      }
       store_config: {
         Row: {
           created_at: string
