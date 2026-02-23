@@ -31,7 +31,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { Search, Package, Warehouse, AlertTriangle, Plus, Minus, Save } from 'lucide-react';
+import { Search, Package, Warehouse, AlertTriangle, Plus, Minus, Save, Download } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface Store {
@@ -197,6 +197,30 @@ const Stock = () => {
   const lowStock = products.filter(p => p.total > 0 && p.total <= 5).length;
   const totalOnlineStock = products.reduce((sum, p) => sum + p.total, 0);
 
+  const exportToCSV = () => {
+    const headers = ['Produto', 'Código de Barras', 'Categoria', 'Preço', ...physicalStores.map(s => s.name), 'Estoque Online (Geral)'];
+    const rows = filteredProducts.map(p => [
+      p.name,
+      p.barcode || '',
+      p.category_name || '',
+      p.price.toFixed(2).replace('.', ','),
+      ...physicalStores.map(s => String(p.stores[s.id] || 0)),
+      String(p.total),
+    ]);
+    const csvContent = [headers, ...rows]
+      .map(row => row.map(cell => `"${cell.replace(/"/g, '""')}"`).join(';'))
+      .join('\n');
+    const BOM = '\uFEFF';
+    const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `estoque_${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+    toast({ title: 'Relatório exportado com sucesso!' });
+  };
+
   return (
     <AdminLayout>
       <div className="space-y-6 animate-fade-in">
@@ -282,6 +306,10 @@ const Stock = () => {
               <SelectItem value="out-of-stock">Sem estoque</SelectItem>
             </SelectContent>
           </Select>
+          <Button variant="outline" onClick={exportToCSV} disabled={filteredProducts.length === 0}>
+            <Download className="h-4 w-4 mr-2" />
+            Exportar CSV
+          </Button>
         </div>
 
         {/* Stock Table */}
