@@ -21,12 +21,12 @@ const ProductCard = ({ product, showDiscount = true }: ProductCardProps) => {
   
   const isWishlisted = isFavorite(product.id);
 
-  // Desconto real baseado em exclusive_price
-  const hasRealDiscount = product.exclusive_price != null && product.exclusive_price < product.price;
+  // Desconto real baseado em promotional_price
+  const hasRealDiscount = (product as any).promotional_price != null && (product as any).promotional_price < product.price;
   const discountPercent = hasRealDiscount
-    ? Math.round(((product.price - product.exclusive_price!) / product.price) * 100)
+    ? Math.round(((product.price - (product as any).promotional_price) / product.price) * 100)
     : 0;
-  const displayPrice = hasRealDiscount ? product.exclusive_price! : product.price;
+  const displayPrice = hasRealDiscount ? (product as any).promotional_price : product.price;
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('pt-BR', {

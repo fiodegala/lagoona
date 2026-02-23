@@ -35,8 +35,8 @@ const HomePage = () => {
     new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
   );
 
-  // Produtos com preço exclusivo (ofertas)
-  const dealProducts = products.filter(p => p.exclusive_price && p.exclusive_price < p.price);
+  // Produtos com preço promocional (ofertas)
+  const dealProducts = products.filter(p => (p as any).promotional_price && (p as any).promotional_price < p.price);
 
   const categoryIcons = ['👕', '👖', '👟', '👜', '💍', '🎮', '📱', '🏠'];
 

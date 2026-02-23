@@ -55,6 +55,7 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
   const [price, setPrice] = useState('');
   const [wholesalePrice, setWholesalePrice] = useState('');
   const [exclusivePrice, setExclusivePrice] = useState('');
+  const [promotionalPrice, setPromotionalPrice] = useState('');
   const [stock, setStock] = useState('0');
   const [categoryId, setCategoryId] = useState<string>('none');
   const [imageUrl, setImageUrl] = useState('');
@@ -90,6 +91,7 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
         setPrice(product.price.toString());
         setWholesalePrice((product as any).wholesale_price?.toString() || '');
         setExclusivePrice((product as any).exclusive_price?.toString() || '');
+        setPromotionalPrice((product as any).promotional_price?.toString() || '');
         setStock(product.stock.toString());
         setCategoryId(product.category_id || 'none');
         setImageUrl(product.image_url || '');
@@ -188,6 +190,7 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
     setPrice('');
     setWholesalePrice('');
     setExclusivePrice('');
+    setPromotionalPrice('');
     setStock('0');
     setCategoryId('none');
     setImageUrl('');
@@ -234,6 +237,7 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
           barcode: barcode.trim() || undefined,
           wholesale_price: wholesalePrice ? parseFloat(wholesalePrice) : undefined,
           exclusive_price: exclusivePrice ? parseFloat(exclusivePrice) : undefined,
+          promotional_price: promotionalPrice ? parseFloat(promotionalPrice) : undefined,
           weight_kg: weightKg ? parseFloat(weightKg) : undefined,
           width_cm: widthCm ? parseFloat(widthCm) : undefined,
           height_cm: heightCm ? parseFloat(heightCm) : undefined,
@@ -284,6 +288,7 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
         barcode: barcode.trim() || undefined,
         wholesale_price: wholesalePrice ? parseFloat(wholesalePrice) : undefined,
         exclusive_price: exclusivePrice ? parseFloat(exclusivePrice) : undefined,
+        promotional_price: promotionalPrice ? parseFloat(promotionalPrice) : undefined,
         weight_kg: weightKg ? parseFloat(weightKg) : undefined,
         width_cm: widthCm ? parseFloat(widthCm) : undefined,
         height_cm: heightCm ? parseFloat(heightCm) : undefined,
@@ -406,7 +411,7 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
             Preços base usados para novas variações
           </p>
         )}
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <div className="space-y-1">
             <Label htmlFor="price" className="text-xs text-muted-foreground">Varejo (R$) *</Label>
             <Input
@@ -418,6 +423,19 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
               value={price}
               onChange={(e) => setPrice(e.target.value)}
               required
+            />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="promotionalPrice" className="text-xs text-store-deal font-semibold">Promocional (R$)</Label>
+            <Input
+              id="promotionalPrice"
+              type="number"
+              step="0.01"
+              min="0"
+              placeholder="0.00"
+              value={promotionalPrice}
+              onChange={(e) => setPromotionalPrice(e.target.value)}
+              className="border-store-deal/30 focus-visible:ring-store-deal/50"
             />
           </div>
           <div className="space-y-1">
@@ -445,6 +463,11 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
             />
           </div>
         </div>
+        {promotionalPrice && price && parseFloat(promotionalPrice) < parseFloat(price) && (
+          <p className="text-xs text-store-deal font-medium">
+            Desconto de {Math.round(((parseFloat(price) - parseFloat(promotionalPrice)) / parseFloat(price)) * 100)}% sobre o preço de varejo
+          </p>
+        )}
       </div>
 
       {/* Store Stock Section */}

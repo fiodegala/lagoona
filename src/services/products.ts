@@ -13,6 +13,7 @@ export interface Product {
   barcode: string | null;
   wholesale_price: number | null;
   exclusive_price: number | null;
+  promotional_price: number | null;
   weight_kg: number | null;
   width_cm: number | null;
   height_cm: number | null;
@@ -43,6 +44,7 @@ export interface CreateProductData {
   metadata?: Record<string, unknown>;
   wholesale_price?: number;
   exclusive_price?: number;
+  promotional_price?: number;
   weight_kg?: number;
   width_cm?: number;
   height_cm?: number;
@@ -84,6 +86,7 @@ export const productsService = {
       metadata: input.metadata || {},
       wholesale_price: input.wholesale_price ?? null,
       exclusive_price: input.exclusive_price ?? null,
+      promotional_price: input.promotional_price ?? null,
       weight_kg: input.weight_kg ?? null,
       width_cm: input.width_cm ?? null,
       height_cm: input.height_cm ?? null,
@@ -116,6 +119,7 @@ export const productsService = {
     if (input.metadata !== undefined) updateData.metadata = input.metadata;
     if (input.wholesale_price !== undefined) updateData.wholesale_price = input.wholesale_price;
     if (input.exclusive_price !== undefined) updateData.exclusive_price = input.exclusive_price;
+    if (input.promotional_price !== undefined) updateData.promotional_price = input.promotional_price;
     if (input.weight_kg !== undefined) updateData.weight_kg = input.weight_kg;
     if (input.width_cm !== undefined) updateData.width_cm = input.width_cm;
     if (input.height_cm !== undefined) updateData.height_cm = input.height_cm;
