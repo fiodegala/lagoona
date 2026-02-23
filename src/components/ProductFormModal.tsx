@@ -53,6 +53,8 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
+  const [wholesalePrice, setWholesalePrice] = useState('');
+  const [exclusivePrice, setExclusivePrice] = useState('');
   const [stock, setStock] = useState('0');
   const [categoryId, setCategoryId] = useState<string>('none');
   const [imageUrl, setImageUrl] = useState('');
@@ -86,6 +88,8 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
         setName(product.name);
         setDescription(product.description || '');
         setPrice(product.price.toString());
+        setWholesalePrice((product as any).wholesale_price?.toString() || '');
+        setExclusivePrice((product as any).exclusive_price?.toString() || '');
         setStock(product.stock.toString());
         setCategoryId(product.category_id || 'none');
         setImageUrl(product.image_url || '');
@@ -182,6 +186,8 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
     setName('');
     setDescription('');
     setPrice('');
+    setWholesalePrice('');
+    setExclusivePrice('');
     setStock('0');
     setCategoryId('none');
     setImageUrl('');
@@ -226,6 +232,8 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
           image_url: imageUrl.trim() || undefined,
           is_active: isActive,
           barcode: barcode.trim() || undefined,
+          wholesale_price: wholesalePrice ? parseFloat(wholesalePrice) : undefined,
+          exclusive_price: exclusivePrice ? parseFloat(exclusivePrice) : undefined,
           weight_kg: weightKg ? parseFloat(weightKg) : undefined,
           width_cm: widthCm ? parseFloat(widthCm) : undefined,
           height_cm: heightCm ? parseFloat(heightCm) : undefined,
@@ -274,6 +282,8 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
         image_url: imageUrl.trim() || undefined,
         is_active: isActive,
         barcode: barcode.trim() || undefined,
+        wholesale_price: wholesalePrice ? parseFloat(wholesalePrice) : undefined,
+        exclusive_price: exclusivePrice ? parseFloat(exclusivePrice) : undefined,
         weight_kg: weightKg ? parseFloat(weightKg) : undefined,
         width_cm: widthCm ? parseFloat(widthCm) : undefined,
         height_cm: heightCm ? parseFloat(heightCm) : undefined,
@@ -388,23 +398,53 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
         />
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="price">Preço {productType === 'simple' ? '(R$) *' : 'Base (R$) *'}</Label>
-        <Input
-          id="price"
-          type="number"
-          step="0.01"
-          min="0"
-          placeholder="0.00"
-          value={price}
-          onChange={(e) => setPrice(e.target.value)}
-          required
-        />
+      {/* Pricing Section */}
+      <div className="space-y-3 rounded-lg border p-4">
+        <Label className="font-medium">Preços</Label>
         {productType === 'variable' && (
           <p className="text-xs text-muted-foreground">
-            Preço base usado para novas variações
+            Preços base usados para novas variações
           </p>
         )}
+        <div className="grid grid-cols-3 gap-3">
+          <div className="space-y-1">
+            <Label htmlFor="price" className="text-xs text-muted-foreground">Varejo (R$) *</Label>
+            <Input
+              id="price"
+              type="number"
+              step="0.01"
+              min="0"
+              placeholder="0.00"
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+              required
+            />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="wholesalePrice" className="text-xs text-muted-foreground">Atacado (R$)</Label>
+            <Input
+              id="wholesalePrice"
+              type="number"
+              step="0.01"
+              min="0"
+              placeholder="0.00"
+              value={wholesalePrice}
+              onChange={(e) => setWholesalePrice(e.target.value)}
+            />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="exclusivePrice" className="text-xs text-muted-foreground">Exclusivo (R$)</Label>
+            <Input
+              id="exclusivePrice"
+              type="number"
+              step="0.01"
+              min="0"
+              placeholder="0.00"
+              value={exclusivePrice}
+              onChange={(e) => setExclusivePrice(e.target.value)}
+            />
+          </div>
+        </div>
       </div>
 
       {/* Store Stock Section */}

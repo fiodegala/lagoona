@@ -21,6 +21,8 @@ export interface ProductVariation {
   sku: string | null;
   barcode: string | null;
   price: number | null;
+  wholesale_price: number | null;
+  exclusive_price: number | null;
   stock: number;
   image_url: string | null;
   is_active: boolean;
@@ -41,6 +43,8 @@ export interface CreateVariationData {
   sku?: string;
   barcode?: string;
   price?: number;
+  wholesale_price?: number;
+  exclusive_price?: number;
   stock?: number;
   image_url?: string;
   is_active?: boolean;

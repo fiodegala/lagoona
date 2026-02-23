@@ -289,7 +289,7 @@ const ProductVariationsEditor = ({ productId, basePrice }: ProductVariationsEdit
 
   const handleUpdateVariation = async (
     variationId: string,
-    field: 'price' | 'stock' | 'sku' | 'barcode' | 'is_active' | 'image_url',
+    field: 'price' | 'wholesale_price' | 'exclusive_price' | 'stock' | 'sku' | 'barcode' | 'is_active' | 'image_url',
     value: string | number | boolean
   ) => {
     try {
@@ -494,7 +494,9 @@ const ProductVariationsEditor = ({ productId, basePrice }: ProductVariationsEdit
                       <TableHead>Variação</TableHead>
                       <TableHead>SKU</TableHead>
                       <TableHead>Código de Barras</TableHead>
-                      <TableHead>Preço</TableHead>
+                      <TableHead>Varejo</TableHead>
+                      <TableHead>Atacado</TableHead>
+                      <TableHead>Exclusivo</TableHead>
                       <TableHead>Estoque</TableHead>
                       <TableHead>Ativo</TableHead>
                       <TableHead className="w-10"></TableHead>
