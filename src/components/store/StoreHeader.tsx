@@ -65,12 +65,12 @@ const StoreHeader = ({ categories }: StoreHeaderProps) => {
           <Link to="/" className="flex items-center shrink-0">
             <img
               src={logoLagoonaDark}
-              alt="Lagoona Store"
+              alt="Fio de Gala"
               className="h-8 sm:h-10 dark:hidden"
             />
             <img
               src={logoLagoona}
-              alt="Lagoona Store"
+              alt="Fio de Gala"
               className="h-8 sm:h-10 hidden dark:block"
             />
           </Link>
@@ -149,7 +149,7 @@ const StoreHeader = ({ categories }: StoreHeaderProps) => {
               <SheetContent side="left" className="w-80 p-0">
                 <div className="flex flex-col h-full">
                   <div className="p-4 border-b flex items-center justify-center">
-                    <img src={logoLagoonaDark} alt="Lagoona Store" className="h-8" />
+                    <img src={logoLagoonaDark} alt="Fio de Gala" className="h-8" />
                   </div>
 
                   <div className="p-4 border-b">

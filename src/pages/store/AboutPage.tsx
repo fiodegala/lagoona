@@ -42,7 +42,7 @@ const AboutPage = () => {
         <section className="bg-gradient-to-br from-store-secondary to-store-secondary/50 py-16 md:py-24">
           <div className="container mx-auto px-4 text-center">
             <h1 className="text-4xl md:text-5xl font-bold text-store-accent mb-6">
-              Sobre a Lagoona
+              Sobre a Fio de Gala
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
               Nascemos com o propósito de levar moda de qualidade e estilo único para você. 
@@ -61,7 +61,7 @@ const AboutPage = () => {
                 </h2>
                 <div className="space-y-4 text-muted-foreground">
                   <p>
-                    A Lagoona nasceu em 2024 do sonho de criar uma marca que unisse 
+                    A Fio de Gala nasceu em 2024 do sonho de criar uma marca que unisse 
                     qualidade, estilo e acessibilidade. Começamos pequenos, mas com uma 
                     grande visão: transformar a forma como as pessoas se vestem e se sentem.
                   </p>

@@ -116,7 +116,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
       <div className="flex items-center justify-between h-16 px-4 border-b border-sidebar-border">
         {!collapsed && (
           <div className="flex items-center gap-2">
-            <img src={logoLagoona} alt="Lagoona" className="h-8 w-auto" />
+            <img src={logoLagoona} alt="Fio de Gala" className="h-8 w-auto" />
           </div>
         )}
         {!isMobile && (
@@ -218,7 +218,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
       {/* Mobile header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 h-14 bg-card border-b z-40 flex items-center justify-between px-4">
         <div className="flex items-center gap-2">
-          <img src={logoLagoona} alt="Lagoona" className="h-6 w-auto" />
+          <img src={logoLagoona} alt="Fio de Gala" className="h-6 w-auto" />
         </div>
         <Button variant="ghost" size="icon" onClick={() => setMobileOpen(!mobileOpen)}>
           {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}

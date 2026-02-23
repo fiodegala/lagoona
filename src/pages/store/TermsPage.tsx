@@ -12,7 +12,7 @@ const TermsPage = () => {
       content: [
         {
           subtitle: '1.1 Aceitação dos termos',
-          text: 'Ao acessar e utilizar o site da Lagoona, você declara ter lido, compreendido e concordado com estes Termos de Uso. Caso não concorde, solicitamos que não utilize nossos serviços.',
+          text: 'Ao acessar e utilizar o site da Fio de Gala, você declara ter lido, compreendido e concordado com estes Termos de Uso. Caso não concorde, solicitamos que não utilize nossos serviços.',
         },
         {
           subtitle: '1.2 Modificações',
@@ -118,7 +118,7 @@ const TermsPage = () => {
       content: [
         {
           subtitle: '6.1 Direitos autorais',
-          text: 'Todo o conteúdo do site (textos, imagens, logos, design) é de propriedade da Lagoona ou licenciado, protegido por leis de propriedade intelectual.',
+          text: 'Todo o conteúdo do site (textos, imagens, logos, design) é de propriedade da Fio de Gala ou licenciado, protegido por leis de propriedade intelectual.',
         },
         {
           subtitle: '6.2 Uso permitido',
@@ -126,7 +126,7 @@ const TermsPage = () => {
         },
         {
           subtitle: '6.3 Marcas registradas',
-          text: 'O nome "Lagoona" e logotipos associados são marcas registradas. Seu uso não autorizado constitui violação de direitos.',
+          text: 'O nome "Fio de Gala" e logotipos associados são marcas registradas. Seu uso não autorizado constitui violação de direitos.',
         },
       ],
     },
@@ -174,7 +174,7 @@ const TermsPage = () => {
             {/* Introduction */}
             <div className="bg-card border rounded-2xl p-6 md:p-8 mb-8">
               <p className="text-muted-foreground leading-relaxed">
-                Bem-vindo à <strong className="text-store-accent">Lagoona</strong>! Estes Termos de Uso regulam o acesso 
+                Bem-vindo à <strong className="text-store-accent">Fio de Gala</strong>! Estes Termos de Uso regulam o acesso 
                 e utilização do nosso site e serviços de e-commerce. Ao navegar ou realizar compras, você concorda 
                 integralmente com as condições aqui estabelecidas. Leia atentamente antes de prosseguir.
               </p>
@@ -240,8 +240,8 @@ const TermsPage = () => {
                   </p>
                   <p className="text-sm">
                     <strong className="text-store-accent">E-mail:</strong>{' '}
-                    <a href="mailto:contato@lagoona.com.br" className="text-store-primary hover:underline">
-                      contato@lagoona.com.br
+                    <a href="mailto:contato@fiodegala.com.br" className="text-store-primary hover:underline">
+                      contato@fiodegala.com.br
                     </a>
                   </p>
                 </div>

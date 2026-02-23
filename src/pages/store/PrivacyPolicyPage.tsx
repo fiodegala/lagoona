@@ -60,7 +60,7 @@ const PrivacyPolicyPage = () => {
         },
         {
           subtitle: '3.3 Não vendemos seus dados',
-          text: 'A Lagoona não vende, aluga ou comercializa suas informações pessoais para terceiros.',
+          text: 'A Fio de Gala não vende, aluga ou comercializa suas informações pessoais para terceiros.',
         },
       ],
     },
@@ -148,7 +148,7 @@ const PrivacyPolicyPage = () => {
             {/* Introduction */}
             <div className="bg-card border rounded-2xl p-6 md:p-8 mb-8">
               <p className="text-muted-foreground leading-relaxed">
-                A <strong className="text-store-accent">Lagoona</strong> valoriza a privacidade dos seus clientes e visitantes. 
+                A <strong className="text-store-accent">Fio de Gala</strong> valoriza a privacidade dos seus clientes e visitantes. 
                 Esta Política de Privacidade explica como coletamos, usamos, armazenamos e protegemos suas informações pessoais 
                 quando você utiliza nosso site e serviços. Ao utilizar nossos serviços, você concorda com as práticas descritas 
                 nesta política.
@@ -199,8 +199,8 @@ const PrivacyPolicyPage = () => {
                   </p>
                   <p className="text-sm">
                     <strong className="text-store-accent">E-mail:</strong>{' '}
-                    <a href="mailto:privacidade@lagoona.com.br" className="text-store-primary hover:underline">
-                      privacidade@lagoona.com.br
+                    <a href="mailto:privacidade@fiodegala.com.br" className="text-store-primary hover:underline">
+                      privacidade@fiodegala.com.br
                     </a>
                   </p>
                 </div>
