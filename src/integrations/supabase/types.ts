@@ -366,10 +366,14 @@ export type Database = {
           notes: string | null
           payment_method: string | null
           payment_status: string | null
+          shipped_at: string | null
           shipping_address: Json | null
+          shipping_carrier: string | null
           status: string
           store_id: string | null
           total: number
+          tracking_code: string | null
+          tracking_url: string | null
           updated_at: string
         }
         Insert: {
@@ -384,10 +388,14 @@ export type Database = {
           notes?: string | null
           payment_method?: string | null
           payment_status?: string | null
+          shipped_at?: string | null
           shipping_address?: Json | null
+          shipping_carrier?: string | null
           status?: string
           store_id?: string | null
           total: number
+          tracking_code?: string | null
+          tracking_url?: string | null
           updated_at?: string
         }
         Update: {
@@ -402,10 +410,14 @@ export type Database = {
           notes?: string | null
           payment_method?: string | null
           payment_status?: string | null
+          shipped_at?: string | null
           shipping_address?: Json | null
+          shipping_carrier?: string | null
           status?: string
           store_id?: string | null
           total?: number
+          tracking_code?: string | null
+          tracking_url?: string | null
           updated_at?: string
         }
         Relationships: [
