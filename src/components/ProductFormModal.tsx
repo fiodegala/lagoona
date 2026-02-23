@@ -21,13 +21,21 @@ import {
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Loader2, Package, Layers, Weight } from 'lucide-react';
+import { Loader2, Package, Layers, Weight, Warehouse } from 'lucide-react';
 import { toast } from 'sonner';
 import { productsService, categoriesService, Product, Category, CreateProductData } from '@/services/products';
 import { variationsService } from '@/services/variations';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import ImageUpload from './ImageUpload';
 import MultiImageUpload from './MultiImageUpload';
 import ProductVariationsEditor from './ProductVariationsEditor';
+
+interface StoreInfo {
+  id: string;
+  name: string;
+  type: string;
+}
 
 interface ProductFormModalProps {
   open: boolean;
@@ -37,6 +45,7 @@ interface ProductFormModalProps {
 }
 
 const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModalProps) => {
+  const { isAdmin, userStoreId } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [activeTab, setActiveTab] = useState('details');
@@ -59,6 +68,10 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
   const [heightCm, setHeightCm] = useState('');
   const [depthCm, setDepthCm] = useState('');
 
+  // Store stock fields
+  const [stores, setStores] = useState<StoreInfo[]>([]);
+  const [storeStockQty, setStoreStockQty] = useState<Record<string, string>>({});
+
   // Auto-created product for variable products
   const [autoCreatedProductId, setAutoCreatedProductId] = useState<string | null>(null);
 
@@ -68,6 +81,7 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
   useEffect(() => {
     if (open) {
       loadCategories();
+      loadStores();
       if (product) {
         setName(product.name);
         setDescription(product.description || '');
@@ -75,7 +89,6 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
         setStock(product.stock.toString());
         setCategoryId(product.category_id || 'none');
         setImageUrl(product.image_url || '');
-        // Load gallery images from metadata
         const metadata = product.metadata as { gallery_images?: string[] } | null;
         setGalleryImages(metadata?.gallery_images || []);
         setIsActive(product.is_active);
@@ -84,8 +97,8 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
         setWidthCm(product.width_cm?.toString() || '');
         setHeightCm(product.height_cm?.toString() || '');
         setDepthCm(product.depth_cm?.toString() || '');
-        // Check if product has variations
         checkProductVariations(product.id);
+        loadStoreStock(product.id);
       } else {
         resetForm();
       }
@@ -115,6 +128,56 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
     }
   };
 
+  const loadStores = async () => {
+    try {
+      const { data } = await supabase.from('stores').select('id, name, type').eq('is_active', true).order('name');
+      const physical = (data || []).filter(s => s.type === 'physical');
+      setStores(physical);
+    } catch (error) {
+      console.error('Error loading stores:', error);
+    }
+  };
+
+  const loadStoreStock = async (productId: string) => {
+    try {
+      const { data } = await supabase
+        .from('store_stock')
+        .select('store_id, quantity')
+        .eq('product_id', productId)
+        .is('variation_id', null);
+      const qty: Record<string, string> = {};
+      (data || []).forEach(s => { qty[s.store_id] = s.quantity.toString(); });
+      setStoreStockQty(qty);
+    } catch (error) {
+      console.error('Error loading store stock:', error);
+    }
+  };
+
+  const saveStoreStock = async (productId: string) => {
+    const storesToSave = isAdmin ? stores : stores.filter(s => s.id === userStoreId);
+    for (const store of storesToSave) {
+      const qty = parseInt(storeStockQty[store.id] || '0') || 0;
+      const { data: existing } = await supabase
+        .from('store_stock')
+        .select('id')
+        .eq('store_id', store.id)
+        .eq('product_id', productId)
+        .is('variation_id', null)
+        .maybeSingle();
+
+      if (existing) {
+        await supabase
+          .from('store_stock')
+          .update({ quantity: qty, updated_at: new Date().toISOString() } as never)
+          .eq('id', existing.id);
+      } else {
+        await supabase
+          .from('store_stock')
+          .insert({ store_id: store.id, product_id: productId, variation_id: null, quantity: qty } as never);
+      }
+    }
+  };
+
   const resetForm = () => {
     setName('');
     setDescription('');
@@ -133,6 +196,7 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
     setHeightCm('');
     setDepthCm('');
     setAutoCreatedProductId(null);
+    setStoreStockQty({});
   };
 
   // Auto-save product when switching to variations tab for new variable products
@@ -217,17 +281,23 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
         metadata: { gallery_images: galleryImages },
       };
 
+      let savedProductId: string;
       if (isEditing && product) {
         await productsService.update(product.id, data);
+        savedProductId = product.id;
         toast.success('Produto atualizado com sucesso!');
       } else if (autoCreatedProductId) {
-        // Update the auto-created product
         await productsService.update(autoCreatedProductId, data);
+        savedProductId = autoCreatedProductId;
         toast.success('Produto atualizado com sucesso!');
       } else {
-        await productsService.create(data);
+        const newProduct = await productsService.create(data);
+        savedProductId = newProduct.id;
         toast.success('Produto criado com sucesso!');
       }
+
+      // Save store stock
+      await saveStoreStock(savedProductId);
       
       onSuccess();
       onClose();
@@ -318,41 +388,57 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="price">Preço {productType === 'simple' ? '(R$) *' : 'Base (R$) *'}</Label>
-          <Input
-            id="price"
-            type="number"
-            step="0.01"
-            min="0"
-            placeholder="0.00"
-            value={price}
-            onChange={(e) => setPrice(e.target.value)}
-            required
-          />
-          {productType === 'variable' && (
-            <p className="text-xs text-muted-foreground">
-              Preço base usado para novas variações
-            </p>
-          )}
+      <div className="space-y-2">
+        <Label htmlFor="price">Preço {productType === 'simple' ? '(R$) *' : 'Base (R$) *'}</Label>
+        <Input
+          id="price"
+          type="number"
+          step="0.01"
+          min="0"
+          placeholder="0.00"
+          value={price}
+          onChange={(e) => setPrice(e.target.value)}
+          required
+        />
+        {productType === 'variable' && (
+          <p className="text-xs text-muted-foreground">
+            Preço base usado para novas variações
+          </p>
+        )}
+      </div>
+
+      {/* Store Stock Section */}
+      <div className="space-y-3 rounded-lg border p-4">
+        <div className="flex items-center gap-2">
+          <Warehouse className="h-4 w-4 text-muted-foreground" />
+          <Label className="font-medium">Estoque por Loja</Label>
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="stock">{productType === 'simple' ? 'Estoque' : 'Estoque Base'}</Label>
-          <Input
-            id="stock"
-            type="number"
-            min="0"
-            placeholder="0"
-            value={stock}
-            onChange={(e) => setStock(e.target.value)}
-          />
-          {productType === 'variable' && (
-            <p className="text-xs text-muted-foreground">
-              Gerenciado por variação
-            </p>
-          )}
-        </div>
+        {(isAdmin ? stores : stores.filter(s => s.id === userStoreId)).map(store => (
+          <div key={store.id} className="flex items-center gap-3">
+            <Label className="text-sm text-muted-foreground w-40">{store.name}</Label>
+            <Input
+              type="number"
+              min="0"
+              placeholder="0"
+              value={storeStockQty[store.id] || '0'}
+              onChange={(e) => setStoreStockQty(prev => ({ ...prev, [store.id]: e.target.value }))}
+              className="w-24"
+            />
+          </div>
+        ))}
+        {isAdmin && stores.length > 0 && (
+          <div className="flex items-center gap-3 pt-2 border-t">
+            <Label className="text-sm font-bold w-40">Estoque Online (Total)</Label>
+            <span className="font-bold text-sm">
+              {stores.reduce((sum, s) => sum + (parseInt(storeStockQty[s.id] || '0') || 0), 0)}
+            </span>
+          </div>
+        )}
+        {productType === 'variable' && (
+          <p className="text-xs text-muted-foreground">
+            Gerenciado por variação
+          </p>
+        )}
       </div>
 
       {/* Barcode field */}
