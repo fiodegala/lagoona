@@ -2,6 +2,7 @@ import { ReactNode, useEffect, useState } from 'react';
 import StoreHeader from './StoreHeader';
 import StoreFooter from './StoreFooter';
 import WhatsAppButton from './WhatsAppButton';
+import SpinWheel from './SpinWheel';
 import { categoriesService, Category } from '@/services/categories';
 
 interface StoreLayoutProps {
@@ -31,6 +32,7 @@ const StoreLayout = ({ children }: StoreLayoutProps) => {
       </main>
       <StoreFooter />
       <WhatsAppButton />
+      <SpinWheel />
     </div>
   );
 };
