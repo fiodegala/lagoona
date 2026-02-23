@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Loader2, ShoppingBag, Truck, RefreshCw, Shield, MessageCircle, TrendingUp } from 'lucide-react';
+import { ArrowRight, Loader2, ShoppingBag, Truck, RefreshCw, Shield, MessageCircle, TrendingUp, Flame } from 'lucide-react';
 import atacadoVideo from '@/assets/atacado-fdg.mp4';
 import { Button } from '@/components/ui/button';
 import StoreLayout from '@/components/store/StoreLayout';
@@ -34,6 +34,9 @@ const HomePage = () => {
   const newProducts = [...products].sort((a, b) =>
     new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
   );
+
+  // Produtos com preço exclusivo (ofertas)
+  const dealProducts = products.filter(p => p.exclusive_price && p.exclusive_price < p.price);
 
   const categoryIcons = ['👕', '👖', '👟', '👜', '💍', '🎮', '📱', '🏠'];
 
@@ -101,6 +104,46 @@ const HomePage = () => {
           </div>
         </div>
       </section>
+
+      {/* Ofertas */}
+      {!isLoading && dealProducts.length > 0 && (
+        <section className="py-16 md:py-20 bg-store-dark/5">
+          <div className="container mx-auto px-4">
+            <div className="flex items-center justify-between mb-10">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-store-deal/10 border border-store-deal/20">
+                  <Flame className="h-5 w-5 text-store-deal" />
+                </div>
+                <div>
+                  <h2 className="text-2xl md:text-3xl font-display font-bold">Ofertas</h2>
+                  <div className="w-12 h-0.5 bg-store-deal mt-2" />
+                </div>
+              </div>
+              <Button variant="outline" asChild className="gap-2 hidden sm:flex border-store-deal/30 text-store-deal hover:bg-store-deal/10">
+                <Link to="/loja?ordenar=ofertas">
+                  Ver todas
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
+              {dealProducts.slice(0, 5).map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+
+            <div className="mt-6 text-center sm:hidden">
+              <Button variant="outline" asChild className="gap-2 border-store-deal/30 text-store-deal">
+                <Link to="/loja?ordenar=ofertas">
+                  Ver todas as ofertas
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Lançamentos */}
       <section className="py-16 md:py-20">
