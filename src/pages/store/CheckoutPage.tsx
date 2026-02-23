@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Loader2, Package, CheckCircle } from 'lucide-react';
+import ShippingCalculator from '@/components/store/ShippingCalculator';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -272,9 +273,10 @@ const CheckoutPage = () => {
                   </div>
                 </CardContent>
               </Card>
-            </div>
 
-            {/* Order summary */}
+              {/* Shipping Calculator */}
+              <ShippingCalculator orderTotal={total} />
+            </div>
             <div className="lg:col-span-1">
               <Card className="sticky top-24">
                 <CardHeader>

@@ -353,7 +353,7 @@ const ProductDetails = () => {
             <Separator />
 
             {/* Shipping Calculator */}
-            <ShippingCalculator productWeight={product.weight_kg || 0.5} />
+            <ShippingCalculator productWeight={product.weight_kg || 0.5} orderTotal={product.promotional_price || product.price} />
 
             {/* Trust Badges */}
             <div className="grid grid-cols-3 gap-4 py-4">
