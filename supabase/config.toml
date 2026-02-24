@@ -2,3 +2,6 @@ project_id = "krlnrzwshjwupiklzblz"
 
 [functions.send-whatsapp]
 verify_jwt = false
+
+[functions.zapi-webhooks]
+verify_jwt = false
