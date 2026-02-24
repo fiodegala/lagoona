@@ -140,21 +140,19 @@ serve(async (req) => {
 
     const zapiData = await zapiResponse.json();
 
-    // Log the WhatsApp message attempt
-    if (orderId) {
-      try {
-        await supabase.from("whatsapp_logs").insert({
-          order_id: orderId,
-          phone: formattedPhone,
-          customer_name: name,
-          message_type: logMessageType,
-          status: zapiResponse.ok ? "sent" : "failed",
-          zapi_message_id: zapiData?.messageId || null,
-          error_message: zapiResponse.ok ? null : JSON.stringify(zapiData),
-        });
-      } catch (logErr) {
-        console.error("Failed to log WhatsApp message:", logErr);
-      }
+    // Log the WhatsApp message attempt (always log, even test messages)
+    try {
+      await serviceSupabase.from("whatsapp_logs").insert({
+        order_id: orderId || null,
+        phone: formattedPhone,
+        customer_name: name,
+        message_type: logMessageType,
+        status: zapiResponse.ok ? "sent" : "failed",
+        zapi_message_id: zapiData?.messageId || null,
+        error_message: zapiResponse.ok ? null : JSON.stringify(zapiData),
+      });
+    } catch (logErr) {
+      console.error("Failed to log WhatsApp message:", logErr);
     }
 
     if (!zapiResponse.ok) {

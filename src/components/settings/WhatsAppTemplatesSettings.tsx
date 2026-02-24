@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import type { Json } from '@/integrations/supabase/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,10 +6,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { MessageCircle, Save, RotateCcw, Info, Eye, SendHorizonal } from 'lucide-react';
+import { MessageCircle, Save, RotateCcw, Info, Eye, SendHorizonal, History, CheckCircle2, XCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Dialog,
   DialogContent,
@@ -85,6 +86,15 @@ function renderWhatsAppText(text: string) {
   });
 }
 
+interface TestLog {
+  id: string;
+  phone: string;
+  message_type: string;
+  status: string;
+  created_at: string;
+  error_message: string | null;
+}
+
 const WhatsAppTemplatesSettings = () => {
   const [templates, setTemplates] = useState<Record<string, string>>({ ...DEFAULT_TEMPLATES });
   const [savedTemplates, setSavedTemplates] = useState<Record<string, string>>({});
@@ -94,10 +104,27 @@ const WhatsAppTemplatesSettings = () => {
   const [testDialogOpen, setTestDialogOpen] = useState(false);
   const [testPhone, setTestPhone] = useState('');
   const [isSendingTest, setIsSendingTest] = useState(false);
+  const [testLogs, setTestLogs] = useState<TestLog[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
+
+  const loadTestLogs = useCallback(async () => {
+    try {
+      const { data } = await supabase
+        .from('whatsapp_logs')
+        .select('id, phone, message_type, status, created_at, error_message')
+        .is('order_id', null)
+        .order('created_at', { ascending: false })
+        .limit(20);
+      if (data) setTestLogs(data);
+    } catch (e) {
+      console.error('Error loading test logs:', e);
+    }
+  }, []);
 
   useEffect(() => {
     loadTemplates();
-  }, []);
+    loadTestLogs();
+  }, [loadTestLogs]);
 
   const loadTemplates = async () => {
     try {
@@ -178,6 +205,7 @@ const WhatsAppTemplatesSettings = () => {
       toast.success('Mensagem de teste enviada com sucesso!');
       setTestDialogOpen(false);
       setTestPhone('');
+      loadTestLogs();
     } catch (error: any) {
       console.error('Error sending test:', error);
       toast.error(error?.message || 'Erro ao enviar mensagem de teste');
@@ -219,6 +247,10 @@ const WhatsAppTemplatesSettings = () => {
             </CardDescription>
           </div>
           <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => setShowHistory(v => !v)}>
+              <History className="h-3.5 w-3.5 mr-1.5" />
+              Histórico ({testLogs.length})
+            </Button>
             <Button variant="outline" size="sm" onClick={() => setTestDialogOpen(true)}>
               <SendHorizonal className="h-3.5 w-3.5 mr-1.5" />
               Enviar teste
@@ -333,6 +365,63 @@ const WhatsAppTemplatesSettings = () => {
             </TabsContent>
           ))}
         </Tabs>
+
+        {showHistory && (
+          <div className="mt-6 border rounded-lg">
+            <div className="flex items-center justify-between p-3 border-b bg-muted/30">
+              <h4 className="text-sm font-medium flex items-center gap-2">
+                <History className="h-4 w-4" />
+                Últimos testes enviados
+              </h4>
+              <Button variant="ghost" size="sm" onClick={loadTestLogs} className="h-7 text-xs">
+                <RotateCcw className="h-3 w-3 mr-1" />
+                Atualizar
+              </Button>
+            </div>
+            {testLogs.length === 0 ? (
+              <p className="text-sm text-muted-foreground p-4 text-center">
+                Nenhum teste enviado ainda.
+              </p>
+            ) : (
+              <ScrollArea className="max-h-[280px]">
+                <div className="divide-y">
+                  {testLogs.map((log) => (
+                    <div key={log.id} className="flex items-center justify-between px-3 py-2 text-sm">
+                      <div className="flex items-center gap-2 min-w-0">
+                        {log.status === 'sent' ? (
+                          <CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" />
+                        ) : (
+                          <XCircle className="h-4 w-4 text-destructive flex-shrink-0" />
+                        )}
+                        <span className="truncate font-mono text-xs">{log.phone}</span>
+                        <Badge variant="outline" className="text-xs flex-shrink-0">
+                          {TEMPLATE_LABELS[log.message_type] || log.message_type}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                        {log.error_message && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Badge variant="destructive" className="text-xs cursor-help">Erro</Badge>
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-xs">
+                              <p className="text-xs">{log.error_message}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
+                        <span className="text-xs text-muted-foreground whitespace-nowrap">
+                          {new Date(log.created_at).toLocaleString('pt-BR', {
+                            day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit',
+                          })}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            )}
+          </div>
+        )}
       </CardContent>
 
       <Dialog open={testDialogOpen} onOpenChange={setTestDialogOpen}>
