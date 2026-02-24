@@ -255,12 +255,13 @@ const POSPage = () => {
                     size="sm"
                     className="flex-1 gap-1.5"
                     onClick={() => {
-                      if (cartItems.length > 0 && saleType !== value) {
-                        if (!confirm('Mudar o tipo de venda vai limpar o carrinho. Continuar?')) return;
-                        setCartItems([]);
-                        setGeneralDiscount({ type: 'percentage', value: 0 });
+                      if (saleType !== value) {
+                        if (cartItems.length > 0) {
+                          setCartItems([]);
+                          setGeneralDiscount({ type: 'percentage', value: 0 });
+                        }
+                        setSaleType(value);
                       }
-                      setSaleType(value);
                     }}
                   >
                     <Icon className="h-3.5 w-3.5" />
