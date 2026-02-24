@@ -9,8 +9,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { ShoppingCart, Truck, ExternalLink, Package, Search, MessageCircle } from 'lucide-react';
+import { ShoppingCart, Truck, ExternalLink, Package, Search, MessageCircle, Clock, CheckCircle2, XCircle } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -33,6 +34,15 @@ const statusMap: Record<string, { label: string; variant: 'default' | 'secondary
   cancelled: { label: 'Cancelado', variant: 'destructive' },
 };
 
+const messageTypeLabels: Record<string, string> = {
+  tracking: '📦 Rastreio',
+  confirmed: '✅ Confirmado',
+  processing: '📦 Em preparo',
+  shipped: '🚚 Enviado',
+  delivered: '🎉 Entregue',
+  cancelled: '❌ Cancelado',
+};
+
 const Orders = () => {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
@@ -53,6 +63,21 @@ const Orders = () => {
       if (error) throw error;
       return data;
     },
+  });
+
+  const { data: whatsappLogs = [] } = useQuery({
+    queryKey: ['whatsapp-logs', trackingModal.orderId],
+    queryFn: async () => {
+      if (!trackingModal.orderId) return [];
+      const { data, error } = await supabase
+        .from('whatsapp_logs' as any)
+        .select('*')
+        .eq('order_id', trackingModal.orderId)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data as any[];
+    },
+    enabled: !!trackingModal.orderId && trackingModal.open,
   });
 
   const updateTrackingMutation = useMutation({
@@ -87,7 +112,6 @@ const Orders = () => {
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       toast.success('Status atualizado!');
 
-      // Send WhatsApp notification for status change
       if (['confirmed', 'processing', 'delivered', 'cancelled'].includes(status)) {
         const order = orders.find(o => o.id === orderId);
         if (!order) return;
@@ -114,11 +138,13 @@ const Orders = () => {
                 phone,
                 customerName: order.customer_name,
                 messageType: status,
+                orderId,
               }),
             }
           );
           if (res.ok) {
             toast.success('Notificação WhatsApp enviada!');
+            queryClient.invalidateQueries({ queryKey: ['whatsapp-logs', orderId] });
           } else {
             toast.error('Status salvo, mas falha ao enviar WhatsApp');
           }
@@ -134,7 +160,6 @@ const Orders = () => {
     setCarrier(order.shipping_carrier || '');
     setCustomUrl(order.tracking_url || '');
     
-    // Try to get customer phone from customers table
     let phone = '';
     if (order.customer_id) {
       const { data: customer } = await supabase.from('customers').select('phone').eq('id', order.customer_id).single();
@@ -174,11 +199,13 @@ const Orders = () => {
                     trackingCode,
                     trackingUrl: url,
                     carrier: selectedCarrier?.label || carrier,
+                    orderId: trackingModal.orderId,
                   }),
                 }
               );
               if (res.ok) {
                 toast.success('WhatsApp enviado com sucesso!');
+                queryClient.invalidateQueries({ queryKey: ['whatsapp-logs', trackingModal.orderId] });
               } else {
                 toast.error('Rastreio salvo, mas falha ao enviar WhatsApp');
               }
@@ -298,54 +325,94 @@ const Orders = () => {
       </div>
 
       <Dialog open={trackingModal.open} onOpenChange={o => setTrackingModal(prev => ({ ...prev, open: o }))}>
-        <DialogContent>
+        <DialogContent className="max-w-lg max-h-[90vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>Adicionar Rastreamento</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div>
-              <Label>Transportadora</Label>
-              <Select value={carrier} onValueChange={setCarrier}>
-                <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                <SelectContent>
-                  {CARRIERS.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>Código de Rastreio</Label>
-              <Input value={trackingCode} onChange={e => setTrackingCode(e.target.value)} placeholder="Ex: BR123456789BR" />
-            </div>
-            {carrier === 'outro' && (
+          <ScrollArea className="flex-1 min-h-0 pr-2">
+            <div className="space-y-4 py-2">
               <div>
-                <Label>URL de Rastreamento</Label>
-                <Input value={customUrl} onChange={e => setCustomUrl(e.target.value)} placeholder="https://..." />
+                <Label>Transportadora</Label>
+                <Select value={carrier} onValueChange={setCarrier}>
+                  <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                  <SelectContent>
+                    {CARRIERS.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
+                  </SelectContent>
+                </Select>
               </div>
-            )}
-            <div className="border-t pt-4 mt-2">
-              <div className="flex items-center gap-2 mb-3">
-                <Checkbox
-                  id="send-whatsapp"
-                  checked={sendWhatsapp}
-                  onCheckedChange={(checked) => setSendWhatsapp(!!checked)}
-                />
-                <label htmlFor="send-whatsapp" className="flex items-center gap-1.5 text-sm font-medium cursor-pointer">
-                  <MessageCircle className="h-4 w-4 text-[#25D366]" />
-                  Notificar cliente via WhatsApp
-                </label>
+              <div>
+                <Label>Código de Rastreio</Label>
+                <Input value={trackingCode} onChange={e => setTrackingCode(e.target.value)} placeholder="Ex: BR123456789BR" />
               </div>
-              {sendWhatsapp && (
+              {carrier === 'outro' && (
                 <div>
-                  <Label>Telefone do cliente (com DDD)</Label>
-                  <Input
-                    value={whatsappPhone}
-                    onChange={e => setWhatsappPhone(e.target.value)}
-                    placeholder="11999999999"
+                  <Label>URL de Rastreamento</Label>
+                  <Input value={customUrl} onChange={e => setCustomUrl(e.target.value)} placeholder="https://..." />
+                </div>
+              )}
+              <div className="border-t pt-4 mt-2">
+                <div className="flex items-center gap-2 mb-3">
+                  <Checkbox
+                    id="send-whatsapp"
+                    checked={sendWhatsapp}
+                    onCheckedChange={(checked) => setSendWhatsapp(!!checked)}
                   />
+                  <label htmlFor="send-whatsapp" className="flex items-center gap-1.5 text-sm font-medium cursor-pointer">
+                    <MessageCircle className="h-4 w-4 text-[#25D366]" />
+                    Notificar cliente via WhatsApp
+                  </label>
+                </div>
+                {sendWhatsapp && (
+                  <div>
+                    <Label>Telefone do cliente (com DDD)</Label>
+                    <Input
+                      value={whatsappPhone}
+                      onChange={e => setWhatsappPhone(e.target.value)}
+                      placeholder="11999999999"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* WhatsApp History */}
+              {whatsappLogs.length > 0 && (
+                <div className="border-t pt-4 mt-2">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-medium">Histórico de WhatsApp ({whatsappLogs.length})</span>
+                  </div>
+                  <div className="space-y-2">
+                    {whatsappLogs.map((log: any) => (
+                      <div key={log.id} className="flex items-start gap-2 rounded-md border p-2.5 text-xs">
+                        {log.status === 'sent' ? (
+                          <CheckCircle2 className="h-3.5 w-3.5 text-green-500 mt-0.5 shrink-0" />
+                        ) : (
+                          <XCircle className="h-3.5 w-3.5 text-destructive mt-0.5 shrink-0" />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-medium">
+                              {messageTypeLabels[log.message_type] || log.message_type}
+                            </span>
+                            <span className="text-muted-foreground whitespace-nowrap">
+                              {format(new Date(log.created_at), "dd/MM/yy HH:mm", { locale: ptBR })}
+                            </span>
+                          </div>
+                          <p className="text-muted-foreground mt-0.5">
+                            Para: {log.phone}
+                            {log.customer_name && ` (${log.customer_name})`}
+                          </p>
+                          {log.error_message && (
+                            <p className="text-destructive mt-0.5 truncate">{log.error_message}</p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
-          </div>
+          </ScrollArea>
           <DialogFooter>
             <Button variant="outline" onClick={() => setTrackingModal({ open: false, orderId: '' })}>Cancelar</Button>
             <Button onClick={handleSaveTracking} disabled={updateTrackingMutation.isPending}>
