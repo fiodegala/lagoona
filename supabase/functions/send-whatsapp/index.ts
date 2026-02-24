@@ -7,13 +7,25 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const STATUS_MESSAGES: Record<string, (name: string) => string> = {
+  confirmed: (name) =>
+    `Olá ${name}! ✅\n\nSeu pedido foi *confirmado* com sucesso!\n\nEstamos preparando tudo para você. 😊`,
+  processing: (name) =>
+    `Olá ${name}! 📦\n\nSeu pedido está sendo *preparado*!\n\nEm breve ele será enviado. Fique de olho! 🚀`,
+  shipped: (name) =>
+    `Olá ${name}! 🚚\n\nSeu pedido foi *enviado*!\n\nVocê receberá o código de rastreio em breve. 😊`,
+  delivered: (name) =>
+    `Olá ${name}! 🎉\n\nSeu pedido foi *entregue*!\n\nEsperamos que você aproveite! Se precisar de algo, estamos à disposição. 💛`,
+  cancelled: (name) =>
+    `Olá ${name}.\n\nInformamos que seu pedido foi *cancelado*.\n\nSe tiver dúvidas, entre em contato conosco. 🙏`,
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Validate auth
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -38,11 +50,12 @@ serve(async (req) => {
       });
     }
 
-    const { phone, customerName, trackingCode, trackingUrl, carrier } = await req.json();
+    const body = await req.json();
+    const { phone, customerName, trackingCode, trackingUrl, carrier, messageType } = body;
 
-    if (!phone || !trackingCode) {
+    if (!phone) {
       return new Response(
-        JSON.stringify({ error: "phone e trackingCode são obrigatórios" }),
+        JSON.stringify({ error: "phone é obrigatório" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -58,22 +71,30 @@ serve(async (req) => {
       );
     }
 
-    // Format phone number (remove non-digits, ensure country code)
     const cleanPhone = phone.replace(/\D/g, "");
     const formattedPhone = cleanPhone.startsWith("55") ? cleanPhone : `55${cleanPhone}`;
-
-    // Build message
-    const carrierName = carrier || "transportadora";
     const name = customerName || "Cliente";
-    let message = `Olá ${name}! 🎉\n\nSeu pedido foi enviado!\n\n📦 *Transportadora:* ${carrierName}\n🔍 *Código de rastreio:* ${trackingCode}`;
 
-    if (trackingUrl) {
-      message += `\n\n🔗 Acompanhe aqui: ${trackingUrl}`;
+    let message: string;
+
+    if (messageType && STATUS_MESSAGES[messageType]) {
+      // Status change notification
+      message = STATUS_MESSAGES[messageType](name);
+    } else if (trackingCode) {
+      // Tracking notification (legacy/existing behavior)
+      const carrierName = carrier || "transportadora";
+      message = `Olá ${name}! 🎉\n\nSeu pedido foi enviado!\n\n📦 *Transportadora:* ${carrierName}\n🔍 *Código de rastreio:* ${trackingCode}`;
+      if (trackingUrl) {
+        message += `\n\n🔗 Acompanhe aqui: ${trackingUrl}`;
+      }
+      message += `\n\nQualquer dúvida, estamos à disposição! 😊`;
+    } else {
+      return new Response(
+        JSON.stringify({ error: "messageType ou trackingCode são obrigatórios" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
-    message += `\n\nQualquer dúvida, estamos à disposição! 😊`;
-
-    // Send via Z-API
     const zapiUrl = `https://api.z-api.io/instances/${instanceId}/token/${instanceToken}/send-text`;
 
     const zapiResponse = await fetch(zapiUrl, {
@@ -82,10 +103,7 @@ serve(async (req) => {
         "Content-Type": "application/json",
         "Client-Token": clientToken,
       },
-      body: JSON.stringify({
-        phone: formattedPhone,
-        message,
-      }),
+      body: JSON.stringify({ phone: formattedPhone, message }),
     });
 
     const zapiData = await zapiResponse.json();
