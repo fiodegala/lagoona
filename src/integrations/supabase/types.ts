@@ -272,6 +272,7 @@ export type Database = {
           address: string | null
           city: string | null
           created_at: string
+          credit_balance: number
           document: string | null
           email: string | null
           id: string
@@ -287,6 +288,7 @@ export type Database = {
           address?: string | null
           city?: string | null
           created_at?: string
+          credit_balance?: number
           document?: string | null
           email?: string | null
           id?: string
@@ -302,6 +304,7 @@ export type Database = {
           address?: string | null
           city?: string | null
           created_at?: string
+          credit_balance?: number
           document?: string | null
           email?: string | null
           id?: string

@@ -7,9 +7,11 @@ import ProductGrid from '@/components/pos/ProductGrid';
 import POSCart, { CartItem } from '@/components/pos/POSCart';
 import PaymentPanel from '@/components/pos/PaymentPanel';
 import CustomerSelector, { Customer } from '@/components/pos/CustomerSelector';
+import ExchangePanel, { ExchangeData } from '@/components/pos/ExchangePanel';
 import { OpenSessionModal, CloseSessionModal, CashMovementModal } from '@/components/pos/CashDrawerModals';
 import { posService, POSSession, CreateSaleData } from '@/services/posService';
 import { offlineService } from '@/services/offlineService';
+import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -31,16 +33,36 @@ const POSPage = () => {
   const [generalDiscount, setGeneralDiscount] = useState<{ type: 'percentage' | 'fixed'; value: number }>({ type: 'percentage', value: 0 });
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [customerCreditBalance, setCustomerCreditBalance] = useState(0);
 
   // Modals
   const [openSessionModal, setOpenSessionModal] = useState(false);
   const [closeSessionModal, setCloseSessionModal] = useState(false);
   const [cashMovementModal, setCashMovementModal] = useState(false);
 
+  const isExchangeMode = saleType === 'troca';
+
   useEffect(() => {
     const unsubscribe = offlineService.onOnlineStatusChange(setIsOnline);
     return unsubscribe;
   }, []);
+
+  // Fetch customer credit balance when customer changes
+  useEffect(() => {
+    const fetchCreditBalance = async () => {
+      if (selectedCustomer?.id) {
+        const { data } = await supabase
+          .from('customers')
+          .select('credit_balance')
+          .eq('id', selectedCustomer.id)
+          .single();
+        setCustomerCreditBalance(data?.credit_balance || 0);
+      } else {
+        setCustomerCreditBalance(0);
+      }
+    };
+    fetchCreditBalance();
+  }, [selectedCustomer?.id]);
 
   useEffect(() => {
     const loadSession = async () => {
@@ -195,6 +217,120 @@ const POSPage = () => {
     }
   };
 
+  const handleExchange = async (data: ExchangeData) => {
+    if (!selectedCustomer) {
+      toast({ title: 'Selecione um cliente', description: 'É necessário vincular um cliente à troca.', variant: 'destructive' });
+      return;
+    }
+    setIsProcessing(true);
+
+    try {
+      // 1. Create sale record for the exchange (new items going out)
+      if (data.newItems.length > 0 && data.amountToPay > 0) {
+        const saleData: CreateSaleData = {
+          local_id: offlineService.generateLocalId(),
+          session_id: session?.id,
+          store_id: userStoreId || undefined,
+          customer_id: selectedCustomer.id,
+          customer_name: selectedCustomer.name,
+          customer_document: selectedCustomer.document || undefined,
+          items: data.newItems.map(item => ({
+            product_id: item.product_id,
+            variation_id: item.variation_id,
+            name: item.name,
+            sku: item.sku,
+            quantity: item.quantity,
+            unit_price: item.unit_price,
+            discount_amount: 0,
+            total: item.unit_price * item.quantity,
+          })),
+          subtotal: data.newTotal,
+          discount_amount: data.returnTotal + data.creditUsed,
+          total: data.amountToPay,
+          payment_method: data.paymentMethod || 'cash',
+          amount_received: data.amountReceived,
+          change_amount: data.amountReceived ? Math.max(0, data.amountReceived - data.amountToPay) : 0,
+          notes: `TROCA - Devolvidos: ${data.returnedItems.map(i => `${i.quantity}x ${i.name}`).join(', ')}`,
+        };
+        await posService.createSale(saleData);
+      }
+
+      // 2. Return stock for returned items
+      for (const item of data.returnedItems) {
+        if (userStoreId) {
+          // Update store_stock
+          let stockQuery = supabase
+            .from('store_stock')
+            .select('id, quantity')
+            .eq('store_id', userStoreId)
+            .eq('product_id', item.product_id);
+          
+          if (item.variation_id) {
+            stockQuery = stockQuery.eq('variation_id', item.variation_id);
+          } else {
+            stockQuery = stockQuery.is('variation_id', null);
+          }
+
+          const { data: existingStock } = await stockQuery.maybeSingle();
+
+          if (existingStock) {
+            await supabase
+              .from('store_stock')
+              .update({ quantity: existingStock.quantity + item.quantity })
+              .eq('id', existingStock.id);
+          } else {
+            await supabase
+              .from('store_stock')
+              .insert({
+                store_id: userStoreId,
+                product_id: item.product_id,
+                variation_id: item.variation_id || null,
+                quantity: item.quantity,
+              });
+          }
+        }
+        // Also update main product stock
+        const { data: product } = await supabase
+          .from('products')
+          .select('stock')
+          .eq('id', item.product_id)
+          .single();
+        if (product) {
+          await supabase
+            .from('products')
+            .update({ stock: product.stock + item.quantity })
+            .eq('id', item.product_id);
+        }
+      }
+
+      // 3. Update customer credit balance
+      const newCreditBalance = customerCreditBalance - data.creditUsed + data.creditToStore;
+      await supabase
+        .from('customers')
+        .update({ credit_balance: newCreditBalance })
+        .eq('id', selectedCustomer.id);
+
+      const messages: string[] = [];
+      if (data.returnedItems.length > 0) messages.push(`${data.returnedItems.reduce((s, i) => s + i.quantity, 0)} item(ns) devolvido(s)`);
+      if (data.newItems.length > 0) messages.push(`${data.newItems.reduce((s, i) => s + i.quantity, 0)} item(ns) novo(s)`);
+      if (data.creditToStore > 0) messages.push(`Crédito de R$ ${data.creditToStore.toFixed(2)} gerado`);
+      if (data.amountToPay > 0) messages.push(`Diferença de R$ ${data.amountToPay.toFixed(2)} paga`);
+
+      toast({
+        title: 'Troca finalizada!',
+        description: messages.join(' • '),
+      });
+
+      setSelectedCustomer(null);
+      setCustomerCreditBalance(0);
+    } catch (error) {
+      console.error('Error processing exchange:', error);
+      toast({ title: 'Erro ao processar troca', variant: 'destructive' });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   const handleOpenSession = async (openingBalance: number, notes?: string) => {
     const newSession = await posService.openSession(openingBalance, notes, userStoreId || undefined);
     setSession(newSession);
@@ -236,7 +372,7 @@ const POSPage = () => {
   return (
     <POSLayout session={session} onOpenCashDrawer={() => setCashMovementModal(true)}>
       <div className="h-full flex">
-        {/* Left side - Products */}
+        {/* Left side - Products / Exchange */}
         <div className="flex-1 flex flex-col">
           <div className="p-4 border-b space-y-3">
             {/* Sale type selector */}
@@ -270,37 +406,67 @@ const POSPage = () => {
                 ))}
               </div>
             </div>
-            <ProductSearch onProductSelect={handleProductSelect} isOnline={isOnline} />
             <CustomerSelector 
               selectedCustomer={selectedCustomer} 
               onSelectCustomer={setSelectedCustomer} 
             />
+            {isExchangeMode && !selectedCustomer && (
+              <div className="text-sm text-destructive bg-destructive/10 rounded-md px-3 py-2">
+                ⚠️ Selecione um cliente para realizar a troca
+              </div>
+            )}
           </div>
-          <ProductGrid selectedCategoryId={selectedCategoryId} onCategoryChange={setSelectedCategoryId} onProductSelect={handleProductSelect} isOnline={isOnline} />
+
+          {isExchangeMode ? (
+            <div className="flex-1 overflow-hidden">
+              <ExchangePanel
+                isOnline={isOnline}
+                customerCreditBalance={customerCreditBalance}
+                onConfirmExchange={handleExchange}
+                isProcessing={isProcessing}
+              />
+            </div>
+          ) : (
+            <>
+              <div className="px-4 pt-3">
+                <ProductSearch onProductSelect={handleProductSelect} isOnline={isOnline} />
+              </div>
+              <ProductGrid selectedCategoryId={selectedCategoryId} onCategoryChange={setSelectedCategoryId} onProductSelect={handleProductSelect} isOnline={isOnline} />
+            </>
+          )}
         </div>
 
-        {/* Right side - Cart & Payment */}
-        <div className="w-96 flex flex-col border-l">
-          <Tabs defaultValue="cart" className="flex-1 flex flex-col">
-            <TabsList className="w-full rounded-none border-b">
-              <TabsTrigger value="cart" className="flex-1">Carrinho</TabsTrigger>
-              <TabsTrigger value="payment" className="flex-1" disabled={cartItems.length === 0}>Pagamento</TabsTrigger>
-            </TabsList>
-            <TabsContent value="cart" className="flex-1 m-0">
-              <POSCart items={cartItems} onUpdateQuantity={handleUpdateQuantity} onRemoveItem={handleRemoveItem} onApplyItemDiscount={handleApplyItemDiscount} generalDiscount={generalDiscount} onApplyGeneralDiscount={(type, value) => setGeneralDiscount({ type, value })} subtotal={subtotal} discountAmount={totalDiscount} total={total} />
-            </TabsContent>
-            <TabsContent value="payment" className="flex-1 m-0 overflow-auto">
-              <PaymentPanel total={total} onPayment={handlePayment} isProcessing={isProcessing} disabled={cartItems.length === 0} />
-            </TabsContent>
-          </Tabs>
-          
-          <div className="p-2 border-t flex gap-2">
-            <Button variant="outline" size="sm" className="flex-1" onClick={() => setCashMovementModal(true)}>
-              <ArrowUpDown className="h-4 w-4 mr-1" /> Sangria/Suprimento
-            </Button>
-            <Button variant="destructive" size="sm" onClick={() => setCloseSessionModal(true)}>Fechar Caixa</Button>
+        {/* Right side - Cart & Payment (hidden in exchange mode) */}
+        {!isExchangeMode && (
+          <div className="w-96 flex flex-col border-l">
+            <Tabs defaultValue="cart" className="flex-1 flex flex-col">
+              <TabsList className="w-full rounded-none border-b">
+                <TabsTrigger value="cart" className="flex-1">Carrinho</TabsTrigger>
+                <TabsTrigger value="payment" className="flex-1" disabled={cartItems.length === 0}>Pagamento</TabsTrigger>
+              </TabsList>
+              <TabsContent value="cart" className="flex-1 m-0">
+                <POSCart items={cartItems} onUpdateQuantity={handleUpdateQuantity} onRemoveItem={handleRemoveItem} onApplyItemDiscount={handleApplyItemDiscount} generalDiscount={generalDiscount} onApplyGeneralDiscount={(type, value) => setGeneralDiscount({ type, value })} subtotal={subtotal} discountAmount={totalDiscount} total={total} />
+              </TabsContent>
+              <TabsContent value="payment" className="flex-1 m-0 overflow-auto">
+                <PaymentPanel total={total} onPayment={handlePayment} isProcessing={isProcessing} disabled={cartItems.length === 0} />
+              </TabsContent>
+            </Tabs>
+            
+            <div className="p-2 border-t flex gap-2">
+              <Button variant="outline" size="sm" className="flex-1" onClick={() => setCashMovementModal(true)}>
+                <ArrowUpDown className="h-4 w-4 mr-1" /> Sangria/Suprimento
+              </Button>
+              <Button variant="destructive" size="sm" onClick={() => setCloseSessionModal(true)}>Fechar Caixa</Button>
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* Bottom bar in exchange mode */}
+        {isExchangeMode && (
+          <div className="w-0">
+            {/* Exchange panel is full-width in the left side */}
+          </div>
+        )}
       </div>
 
       <OpenSessionModal open={openSessionModal} onOpenChange={setOpenSessionModal} onConfirm={handleOpenSession} />
