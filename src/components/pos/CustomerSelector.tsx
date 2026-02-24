@@ -15,7 +15,9 @@ import {
   CommandItem,
   CommandList,
 } from '@/components/ui/command';
-import { User, X, Phone, FileText, UserPlus, ArrowLeft, Loader2 } from 'lucide-react';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { User, X, Phone, FileText, UserPlus, ArrowLeft, Loader2, Building2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -32,6 +34,22 @@ interface CustomerSelectorProps {
   onSelectCustomer: (customer: Customer | null) => void;
 }
 
+const emptyForm = {
+  customer_type: 'pf' as 'pf' | 'pj',
+  name: '',
+  phone: '',
+  document: '',
+  email: '',
+  birthday: '',
+  // PJ fields
+  razao_social: '',
+  nome_fantasia: '',
+  inscricao_estadual: '',
+  inscricao_municipal: '',
+  responsavel_nome: '',
+  responsavel_telefone: '',
+};
+
 const CustomerSelector = ({ selectedCustomer, onSelectCustomer }: CustomerSelectorProps) => {
   const [open, setOpen] = useState(false);
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -39,12 +57,7 @@ const CustomerSelector = ({ selectedCustomer, onSelectCustomer }: CustomerSelect
   const [searchQuery, setSearchQuery] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [formData, setFormData] = useState({
-    name: '',
-    phone: '',
-    document: '',
-    email: '',
-  });
+  const [formData, setFormData] = useState({ ...emptyForm });
 
   useEffect(() => {
     const fetchCustomers = async () => {
@@ -93,31 +106,51 @@ const CustomerSelector = ({ selectedCustomer, onSelectCustomer }: CustomerSelect
   };
 
   const handleOpenForm = () => {
-    setFormData({ name: searchQuery || '', phone: '', document: '', email: '' });
+    setFormData({ ...emptyForm, name: searchQuery || '' });
     setShowForm(true);
   };
 
   const handleCloseForm = () => {
     setShowForm(false);
-    setFormData({ name: '', phone: '', document: '', email: '' });
+    setFormData({ ...emptyForm });
+  };
+
+  const updateField = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
   };
 
   const handleSaveCustomer = async () => {
-    if (!formData.name.trim()) {
+    const isPJ = formData.customer_type === 'pj';
+
+    if (isPJ && !formData.razao_social.trim()) {
+      toast.error('Razão Social é obrigatória para PJ');
+      return;
+    }
+    if (!isPJ && !formData.name.trim()) {
       toast.error('Nome é obrigatório');
       return;
     }
 
     setIsSaving(true);
     try {
+      const insertData = {
+        customer_type: formData.customer_type,
+        name: isPJ ? formData.razao_social.trim() : formData.name.trim(),
+        phone: formData.phone.trim() || null,
+        document: formData.document.trim() || null,
+        email: formData.email.trim() || null,
+        birthday: formData.birthday || null,
+        razao_social: isPJ ? formData.razao_social.trim() : null,
+        nome_fantasia: isPJ ? (formData.nome_fantasia.trim() || null) : null,
+        inscricao_estadual: isPJ ? (formData.inscricao_estadual.trim() || null) : null,
+        inscricao_municipal: isPJ ? (formData.inscricao_municipal.trim() || null) : null,
+        responsavel_nome: isPJ ? (formData.responsavel_nome.trim() || null) : null,
+        responsavel_telefone: isPJ ? (formData.responsavel_telefone.trim() || null) : null,
+      };
+
       const { data, error } = await supabase
         .from('customers')
-        .insert({
-          name: formData.name.trim(),
-          phone: formData.phone.trim() || null,
-          document: formData.document.trim() || null,
-          email: formData.email.trim() || null,
-        })
+        .insert(insertData)
         .select('id, name, email, phone, document')
         .single();
 
@@ -145,12 +178,7 @@ const CustomerSelector = ({ selectedCustomer, onSelectCustomer }: CustomerSelect
             </div>
           )}
         </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-6 w-6 shrink-0"
-          onClick={handleClear}
-        >
+        <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={handleClear}>
           <X className="h-4 w-4" />
         </Button>
       </div>
@@ -160,73 +188,203 @@ const CustomerSelector = ({ selectedCustomer, onSelectCustomer }: CustomerSelect
   return (
     <Popover open={open} onOpenChange={(v) => { setOpen(v); if (!v) handleCloseForm(); }}>
       <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          className="w-full justify-start gap-2 text-muted-foreground"
-        >
+        <Button variant="outline" className="w-full justify-start gap-2 text-muted-foreground">
           <User className="h-4 w-4" />
           <span>Selecionar cliente</span>
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80 p-0 z-50" align="start">
+      <PopoverContent className="w-96 p-0 z-50" align="start">
         {showForm ? (
-          <div className="p-4 space-y-3">
-            <div className="flex items-center gap-2">
+          <div className="flex flex-col max-h-[70vh]">
+            <div className="flex items-center gap-2 p-3 border-b">
               <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleCloseForm}>
                 <ArrowLeft className="h-4 w-4" />
               </Button>
               <h4 className="font-semibold text-sm">Novo Cliente</h4>
             </div>
-            <div className="space-y-2">
-              <div>
-                <Label className="text-xs">Nome *</Label>
-                <Input
-                  placeholder="Nome completo"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  autoFocus
-                  className="h-9"
-                />
+
+            <ScrollArea className="flex-1 p-4">
+              <div className="space-y-4">
+                {/* Tipo de pessoa */}
+                <div className="space-y-2">
+                  <Label className="text-xs font-medium">Tipo de Pessoa</Label>
+                  <RadioGroup
+                    value={formData.customer_type}
+                    onValueChange={(v) => updateField('customer_type', v)}
+                    className="flex gap-4"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="pf" id="pf" />
+                      <Label htmlFor="pf" className="cursor-pointer font-normal flex items-center gap-1.5">
+                        <User className="h-3.5 w-3.5" /> Pessoa Física
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="pj" id="pj" />
+                      <Label htmlFor="pj" className="cursor-pointer font-normal flex items-center gap-1.5">
+                        <Building2 className="h-3.5 w-3.5" /> Pessoa Jurídica
+                      </Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+
+                {formData.customer_type === 'pf' ? (
+                  /* ---- PESSOA FÍSICA ---- */
+                  <div className="space-y-3">
+                    <div>
+                      <Label className="text-xs">Nome Completo *</Label>
+                      <Input
+                        placeholder="Nome completo"
+                        value={formData.name}
+                        onChange={(e) => updateField('name', e.target.value)}
+                        autoFocus
+                        className="h-9"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">CPF</Label>
+                      <Input
+                        placeholder="000.000.000-00"
+                        value={formData.document}
+                        onChange={(e) => updateField('document', e.target.value)}
+                        className="h-9"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Data de Nascimento</Label>
+                      <Input
+                        type="date"
+                        value={formData.birthday}
+                        onChange={(e) => updateField('birthday', e.target.value)}
+                        className="h-9"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Telefone</Label>
+                      <Input
+                        placeholder="(00) 00000-0000"
+                        value={formData.phone}
+                        onChange={(e) => updateField('phone', e.target.value)}
+                        className="h-9"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">E-mail</Label>
+                      <Input
+                        placeholder="email@exemplo.com"
+                        type="email"
+                        value={formData.email}
+                        onChange={(e) => updateField('email', e.target.value)}
+                        className="h-9"
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  /* ---- PESSOA JURÍDICA ---- */
+                  <div className="space-y-3">
+                    <div>
+                      <Label className="text-xs">Razão Social *</Label>
+                      <Input
+                        placeholder="Razão Social da empresa"
+                        value={formData.razao_social}
+                        onChange={(e) => updateField('razao_social', e.target.value)}
+                        autoFocus
+                        className="h-9"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Nome Fantasia</Label>
+                      <Input
+                        placeholder="Nome fantasia"
+                        value={formData.nome_fantasia}
+                        onChange={(e) => updateField('nome_fantasia', e.target.value)}
+                        className="h-9"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">CNPJ</Label>
+                      <Input
+                        placeholder="00.000.000/0000-00"
+                        value={formData.document}
+                        onChange={(e) => updateField('document', e.target.value)}
+                        className="h-9"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Inscrição Estadual</Label>
+                      <Input
+                        placeholder="Inscrição estadual"
+                        value={formData.inscricao_estadual}
+                        onChange={(e) => updateField('inscricao_estadual', e.target.value)}
+                        className="h-9"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Inscrição Municipal</Label>
+                      <Input
+                        placeholder="Inscrição municipal"
+                        value={formData.inscricao_municipal}
+                        onChange={(e) => updateField('inscricao_municipal', e.target.value)}
+                        className="h-9"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">E-mail da Empresa</Label>
+                      <Input
+                        placeholder="contato@empresa.com"
+                        type="email"
+                        value={formData.email}
+                        onChange={(e) => updateField('email', e.target.value)}
+                        className="h-9"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Telefone da Empresa</Label>
+                      <Input
+                        placeholder="(00) 0000-0000"
+                        value={formData.phone}
+                        onChange={(e) => updateField('phone', e.target.value)}
+                        className="h-9"
+                      />
+                    </div>
+                    <div className="pt-2 border-t">
+                      <Label className="text-xs font-medium text-muted-foreground">Responsável</Label>
+                    </div>
+                    <div>
+                      <Label className="text-xs">Nome do Responsável</Label>
+                      <Input
+                        placeholder="Nome do responsável"
+                        value={formData.responsavel_nome}
+                        onChange={(e) => updateField('responsavel_nome', e.target.value)}
+                        className="h-9"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Telefone do Responsável</Label>
+                      <Input
+                        placeholder="(00) 00000-0000"
+                        value={formData.responsavel_telefone}
+                        onChange={(e) => updateField('responsavel_telefone', e.target.value)}
+                        className="h-9"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
-              <div>
-                <Label className="text-xs">Telefone</Label>
-                <Input
-                  placeholder="(00) 00000-0000"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className="h-9"
-                />
-              </div>
-              <div>
-                <Label className="text-xs">CPF/CNPJ</Label>
-                <Input
-                  placeholder="000.000.000-00"
-                  value={formData.document}
-                  onChange={(e) => setFormData({ ...formData, document: e.target.value })}
-                  className="h-9"
-                />
-              </div>
-              <div>
-                <Label className="text-xs">E-mail</Label>
-                <Input
-                  placeholder="email@exemplo.com"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="h-9"
-                />
-              </div>
+            </ScrollArea>
+
+            <div className="p-3 border-t">
+              <Button className="w-full" onClick={handleSaveCustomer} disabled={isSaving}>
+                {isSaving ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Salvando...
+                  </>
+                ) : (
+                  'Cadastrar e Selecionar'
+                )}
+              </Button>
             </div>
-            <Button className="w-full" onClick={handleSaveCustomer} disabled={isSaving}>
-              {isSaving ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  Salvando...
-                </>
-              ) : (
-                'Cadastrar e Selecionar'
-              )}
-            </Button>
           </div>
         ) : (
           <Command shouldFilter={false}>
@@ -274,12 +432,7 @@ const CustomerSelector = ({ selectedCustomer, onSelectCustomer }: CustomerSelect
               </CommandGroup>
             </CommandList>
             <div className="p-2 border-t">
-              <Button
-                variant="outline"
-                className="w-full gap-2"
-                size="sm"
-                onClick={handleOpenForm}
-              >
+              <Button variant="outline" className="w-full gap-2" size="sm" onClick={handleOpenForm}>
                 <UserPlus className="h-4 w-4" />
                 Cadastrar novo cliente
               </Button>

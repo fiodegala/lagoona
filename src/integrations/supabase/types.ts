@@ -270,48 +270,72 @@ export type Database = {
       customers: {
         Row: {
           address: string | null
+          birthday: string | null
           city: string | null
           created_at: string
           credit_balance: number
+          customer_type: string
           document: string | null
           email: string | null
           id: string
+          inscricao_estadual: string | null
+          inscricao_municipal: string | null
           is_active: boolean
           name: string
+          nome_fantasia: string | null
           notes: string | null
           phone: string | null
+          razao_social: string | null
+          responsavel_nome: string | null
+          responsavel_telefone: string | null
           state: string | null
           updated_at: string
           zip_code: string | null
         }
         Insert: {
           address?: string | null
+          birthday?: string | null
           city?: string | null
           created_at?: string
           credit_balance?: number
+          customer_type?: string
           document?: string | null
           email?: string | null
           id?: string
+          inscricao_estadual?: string | null
+          inscricao_municipal?: string | null
           is_active?: boolean
           name: string
+          nome_fantasia?: string | null
           notes?: string | null
           phone?: string | null
+          razao_social?: string | null
+          responsavel_nome?: string | null
+          responsavel_telefone?: string | null
           state?: string | null
           updated_at?: string
           zip_code?: string | null
         }
         Update: {
           address?: string | null
+          birthday?: string | null
           city?: string | null
           created_at?: string
           credit_balance?: number
+          customer_type?: string
           document?: string | null
           email?: string | null
           id?: string
+          inscricao_estadual?: string | null
+          inscricao_municipal?: string | null
           is_active?: boolean
           name?: string
+          nome_fantasia?: string | null
           notes?: string | null
           phone?: string | null
+          razao_social?: string | null
+          responsavel_nome?: string | null
+          responsavel_telefone?: string | null
           state?: string | null
           updated_at?: string
           zip_code?: string | null
