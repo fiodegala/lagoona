@@ -26,6 +26,7 @@ import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { DateRange } from 'react-day-picker';
 import BrazilSalesMap from '@/components/dashboard/BrazilSalesMap';
+import WhatsAppMetrics from '@/components/dashboard/WhatsAppMetrics';
 
 type PeriodFilter = 'today' | 'week' | 'month' | 'all' | 'custom';
 
@@ -1497,6 +1498,9 @@ const Dashboard = () => {
               )}
             </CardContent>
           </Card>
+
+          {/* WhatsApp Metrics */}
+          <WhatsAppMetrics />
 
           {/* Quick Actions */}
           <Card className="card-elevated">
