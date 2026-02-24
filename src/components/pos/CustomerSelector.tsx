@@ -193,7 +193,7 @@ const CustomerSelector = ({ selectedCustomer, onSelectCustomer }: CustomerSelect
           <span>Selecionar cliente</span>
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-96 p-0 z-50" align="start">
+      <PopoverContent className="w-96 p-0 z-50 max-h-[80vh]" align="start" side="bottom" avoidCollisions>
         {showForm ? (
           <div className="flex flex-col max-h-[70vh]">
             <div className="flex items-center gap-2 p-3 border-b">
@@ -203,7 +203,7 @@ const CustomerSelector = ({ selectedCustomer, onSelectCustomer }: CustomerSelect
               <h4 className="font-semibold text-sm">Novo Cliente</h4>
             </div>
 
-            <ScrollArea className="flex-1 p-4">
+            <ScrollArea className="max-h-[55vh] p-4">
               <div className="space-y-4">
                 {/* Tipo de pessoa */}
                 <div className="space-y-2">
