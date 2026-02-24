@@ -245,7 +245,7 @@ const PaymentPanel = ({
                   <SelectValue placeholder="Selecione as parcelas" />
                 </SelectTrigger>
                 <SelectContent className="bg-popover">
-                  {Array.from({ length: 10 }, (_, i) => i + 1).map((num) => {
+                  {Array.from({ length: 6 }, (_, i) => i + 1).map((num) => {
                     const value = total / num;
                     return (
                       <SelectItem key={num} value={num.toString()}>
