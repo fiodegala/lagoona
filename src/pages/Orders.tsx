@@ -81,10 +81,51 @@ const Orders = () => {
     mutationFn: async ({ orderId, status }: { orderId: string; status: string }) => {
       const { error } = await supabase.from('orders').update({ status }).eq('id', orderId);
       if (error) throw error;
+      return { orderId, status };
     },
-    onSuccess: () => {
+    onSuccess: async (_, { orderId, status }) => {
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       toast.success('Status atualizado!');
+
+      // Send WhatsApp notification for status change
+      if (['confirmed', 'processing', 'delivered', 'cancelled'].includes(status)) {
+        const order = orders.find(o => o.id === orderId);
+        if (!order) return;
+
+        let phone = '';
+        if (order.customer_id) {
+          const { data: customer } = await supabase.from('customers').select('phone').eq('id', order.customer_id).single();
+          phone = customer?.phone || '';
+        }
+
+        if (!phone) return;
+
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          const res = await fetch(
+            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-whatsapp`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${session?.access_token}`,
+              },
+              body: JSON.stringify({
+                phone,
+                customerName: order.customer_name,
+                messageType: status,
+              }),
+            }
+          );
+          if (res.ok) {
+            toast.success('Notificação WhatsApp enviada!');
+          } else {
+            toast.error('Status salvo, mas falha ao enviar WhatsApp');
+          }
+        } catch {
+          console.error('Erro ao enviar WhatsApp de status');
+        }
+      }
     },
   });
 
