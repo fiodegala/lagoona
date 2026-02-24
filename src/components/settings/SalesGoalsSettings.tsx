@@ -30,7 +30,7 @@ interface StoreGoals {
 }
 
 const SalesGoalsSettings = () => {
-  const { canManageGoals, isAdmin } = useAuth();
+  const { canManageGoals, isAdmin, isLoading: authLoading } = useAuth();
   const [goals, setGoals] = useState<SalesGoal[]>([]);
   const [stores, setStores] = useState<StoreInfo[]>([]);
   const [loading, setLoading] = useState(true);
@@ -41,8 +41,8 @@ const SalesGoalsSettings = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    if (!authLoading) fetchData();
+  }, [isAdmin, authLoading]);
 
   const fetchData = async () => {
     try {
