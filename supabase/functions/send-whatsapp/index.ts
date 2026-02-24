@@ -7,18 +7,23 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const STATUS_MESSAGES: Record<string, (name: string) => string> = {
-  confirmed: (name) =>
-    `Olá ${name}! ✅\n\nSeu pedido foi *confirmado* com sucesso!\n\nEstamos preparando tudo para você. 😊`,
-  processing: (name) =>
-    `Olá ${name}! 📦\n\nSeu pedido está sendo *preparado*!\n\nEm breve ele será enviado. Fique de olho! 🚀`,
-  shipped: (name) =>
-    `Olá ${name}! 🚚\n\nSeu pedido foi *enviado*!\n\nVocê receberá o código de rastreio em breve. 😊`,
-  delivered: (name) =>
-    `Olá ${name}! 🎉\n\nSeu pedido foi *entregue*!\n\nEsperamos que você aproveite! Se precisar de algo, estamos à disposição. 💛`,
-  cancelled: (name) =>
-    `Olá ${name}.\n\nInformamos que seu pedido foi *cancelado*.\n\nSe tiver dúvidas, entre em contato conosco. 🙏`,
+const DEFAULT_STATUS_TEMPLATES: Record<string, string> = {
+  confirmed: 'Olá {nome}! ✅\n\nSeu pedido foi *confirmado* com sucesso!\n\nEstamos preparando tudo para você. 😊',
+  processing: 'Olá {nome}! 📦\n\nSeu pedido está sendo *preparado*!\n\nEm breve ele será enviado. Fique de olho! 🚀',
+  shipped: 'Olá {nome}! 🚚\n\nSeu pedido foi *enviado*!\n\nVocê receberá o código de rastreio em breve. 😊',
+  delivered: 'Olá {nome}! 🎉\n\nSeu pedido foi *entregue*!\n\nEsperamos que você aproveite! Se precisar de algo, estamos à disposição. 💛',
+  cancelled: 'Olá {nome}.\n\nInformamos que seu pedido foi *cancelado*.\n\nSe tiver dúvidas, entre em contato conosco. 🙏',
 };
+
+const DEFAULT_TRACKING_TEMPLATE = 'Olá {nome}! 🎉\n\nSeu pedido foi enviado!\n\n📦 *Transportadora:* {transportadora}\n🔍 *Código de rastreio:* {codigo}\n\n🔗 Acompanhe aqui: {url}\n\nQualquer dúvida, estamos à disposição! 😊';
+
+function applyTemplate(template: string, vars: Record<string, string>): string {
+  let result = template;
+  for (const [key, value] of Object.entries(vars)) {
+    result = result.replaceAll(`{${key}}`, value || '');
+  }
+  return result;
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -71,6 +76,26 @@ serve(async (req) => {
       );
     }
 
+    // Fetch custom templates from store_config using service role
+    const serviceSupabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+
+    let customTemplates: Record<string, string> = {};
+    try {
+      const { data: configData } = await serviceSupabase
+        .from("store_config")
+        .select("value")
+        .eq("key", "whatsapp_templates")
+        .maybeSingle();
+      if (configData?.value && typeof configData.value === 'object') {
+        customTemplates = configData.value as Record<string, string>;
+      }
+    } catch (e) {
+      console.error("Failed to load custom templates, using defaults:", e);
+    }
+
     const cleanPhone = phone.replace(/\D/g, "");
     const formattedPhone = cleanPhone.startsWith("55") ? cleanPhone : `55${cleanPhone}`;
     const name = customerName || "Cliente";
@@ -78,15 +103,22 @@ serve(async (req) => {
     let message: string;
     let logMessageType = messageType || "tracking";
 
-    if (messageType && STATUS_MESSAGES[messageType]) {
-      message = STATUS_MESSAGES[messageType](name);
+    if (messageType && (customTemplates[messageType] || DEFAULT_STATUS_TEMPLATES[messageType])) {
+      const template = customTemplates[messageType] || DEFAULT_STATUS_TEMPLATES[messageType];
+      message = applyTemplate(template, { nome: name });
     } else if (trackingCode) {
+      const template = customTemplates['tracking'] || DEFAULT_TRACKING_TEMPLATE;
       const carrierName = carrier || "transportadora";
-      message = `Olá ${name}! 🎉\n\nSeu pedido foi enviado!\n\n📦 *Transportadora:* ${carrierName}\n🔍 *Código de rastreio:* ${trackingCode}`;
-      if (trackingUrl) {
-        message += `\n\n🔗 Acompanhe aqui: ${trackingUrl}`;
+      message = applyTemplate(template, {
+        nome: name,
+        transportadora: carrierName,
+        codigo: trackingCode,
+        url: trackingUrl || '',
+      });
+      // Remove empty URL line if no URL provided
+      if (!trackingUrl) {
+        message = message.replace(/\n.*{url}.*\n?/g, '').replace(/\n🔗.*\n?/g, '');
       }
-      message += `\n\nQualquer dúvida, estamos à disposição! 😊`;
       logMessageType = "tracking";
     } else {
       return new Response(
