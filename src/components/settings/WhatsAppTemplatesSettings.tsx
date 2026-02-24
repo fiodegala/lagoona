@@ -3,12 +3,21 @@ import type { Json } from '@/integrations/supabase/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { MessageCircle, Save, RotateCcw, Info, Eye } from 'lucide-react';
+import { MessageCircle, Save, RotateCcw, Info, Eye, SendHorizonal } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import {
   Tooltip,
   TooltipContent,
@@ -81,6 +90,10 @@ const WhatsAppTemplatesSettings = () => {
   const [savedTemplates, setSavedTemplates] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [activeTab, setActiveTab] = useState('confirmed');
+  const [testDialogOpen, setTestDialogOpen] = useState(false);
+  const [testPhone, setTestPhone] = useState('');
+  const [isSendingTest, setIsSendingTest] = useState(false);
 
   useEffect(() => {
     loadTemplates();
@@ -144,6 +157,35 @@ const WhatsAppTemplatesSettings = () => {
     }
   };
 
+  const handleSendTest = async () => {
+    if (!testPhone.trim()) {
+      toast.error('Informe o número de telefone');
+      return;
+    }
+    setIsSendingTest(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('send-whatsapp', {
+        body: {
+          phone: testPhone,
+          customerName: SAMPLE_VALUES['{nome}'],
+          messageType: activeTab === 'tracking' ? undefined : activeTab,
+          trackingCode: activeTab === 'tracking' ? SAMPLE_VALUES['{codigo}'] : undefined,
+          trackingUrl: activeTab === 'tracking' ? SAMPLE_VALUES['{url}'] : undefined,
+          carrier: activeTab === 'tracking' ? SAMPLE_VALUES['{transportadora}'] : undefined,
+        },
+      });
+      if (error) throw error;
+      toast.success('Mensagem de teste enviada com sucesso!');
+      setTestDialogOpen(false);
+      setTestPhone('');
+    } catch (error: any) {
+      console.error('Error sending test:', error);
+      toast.error(error?.message || 'Erro ao enviar mensagem de teste');
+    } finally {
+      setIsSendingTest(false);
+    }
+  };
+
   const handleReset = (key: string) => {
     setTemplates(prev => ({ ...prev, [key]: DEFAULT_TEMPLATES[key] }));
   };
@@ -177,6 +219,10 @@ const WhatsAppTemplatesSettings = () => {
             </CardDescription>
           </div>
           <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => setTestDialogOpen(true)}>
+              <SendHorizonal className="h-3.5 w-3.5 mr-1.5" />
+              Enviar teste
+            </Button>
             <Button variant="outline" size="sm" onClick={handleResetAll}>
               <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
               Restaurar padrão
@@ -189,7 +235,7 @@ const WhatsAppTemplatesSettings = () => {
         </div>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue="confirmed">
+        <Tabs defaultValue="confirmed" onValueChange={setActiveTab}>
           <TabsList className="flex flex-wrap h-auto gap-1 bg-transparent p-0 mb-4">
             {Object.entries(TEMPLATE_LABELS).map(([key, label]) => (
               <TabsTrigger
@@ -288,6 +334,44 @@ const WhatsAppTemplatesSettings = () => {
           ))}
         </Tabs>
       </CardContent>
+
+      <Dialog open={testDialogOpen} onOpenChange={setTestDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Enviar mensagem de teste</DialogTitle>
+            <DialogDescription>
+              Enviaremos o template "<strong>{TEMPLATE_LABELS[activeTab]}</strong>" com dados de exemplo para o número informado.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-2">
+              <Label htmlFor="test-phone">Número de WhatsApp</Label>
+              <Input
+                id="test-phone"
+                placeholder="(11) 99999-9999"
+                value={testPhone}
+                onChange={(e) => setTestPhone(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">
+                Informe o número com DDD. Ex: 11999999999
+              </p>
+            </div>
+            <div className="rounded-lg bg-muted/50 p-3">
+              <p className="text-xs font-medium text-muted-foreground mb-1">Pré-visualização:</p>
+              <p className="text-xs whitespace-pre-wrap">{formatPreview(templates[activeTab])}</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setTestDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSendTest} disabled={isSendingTest}>
+              <SendHorizonal className="h-3.5 w-3.5 mr-1.5" />
+              {isSendingTest ? 'Enviando...' : 'Enviar teste'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };
