@@ -9,7 +9,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { ShoppingCart, Truck, ExternalLink, Package, Search } from 'lucide-react';
+import { ShoppingCart, Truck, ExternalLink, Package, Search, MessageCircle } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -35,10 +36,12 @@ const statusMap: Record<string, { label: string; variant: 'default' | 'secondary
 const Orders = () => {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
-  const [trackingModal, setTrackingModal] = useState<{ open: boolean; orderId: string; currentCode?: string; currentCarrier?: string; currentUrl?: string }>({ open: false, orderId: '' });
+  const [trackingModal, setTrackingModal] = useState<{ open: boolean; orderId: string; order?: any }>({ open: false, orderId: '' });
   const [trackingCode, setTrackingCode] = useState('');
   const [carrier, setCarrier] = useState('');
   const [customUrl, setCustomUrl] = useState('');
+  const [whatsappPhone, setWhatsappPhone] = useState('');
+  const [sendWhatsapp, setSendWhatsapp] = useState(true);
 
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ['orders'],
@@ -85,21 +88,66 @@ const Orders = () => {
     },
   });
 
-  const openTrackingModal = (order: any) => {
+  const openTrackingModal = async (order: any) => {
     setTrackingCode(order.tracking_code || '');
     setCarrier(order.shipping_carrier || '');
     setCustomUrl(order.tracking_url || '');
-    setTrackingModal({ open: true, orderId: order.id, currentCode: order.tracking_code, currentCarrier: order.shipping_carrier, currentUrl: order.tracking_url });
+    
+    // Try to get customer phone from customers table
+    let phone = '';
+    if (order.customer_id) {
+      const { data: customer } = await supabase.from('customers').select('phone').eq('id', order.customer_id).single();
+      phone = customer?.phone || '';
+    }
+    setWhatsappPhone(phone);
+    setSendWhatsapp(!!phone);
+    setTrackingModal({ open: true, orderId: order.id, order });
   };
 
-  const handleSaveTracking = () => {
+  const handleSaveTracking = async () => {
     if (!trackingCode || !carrier) {
       toast.error('Preencha o código de rastreio e a transportadora');
       return;
     }
     const selectedCarrier = CARRIERS.find(c => c.value === carrier);
     const url = carrier === 'outro' ? customUrl : (selectedCarrier?.urlTemplate.replace('{code}', trackingCode) || '');
-    updateTrackingMutation.mutate({ orderId: trackingModal.orderId, tracking_code: trackingCode, shipping_carrier: carrier, tracking_url: url });
+    
+    updateTrackingMutation.mutate(
+      { orderId: trackingModal.orderId, tracking_code: trackingCode, shipping_carrier: carrier, tracking_url: url },
+      {
+        onSuccess: async () => {
+          if (sendWhatsapp && whatsappPhone) {
+            try {
+              const { data: { session } } = await supabase.auth.getSession();
+              const res = await fetch(
+                `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-whatsapp`,
+                {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${session?.access_token}`,
+                  },
+                  body: JSON.stringify({
+                    phone: whatsappPhone,
+                    customerName: trackingModal.order?.customer_name,
+                    trackingCode,
+                    trackingUrl: url,
+                    carrier: selectedCarrier?.label || carrier,
+                  }),
+                }
+              );
+              if (res.ok) {
+                toast.success('WhatsApp enviado com sucesso!');
+              } else {
+                toast.error('Rastreio salvo, mas falha ao enviar WhatsApp');
+              }
+            } catch {
+              toast.error('Rastreio salvo, mas erro ao enviar WhatsApp');
+            }
+          }
+        },
+      }
+    );
   };
 
   const filteredOrders = orders.filter(o =>
@@ -233,6 +281,29 @@ const Orders = () => {
                 <Input value={customUrl} onChange={e => setCustomUrl(e.target.value)} placeholder="https://..." />
               </div>
             )}
+            <div className="border-t pt-4 mt-2">
+              <div className="flex items-center gap-2 mb-3">
+                <Checkbox
+                  id="send-whatsapp"
+                  checked={sendWhatsapp}
+                  onCheckedChange={(checked) => setSendWhatsapp(!!checked)}
+                />
+                <label htmlFor="send-whatsapp" className="flex items-center gap-1.5 text-sm font-medium cursor-pointer">
+                  <MessageCircle className="h-4 w-4 text-[#25D366]" />
+                  Notificar cliente via WhatsApp
+                </label>
+              </div>
+              {sendWhatsapp && (
+                <div>
+                  <Label>Telefone do cliente (com DDD)</Label>
+                  <Input
+                    value={whatsappPhone}
+                    onChange={e => setWhatsappPhone(e.target.value)}
+                    placeholder="11999999999"
+                  />
+                </div>
+              )}
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setTrackingModal({ open: false, orderId: '' })}>Cancelar</Button>
