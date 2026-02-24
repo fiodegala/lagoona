@@ -122,6 +122,7 @@ interface SalesGoal {
   type: 'daily' | 'monthly';
   target_amount: number;
   is_active: boolean;
+  store_id: string | null;
 }
 
 const Dashboard = () => {
@@ -339,8 +340,17 @@ const Dashboard = () => {
 
   // Calculate goal progress
   const goalProgress = useMemo(() => {
-    const dailyGoal = salesGoals.find(g => g.type === 'daily');
-    const monthlyGoal = salesGoals.find(g => g.type === 'monthly');
+    // Prioritize store-specific goal, fallback to global (store_id = null)
+    const findGoal = (type: string) => {
+      if (activeStoreFilter) {
+        const storeGoal = salesGoals.find(g => g.type === type && g.store_id === activeStoreFilter);
+        if (storeGoal) return storeGoal;
+      }
+      return salesGoals.find(g => g.type === type && !g.store_id) || null;
+    };
+
+    const dailyGoal = findGoal('daily');
+    const monthlyGoal = findGoal('monthly');
 
     // Get today's sales (online + POS)
     const today = new Date();
@@ -398,7 +408,7 @@ const Dashboard = () => {
         isComplete: monthlyGoal?.target_amount ? monthTotal >= monthlyGoal.target_amount : false,
       },
     };
-  }, [rawOrders, rawPOSSales, salesGoals]);
+  }, [rawOrders, rawPOSSales, salesGoals, activeStoreFilter]);
 
   // Recent orders (always show latest 5 within period)
   const recentOrders = useMemo(() => {
