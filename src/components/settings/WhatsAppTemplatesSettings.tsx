@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { MessageCircle, Save, RotateCcw, Info } from 'lucide-react';
+import { MessageCircle, Save, RotateCcw, Info, Eye } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -41,6 +41,40 @@ const TEMPLATE_VARIABLES: Record<string, string[]> = {
   cancelled: ['{nome}'],
   tracking: ['{nome}', '{transportadora}', '{codigo}', '{url}'],
 };
+
+const SAMPLE_VALUES: Record<string, string> = {
+  '{nome}': 'Maria Silva',
+  '{transportadora}': 'Correios',
+  '{codigo}': 'QR123456789BR',
+  '{url}': 'https://rastreio.correios.com.br/QR123456789BR',
+};
+
+function formatPreview(template: string): string {
+  let text = template;
+  for (const [key, value] of Object.entries(SAMPLE_VALUES)) {
+    text = text.split(key).join(value);
+  }
+  return text;
+}
+
+function renderWhatsAppText(text: string) {
+  // Convert *bold* to <strong>, preserve newlines
+  const lines = text.split('\n');
+  return lines.map((line, i) => {
+    const parts = line.split(/(\*[^*]+\*)/g);
+    return (
+      <span key={i}>
+        {i > 0 && <br />}
+        {parts.map((part, j) => {
+          if (part.startsWith('*') && part.endsWith('*')) {
+            return <strong key={j}>{part.slice(1, -1)}</strong>;
+          }
+          return <span key={j}>{part}</span>;
+        })}
+      </span>
+    );
+  });
+}
 
 const WhatsAppTemplatesSettings = () => {
   const [templates, setTemplates] = useState<Record<string, string>>({ ...DEFAULT_TEMPLATES });
@@ -193,35 +227,61 @@ const WhatsAppTemplatesSettings = () => {
                 </div>
               </div>
 
-              <Textarea
-                value={templates[key]}
-                onChange={(e) => setTemplates(prev => ({ ...prev, [key]: e.target.value }))}
-                rows={8}
-                className="font-mono text-sm"
-              />
+              <div className="grid md:grid-cols-2 gap-4">
+                {/* Editor */}
+                <div className="space-y-3">
+                  <Textarea
+                    value={templates[key]}
+                    onChange={(e) => setTemplates(prev => ({ ...prev, [key]: e.target.value }))}
+                    rows={10}
+                    className="font-mono text-sm"
+                  />
 
-              <div className="flex items-start gap-2 p-3 rounded-lg bg-muted/50">
-                <Info className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-                <div className="text-xs text-muted-foreground space-y-1">
-                  <p className="font-medium">Variáveis disponíveis:</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {TEMPLATE_VARIABLES[key].map(v => (
-                      <Tooltip key={v}>
-                        <TooltipTrigger asChild>
-                          <code className="bg-background px-1.5 py-0.5 rounded border text-xs cursor-help">
-                            {v}
-                          </code>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          {v === '{nome}' && 'Nome do cliente'}
-                          {v === '{transportadora}' && 'Nome da transportadora'}
-                          {v === '{codigo}' && 'Código de rastreio'}
-                          {v === '{url}' && 'URL de rastreio'}
-                        </TooltipContent>
-                      </Tooltip>
-                    ))}
+                  <div className="flex items-start gap-2 p-3 rounded-lg bg-muted/50">
+                    <Info className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                    <div className="text-xs text-muted-foreground space-y-1">
+                      <p className="font-medium">Variáveis disponíveis:</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {TEMPLATE_VARIABLES[key].map(v => (
+                          <Tooltip key={v}>
+                            <TooltipTrigger asChild>
+                              <code className="bg-background px-1.5 py-0.5 rounded border text-xs cursor-help">
+                                {v}
+                              </code>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              {v === '{nome}' && 'Nome do cliente'}
+                              {v === '{transportadora}' && 'Nome da transportadora'}
+                              {v === '{codigo}' && 'Código de rastreio'}
+                              {v === '{url}' && 'URL de rastreio'}
+                            </TooltipContent>
+                          </Tooltip>
+                        ))}
+                      </div>
+                      <p>Use <code className="bg-background px-1 rounded border">*texto*</code> para negrito.</p>
+                    </div>
                   </div>
-                  <p>Use <code className="bg-background px-1 rounded border">*texto*</code> para negrito no WhatsApp.</p>
+                </div>
+
+                {/* Preview */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                    <Eye className="h-4 w-4" />
+                    Pré-visualização
+                  </div>
+                  <div className="rounded-xl bg-[hsl(var(--muted))] p-4 min-h-[200px]">
+                    {/* WhatsApp-style bubble */}
+                    <div className="max-w-[280px] ml-auto">
+                      <div className="bg-[hsl(142,70%,87%)] dark:bg-[hsl(142,40%,25%)] rounded-xl rounded-tr-sm px-3 py-2 shadow-sm">
+                        <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap break-words">
+                          {renderWhatsAppText(formatPreview(templates[key]))}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground text-right mt-1">
+                          {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} ✓✓
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </TabsContent>
