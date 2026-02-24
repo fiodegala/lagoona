@@ -77,10 +77,7 @@ serve(async (req) => {
 
     const zapiResponse = await fetch(zapiUrl, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Client-Token": token,
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         phone: formattedPhone,
         message,
