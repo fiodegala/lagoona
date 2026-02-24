@@ -51,7 +51,7 @@ serve(async (req) => {
     }
 
     const body = await req.json();
-    const { phone, customerName, trackingCode, trackingUrl, carrier, messageType } = body;
+    const { phone, customerName, trackingCode, trackingUrl, carrier, messageType, orderId } = body;
 
     if (!phone) {
       return new Response(
@@ -76,18 +76,18 @@ serve(async (req) => {
     const name = customerName || "Cliente";
 
     let message: string;
+    let logMessageType = messageType || "tracking";
 
     if (messageType && STATUS_MESSAGES[messageType]) {
-      // Status change notification
       message = STATUS_MESSAGES[messageType](name);
     } else if (trackingCode) {
-      // Tracking notification (legacy/existing behavior)
       const carrierName = carrier || "transportadora";
       message = `Olá ${name}! 🎉\n\nSeu pedido foi enviado!\n\n📦 *Transportadora:* ${carrierName}\n🔍 *Código de rastreio:* ${trackingCode}`;
       if (trackingUrl) {
         message += `\n\n🔗 Acompanhe aqui: ${trackingUrl}`;
       }
       message += `\n\nQualquer dúvida, estamos à disposição! 😊`;
+      logMessageType = "tracking";
     } else {
       return new Response(
         JSON.stringify({ error: "messageType ou trackingCode são obrigatórios" }),
@@ -107,6 +107,23 @@ serve(async (req) => {
     });
 
     const zapiData = await zapiResponse.json();
+
+    // Log the WhatsApp message attempt
+    if (orderId) {
+      try {
+        await supabase.from("whatsapp_logs").insert({
+          order_id: orderId,
+          phone: formattedPhone,
+          customer_name: name,
+          message_type: logMessageType,
+          status: zapiResponse.ok ? "sent" : "failed",
+          zapi_message_id: zapiData?.messageId || null,
+          error_message: zapiResponse.ok ? null : JSON.stringify(zapiData),
+        });
+      } catch (logErr) {
+        console.error("Failed to log WhatsApp message:", logErr);
+      }
+    }
 
     if (!zapiResponse.ok) {
       console.error("Z-API error:", zapiData);

@@ -1281,6 +1281,50 @@ export type Database = {
           },
         ]
       }
+      whatsapp_logs: {
+        Row: {
+          created_at: string
+          customer_name: string | null
+          error_message: string | null
+          id: string
+          message_type: string
+          order_id: string | null
+          phone: string
+          status: string
+          zapi_message_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          customer_name?: string | null
+          error_message?: string | null
+          id?: string
+          message_type?: string
+          order_id?: string | null
+          phone: string
+          status?: string
+          zapi_message_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          customer_name?: string | null
+          error_message?: string | null
+          id?: string
+          message_type?: string
+          order_id?: string | null
+          phone?: string
+          status?: string
+          zapi_message_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_logs_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       zapi_webhook_logs: {
         Row: {
           created_at: string
