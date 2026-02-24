@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
 import SalesGoalsSettings from '@/components/settings/SalesGoalsSettings';
+import WhatsAppTemplatesSettings from '@/components/settings/WhatsAppTemplatesSettings';
 
 const Settings = () => {
   const { profile } = useAuth();
@@ -19,6 +20,8 @@ const Settings = () => {
         </div>
 
         <SalesGoalsSettings />
+
+        <WhatsAppTemplatesSettings />
 
         <div className="grid gap-6 lg:grid-cols-2">
           <Card className="card-elevated">
