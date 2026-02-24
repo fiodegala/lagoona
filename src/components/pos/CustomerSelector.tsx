@@ -203,7 +203,7 @@ const CustomerSelector = ({ selectedCustomer, onSelectCustomer }: CustomerSelect
               <h4 className="font-semibold text-sm">Novo Cliente</h4>
             </div>
 
-            <ScrollArea className="max-h-[55vh] p-4">
+            <div className="overflow-y-auto max-h-[55vh] p-4">
               <div className="space-y-4">
                 {/* Tipo de pessoa */}
                 <div className="space-y-2">
@@ -371,7 +371,7 @@ const CustomerSelector = ({ selectedCustomer, onSelectCustomer }: CustomerSelect
                   </div>
                 )}
               </div>
-            </ScrollArea>
+            </div>
 
             <div className="p-3 border-t">
               <Button className="w-full" onClick={handleSaveCustomer} disabled={isSaving}>
