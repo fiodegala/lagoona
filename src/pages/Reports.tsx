@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from 'react';
 import AdminLayout from '@/components/AdminLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
@@ -10,7 +11,8 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   BarChart3, TrendingUp, Users, ShoppingCart, Package,
-  Calendar, CalendarRange, DollarSign, ArrowUpRight, ArrowDownRight
+  Calendar, CalendarRange, DollarSign, ArrowUpRight, ArrowDownRight,
+  Download, FileSpreadsheet, FileText
 } from 'lucide-react';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -315,6 +317,136 @@ const Reports = () => {
     return [...map.values()].sort((a, b) => b.revenue - a.revenue).slice(0, 10);
   }, [filteredOrders]);
 
+  const exportToCSV = () => {
+    const BOM = '\uFEFF';
+    let csv = BOM + 'Relatório de Vendas\n';
+    csv += `Período: ${format(dateRange.start, 'dd/MM/yyyy')} - ${format(dateRange.end, 'dd/MM/yyyy')}\n\n`;
+
+    // KPIs
+    csv += 'Resumo\n';
+    csv += `Receita Total;${kpis.totalRevenue.toFixed(2)}\n`;
+    csv += `Receita Online;${kpis.onlineRevenue.toFixed(2)}\n`;
+    csv += `Receita PDV;${kpis.posRevenue.toFixed(2)}\n`;
+    csv += `Total de Vendas;${kpis.totalSales}\n`;
+    csv += `Ticket Médio;${kpis.avgTicket.toFixed(2)}\n`;
+    csv += `Cancelamentos;${kpis.cancelledCount}\n\n`;
+
+    // Sales over time
+    csv += 'Vendas por Dia\n';
+    csv += 'Data;Online;PDV;Total\n';
+    salesOverTime.forEach(d => {
+      csv += `${d.name};${d.online.toFixed(2)};${d.pdv.toFixed(2)};${d.total.toFixed(2)}\n`;
+    });
+    csv += '\n';
+
+    // Top products
+    csv += 'Top Produtos\n';
+    csv += 'Produto;Quantidade;Receita\n';
+    topProducts.forEach(p => {
+      csv += `${p.name};${p.qty};${p.revenue.toFixed(2)}\n`;
+    });
+    csv += '\n';
+
+    // Top customers
+    csv += 'Top Clientes\n';
+    csv += 'Cliente;Pedidos;Receita\n';
+    topCustomers.forEach(c => {
+      csv += `${c.name};${c.orders};${c.revenue.toFixed(2)}\n`;
+    });
+    csv += '\n';
+
+    // Payment methods
+    csv += 'Métodos de Pagamento\n';
+    csv += 'Método;Quantidade;Valor\n';
+    paymentDistribution.forEach(p => {
+      csv += `${p.name};${p.count};${p.value.toFixed(2)}\n`;
+    });
+    csv += '\n';
+
+    // Sales by state
+    csv += 'Vendas por Estado\n';
+    csv += 'Estado;Pedidos;Receita\n';
+    salesByState.forEach(s => {
+      csv += `${s.state};${s.orders};${s.revenue.toFixed(2)}\n`;
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `relatorio-vendas-${format(new Date(), 'yyyy-MM-dd')}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const exportToPDF = () => {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    const html = `
+      <!DOCTYPE html>
+      <html><head>
+        <meta charset="utf-8">
+        <title>Relatório de Vendas</title>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 40px; color: #333; }
+          h1 { font-size: 22px; margin-bottom: 4px; }
+          h2 { font-size: 16px; margin-top: 24px; border-bottom: 2px solid #eee; padding-bottom: 4px; }
+          .subtitle { color: #777; font-size: 13px; margin-bottom: 20px; }
+          .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 16px 0; }
+          .kpi { border: 1px solid #eee; border-radius: 8px; padding: 12px; }
+          .kpi-label { font-size: 11px; color: #888; }
+          .kpi-value { font-size: 20px; font-weight: bold; }
+          table { width: 100%; border-collapse: collapse; margin: 8px 0 16px; font-size: 13px; }
+          th { text-align: left; background: #f5f5f5; padding: 8px; border: 1px solid #ddd; }
+          td { padding: 8px; border: 1px solid #ddd; }
+          tr:nth-child(even) { background: #fafafa; }
+          .text-right { text-align: right; }
+          @media print { body { padding: 20px; } }
+        </style>
+      </head><body>
+        <h1>Relatório de Vendas</h1>
+        <p class="subtitle">${format(dateRange.start, 'dd/MM/yyyy')} - ${format(dateRange.end, 'dd/MM/yyyy')}</p>
+
+        <div class="kpi-grid">
+          <div class="kpi"><div class="kpi-label">Receita Total</div><div class="kpi-value">${formatCurrency(kpis.totalRevenue)}</div></div>
+          <div class="kpi"><div class="kpi-label">Total de Vendas</div><div class="kpi-value">${kpis.totalSales}</div></div>
+          <div class="kpi"><div class="kpi-label">Ticket Médio</div><div class="kpi-value">${formatCurrency(kpis.avgTicket)}</div></div>
+          <div class="kpi"><div class="kpi-label">Cancelamentos</div><div class="kpi-value">${kpis.cancelledCount}</div></div>
+        </div>
+
+        <h2>Top 10 Produtos</h2>
+        <table>
+          <thead><tr><th>#</th><th>Produto</th><th class="text-right">Qtd</th><th class="text-right">Receita</th></tr></thead>
+          <tbody>${topProducts.map((p, i) => `<tr><td>${i + 1}</td><td>${p.name}</td><td class="text-right">${p.qty}</td><td class="text-right">${formatCurrency(p.revenue)}</td></tr>`).join('')}</tbody>
+        </table>
+
+        <h2>Top 10 Clientes</h2>
+        <table>
+          <thead><tr><th>#</th><th>Cliente</th><th class="text-right">Pedidos</th><th class="text-right">Receita</th></tr></thead>
+          <tbody>${topCustomers.map((c, i) => `<tr><td>${i + 1}</td><td>${c.name}</td><td class="text-right">${c.orders}</td><td class="text-right">${formatCurrency(c.revenue)}</td></tr>`).join('')}</tbody>
+        </table>
+
+        <h2>Métodos de Pagamento</h2>
+        <table>
+          <thead><tr><th>Método</th><th class="text-right">Quantidade</th><th class="text-right">Valor</th></tr></thead>
+          <tbody>${paymentDistribution.map(p => `<tr><td>${p.name}</td><td class="text-right">${p.count}</td><td class="text-right">${formatCurrency(p.value)}</td></tr>`).join('')}</tbody>
+        </table>
+
+        <h2>Vendas por Estado</h2>
+        <table>
+          <thead><tr><th>Estado</th><th class="text-right">Pedidos</th><th class="text-right">Receita</th></tr></thead>
+          <tbody>${salesByState.map(s => `<tr><td>${s.state}</td><td class="text-right">${s.orders}</td><td class="text-right">${formatCurrency(s.revenue)}</td></tr>`).join('')}</tbody>
+        </table>
+
+        <script>window.onload = () => { window.print(); }</script>
+      </body></html>
+    `;
+
+    printWindow.document.write(html);
+    printWindow.document.close();
+  };
+
   if (isLoading) {
     return (
       <AdminLayout>
@@ -340,6 +472,24 @@ const Reports = () => {
           </div>
 
           <div className="flex items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <Download className="h-4 w-4 mr-2" />
+                  Exportar
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={exportToCSV}>
+                  <FileSpreadsheet className="h-4 w-4 mr-2" />
+                  Excel (CSV)
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={exportToPDF}>
+                  <FileText className="h-4 w-4 mr-2" />
+                  PDF
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Select value={periodFilter} onValueChange={(v) => setPeriodFilter(v as PeriodFilter)}>
               <SelectTrigger className="w-[160px]">
                 <Calendar className="h-4 w-4 mr-2" />
