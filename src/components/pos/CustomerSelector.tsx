@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/command';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { User, X, Phone, FileText, UserPlus, ArrowLeft, Loader2, Building2 } from 'lucide-react';
+import { User, X, Phone, FileText, UserPlus, ArrowLeft, Loader2, Building2, MapPin } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -41,6 +41,11 @@ const emptyForm = {
   document: '',
   email: '',
   birthday: '',
+  // Address fields
+  zip_code: '',
+  address: '',
+  city: '',
+  state: '',
   // PJ fields
   razao_social: '',
   nome_fantasia: '',
@@ -58,7 +63,7 @@ const CustomerSelector = ({ selectedCustomer, onSelectCustomer }: CustomerSelect
   const [showForm, setShowForm] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState({ ...emptyForm });
-
+  const [isLoadingCep, setIsLoadingCep] = useState(false);
   useEffect(() => {
     const fetchCustomers = async () => {
       setIsLoading(true);
@@ -119,6 +124,32 @@ const CustomerSelector = ({ selectedCustomer, onSelectCustomer }: CustomerSelect
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const handleCepChange = async (cep: string) => {
+    const cleanCep = cep.replace(/\D/g, '');
+    const formatted = cleanCep.length > 5 ? `${cleanCep.slice(0, 5)}-${cleanCep.slice(5, 8)}` : cleanCep;
+    updateField('zip_code', formatted);
+
+    if (cleanCep.length === 8) {
+      setIsLoadingCep(true);
+      try {
+        const res = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
+        const data = await res.json();
+        if (!data.erro) {
+          setFormData(prev => ({
+            ...prev,
+            address: data.logradouro || '',
+            city: data.localidade || '',
+            state: data.uf || '',
+          }));
+        }
+      } catch {
+        // silent
+      } finally {
+        setIsLoadingCep(false);
+      }
+    }
+  };
+
   const handleSaveCustomer = async () => {
     const isPJ = formData.customer_type === 'pj';
 
@@ -140,6 +171,10 @@ const CustomerSelector = ({ selectedCustomer, onSelectCustomer }: CustomerSelect
         document: formData.document.trim() || null,
         email: formData.email.trim() || null,
         birthday: formData.birthday || null,
+        zip_code: formData.zip_code.trim() || null,
+        address: formData.address.trim() || null,
+        city: formData.city.trim() || null,
+        state: formData.state.trim() || null,
         razao_social: isPJ ? formData.razao_social.trim() : null,
         nome_fantasia: isPJ ? (formData.nome_fantasia.trim() || null) : null,
         inscricao_estadual: isPJ ? (formData.inscricao_estadual.trim() || null) : null,
@@ -278,6 +313,55 @@ const CustomerSelector = ({ selectedCustomer, onSelectCustomer }: CustomerSelect
                         className="h-9"
                       />
                     </div>
+                    {/* Endereço */}
+                    <div className="pt-2 border-t">
+                      <Label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                        <MapPin className="h-3 w-3" /> Endereço
+                      </Label>
+                    </div>
+                    <div>
+                      <Label className="text-xs">CEP</Label>
+                      <div className="relative">
+                        <Input
+                          placeholder="00000-000"
+                          value={formData.zip_code}
+                          onChange={(e) => handleCepChange(e.target.value)}
+                          maxLength={9}
+                          className="h-9"
+                        />
+                        {isLoadingCep && <Loader2 className="h-3.5 w-3.5 animate-spin absolute right-2.5 top-2.5 text-muted-foreground" />}
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="text-xs">Endereço</Label>
+                      <Input
+                        placeholder="Rua, número, complemento"
+                        value={formData.address}
+                        onChange={(e) => updateField('address', e.target.value)}
+                        className="h-9"
+                      />
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="col-span-2">
+                        <Label className="text-xs">Cidade</Label>
+                        <Input
+                          placeholder="Cidade"
+                          value={formData.city}
+                          onChange={(e) => updateField('city', e.target.value)}
+                          className="h-9"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs">UF</Label>
+                        <Input
+                          placeholder="UF"
+                          value={formData.state}
+                          onChange={(e) => updateField('state', e.target.value)}
+                          maxLength={2}
+                          className="h-9"
+                        />
+                      </div>
+                    </div>
                   </div>
                 ) : (
                   /* ---- PESSOA JURÍDICA ---- */
@@ -346,6 +430,55 @@ const CustomerSelector = ({ selectedCustomer, onSelectCustomer }: CustomerSelect
                         onChange={(e) => updateField('phone', e.target.value)}
                         className="h-9"
                       />
+                    </div>
+                    {/* Endereço */}
+                    <div className="pt-2 border-t">
+                      <Label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                        <MapPin className="h-3 w-3" /> Endereço
+                      </Label>
+                    </div>
+                    <div>
+                      <Label className="text-xs">CEP</Label>
+                      <div className="relative">
+                        <Input
+                          placeholder="00000-000"
+                          value={formData.zip_code}
+                          onChange={(e) => handleCepChange(e.target.value)}
+                          maxLength={9}
+                          className="h-9"
+                        />
+                        {isLoadingCep && <Loader2 className="h-3.5 w-3.5 animate-spin absolute right-2.5 top-2.5 text-muted-foreground" />}
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="text-xs">Endereço</Label>
+                      <Input
+                        placeholder="Rua, número, complemento"
+                        value={formData.address}
+                        onChange={(e) => updateField('address', e.target.value)}
+                        className="h-9"
+                      />
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="col-span-2">
+                        <Label className="text-xs">Cidade</Label>
+                        <Input
+                          placeholder="Cidade"
+                          value={formData.city}
+                          onChange={(e) => updateField('city', e.target.value)}
+                          className="h-9"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs">UF</Label>
+                        <Input
+                          placeholder="UF"
+                          value={formData.state}
+                          onChange={(e) => updateField('state', e.target.value)}
+                          maxLength={2}
+                          className="h-9"
+                        />
+                      </div>
                     </div>
                     <div className="pt-2 border-t">
                       <Label className="text-xs font-medium text-muted-foreground">Responsável</Label>
