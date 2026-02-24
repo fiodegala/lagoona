@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import POSLayout from '@/components/pos/POSLayout';
-import ProductSearch, { ProductResult } from '@/components/pos/ProductSearch';
+import ProductSearch, { ProductResult, SaleType } from '@/components/pos/ProductSearch';
 import ProductGrid from '@/components/pos/ProductGrid';
 import POSCart, { CartItem } from '@/components/pos/POSCart';
 import PaymentPanel from '@/components/pos/PaymentPanel';
@@ -13,7 +13,8 @@ import { offlineService } from '@/services/offlineService';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { DollarSign, ArrowUpDown } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { DollarSign, ArrowUpDown, ShoppingBag, Package, Star, RefreshCw } from 'lucide-react';
 
 const POSPage = () => {
   const navigate = useNavigate();
@@ -23,6 +24,7 @@ const POSPage = () => {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [saleType, setSaleType] = useState<SaleType>('varejo');
 
   // Cart state
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
@@ -73,7 +75,21 @@ const POSPage = () => {
   const totalDiscount = itemDiscounts + generalDiscountAmount;
   const total = Math.max(0, subtotal - totalDiscount);
 
+  const resolvePrice = useCallback((product: ProductResult): number => {
+    switch (saleType) {
+      case 'atacado':
+        return product.wholesale_price ?? product.price;
+      case 'exclusivo':
+        return product.exclusive_price ?? product.price;
+      case 'troca':
+        return 0;
+      default:
+        return product.promotional_price ?? product.price;
+    }
+  }, [saleType]);
+
   const handleProductSelect = useCallback((product: ProductResult) => {
+    const unitPrice = resolvePrice(product);
     const existingItem = cartItems.find((item) => item.product_id === product.id && !item.variation_id);
     
     if (existingItem) {
@@ -89,15 +105,15 @@ const POSPage = () => {
         id: crypto.randomUUID(),
         product_id: product.id,
         name: product.name,
-        unit_price: product.price,
+        unit_price: unitPrice,
         quantity: 1,
         discount_amount: 0,
-        total: product.price,
+        total: unitPrice,
         max_stock: product.stock,
       };
       setCartItems((items) => [...items, newItem]);
     }
-  }, [cartItems]);
+  }, [cartItems, resolvePrice]);
 
   const handleUpdateQuantity = (itemId: string, quantity: number) => {
     if (quantity < 1) return;
@@ -223,6 +239,36 @@ const POSPage = () => {
         {/* Left side - Products */}
         <div className="flex-1 flex flex-col">
           <div className="p-4 border-b space-y-3">
+            {/* Sale type selector */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">Tipo de venda:</span>
+              <div className="flex gap-1.5 flex-1">
+                {([
+                  { value: 'varejo' as SaleType, label: 'Varejo', icon: ShoppingBag },
+                  { value: 'atacado' as SaleType, label: 'Atacado', icon: Package },
+                  { value: 'exclusivo' as SaleType, label: 'Exclusivo', icon: Star },
+                  { value: 'troca' as SaleType, label: 'Troca', icon: RefreshCw },
+                ]).map(({ value, label, icon: Icon }) => (
+                  <Button
+                    key={value}
+                    variant={saleType === value ? 'default' : 'outline'}
+                    size="sm"
+                    className="flex-1 gap-1.5"
+                    onClick={() => {
+                      if (cartItems.length > 0 && saleType !== value) {
+                        if (!confirm('Mudar o tipo de venda vai limpar o carrinho. Continuar?')) return;
+                        setCartItems([]);
+                        setGeneralDiscount({ type: 'percentage', value: 0 });
+                      }
+                      setSaleType(value);
+                    }}
+                  >
+                    <Icon className="h-3.5 w-3.5" />
+                    {label}
+                  </Button>
+                ))}
+              </div>
+            </div>
             <ProductSearch onProductSelect={handleProductSelect} isOnline={isOnline} />
             <CustomerSelector 
               selectedCustomer={selectedCustomer} 

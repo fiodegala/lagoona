@@ -8,11 +8,16 @@ import { posService } from '@/services/posService';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 
+export type SaleType = 'varejo' | 'atacado' | 'exclusivo' | 'troca';
+
 export interface ProductResult {
   id: string;
   name: string;
   description: string | null;
   price: number;
+  wholesale_price?: number | null;
+  exclusive_price?: number | null;
+  promotional_price?: number | null;
   stock: number;
   category_name: string | null;
   image_url: string | null;
@@ -21,6 +26,9 @@ export interface ProductResult {
     id: string;
     sku: string | null;
     price: number | null;
+    wholesale_price?: number | null;
+    exclusive_price?: number | null;
+    promotional_price?: number | null;
     stock: number;
     is_active: boolean;
   }>;
@@ -56,6 +64,9 @@ const ProductSearch = ({ onProductSelect, isOnline }: ProductSearchProps) => {
           name: p.name,
           description: p.description,
           price: p.price,
+          wholesale_price: p.wholesale_price,
+          exclusive_price: p.exclusive_price,
+          promotional_price: p.promotional_price,
           stock: p.stock,
           category_name: null,
           image_url: p.image_url,
@@ -64,6 +75,9 @@ const ProductSearch = ({ onProductSelect, isOnline }: ProductSearchProps) => {
             id: v.id as string,
             sku: v.sku as string | null,
             price: v.price as number | null,
+            wholesale_price: v.wholesale_price as number | null,
+            exclusive_price: v.exclusive_price as number | null,
+            promotional_price: v.promotional_price as number | null,
             stock: v.stock as number,
             is_active: v.is_active as boolean,
           })),
@@ -95,6 +109,9 @@ const ProductSearch = ({ onProductSelect, isOnline }: ProductSearchProps) => {
             name: data.name,
             description: data.description,
             price: data.price,
+            wholesale_price: data.wholesale_price,
+            exclusive_price: data.exclusive_price,
+            promotional_price: data.promotional_price,
             stock: data.stock,
             category_name: null,
             image_url: data.image_url,
@@ -103,6 +120,9 @@ const ProductSearch = ({ onProductSelect, isOnline }: ProductSearchProps) => {
               id: v.id as string,
               sku: v.sku as string | null,
               price: v.price as number | null,
+              wholesale_price: v.wholesale_price as number | null,
+              exclusive_price: v.exclusive_price as number | null,
+              promotional_price: v.promotional_price as number | null,
               stock: v.stock as number,
               is_active: v.is_active as boolean,
             })),

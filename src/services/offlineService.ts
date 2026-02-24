@@ -9,6 +9,9 @@ interface POSDatabase extends DBSchema {
       name: string;
       description: string | null;
       price: number;
+      wholesale_price: number | null;
+      exclusive_price: number | null;
+      promotional_price: number | null;
       stock: number;
       category_id: string | null;
       category_name: string | null;
@@ -19,6 +22,9 @@ interface POSDatabase extends DBSchema {
         id: string;
         sku: string | null;
         price: number | null;
+        wholesale_price: number | null;
+        exclusive_price: number | null;
+        promotional_price: number | null;
         stock: number;
         is_active: boolean;
       }>;
@@ -102,6 +108,9 @@ export const offlineService = {
         name: product.name,
         description: product.description,
         price: product.price,
+        wholesale_price: product.wholesale_price,
+        exclusive_price: product.exclusive_price,
+        promotional_price: product.promotional_price,
         stock: product.stock,
         category_id: product.category_id,
         category_name: (product.categories as { name: string } | null)?.name || null,
@@ -112,6 +121,9 @@ export const offlineService = {
           id: v.id as string,
           sku: v.sku as string | null,
           price: v.price as number | null,
+          wholesale_price: v.wholesale_price as number | null,
+          exclusive_price: v.exclusive_price as number | null,
+          promotional_price: v.promotional_price as number | null,
           stock: v.stock as number,
           is_active: v.is_active as boolean,
         })),

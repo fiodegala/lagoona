@@ -17,6 +17,9 @@ interface CachedProduct {
   name: string;
   description: string | null;
   price: number;
+  wholesale_price?: number | null;
+  exclusive_price?: number | null;
+  promotional_price?: number | null;
   stock: number;
   category_id: string | null;
   category_name: string | null;
@@ -27,6 +30,9 @@ interface CachedProduct {
     id: string;
     sku: string | null;
     price: number | null;
+    wholesale_price?: number | null;
+    exclusive_price?: number | null;
+    promotional_price?: number | null;
     stock: number;
     is_active: boolean;
   }>;
