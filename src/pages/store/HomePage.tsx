@@ -206,21 +206,24 @@ const HomePage = () => {
               </Button>
             </div>
 
-            <div className="flex flex-wrap justify-center gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 md:gap-6">
               {categories.slice(0, 8).map((category, index) => (
                 <Link
                   key={category.id}
                   to={`/loja/categoria/${category.slug}`}
-                  className="group w-32 sm:w-36 md:w-40 flex flex-col items-center gap-3 p-5 rounded-xl bg-background hover:shadow-lg transition-all hover:-translate-y-1"
+                  className="group relative overflow-hidden rounded-xl bg-background hover:shadow-lg transition-all hover:-translate-y-1 aspect-[4/5]"
                 >
-                  <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center overflow-hidden group-hover:scale-110 transition-transform">
+                  <div className="absolute inset-0 bg-muted flex items-center justify-center overflow-hidden">
                     {category.image_url ? (
-                      <img src={category.image_url} alt={category.name} className="w-full h-full object-cover" />
+                      <img src={category.image_url} alt={category.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                     ) : (
-                      <span className="text-3xl">{categoryIcons[index % categoryIcons.length]}</span>
+                      <span className="text-5xl">{categoryIcons[index % categoryIcons.length]}</span>
                     )}
                   </div>
-                  <span className="text-sm font-medium text-center line-clamp-2">{category.name}</span>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 p-4">
+                    <span className="text-sm md:text-base font-semibold text-white line-clamp-2">{category.name}</span>
+                  </div>
                 </Link>
               ))}
             </div>
