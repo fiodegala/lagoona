@@ -123,8 +123,10 @@ const StoreHeader = ({ categories }: StoreHeaderProps) => {
             </Button>
 
             {/* Account */}
-            <Button variant="ghost" size="icon" className="hidden sm:flex text-foreground/70 hover:text-foreground">
-              <User className="h-5 w-5" />
+            <Button variant="ghost" size="icon" asChild className="hidden sm:flex text-foreground/70 hover:text-foreground">
+              <Link to="/minha-conta">
+                <User className="h-5 w-5" />
+              </Link>
             </Button>
 
             {/* Cart */}

@@ -42,6 +42,8 @@ import TermsPage from "./pages/store/TermsPage";
 import ExchangesReturnsPage from "./pages/store/ExchangesReturnsPage";
 import FavoritesPage from "./pages/store/FavoritesPage";
 import OrderTrackingPage from "./pages/store/OrderTrackingPage";
+import StoreLoginPage from "./pages/store/StoreLoginPage";
+import MyAccountPage from "./pages/store/MyAccountPage";
 
 const queryClient = new QueryClient();
 
@@ -70,6 +72,8 @@ const App = () => (
               <Route path="/trocas-devolucoes" element={<ExchangesReturnsPage />} />
               <Route path="/favoritos" element={<FavoritesPage />} />
               <Route path="/rastrear-pedido" element={<OrderTrackingPage />} />
+              <Route path="/conta/login" element={<StoreLoginPage />} />
+              <Route path="/minha-conta" element={<MyAccountPage />} />
 
               {/* Admin Routes */}
               <Route path="/login" element={<Login />} />
