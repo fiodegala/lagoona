@@ -1,27 +1,32 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Loader2, ShoppingBag, Truck, RefreshCw, Shield, MessageCircle, TrendingUp, Flame } from 'lucide-react';
+import { ArrowRight, Loader2, ShoppingBag, Truck, RefreshCw, Shield, MessageCircle, TrendingUp, Flame, ChevronLeft, ChevronRight } from 'lucide-react';
 import atacadoVideo from '@/assets/atacado-fdg.mp4';
 import { Button } from '@/components/ui/button';
 import StoreLayout from '@/components/store/StoreLayout';
 import ProductCard from '@/components/store/ProductCard';
 import { productsService, Product } from '@/services/products';
 import { categoriesService, Category } from '@/services/categories';
+import { bannersService, Banner } from '@/services/banners';
 
 const HomePage = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [heroBanners, setHeroBanners] = useState<Banner[]>([]);
+  const [currentHeroBanner, setCurrentHeroBanner] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [productsData, categoriesData] = await Promise.all([
+        const [productsData, categoriesData, bannersData] = await Promise.all([
           productsService.getAll(),
           categoriesService.getAll(),
+          bannersService.getByType('hero').catch(() => []),
         ]);
         setProducts(productsData.filter(p => p.is_active));
         setCategories(categoriesData.filter(c => c.is_active));
+        setHeroBanners(bannersData);
       } catch (error) {
         console.error('Error loading data:', error);
       } finally {
@@ -30,6 +35,15 @@ const HomePage = () => {
     };
     loadData();
   }, []);
+
+  // Auto-rotate hero banners
+  useEffect(() => {
+    if (heroBanners.length <= 1) return;
+    const interval = setInterval(() => {
+      setCurrentHeroBanner(prev => (prev + 1) % heroBanners.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [heroBanners.length]);
 
   const newProducts = [...products].sort((a, b) =>
     new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
@@ -44,41 +58,105 @@ const HomePage = () => {
     <StoreLayout>
       {/* Hero Section */}
       <section className="relative h-[500px] md:h-[600px] lg:h-[700px] overflow-hidden">
-        <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{
-            backgroundImage: `url('https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=1920&q=80')`,
-          }}
-        />
-        <div className="absolute inset-0 bg-store-dark/75" />
-        <div className="relative h-full flex items-center">
-          <div className="container mx-auto px-4">
-            <div className="max-w-2xl">
-              <span className="inline-block px-5 py-1.5 text-store-gold text-xs font-semibold tracking-[0.25em] uppercase mb-6 border border-store-gold/40">
-                Nova Coleção 2024
-              </span>
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold text-white mb-6 leading-tight italic">
-                Elegância que define o estilo moderno
-              </h1>
-              <p className="text-lg md:text-xl text-white/70 mb-8 max-w-lg font-light tracking-wide">
-                Descubra peças exclusivas confeccionadas com os melhores materiais. Qualidade premium para quem não abre mão de estilo.
-              </p>
-              <div className="flex flex-wrap gap-4">
-                <Button asChild size="lg" className="gap-2 bg-store-gold text-store-dark hover:bg-store-gold/90 font-semibold text-base px-8 tracking-wide">
-                  <Link to="/loja">
-                    Comprar agora
-                    <ArrowRight className="h-5 w-5" />
-                  </Link>
+        {heroBanners.length > 0 ? (
+          <>
+            {heroBanners.map((banner, index) => (
+              <div
+                key={banner.id}
+                className="absolute inset-0 transition-opacity duration-700"
+                style={{ opacity: index === currentHeroBanner ? 1 : 0 }}
+              >
+                <div
+                  className="absolute inset-0 bg-cover bg-center"
+                  style={{ backgroundImage: `url('${banner.image_url}')` }}
+                />
+                <div className="absolute inset-0 bg-store-dark/60" />
+                <div className="relative h-full flex items-center">
+                  <div className="container mx-auto px-4">
+                    <div className="max-w-2xl">
+                      {banner.title && (
+                        <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold text-white mb-6 leading-tight italic">
+                          {banner.title}
+                        </h1>
+                      )}
+                      {banner.subtitle && (
+                        <p className="text-lg md:text-xl text-white/70 mb-8 max-w-lg font-light tracking-wide">
+                          {banner.subtitle}
+                        </p>
+                      )}
+                      {banner.link_url && (
+                        <Button asChild size="lg" className="gap-2 bg-store-gold text-store-dark hover:bg-store-gold/90 font-semibold text-base px-8 tracking-wide">
+                          <Link to={banner.link_url}>
+                            Comprar agora
+                            <ArrowRight className="h-5 w-5" />
+                          </Link>
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+            {heroBanners.length > 1 && (
+              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-3 z-10">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-white/70 hover:text-white hover:bg-white/10"
+                  onClick={() => setCurrentHeroBanner(prev => (prev - 1 + heroBanners.length) % heroBanners.length)}
+                >
+                  <ChevronLeft className="h-5 w-5" />
                 </Button>
-                <Button asChild size="lg" className="gap-2 bg-store-primary text-store-primary-foreground hover:bg-store-gold font-semibold text-base px-8 tracking-wide transition-all duration-300 hover:scale-105 hover:shadow-[0_0_20px_hsl(40_60%_50%/0.4)]">
-                  <Link to="/loja?ordenar=recentes">
-                    Ver lançamentos
-                  </Link>
+                {heroBanners.map((_, idx) => (
+                  <button
+                    key={idx}
+                    className={`w-2.5 h-2.5 rounded-full transition-all ${idx === currentHeroBanner ? 'bg-store-gold scale-125' : 'bg-white/40'}`}
+                    onClick={() => setCurrentHeroBanner(idx)}
+                  />
+                ))}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-white/70 hover:text-white hover:bg-white/10"
+                  onClick={() => setCurrentHeroBanner(prev => (prev + 1) % heroBanners.length)}
+                >
+                  <ChevronRight className="h-5 w-5" />
                 </Button>
               </div>
+            )}
+          </>
+        ) : (
+          <>
+            <div
+              className="absolute inset-0 bg-cover bg-center"
+              style={{ backgroundImage: `url('https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=1920&q=80')` }}
+            />
+            <div className="absolute inset-0 bg-store-dark/75" />
+            <div className="relative h-full flex items-center">
+              <div className="container mx-auto px-4">
+                <div className="max-w-2xl">
+                  <span className="inline-block px-5 py-1.5 text-store-gold text-xs font-semibold tracking-[0.25em] uppercase mb-6 border border-store-gold/40">
+                    Nova Coleção 2024
+                  </span>
+                  <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold text-white mb-6 leading-tight italic">
+                    Elegância que define o estilo moderno
+                  </h1>
+                  <p className="text-lg md:text-xl text-white/70 mb-8 max-w-lg font-light tracking-wide">
+                    Descubra peças exclusivas confeccionadas com os melhores materiais.
+                  </p>
+                  <div className="flex flex-wrap gap-4">
+                    <Button asChild size="lg" className="gap-2 bg-store-gold text-store-dark hover:bg-store-gold/90 font-semibold text-base px-8 tracking-wide">
+                      <Link to="/loja">
+                        Comprar agora
+                        <ArrowRight className="h-5 w-5" />
+                      </Link>
+                    </Button>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
+          </>
+        )}
       </section>
 
       {/* Benefits Bar */}
