@@ -2,6 +2,12 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Loader2, ShoppingBag, Truck, RefreshCw, Shield, MessageCircle, TrendingUp, Flame, ChevronLeft, ChevronRight } from 'lucide-react';
 import atacadoVideo from '@/assets/atacado-fdg.mp4';
+import insta1 from '@/assets/insta-1.jpg';
+import insta2 from '@/assets/insta-2.jpg';
+import insta3 from '@/assets/insta-3.jpg';
+import insta4 from '@/assets/insta-4.jpg';
+import insta5 from '@/assets/insta-5.jpg';
+import insta6 from '@/assets/insta-6.jpg';
 import { Button } from '@/components/ui/button';
 import StoreLayout from '@/components/store/StoreLayout';
 import ProductCard from '@/components/store/ProductCard';
@@ -368,14 +374,7 @@ const HomePage = () => {
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 md:gap-3">
-            {[
-              'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=400&h=400&fit=crop',
-              'https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=400&h=400&fit=crop',
-              'https://images.unsplash.com/photo-1496747611176-843222e1e57c?w=400&h=400&fit=crop',
-              'https://images.unsplash.com/photo-1509631179647-0177331693ae?w=400&h=400&fit=crop',
-              'https://images.unsplash.com/photo-1485968579580-b6d095142e6e?w=400&h=400&fit=crop',
-              'https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=400&h=400&fit=crop',
-            ].map((img, idx) => (
+            {[insta1, insta2, insta3, insta4, insta5, insta6].map((img, idx) => (
               <a
                 key={idx}
                 href="https://instagram.com/lagoona.store"
