@@ -374,7 +374,7 @@ const HomePage = () => {
           </div>
 
           {/* Elfsight Instagram Feed Widget */}
-          <div className="elfsight-app-SUBSTITUA-PELO-SEU-APP-ID" data-elfsight-app-lazy></div>
+          <div className="elfsight-app-b9487465-81f2-41e1-a42f-e032db025e5c" data-elfsight-app-lazy></div>
 
           <div className="text-center mt-8">
             <Button asChild variant="outline" className="gap-2 border-store-gold/30 text-store-gold hover:bg-store-gold/10 font-semibold tracking-wide">
