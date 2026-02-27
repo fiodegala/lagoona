@@ -364,40 +364,21 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* Instagram Feed */}
+      {/* Instagram Feed - Elfsight Widget */}
       <section className="py-16 md:py-20 bg-store-secondary/30">
         <div className="container mx-auto px-4">
           <div className="text-center mb-10">
             <h2 className="text-2xl md:text-3xl font-display font-bold italic">Siga-nos no Instagram</h2>
             <div className="w-12 h-0.5 bg-store-gold mt-2 mx-auto" />
-            <p className="text-muted-foreground mt-3 font-light tracking-wide">@lagoona.store</p>
+            <p className="text-muted-foreground mt-3 font-light tracking-wide">@fiodegala</p>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 md:gap-3">
-            {[insta1, insta2, insta3, insta4, insta5, insta6].map((img, idx) => (
-              <a
-                key={idx}
-                href="https://instagram.com/lagoona.store"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group relative aspect-square overflow-hidden rounded-lg"
-              >
-                <img
-                  src={img}
-                  alt={`Instagram post ${idx + 1}`}
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                  loading="lazy"
-                />
-                <div className="absolute inset-0 bg-store-dark/0 group-hover:bg-store-dark/40 transition-colors duration-300 flex items-center justify-center">
-                  <MessageCircle className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                </div>
-              </a>
-            ))}
-          </div>
+          {/* Elfsight Instagram Feed Widget */}
+          <div className="elfsight-app-SUBSTITUA-PELO-SEU-APP-ID" data-elfsight-app-lazy></div>
 
           <div className="text-center mt-8">
             <Button asChild variant="outline" className="gap-2 border-store-gold/30 text-store-gold hover:bg-store-gold/10 font-semibold tracking-wide">
-              <a href="https://instagram.com/lagoona.store" target="_blank" rel="noopener noreferrer">
+              <a href="https://instagram.com/fiodegala" target="_blank" rel="noopener noreferrer">
                 Seguir no Instagram
                 <ArrowRight className="h-4 w-4" />
               </a>
