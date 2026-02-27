@@ -19,20 +19,23 @@ const HomePage = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [heroBanners, setHeroBanners] = useState<Banner[]>([]);
+  const [promoBanners, setPromoBanners] = useState<Banner[]>([]);
   const [currentHeroBanner, setCurrentHeroBanner] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [productsData, categoriesData, bannersData] = await Promise.all([
+        const [productsData, categoriesData, bannersData, promoData] = await Promise.all([
           productsService.getAll(),
           categoriesService.getAll(),
           bannersService.getByType('hero').catch(() => []),
+          bannersService.getByType('promocional').catch(() => []),
         ]);
         setProducts(productsData.filter(p => p.is_active));
         setCategories(categoriesData.filter(c => c.is_active));
         setHeroBanners(bannersData);
+        setPromoBanners(promoData);
       } catch (error) {
         console.error('Error loading data:', error);
       } finally {
@@ -319,6 +322,41 @@ const HomePage = () => {
                   <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Banners Promocionais */}
+      {promoBanners.length > 0 && (
+        <section className="py-10 md:py-14">
+          <div className="container mx-auto px-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+              {promoBanners.map((banner) => (
+                <Link
+                  key={banner.id}
+                  to={banner.link_url || '/loja'}
+                  className="group relative overflow-hidden rounded-xl aspect-[2/1] block"
+                >
+                  <img
+                    src={banner.image_url}
+                    alt={banner.title || 'Promoção'}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                  {(banner.title || banner.subtitle) && (
+                    <div className="absolute bottom-0 left-0 right-0 p-5 md:p-6">
+                      {banner.title && (
+                        <h3 className="text-lg md:text-xl font-display font-bold text-white mb-1">{banner.title}</h3>
+                      )}
+                      {banner.subtitle && (
+                        <p className="text-sm text-white/70 font-light">{banner.subtitle}</p>
+                      )}
+                    </div>
+                  )}
+                </Link>
+              ))}
             </div>
           </div>
         </section>
