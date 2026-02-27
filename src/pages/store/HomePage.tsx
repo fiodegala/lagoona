@@ -30,7 +30,7 @@ const HomePage = () => {
           productsService.getAll(),
           categoriesService.getAll(),
           bannersService.getByType('hero').catch(() => []),
-          bannersService.getByType('promocional').catch(() => []),
+          bannersService.getByType('promo').catch(() => []),
         ]);
         setProducts(productsData.filter(p => p.is_active));
         setCategories(categoriesData.filter(c => c.is_active));
