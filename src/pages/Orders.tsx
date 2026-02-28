@@ -34,6 +34,16 @@ const statusMap: Record<string, { label: string; variant: 'default' | 'secondary
   cancelled: { label: 'Cancelado', variant: 'destructive' },
 };
 
+const paymentStatusMap: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline'; icon: typeof CheckCircle2 }> = {
+  approved: { label: 'Aprovado', variant: 'default', icon: CheckCircle2 },
+  pending: { label: 'Pendente', variant: 'outline', icon: Clock },
+  in_process: { label: 'Em análise', variant: 'secondary', icon: Clock },
+  rejected: { label: 'Recusado', variant: 'destructive', icon: XCircle },
+  refunded: { label: 'Devolvido', variant: 'destructive', icon: XCircle },
+  cancelled: { label: 'Cancelado', variant: 'destructive', icon: XCircle },
+  charged_back: { label: 'Contestado', variant: 'destructive', icon: XCircle },
+};
+
 const messageTypeLabels: Record<string, string> = {
   tracking: '📦 Rastreio',
   confirmed: '✅ Confirmado',
@@ -256,11 +266,14 @@ const Orders = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Pedido</TableHead>
-                    <TableHead>Cliente</TableHead>
-                    <TableHead>Total</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Rastreamento</TableHead>
+                     <TableHead>Pedido</TableHead>
+                     <TableHead>Cliente</TableHead>
+                     <TableHead>Total</TableHead>
+                     <TableHead>Status</TableHead>
+                     <TableHead>Pagamento</TableHead>
+                     <TableHead>Rastreamento</TableHead>
+                     <TableHead>Data</TableHead>
+                     <TableHead>Ações</TableHead>
                     <TableHead>Data</TableHead>
                     <TableHead>Ações</TableHead>
                   </TableRow>
@@ -289,6 +302,21 @@ const Orders = () => {
                               ))}
                             </SelectContent>
                           </Select>
+                        </TableCell>
+                        <TableCell>
+                          {(() => {
+                            const ps = paymentStatusMap[order.payment_status || 'pending'] || { label: order.payment_status || '—', variant: 'outline' as const, icon: Clock };
+                            const PayIcon = ps.icon;
+                            return (
+                              <Badge variant={ps.variant} className="gap-1 text-xs">
+                                <PayIcon className="h-3 w-3" />
+                                {ps.label}
+                              </Badge>
+                            );
+                          })()}
+                          {order.payment_method && (
+                            <p className="text-[10px] text-muted-foreground mt-0.5 capitalize">{order.payment_method}</p>
+                          )}
                         </TableCell>
                         <TableCell>
                           {order.tracking_code ? (
