@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
 import SalesGoalsSettings from '@/components/settings/SalesGoalsSettings';
 import WhatsAppTemplatesSettings from '@/components/settings/WhatsAppTemplatesSettings';
+import DealsCountdownSettings from '@/components/settings/DealsCountdownSettings';
 
 const Settings = () => {
   const { profile } = useAuth();
@@ -20,6 +21,8 @@ const Settings = () => {
         </div>
 
         <SalesGoalsSettings />
+
+        <DealsCountdownSettings />
 
         <WhatsAppTemplatesSettings />
 
