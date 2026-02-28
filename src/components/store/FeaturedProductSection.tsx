@@ -69,7 +69,7 @@ const FeaturedProductSection = ({ product }: FeaturedProductSectionProps) => {
   };
 
   return (
-    <section className="py-16 md:py-20 bg-store-secondary/50">
+    <section className="py-16 md:py-20 bg-gradient-to-br from-store-gold/10 via-store-gold/5 to-transparent border-y border-store-gold/15">
       <div className="container mx-auto px-4">
         <div className="text-center mb-10">
           <h2 className="text-2xl md:text-3xl font-display font-bold italic">Produto em Destaque</h2>
