@@ -41,7 +41,7 @@ const FeaturedProductSettings = () => {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      const value = { product_id: selectedProductId || null };
+      const value = { product_id: selectedProductId === 'none' ? null : selectedProductId || null };
 
       const { data: existing } = await supabase
         .from('store_config')
@@ -49,15 +49,24 @@ const FeaturedProductSettings = () => {
         .eq('key', 'featured_product')
         .maybeSingle();
 
+      let error;
       if (existing) {
-        await supabase
+        const res = await supabase
           .from('store_config')
           .update({ value: value as any, is_public: true, updated_at: new Date().toISOString() })
           .eq('key', 'featured_product');
+        error = res.error;
       } else {
-        await supabase
+        const res = await supabase
           .from('store_config')
           .insert({ key: 'featured_product', value: value as any, is_public: true } as any);
+        error = res.error;
+      }
+
+      if (error) {
+        console.error('Error saving featured product:', error);
+        toast.error('Erro ao salvar: ' + error.message);
+        return;
       }
 
       toast.success('Produto em destaque atualizado!');
