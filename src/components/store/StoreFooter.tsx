@@ -51,6 +51,7 @@ const StoreFooter = () => {
             <h4 className="font-display font-semibold text-store-gold text-sm tracking-[0.15em] uppercase">Institucional</h4>
             <nav className="flex flex-col gap-2 text-sm">
               <Link to="/sobre" className="text-white/50 hover:text-store-gold transition-colors">Sobre a Fio de Gala</Link>
+              <Link to="/atacado" className="text-white/50 hover:text-store-gold transition-colors">Atacado</Link>
               <Link to="/contato" className="text-white/50 hover:text-store-gold transition-colors">Contato</Link>
               <Link to="/trabalhe-conosco" className="text-white/50 hover:text-store-gold transition-colors">Trabalhe Conosco</Link>
             </nav>

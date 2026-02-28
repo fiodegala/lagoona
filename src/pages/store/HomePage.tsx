@@ -411,7 +411,7 @@ const HomePage = () => {
                 Seja um revendedor autorizado e tenha acesso a condições exclusivas, suporte dedicado e produtos de alta qualidade para sua loja.
               </p>
               <Button asChild variant="outline" className="gap-2 border-store-gold/40 text-store-gold hover:bg-store-gold/10 font-semibold tracking-wide">
-                <Link to="/contato">
+                <Link to="/atacado">
                   Saiba mais
                   <ArrowRight className="h-4 w-4" />
                 </Link>
