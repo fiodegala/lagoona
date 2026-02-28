@@ -270,7 +270,7 @@ const StorePage = () => {
     <StoreLayout>
       {/* Countdown for offers page */}
       {showOnlyOffers && (
-        <DealsCountdownSection products={filteredProducts} />
+        <DealsCountdownSection products={filteredProducts} hideProducts />
       )}
 
       <div className="container mx-auto px-4 py-6">
