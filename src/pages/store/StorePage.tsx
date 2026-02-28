@@ -13,6 +13,7 @@ import StoreLayout from '@/components/store/StoreLayout';
 import ProductCard from '@/components/store/ProductCard';
 import { productsService, Product } from '@/services/products';
 import { categoriesService, Category } from '@/services/categories';
+import { enrichProductsWithStock } from '@/services/stockService';
 
 const ITEMS_PER_PAGE = 12;
 
@@ -42,7 +43,9 @@ const StorePage = () => {
           categoriesService.getAll(),
         ]);
         
-        setProducts(productsData.filter(p => p.is_active));
+        const activeProducts = productsData.filter(p => p.is_active);
+        const enrichedProducts = await enrichProductsWithStock(activeProducts);
+        setProducts(enrichedProducts);
         setCategories(categoriesData.filter(c => c.is_active));
       } catch (error) {
         console.error('Error loading data:', error);

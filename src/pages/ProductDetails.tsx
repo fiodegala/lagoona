@@ -11,6 +11,7 @@ import {
 import { productsService, Product } from '@/services/products';
 import { categoriesService, Category } from '@/services/categories';
 import { ProductVariation } from '@/services/variations';
+import { getProductRealStock } from '@/services/stockService';
 import StoreLayout from '@/components/store/StoreLayout';
 import ProductVariationSelector from '@/components/store/ProductVariationSelector';
 import ShippingCalculator from '@/components/store/ShippingCalculator';
@@ -51,7 +52,8 @@ const ProductDetails = () => {
           return;
         }
 
-        setProduct(productData);
+        const realStock = await getProductRealStock(productData.id);
+        setProduct({ ...productData, stock: realStock });
         setSelectedImage(productData.image_url);
 
         if (productData.category_id) {

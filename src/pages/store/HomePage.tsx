@@ -14,6 +14,7 @@ import ProductCard from '@/components/store/ProductCard';
 import { productsService, Product } from '@/services/products';
 import { categoriesService, Category } from '@/services/categories';
 import { bannersService, Banner } from '@/services/banners';
+import { enrichProductsWithStock } from '@/services/stockService';
 
 const HomePage = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -32,7 +33,9 @@ const HomePage = () => {
           bannersService.getByType('hero').catch(() => []),
           bannersService.getByType('promo').catch(() => []),
         ]);
-        setProducts(productsData.filter(p => p.is_active));
+        const activeProducts = productsData.filter(p => p.is_active);
+        const enrichedProducts = await enrichProductsWithStock(activeProducts);
+        setProducts(enrichedProducts);
         setCategories(categoriesData.filter(c => c.is_active));
         setHeroBanners(bannersData);
         setPromoBanners(promoData);
