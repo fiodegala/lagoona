@@ -558,10 +558,10 @@ const Stock = () => {
                                   <Skeleton className="h-6 w-full" />
                                 </div>
                               ) : (
-                                <div className="p-4 space-y-4">
+                                <div className="p-4 space-y-5">
                                   {expandedData.map((group) => (
-                                    <div key={group.color} className="space-y-2">
-                                      <div className="flex items-center gap-2">
+                                    <div key={group.color}>
+                                      <div className="flex items-center gap-2 mb-2">
                                         <Badge variant="outline" className="font-semibold">
                                           {group.color}
                                         </Badge>
@@ -569,36 +569,43 @@ const Stock = () => {
                                           Total: {group.total}
                                         </span>
                                       </div>
-                                      <div className="ml-4 space-y-1">
-                                        {group.variations.map((vd) => {
-                                          const sizeAttr = vd.variation.attribute_values?.find(
-                                            av => av.attribute_name.toLowerCase() !== 'cor'
-                                          );
-                                          const label = vd.variation.attribute_values
-                                            ?.filter(av => av.attribute_name.toLowerCase() !== 'cor')
-                                            .map(av => av.value)
-                                            .join(' / ') || vd.variation.sku || '—';
-                                          return (
-                                            <div key={vd.variation.id} className="flex items-center gap-3 text-sm py-1 border-b border-border/50 last:border-0">
-                                              <span className="w-24 text-muted-foreground">{label}</span>
-                                              {physicalStores.map(store => (
-                                                <span key={store.id} className="w-20 text-center">
-                                                  <Badge
-                                                    variant={(vd.storeQuantities[store.id] || 0) === 0 ? 'destructive' : 'secondary'}
-                                                    className="min-w-[32px] justify-center text-xs"
-                                                  >
-                                                    {vd.storeQuantities[store.id] || 0}
-                                                  </Badge>
-                                                </span>
-                                              ))}
-                                              <span className="w-20 text-center font-medium">{vd.total}</span>
-                                              {vd.variation.sku && (
-                                                <span className="text-xs text-muted-foreground">SKU: {vd.variation.sku}</span>
-                                              )}
-                                            </div>
-                                          );
-                                        })}
-                                      </div>
+                                      <Table>
+                                        <TableHeader>
+                                          <TableRow className="bg-muted/50">
+                                            <TableHead className="text-xs h-8">Tamanho</TableHead>
+                                            {physicalStores.map(store => (
+                                              <TableHead key={store.id} className="text-xs text-center h-8">{store.name}</TableHead>
+                                            ))}
+                                            <TableHead className="text-xs text-center font-bold h-8">Total</TableHead>
+                                            <TableHead className="text-xs h-8">SKU</TableHead>
+                                          </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                          {group.variations.map((vd) => {
+                                            const label = vd.variation.attribute_values
+                                              ?.filter(av => av.attribute_name.toLowerCase() !== 'cor')
+                                              .map(av => av.value)
+                                              .join(' / ') || '—';
+                                            return (
+                                              <TableRow key={vd.variation.id} className="hover:bg-muted/30">
+                                                <TableCell className="py-1.5 text-sm font-medium">{label}</TableCell>
+                                                {physicalStores.map(store => (
+                                                  <TableCell key={store.id} className="py-1.5 text-center">
+                                                    <Badge
+                                                      variant={(vd.storeQuantities[store.id] || 0) === 0 ? 'destructive' : 'secondary'}
+                                                      className="min-w-[32px] justify-center text-xs"
+                                                    >
+                                                      {vd.storeQuantities[store.id] || 0}
+                                                    </Badge>
+                                                  </TableCell>
+                                                ))}
+                                                <TableCell className="py-1.5 text-center font-bold text-sm">{vd.total}</TableCell>
+                                                <TableCell className="py-1.5 text-xs text-muted-foreground">{vd.variation.sku || '—'}</TableCell>
+                                              </TableRow>
+                                            );
+                                          })}
+                                        </TableBody>
+                                      </Table>
                                     </div>
                                   ))}
                                   {expandedData.length === 0 && (
