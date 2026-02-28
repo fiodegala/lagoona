@@ -172,7 +172,7 @@ const Stock = () => {
         (filterStatus === 'in-stock' && p.total > 0) ||
         (filterStatus === 'low-stock' && p.total > 0 && p.total <= 5) ||
         (filterStatus === 'out-of-stock' && p.total === 0) ||
-        (filterStatus === 'below-min' && p.min_stock > 0 && p.total <= p.min_stock);
+        (filterStatus === 'below-min' && p.min_stock > 0 && p.total > 0 && p.total <= p.min_stock);
 
       return matchesSearch && matchesStatus;
     });
@@ -300,7 +300,7 @@ const Stock = () => {
   const totalProducts = products.length;
   const outOfStock = products.filter(p => p.total === 0).length;
   const lowStock = products.filter(p => p.total > 0 && p.total <= 5).length;
-  const belowMinStock = products.filter(p => p.min_stock > 0 && p.total <= p.min_stock).length;
+  const belowMinStock = products.filter(p => p.min_stock > 0 && p.total > 0 && p.total <= p.min_stock).length;
   const totalOnlineStock = products.reduce((sum, p) => sum + p.total, 0);
 
   const exportToCSV = () => {
