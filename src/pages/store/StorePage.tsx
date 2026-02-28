@@ -171,7 +171,7 @@ const StorePage = () => {
     }).format(price);
   };
 
-  const FiltersContent = () => (
+  const filtersContent = (
     <div className="space-y-6">
       {/* Price Range */}
       <div className="space-y-4">
@@ -307,7 +307,7 @@ const StorePage = () => {
                 <SheetTitle>Filtros</SheetTitle>
               </SheetHeader>
               <div className="mt-6">
-                <FiltersContent />
+                {filtersContent}
               </div>
             </SheetContent>
           </Sheet>
@@ -345,7 +345,7 @@ const StorePage = () => {
           <aside className="hidden lg:block w-64 shrink-0">
             <div className="sticky top-36 bg-card rounded-xl border p-5">
               <h3 className="font-semibold text-lg mb-4">Filtrar por</h3>
-              <FiltersContent />
+              {filtersContent}
             </div>
           </aside>
 

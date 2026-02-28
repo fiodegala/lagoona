@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, forwardRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Package, ShoppingCart, Heart, Star, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -14,7 +14,7 @@ interface ProductCardProps {
   showDiscount?: boolean;
 }
 
-const ProductCard = ({ product, showDiscount = true }: ProductCardProps) => {
+const ProductCard = forwardRef<HTMLAnchorElement, ProductCardProps>(({ product, showDiscount = true }, ref) => {
   const { addItem } = useCart();
   const { isFavorite, toggleFavorite } = useFavorites();
   const [isHovered, setIsHovered] = useState(false);
@@ -205,6 +205,8 @@ const ProductCard = ({ product, showDiscount = true }: ProductCardProps) => {
       </div>
     </Link>
   );
-};
+});
+
+ProductCard.displayName = 'ProductCard';
 
 export default ProductCard;
