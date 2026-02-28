@@ -4,12 +4,22 @@ import { ArrowRight, Flame, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import ProductCard from '@/components/store/ProductCard';
 import { Product } from '@/services/products';
+import { supabase } from '@/integrations/supabase/client';
 
 interface DealsCountdownSectionProps {
   products: Product[];
 }
 
-const getEndOfDay = () => {
+interface DealsConfig {
+  enabled: boolean;
+  end_date: string | null;
+}
+
+const getTimeLeft = (endDate: string | null) => {
+  if (endDate) {
+    return new Date(endDate).getTime() - Date.now();
+  }
+  // Fallback: end of day
   const now = new Date();
   const end = new Date(now);
   end.setHours(23, 59, 59, 999);
@@ -18,10 +28,11 @@ const getEndOfDay = () => {
 
 const formatTime = (ms: number) => {
   const totalSeconds = Math.max(0, Math.floor(ms / 1000));
-  const hours = Math.floor(totalSeconds / 3600);
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
-  return { hours, minutes, seconds };
+  return { days, hours, minutes, seconds };
 };
 
 const TimeBlock = ({ value, label }: { value: number; label: string }) => (
@@ -34,28 +45,51 @@ const TimeBlock = ({ value, label }: { value: number; label: string }) => (
 );
 
 const DealsCountdownSection = ({ products }: DealsCountdownSectionProps) => {
-  const [timeLeft, setTimeLeft] = useState(getEndOfDay);
+  const [config, setConfig] = useState<DealsConfig>({ enabled: true, end_date: null });
+  const [timeLeft, setTimeLeft] = useState(0);
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setTimeLeft(getEndOfDay());
-    }, 1000);
-    return () => clearInterval(interval);
+    const load = async () => {
+      try {
+        const { data } = await supabase
+          .from('store_config')
+          .select('value')
+          .eq('key', 'deals_countdown')
+          .maybeSingle();
+
+        if (data?.value) {
+          setConfig(data.value as unknown as DealsConfig);
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoaded(true);
+      }
+    };
+    load();
   }, []);
 
-  const { hours, minutes, seconds } = formatTime(timeLeft);
+  useEffect(() => {
+    if (!loaded) return;
+    setTimeLeft(getTimeLeft(config.end_date));
+    const interval = setInterval(() => {
+      setTimeLeft(getTimeLeft(config.end_date));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [loaded, config.end_date]);
 
-  if (products.length === 0) return null;
+  if (!loaded || !config.enabled || products.length === 0 || timeLeft <= 0) return null;
+
+  const { days, hours, minutes, seconds } = formatTime(timeLeft);
 
   return (
     <section className="py-16 md:py-20 relative overflow-hidden">
-      {/* Background accent */}
       <div className="absolute inset-0 bg-gradient-to-br from-store-deal/5 via-transparent to-store-deal/5" />
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-store-deal/30 to-transparent" />
       <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-store-deal/30 to-transparent" />
 
       <div className="container mx-auto px-4 relative">
-        {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-10 gap-6">
           <div className="flex items-center gap-4">
             <div className="relative">
@@ -78,6 +112,12 @@ const DealsCountdownSection = ({ products }: DealsCountdownSectionProps) => {
           <div className="flex items-center gap-4">
             <span className="text-xs text-muted-foreground uppercase tracking-wider hidden md:block">Termina em:</span>
             <div className="flex items-center gap-2">
+              {days > 0 && (
+                <>
+                  <TimeBlock value={days} label="Dias" />
+                  <span className="text-store-deal font-bold text-xl mt-[-16px]">:</span>
+                </>
+              )}
               <TimeBlock value={hours} label="Hrs" />
               <span className="text-store-deal font-bold text-xl mt-[-16px]">:</span>
               <TimeBlock value={minutes} label="Min" />
@@ -87,14 +127,12 @@ const DealsCountdownSection = ({ products }: DealsCountdownSectionProps) => {
           </div>
         </div>
 
-        {/* Products Grid */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
           {products.slice(0, 5).map((product) => (
             <ProductCard key={product.id} product={product} showDiscount />
           ))}
         </div>
 
-        {/* CTA */}
         <div className="mt-8 text-center">
           <Button asChild variant="outline" className="gap-2 border-store-deal/30 text-store-deal hover:bg-store-deal/10 font-semibold">
             <Link to="/loja?ordenar=ofertas">
