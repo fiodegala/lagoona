@@ -22,6 +22,7 @@ import {
 import { Package, Pencil, Trash2, Eye, Power, ChevronDown, ChevronRight, Layers } from 'lucide-react';
 import { Product } from '@/services/products';
 import { variationsService, ProductVariation } from '@/services/variations';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ProductTableRowProps {
   product: Product;
@@ -54,20 +55,40 @@ const ProductTableRow = ({
   const [variations, setVariations] = useState<ProductVariation[]>([]);
   const [variationCount, setVariationCount] = useState<number | null>(null);
   const [isLoadingVariations, setIsLoadingVariations] = useState(false);
+  const [storeStockMap, setStoreStockMap] = useState<Record<string, number>>({}); // variation_id -> total qty
+  const [simpleProductStock, setSimpleProductStock] = useState<number>(0);
 
-  // Load variation count on mount
+  // Load variation count and store_stock on mount
   useEffect(() => {
-    const loadVariationCount = async () => {
+    const loadVariationData = async () => {
       try {
-        const vars = await variationsService.getVariationsByProduct(product.id);
+        const [vars, stockRes] = await Promise.all([
+          variationsService.getVariationsByProduct(product.id),
+          supabase
+            .from('store_stock')
+            .select('variation_id, quantity')
+            .eq('product_id', product.id),
+        ]);
         setVariationCount(vars.length);
         setVariations(vars);
+        
+        const map: Record<string, number> = {};
+        let simpleTotal = 0;
+        (stockRes.data || []).forEach((s: any) => {
+          if (s.variation_id) {
+            map[s.variation_id] = (map[s.variation_id] || 0) + s.quantity;
+          } else {
+            simpleTotal += s.quantity;
+          }
+        });
+        setStoreStockMap(map);
+        setSimpleProductStock(simpleTotal);
       } catch (error) {
-        console.error('Error loading variation count:', error);
+        console.error('Error loading variation data:', error);
         setVariationCount(0);
       }
     };
-    loadVariationCount();
+    loadVariationData();
   }, [product.id]);
 
   const hasVariations = variationCount !== null && variationCount > 0;
@@ -99,7 +120,7 @@ const ProductTableRow = ({
     setIsExpanded(!isExpanded);
   };
 
-  const totalVariationStock = variations.reduce((sum, v) => sum + v.stock, 0);
+  const totalVariationStock = variations.reduce((sum, v) => sum + (storeStockMap[v.id] || 0), 0);
   const priceRange = variations.length > 0 
     ? {
         min: Math.min(...variations.map(v => v.price ?? product.price)),
@@ -191,10 +212,10 @@ const ProductTableRow = ({
               </Badge>
             ) : (
               <Badge
-                variant={product.stock > 0 ? 'secondary' : 'destructive'}
-                className={product.stock > 0 ? '' : 'bg-destructive/10 text-destructive'}
+                variant={simpleProductStock > 0 ? 'secondary' : 'destructive'}
+                className={simpleProductStock > 0 ? '' : 'bg-destructive/10 text-destructive'}
               >
-                {product.stock} un.
+                {simpleProductStock} un.
               </Badge>
             )}
           </TableCell>
@@ -328,12 +349,17 @@ const ProductTableRow = ({
                   {formatCurrency(variation.price ?? product.price)}
                 </TableCell>
                 <TableCell>
-                  <Badge
-                    variant={variation.stock > 0 ? 'secondary' : 'destructive'}
-                    className={`text-xs ${variation.stock > 0 ? '' : 'bg-destructive/10 text-destructive'}`}
-                  >
-                    {variation.stock} un.
-                  </Badge>
+                  {(() => {
+                    const varStock = storeStockMap[variation.id] || 0;
+                    return (
+                      <Badge
+                        variant={varStock > 0 ? 'secondary' : 'destructive'}
+                        className={`text-xs ${varStock > 0 ? '' : 'bg-destructive/10 text-destructive'}`}
+                      >
+                        {varStock} un.
+                      </Badge>
+                    );
+                  })()}
                 </TableCell>
                 <TableCell>
                   {variation.is_active ? (
