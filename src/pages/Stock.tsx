@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import AdminLayout from '@/components/AdminLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -31,8 +31,9 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { Search, Package, Warehouse, AlertTriangle, Plus, Minus, Save, Download } from 'lucide-react';
+import { Search, Package, Warehouse, AlertTriangle, Plus, Minus, Save, Download, ChevronDown, ChevronRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { variationsService, ProductVariation, ProductAttribute } from '@/services/variations';
 
 interface Store {
   id: string;
@@ -51,9 +52,21 @@ interface StockProduct {
   is_active: boolean;
   stock_legacy: number;
   min_stock: number;
-  stores: Record<string, number>; // store_id -> quantity
+  stores: Record<string, number>;
   total: number;
   has_variations: boolean;
+}
+
+interface VariationDetail {
+  variation: ProductVariation;
+  storeQuantities: Record<string, number>;
+  total: number;
+}
+
+interface ColorGroup {
+  color: string;
+  variations: VariationDetail[];
+  total: number;
 }
 
 const Stock = () => {
@@ -70,6 +83,11 @@ const Stock = () => {
   const [editingProduct, setEditingProduct] = useState<StockProduct | null>(null);
   const [editQuantities, setEditQuantities] = useState<Record<string, number>>({});
   const [isSaving, setIsSaving] = useState(false);
+
+  // Expansion state for variation details
+  const [expandedProductId, setExpandedProductId] = useState<string | null>(null);
+  const [expandedData, setExpandedData] = useState<ColorGroup[]>([]);
+  const [isLoadingExpanded, setIsLoadingExpanded] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -168,6 +186,71 @@ const Stock = () => {
   const openEditModal = (product: StockProduct) => {
     setEditingProduct(product);
     setEditQuantities({ ...product.stores });
+  };
+
+  const toggleExpand = async (product: StockProduct) => {
+    if (expandedProductId === product.id) {
+      setExpandedProductId(null);
+      setExpandedData([]);
+      return;
+    }
+
+    if (!product.has_variations) {
+      setExpandedProductId(null);
+      return;
+    }
+
+    setExpandedProductId(product.id);
+    setIsLoadingExpanded(true);
+
+    try {
+      const [variations, stockRes] = await Promise.all([
+        variationsService.getVariationsByProduct(product.id),
+        supabase
+          .from('store_stock')
+          .select('variation_id, store_id, quantity')
+          .eq('product_id', product.id)
+          .not('variation_id', 'is', null),
+      ]);
+
+      const stockData = stockRes.data || [];
+
+      // Build per-variation store quantities
+      const variationDetails: VariationDetail[] = variations.filter(v => v.is_active).map(v => {
+        const storeQuantities: Record<string, number> = {};
+        let total = 0;
+        stockData.forEach((s: any) => {
+          if (s.variation_id === v.id) {
+            storeQuantities[s.store_id] = (storeQuantities[s.store_id] || 0) + s.quantity;
+            total += s.quantity;
+          }
+        });
+        return { variation: v, storeQuantities, total };
+      });
+
+      // Group by color (first attribute named "Cor" or the first attribute)
+      const colorGroups: Record<string, VariationDetail[]> = {};
+      variationDetails.forEach(vd => {
+        const colorAttr = vd.variation.attribute_values?.find(
+          av => av.attribute_name.toLowerCase() === 'cor'
+        );
+        const colorKey = colorAttr?.value || 'Sem cor';
+        if (!colorGroups[colorKey]) colorGroups[colorKey] = [];
+        colorGroups[colorKey].push(vd);
+      });
+
+      const groups: ColorGroup[] = Object.entries(colorGroups).map(([color, vars]) => ({
+        color,
+        variations: vars,
+        total: vars.reduce((sum, v) => sum + v.total, 0),
+      }));
+
+      setExpandedData(groups);
+    } catch (error) {
+      console.error('Error loading variation details:', error);
+    } finally {
+      setIsLoadingExpanded(false);
+    }
   };
 
   const handleSaveStock = async () => {
@@ -387,9 +470,19 @@ const Stock = () => {
                       </TableRow>
                     ) : (
                       filteredProducts.map((product) => (
-                        <TableRow key={product.id}>
+                        <React.Fragment key={product.id}>
+                        <TableRow 
+                          
+                          className={product.has_variations ? 'cursor-pointer hover:bg-muted/50' : ''}
+                          onClick={() => product.has_variations && toggleExpand(product)}
+                        >
                           <TableCell>
                             <div className="flex items-center gap-3">
+                              {product.has_variations && (
+                                expandedProductId === product.id 
+                                  ? <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
+                                  : <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                              )}
                               {product.image_url ? (
                                 <img src={product.image_url} alt="" className="h-10 w-10 rounded object-cover" />
                               ) : (
@@ -447,13 +540,76 @@ const Stock = () => {
                               {product.has_variations ? (
                                 <Badge variant="outline" className="text-xs">Variável</Badge>
                               ) : (
-                                <Button variant="ghost" size="sm" onClick={() => openEditModal(product)}>
+                                <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); openEditModal(product); }}>
                                   Editar
                                 </Button>
                               )}
                             </TableCell>
                           )}
                         </TableRow>
+                        {/* Expanded variation details */}
+                        {expandedProductId === product.id && (
+                          <TableRow key={`${product.id}-expanded`}>
+                            <TableCell colSpan={4 + physicalStores.length + (isAdmin ? 1 : 0)} className="bg-muted/30 p-0">
+                              {isLoadingExpanded ? (
+                                <div className="p-4 space-y-2">
+                                  <Skeleton className="h-6 w-full" />
+                                  <Skeleton className="h-6 w-full" />
+                                  <Skeleton className="h-6 w-full" />
+                                </div>
+                              ) : (
+                                <div className="p-4 space-y-4">
+                                  {expandedData.map((group) => (
+                                    <div key={group.color} className="space-y-2">
+                                      <div className="flex items-center gap-2">
+                                        <Badge variant="outline" className="font-semibold">
+                                          {group.color}
+                                        </Badge>
+                                        <span className="text-sm font-bold text-foreground">
+                                          Total: {group.total}
+                                        </span>
+                                      </div>
+                                      <div className="ml-4 space-y-1">
+                                        {group.variations.map((vd) => {
+                                          const sizeAttr = vd.variation.attribute_values?.find(
+                                            av => av.attribute_name.toLowerCase() !== 'cor'
+                                          );
+                                          const label = vd.variation.attribute_values
+                                            ?.filter(av => av.attribute_name.toLowerCase() !== 'cor')
+                                            .map(av => av.value)
+                                            .join(' / ') || vd.variation.sku || '—';
+                                          return (
+                                            <div key={vd.variation.id} className="flex items-center gap-3 text-sm py-1 border-b border-border/50 last:border-0">
+                                              <span className="w-24 text-muted-foreground">{label}</span>
+                                              {physicalStores.map(store => (
+                                                <span key={store.id} className="w-20 text-center">
+                                                  <Badge
+                                                    variant={(vd.storeQuantities[store.id] || 0) === 0 ? 'destructive' : 'secondary'}
+                                                    className="min-w-[32px] justify-center text-xs"
+                                                  >
+                                                    {vd.storeQuantities[store.id] || 0}
+                                                  </Badge>
+                                                </span>
+                                              ))}
+                                              <span className="w-20 text-center font-medium">{vd.total}</span>
+                                              {vd.variation.sku && (
+                                                <span className="text-xs text-muted-foreground">SKU: {vd.variation.sku}</span>
+                                              )}
+                                            </div>
+                                          );
+                                        })}
+                                      </div>
+                                    </div>
+                                  ))}
+                                  {expandedData.length === 0 && (
+                                    <p className="text-sm text-muted-foreground">Nenhuma variação encontrada.</p>
+                                  )}
+                                </div>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        )}
+                        </React.Fragment>
                       ))
                     )}
                   </TableBody>
