@@ -47,6 +47,7 @@ import OrderTrackingPage from "./pages/store/OrderTrackingPage";
 import StoreLoginPage from "./pages/store/StoreLoginPage";
 import MyAccountPage from "./pages/store/MyAccountPage";
 import WholesalePage from "./pages/store/WholesalePage";
+import WorkWithUsPage from "./pages/store/WorkWithUsPage";
 
 const queryClient = new QueryClient();
 
@@ -80,6 +81,7 @@ const App = () => (
               <Route path="/conta/login" element={<StoreLoginPage />} />
               <Route path="/minha-conta" element={<MyAccountPage />} />
               <Route path="/atacado" element={<WholesalePage />} />
+              <Route path="/trabalhe-conosco" element={<WorkWithUsPage />} />
 
               {/* Admin Routes */}
               <Route path="/login" element={<Login />} />
