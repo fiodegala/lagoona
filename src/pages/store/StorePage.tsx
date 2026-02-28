@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Loader2, Search, SlidersHorizontal, X, Package, Grid3X3, LayoutList } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -24,23 +24,40 @@ const StorePage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout>>();
 
   // Derive filter state directly from URL (single source of truth)
   const searchQuery = searchParams.get('busca') || '';
-  const selectedCategories = searchParams.get('categorias')?.split(',').filter(Boolean) || [];
+  const categoriesParam = searchParams.get('categorias') || '';
+  const selectedCategories = useMemo(
+    () => categoriesParam ? categoriesParam.split(',').filter(Boolean) : [],
+    [categoriesParam]
+  );
   const sortBy = searchParams.get('ordenar') || 'recentes';
   const showOnlyOffers = searchParams.get('ofertas') === 'true';
   const showInStock = searchParams.get('estoque') === 'true';
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
-  const [currentPage, setCurrentPage] = useState(1);
 
-  // Reset page when filters change
-  const filterKey = `${searchQuery}|${selectedCategories.join(',')}|${sortBy}|${showOnlyOffers}|${showInStock}`;
-  const [prevFilterKey, setPrevFilterKey] = useState(filterKey);
-  if (filterKey !== prevFilterKey) {
-    setPrevFilterKey(filterKey);
-    setCurrentPage(1);
-  }
+  // Local search state for debounced input
+  const [localSearch, setLocalSearch] = useState(searchQuery);
+  const prevSearchFromUrl = useRef(searchQuery);
+  useEffect(() => {
+    if (prevSearchFromUrl.current !== searchQuery) {
+      prevSearchFromUrl.current = searchQuery;
+      setLocalSearch(searchQuery);
+    }
+  }, [searchQuery]);
+
+  // Reset page when URL params change
+  const filterKey = `${searchQuery}|${categoriesParam}|${sortBy}|${showOnlyOffers}|${showInStock}`;
+  const prevFilterKeyRef = useRef(filterKey);
+  useEffect(() => {
+    if (prevFilterKeyRef.current !== filterKey) {
+      prevFilterKeyRef.current = filterKey;
+      setCurrentPage(1);
+    }
+  }, [filterKey]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -64,27 +81,43 @@ const StorePage = () => {
     loadData();
   }, []);
 
-  // Helper to update a single URL param
-  const updateParam = (key: string, value: string | null) => {
-    const params = new URLSearchParams(searchParams);
-    if (value) {
-      params.set(key, value);
-    } else {
-      params.delete(key);
-    }
-    setSearchParams(params, { replace: true });
-  };
+  // Helper to update URL params without causing loops
+  const updateParam = useCallback((key: string, value: string | null) => {
+    setSearchParams(prev => {
+      const params = new URLSearchParams(prev);
+      if (value) {
+        params.set(key, value);
+      } else {
+        params.delete(key);
+      }
+      return params;
+    }, { replace: true });
+  }, [setSearchParams]);
 
-  const setSearchQuery = (value: string) => updateParam('busca', value || null);
-  const setSortBy = (value: string) => updateParam('ordenar', value === 'recentes' ? null : value);
-  const setShowInStock = (checked: boolean) => updateParam('estoque', checked ? 'true' : null);
-  const setShowOnlyOffers = (checked: boolean) => updateParam('ofertas', checked ? 'true' : null);
+  const handleSearchChange = useCallback((value: string) => {
+    setLocalSearch(value);
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    searchTimerRef.current = setTimeout(() => {
+      updateParam('busca', value || null);
+    }, 300);
+  }, [updateParam]);
+
+  const setSortBy = useCallback((value: string) => {
+    updateParam('ordenar', value === 'recentes' ? null : value);
+  }, [updateParam]);
+
+  const setShowInStock = useCallback((checked: boolean) => {
+    updateParam('estoque', checked ? 'true' : null);
+  }, [updateParam]);
+
+  const setShowOnlyOffers = useCallback((checked: boolean) => {
+    updateParam('ofertas', checked ? 'true' : null);
+  }, [updateParam]);
 
   // Filter and sort products
   const filteredProducts = useMemo(() => {
     let result = [...products];
 
-    // Search filter
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       result = result.filter(
@@ -93,25 +126,20 @@ const StorePage = () => {
       );
     }
 
-    // Category filter
     if (selectedCategories.length > 0) {
       result = result.filter(p => p.category_id && selectedCategories.includes(p.category_id));
     }
 
-    // Offers filter
     if (showOnlyOffers) {
       result = result.filter(p => p.promotional_price && p.promotional_price < p.price);
     }
 
-    // Stock filter
     if (showInStock) {
       result = result.filter(p => p.stock > 0);
     }
 
-    // Price filter
     result = result.filter(p => p.price >= priceRange[0] && p.price <= priceRange[1]);
 
-    // Sorting
     switch (sortBy) {
       case 'preco-menor':
         result.sort((a, b) => a.price - b.price);
@@ -140,17 +168,27 @@ const StorePage = () => {
     currentPage * ITEMS_PER_PAGE
   );
 
-  const toggleCategory = (categoryId: string) => {
-    const newCats = selectedCategories.includes(categoryId)
-      ? selectedCategories.filter(id => id !== categoryId)
-      : [...selectedCategories, categoryId];
-    updateParam('categorias', newCats.length > 0 ? newCats.join(',') : null);
-  };
+  const toggleCategory = useCallback((categoryId: string) => {
+    setSearchParams(prev => {
+      const params = new URLSearchParams(prev);
+      const current = params.get('categorias')?.split(',').filter(Boolean) || [];
+      const newCats = current.includes(categoryId)
+        ? current.filter(id => id !== categoryId)
+        : [...current, categoryId];
+      if (newCats.length > 0) {
+        params.set('categorias', newCats.join(','));
+      } else {
+        params.delete('categorias');
+      }
+      return params;
+    }, { replace: true });
+  }, [setSearchParams]);
 
-  const clearFilters = () => {
+  const clearFilters = useCallback(() => {
     setPriceRange([0, 10000]);
+    setLocalSearch('');
     setSearchParams({}, { replace: true });
-  };
+  }, [setSearchParams]);
 
   const activeFiltersCount = 
     (searchQuery ? 1 : 0) + 
@@ -158,7 +196,6 @@ const StorePage = () => {
     (sortBy !== 'recentes' ? 1 : 0) + 
     (showOnlyOffers ? 1 : 0) +
     (showInStock ? 1 : 0);
-
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -247,8 +284,8 @@ const StorePage = () => {
             <Input
               type="search"
               placeholder="Buscar nesta lista..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              value={localSearch}
+              onChange={(e) => handleSearchChange(e.target.value)}
               className="pl-10"
             />
           </div>
