@@ -6,6 +6,7 @@ export interface Product {
   description: string | null;
   price: number;
   stock: number;
+  min_stock: number;
   category_id: string | null;
   image_url: string | null;
   is_active: boolean;
@@ -38,6 +39,7 @@ export interface CreateProductData {
   description?: string;
   price: number;
   stock?: number;
+  min_stock?: number;
   category_id?: string;
   image_url?: string;
   is_active?: boolean;
@@ -80,6 +82,7 @@ export const productsService = {
       description: input.description || null,
       price: input.price,
       stock: input.stock || 0,
+      min_stock: input.min_stock ?? 0,
       category_id: input.category_id || null,
       image_url: input.image_url || null,
       is_active: input.is_active ?? true,
@@ -113,6 +116,7 @@ export const productsService = {
     if (input.description !== undefined) updateData.description = input.description;
     if (input.price !== undefined) updateData.price = input.price;
     if (input.stock !== undefined) updateData.stock = input.stock;
+    if (input.min_stock !== undefined) updateData.min_stock = input.min_stock;
     if (input.category_id !== undefined) updateData.category_id = input.category_id || null;
     if (input.image_url !== undefined) updateData.image_url = input.image_url;
     if (input.is_active !== undefined) updateData.is_active = input.is_active;

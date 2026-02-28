@@ -1010,6 +1010,7 @@ export type Database = {
           image_url: string | null
           is_active: boolean
           metadata: Json | null
+          min_stock: number
           name: string
           price: number
           promotional_price: number | null
@@ -1031,6 +1032,7 @@ export type Database = {
           image_url?: string | null
           is_active?: boolean
           metadata?: Json | null
+          min_stock?: number
           name: string
           price: number
           promotional_price?: number | null
@@ -1052,6 +1054,7 @@ export type Database = {
           image_url?: string | null
           is_active?: boolean
           metadata?: Json | null
+          min_stock?: number
           name?: string
           price?: number
           promotional_price?: number | null
