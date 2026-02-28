@@ -139,8 +139,11 @@ const RelatedProducts = ({
         onScroll={handleScroll}
       >
         {products.map((product) => {
-          const originalPrice = product.price * 1.15;
-          const hasDiscount = true;
+          const hasDiscount = (product as any).promotional_price != null && (product as any).promotional_price < product.price;
+          const discountPercent = hasDiscount
+            ? Math.round(((product.price - (product as any).promotional_price) / product.price) * 100)
+            : 0;
+          const displayPrice = hasDiscount ? (product as any).promotional_price : product.price;
 
           return (
             <Link
@@ -164,7 +167,7 @@ const RelatedProducts = ({
                   
                   {hasDiscount && (
                     <Badge className="absolute top-2 left-2 bg-store-deal text-white text-xs">
-                      -15%
+                      -{discountPercent}%
                     </Badge>
                   )}
 
@@ -186,11 +189,11 @@ const RelatedProducts = ({
                   <div className="space-y-0.5">
                     {hasDiscount && (
                       <p className="text-xs text-muted-foreground line-through">
-                        {formatPrice(originalPrice)}
+                        {formatPrice(product.price)}
                       </p>
                     )}
                     <p className="font-bold text-store-accent">
-                      {formatPrice(product.price)}
+                      {formatPrice(displayPrice)}
                     </p>
                     <p className="text-xs text-muted-foreground">
                       ou 6x de {formatPrice(product.price / 6)}
