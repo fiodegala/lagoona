@@ -25,6 +25,13 @@ Deno.serve(async (req) => {
       return await createPayment(body, accessToken);
     } else if (action === 'get_payment') {
       return await getPayment(body.payment_id, accessToken);
+    } else if (action === 'get_public_key') {
+      const publicKey = Deno.env.get('MERCADOPAGO_PUBLIC_KEY');
+      if (!publicKey) throw new Error('MERCADOPAGO_PUBLIC_KEY is not configured');
+      return new Response(
+        JSON.stringify({ public_key: publicKey }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     } else {
       throw new Error(`Unknown action: ${action}`);
     }
