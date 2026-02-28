@@ -22,7 +22,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { FolderTree, Plus, Pencil, Trash2, Loader2, Eye, EyeOff, Ruler, GripVertical } from 'lucide-react';
+import { FolderTree, Plus, Pencil, Trash2, Loader2, Eye, EyeOff, Ruler, GripVertical, Grid3X3, LayoutList } from 'lucide-react';
 import { toast } from 'sonner';
 import { categoriesService, Category } from '@/services/categories';
 import CategoryFormModal from '@/components/CategoryFormModal';
@@ -203,6 +203,7 @@ const Categories = () => {
   const [formOpen, setFormOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [measurementCategory, setMeasurementCategory] = useState<Category | null>(null);
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -298,10 +299,30 @@ const Categories = () => {
               Organize seus produtos em categorias. Arraste para reordenar.
             </p>
           </div>
-          <Button className="gap-2" onClick={handleCreate}>
-            <Plus className="h-4 w-4" />
-            Nova Categoria
-          </Button>
+          <div className="flex items-center gap-2">
+            <div className="flex border rounded-lg overflow-hidden">
+              <Button
+                variant={viewMode === 'list' ? 'default' : 'ghost'}
+                size="icon"
+                onClick={() => setViewMode('list')}
+                className="rounded-none h-9 w-9"
+              >
+                <LayoutList className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                size="icon"
+                onClick={() => setViewMode('grid')}
+                className="rounded-none h-9 w-9"
+              >
+                <Grid3X3 className="h-4 w-4" />
+              </Button>
+            </div>
+            <Button className="gap-2" onClick={handleCreate}>
+              <Plus className="h-4 w-4" />
+              Nova Categoria
+            </Button>
+          </div>
         </div>
 
         <Card className="card-elevated">
@@ -322,45 +343,119 @@ const Categories = () => {
               </Button>
             </CardContent>
           ) : (
-            <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <DndContext
-                  sensors={sensors}
-                  collisionDetection={closestCenter}
-                  onDragEnd={handleDragEnd}
-                >
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-10"></TableHead>
-                        <TableHead>Nome</TableHead>
-                        <TableHead>Slug</TableHead>
-                        <TableHead>Categoria Pai</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="text-right">Ações</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      <SortableContext
-                        items={categories.map((c) => c.id)}
-                        strategy={verticalListSortingStrategy}
-                      >
-                        {categories.map((category) => (
-                          <SortableCategoryRow
-                            key={category.id}
-                            category={category}
-                            getParentName={getParentName}
-                            onEdit={handleEdit}
-                            onDelete={handleDelete}
-                            onToggleActive={handleToggleActive}
-                            onMeasurement={setMeasurementCategory}
+            <CardContent className={viewMode === 'list' ? 'p-0' : 'p-4'}>
+              {viewMode === 'list' ? (
+                <div className="overflow-x-auto">
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handleDragEnd}
+                  >
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-10"></TableHead>
+                          <TableHead>Nome</TableHead>
+                          <TableHead>Slug</TableHead>
+                          <TableHead>Categoria Pai</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead className="text-right">Ações</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        <SortableContext
+                          items={categories.map((c) => c.id)}
+                          strategy={verticalListSortingStrategy}
+                        >
+                          {categories.map((category) => (
+                            <SortableCategoryRow
+                              key={category.id}
+                              category={category}
+                              getParentName={getParentName}
+                              onEdit={handleEdit}
+                              onDelete={handleDelete}
+                              onToggleActive={handleToggleActive}
+                              onMeasurement={setMeasurementCategory}
+                            />
+                          ))}
+                        </SortableContext>
+                      </TableBody>
+                    </Table>
+                  </DndContext>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                  {categories.map((category) => (
+                    <div
+                      key={category.id}
+                      className="group relative rounded-xl border bg-card overflow-hidden hover:shadow-md transition-shadow"
+                    >
+                      <div className="aspect-[4/3] bg-muted flex items-center justify-center overflow-hidden">
+                        {category.image_url ? (
+                          <img
+                            src={category.image_url}
+                            alt={category.name}
+                            className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
                           />
-                        ))}
-                      </SortableContext>
-                    </TableBody>
-                  </Table>
-                </DndContext>
-              </div>
+                        ) : (
+                          <FolderTree className="h-10 w-10 text-muted-foreground/40" />
+                        )}
+                      </div>
+                      <div className="p-3 space-y-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="font-medium text-sm truncate">{category.name}</p>
+                          {category.is_active ? (
+                            <Badge className="bg-success/10 text-success hover:bg-success/20 text-xs shrink-0">Ativa</Badge>
+                          ) : (
+                            <Badge variant="secondary" className="text-xs shrink-0">Inativa</Badge>
+                          )}
+                        </div>
+                        {category.description && (
+                          <p className="text-xs text-muted-foreground line-clamp-2">{category.description}</p>
+                        )}
+                        {getParentName(category.parent_id) && (
+                          <Badge variant="outline" className="text-xs">{getParentName(category.parent_id)}</Badge>
+                        )}
+                        <div className="flex items-center justify-end gap-1 pt-1 border-t">
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setMeasurementCategory(category)} title="Tabela de Medidas">
+                            <Ruler className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleToggleActive(category)} title={category.is_active ? 'Desativar' : 'Ativar'}>
+                            {category.is_active ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEdit(category)} title="Editar">
+                            <Pencil className="h-3.5 w-3.5" />
+                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" title="Excluir">
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Excluir categoria?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Esta ação não pode ser desfeita. A categoria "{category.name}" será removida permanentemente.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => handleDelete(category.id)}
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                >
+                                  Excluir
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           )}
         </Card>
