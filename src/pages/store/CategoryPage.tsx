@@ -7,6 +7,7 @@ import StoreLayout from '@/components/store/StoreLayout';
 import ProductCard from '@/components/store/ProductCard';
 import { productsService, Product } from '@/services/products';
 import { categoriesService, Category } from '@/services/categories';
+import { enrichProductsWithStock } from '@/services/stockService';
 
 const ITEMS_PER_PAGE = 12;
 
@@ -36,7 +37,8 @@ const CategoryPage = () => {
           const categoryProducts = productsData.filter(
             p => p.is_active && p.category_id === foundCategory.id
           );
-          setProducts(categoryProducts);
+          const enriched = await enrichProductsWithStock(categoryProducts);
+          setProducts(enriched);
         }
       } catch (error) {
         console.error('Error loading category:', error);

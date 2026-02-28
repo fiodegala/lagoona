@@ -6,6 +6,7 @@ import ProductCard from '@/components/store/ProductCard';
 import { Button } from '@/components/ui/button';
 import { useFavorites } from '@/contexts/FavoritesContext';
 import { productsService, Product } from '@/services/products';
+import { enrichProductsWithStock } from '@/services/stockService';
 
 const FavoritesPage = () => {
   const { favorites, clearFavorites } = useFavorites();
@@ -25,7 +26,8 @@ const FavoritesPage = () => {
         const favoriteProducts = allProducts.filter((product) =>
           favorites.includes(product.id)
         );
-        setProducts(favoriteProducts);
+        const enriched = await enrichProductsWithStock(favoriteProducts);
+        setProducts(enriched);
       } catch (error) {
         console.error('Error loading favorite products:', error);
       } finally {

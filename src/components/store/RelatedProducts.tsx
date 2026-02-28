@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { productsService, Product } from '@/services/products';
+import { enrichProductsWithStock } from '@/services/stockService';
 import { cn } from '@/lib/utils';
 
 interface RelatedProductsProps {
@@ -42,7 +43,8 @@ const RelatedProducts = ({
         }
 
         // Limit results
-        setProducts(related.slice(0, limit));
+        const enriched = await enrichProductsWithStock(related.slice(0, limit));
+        setProducts(enriched);
       } catch (error) {
         console.error('Error loading related products:', error);
       } finally {
