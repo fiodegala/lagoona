@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { ArrowLeft, Loader2, Package, CheckCircle } from 'lucide-react';
 import ShippingCalculator from '@/components/store/ShippingCalculator';
+import MercadoPagoPayment from '@/components/store/MercadoPagoPayment';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,11 +14,11 @@ import { useCart } from '@/contexts/CartContext';
 import { supabase } from '@/integrations/supabase/client';
 
 const CheckoutPage = () => {
-  const navigate = useNavigate();
   const { items, getTotal, clearCart } = useCart();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderComplete, setOrderComplete] = useState(false);
   const [orderId, setOrderId] = useState<string | null>(null);
+  const [step, setStep] = useState<'info' | 'payment'>('info');
 
   const [formData, setFormData] = useState({
     name: '',
@@ -44,7 +45,7 @@ const CheckoutPage = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleCreateOrder = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (items.length === 0) {
@@ -52,7 +53,6 @@ const CheckoutPage = () => {
       return;
     }
 
-    // Basic validation
     if (!formData.name || !formData.email || !formData.phone || !formData.address || !formData.city || !formData.state || !formData.zipCode) {
       toast.error('Preencha todos os campos obrigatórios');
       return;
@@ -61,7 +61,6 @@ const CheckoutPage = () => {
     setIsSubmitting(true);
 
     try {
-      // Create order in database
       const orderItems = items.map(item => ({
         product_id: item.productId,
         variation_id: item.variationId || null,
@@ -76,17 +75,18 @@ const CheckoutPage = () => {
         .insert({
           customer_email: formData.email,
           customer_name: formData.name,
-          customer_phone: formData.phone,
           shipping_address: {
             address: formData.address,
             city: formData.city,
             state: formData.state,
             zip_code: formData.zipCode,
             complement: formData.complement,
+            phone: formData.phone,
           },
           items: orderItems,
           total: total,
           status: 'pending',
+          payment_status: 'pending',
         })
         .select('id')
         .single();
@@ -94,9 +94,8 @@ const CheckoutPage = () => {
       if (error) throw error;
 
       setOrderId(data.id);
-      setOrderComplete(true);
-      clearCart();
-      toast.success('Pedido realizado com sucesso!');
+      setStep('payment');
+      toast.success('Pedido criado! Agora escolha a forma de pagamento.');
     } catch (error) {
       console.error('Error creating order:', error);
       toast.error('Erro ao processar pedido. Tente novamente.');
@@ -105,7 +104,36 @@ const CheckoutPage = () => {
     }
   };
 
-  if (items.length === 0 && !orderComplete) {
+  const handlePaymentSuccess = async (paymentData: any) => {
+    try {
+      // Update order with payment info
+      if (orderId) {
+        await supabase
+          .from('orders')
+          .update({
+            payment_status: paymentData.status === 'approved' ? 'paid' : 'pending',
+            payment_method: paymentData.payment_method_id,
+            metadata: {
+              mercadopago_payment_id: paymentData.id,
+              payment_status: paymentData.status,
+              payment_status_detail: paymentData.status_detail,
+            },
+          })
+          .eq('id', orderId);
+      }
+    } catch (err) {
+      console.error('Error updating order:', err);
+    }
+
+    setOrderComplete(true);
+    clearCart();
+  };
+
+  const handlePaymentError = (error: string) => {
+    console.error('Payment error:', error);
+  };
+
+  if (items.length === 0 && !orderComplete && step === 'info') {
     return (
       <StoreLayout>
         <div className="container mx-auto px-4 py-24 text-center">
@@ -155,190 +183,162 @@ const CheckoutPage = () => {
   return (
     <StoreLayout>
       <div className="container mx-auto px-4 py-8">
-        {/* Back button */}
         <Button variant="ghost" asChild className="mb-6">
-          <Link to="/carrinho">
+          <Link to={step === 'payment' ? '#' : '/carrinho'} onClick={step === 'payment' ? (e) => { e.preventDefault(); setStep('info'); } : undefined}>
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Voltar ao Carrinho
+            {step === 'payment' ? 'Voltar aos Dados' : 'Voltar ao Carrinho'}
           </Link>
         </Button>
 
-        <h1 className="text-3xl font-bold mb-8">Finalizar Compra</h1>
+        <h1 className="text-3xl font-bold mb-8">
+          {step === 'info' ? 'Finalizar Compra' : 'Pagamento'}
+        </h1>
 
-        <form onSubmit={handleSubmit}>
-          <div className="grid lg:grid-cols-3 gap-8">
-            {/* Customer info */}
-            <div className="lg:col-span-2 space-y-6">
-              {/* Personal data */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Dados Pessoais</CardTitle>
-                </CardHeader>
-                <CardContent className="grid sm:grid-cols-2 gap-4">
-                  <div className="sm:col-span-2">
-                    <Label htmlFor="name">Nome Completo *</Label>
-                    <Input
-                      id="name"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleInputChange}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="email">E-mail *</Label>
-                    <Input
-                      id="email"
-                      name="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="phone">Telefone *</Label>
-                    <Input
-                      id="phone"
-                      name="phone"
-                      type="tel"
-                      placeholder="(00) 00000-0000"
-                      value={formData.phone}
-                      onChange={handleInputChange}
-                      required
-                    />
-                  </div>
-                </CardContent>
-              </Card>
+        <div className="grid lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 space-y-6">
+            {step === 'info' ? (
+              <form onSubmit={handleCreateOrder}>
+                {/* Personal data */}
+                <Card className="mb-6">
+                  <CardHeader>
+                    <CardTitle className="text-lg">Dados Pessoais</CardTitle>
+                  </CardHeader>
+                  <CardContent className="grid sm:grid-cols-2 gap-4">
+                    <div className="sm:col-span-2">
+                      <Label htmlFor="name">Nome Completo *</Label>
+                      <Input id="name" name="name" value={formData.name} onChange={handleInputChange} required />
+                    </div>
+                    <div>
+                      <Label htmlFor="email">E-mail *</Label>
+                      <Input id="email" name="email" type="email" value={formData.email} onChange={handleInputChange} required />
+                    </div>
+                    <div>
+                      <Label htmlFor="phone">Telefone *</Label>
+                      <Input id="phone" name="phone" type="tel" placeholder="(00) 00000-0000" value={formData.phone} onChange={handleInputChange} required />
+                    </div>
+                  </CardContent>
+                </Card>
 
-              {/* Shipping address */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Endereço de Entrega</CardTitle>
-                </CardHeader>
-                <CardContent className="grid sm:grid-cols-2 gap-4">
-                  <div className="sm:col-span-2">
-                    <Label htmlFor="address">Endereço *</Label>
-                    <Input
-                      id="address"
-                      name="address"
-                      placeholder="Rua, número"
-                      value={formData.address}
-                      onChange={handleInputChange}
-                      required
-                    />
-                  </div>
-                  <div className="sm:col-span-2">
-                    <Label htmlFor="complement">Complemento</Label>
-                    <Input
-                      id="complement"
-                      name="complement"
-                      placeholder="Apartamento, bloco, etc."
-                      value={formData.complement}
-                      onChange={handleInputChange}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="city">Cidade *</Label>
-                    <Input
-                      id="city"
-                      name="city"
-                      value={formData.city}
-                      onChange={handleInputChange}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="state">Estado *</Label>
-                    <Input
-                      id="state"
-                      name="state"
-                      placeholder="SP"
-                      maxLength={2}
-                      value={formData.state}
-                      onChange={handleInputChange}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="zipCode">CEP *</Label>
-                    <Input
-                      id="zipCode"
-                      name="zipCode"
-                      placeholder="00000-000"
-                      value={formData.zipCode}
-                      onChange={handleInputChange}
-                      required
-                    />
-                  </div>
-                </CardContent>
-              </Card>
+                {/* Shipping address */}
+                <Card className="mb-6">
+                  <CardHeader>
+                    <CardTitle className="text-lg">Endereço de Entrega</CardTitle>
+                  </CardHeader>
+                  <CardContent className="grid sm:grid-cols-2 gap-4">
+                    <div className="sm:col-span-2">
+                      <Label htmlFor="address">Endereço *</Label>
+                      <Input id="address" name="address" placeholder="Rua, número" value={formData.address} onChange={handleInputChange} required />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <Label htmlFor="complement">Complemento</Label>
+                      <Input id="complement" name="complement" placeholder="Apartamento, bloco, etc." value={formData.complement} onChange={handleInputChange} />
+                    </div>
+                    <div>
+                      <Label htmlFor="city">Cidade *</Label>
+                      <Input id="city" name="city" value={formData.city} onChange={handleInputChange} required />
+                    </div>
+                    <div>
+                      <Label htmlFor="state">Estado *</Label>
+                      <Input id="state" name="state" placeholder="SP" maxLength={2} value={formData.state} onChange={handleInputChange} required />
+                    </div>
+                    <div>
+                      <Label htmlFor="zipCode">CEP *</Label>
+                      <Input id="zipCode" name="zipCode" placeholder="00000-000" value={formData.zipCode} onChange={handleInputChange} required />
+                    </div>
+                  </CardContent>
+                </Card>
 
-              {/* Shipping Calculator */}
-              <ShippingCalculator orderTotal={total} />
-            </div>
-            <div className="lg:col-span-1">
-              <Card className="sticky top-24">
-                <CardHeader>
-                  <CardTitle>Resumo do Pedido</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {/* Items list */}
-                  <div className="space-y-3 max-h-64 overflow-y-auto">
-                    {items.map((item) => (
-                      <div key={item.id} className="flex gap-3">
-                        <div className="w-12 h-12 shrink-0 rounded bg-muted overflow-hidden">
-                          {item.imageUrl ? (
-                            <img
-                              src={item.imageUrl}
-                              alt={item.name}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center">
-                              <Package className="h-4 w-4 text-muted-foreground/30" />
-                            </div>
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium line-clamp-1">{item.name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {item.quantity}x {formatPrice(item.price)}
-                          </p>
-                        </div>
-                        <p className="text-sm font-medium">
-                          {formatPrice(item.price * item.quantity)}
+                <ShippingCalculator orderTotal={total} />
+
+                <div className="mt-6 lg:hidden">
+                  <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Processando...
+                      </>
+                    ) : (
+                      'Ir para Pagamento'
+                    )}
+                  </Button>
+                </div>
+              </form>
+            ) : (
+              orderId && (
+                <MercadoPagoPayment
+                  amount={total}
+                  orderId={orderId}
+                  customerEmail={formData.email}
+                  customerName={formData.name}
+                  description={`Pedido #${orderId.slice(0, 8).toUpperCase()}`}
+                  onPaymentSuccess={handlePaymentSuccess}
+                  onPaymentError={handlePaymentError}
+                />
+              )
+            )}
+          </div>
+
+          {/* Order Summary */}
+          <div className="lg:col-span-1">
+            <Card className="sticky top-24">
+              <CardHeader>
+                <CardTitle>Resumo do Pedido</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-3 max-h-64 overflow-y-auto">
+                  {items.map((item) => (
+                    <div key={item.id} className="flex gap-3">
+                      <div className="w-12 h-12 shrink-0 rounded bg-muted overflow-hidden">
+                        {item.imageUrl ? (
+                          <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <Package className="h-4 w-4 text-muted-foreground/30" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium line-clamp-1">{item.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {item.quantity}x {formatPrice(item.price)}
                         </p>
                       </div>
-                    ))}
-                  </div>
-
-                  <Separator />
-
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Subtotal</span>
-                      <span>{formatPrice(total)}</span>
+                      <p className="text-sm font-medium">
+                        {formatPrice(item.price * item.quantity)}
+                      </p>
                     </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Frete</span>
-                      <span className="text-success">Grátis</span>
-                    </div>
-                  </div>
+                  ))}
+                </div>
 
-                  <Separator />
+                <Separator />
 
-                  <div className="flex justify-between font-semibold text-lg">
-                    <span>Total</span>
-                    <span className="text-primary">{formatPrice(total)}</span>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Subtotal</span>
+                    <span>{formatPrice(total)}</span>
                   </div>
-                </CardContent>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Frete</span>
+                    <span className="text-success">Grátis</span>
+                  </div>
+                </div>
+
+                <Separator />
+
+                <div className="flex justify-between font-semibold text-lg">
+                  <span>Total</span>
+                  <span className="text-primary">{formatPrice(total)}</span>
+                </div>
+              </CardContent>
+              {step === 'info' && (
                 <CardFooter>
                   <Button
                     type="submit"
-                    className="w-full"
+                    form="checkout-form"
+                    className="w-full hidden lg:flex"
                     size="lg"
                     disabled={isSubmitting}
+                    onClick={handleCreateOrder}
                   >
                     {isSubmitting ? (
                       <>
@@ -346,14 +346,14 @@ const CheckoutPage = () => {
                         Processando...
                       </>
                     ) : (
-                      'Confirmar Pedido'
+                      'Ir para Pagamento'
                     )}
                   </Button>
                 </CardFooter>
-              </Card>
-            </div>
+              )}
+            </Card>
           </div>
-        </form>
+        </div>
       </div>
     </StoreLayout>
   );

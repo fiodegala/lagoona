@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.zapi-webhooks]
 verify_jwt = false
+
+[functions.mercadopago-payment]
+verify_jwt = false
