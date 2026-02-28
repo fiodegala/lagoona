@@ -17,6 +17,7 @@ import { productsService, Product } from '@/services/products';
 import { categoriesService, Category } from '@/services/categories';
 import { bannersService, Banner } from '@/services/banners';
 import { enrichProductsWithStock } from '@/services/stockService';
+import { supabase } from '@/integrations/supabase/client';
 
 const HomePage = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -25,15 +26,17 @@ const HomePage = () => {
   const [promoBanners, setPromoBanners] = useState<Banner[]>([]);
   const [currentHeroBanner, setCurrentHeroBanner] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [featuredProduct, setFeaturedProduct] = useState<Product | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [productsData, categoriesData, bannersData, promoData] = await Promise.all([
+        const [productsData, categoriesData, bannersData, promoData, featuredConfig] = await Promise.all([
           productsService.getAll(),
           categoriesService.getAll(),
           bannersService.getByType('hero').catch(() => []),
           bannersService.getByType('promo').catch(() => []),
+          supabase.from('store_config').select('value').eq('key', 'featured_product').maybeSingle(),
         ]);
         const activeProducts = productsData.filter(p => p.is_active);
         const enrichedProducts = await enrichProductsWithStock(activeProducts);
@@ -41,6 +44,13 @@ const HomePage = () => {
         setCategories(categoriesData.filter(c => c.is_active));
         setHeroBanners(bannersData);
         setPromoBanners(promoData);
+
+        // Set featured product from config
+        const featuredId = (featuredConfig.data?.value as { product_id?: string })?.product_id;
+        if (featuredId && featuredId !== 'none') {
+          const fp = enrichedProducts.find(p => p.id === featuredId);
+          setFeaturedProduct(fp || null);
+        }
       } catch (error) {
         console.error('Error loading data:', error);
       } finally {
@@ -300,8 +310,8 @@ const HomePage = () => {
       )}
 
       {/* Produto em Destaque - Compra Rápida */}
-      {!isLoading && products.length > 0 && (
-        <FeaturedProductSection product={products[0]} />
+      {!isLoading && featuredProduct && (
+        <FeaturedProductSection product={featuredProduct} />
       )}
 
       {/* Banners Promocionais */}
