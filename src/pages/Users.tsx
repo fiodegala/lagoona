@@ -98,10 +98,6 @@ const UsersPage = () => {
     store_id: '' as string,
   });
 
-  if (!isAdmin) {
-    return <Navigate to="/" replace />;
-  }
-
   // Fetch stores
   const { data: stores = [] } = useQuery({
     queryKey: ['stores'],
@@ -242,6 +238,10 @@ const UsersPage = () => {
       toast({ title: 'Erro ao remover acesso', variant: 'destructive' });
     },
   });
+
+  if (!isAdmin) {
+    return <Navigate to="/" replace />;
+  }
 
   const handleOpenForm = (userRole?: UserWithRole) => {
     if (userRole) {
