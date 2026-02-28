@@ -45,6 +45,7 @@ import FavoritesPage from "./pages/store/FavoritesPage";
 import OrderTrackingPage from "./pages/store/OrderTrackingPage";
 import StoreLoginPage from "./pages/store/StoreLoginPage";
 import MyAccountPage from "./pages/store/MyAccountPage";
+import WholesalePage from "./pages/store/WholesalePage";
 
 const queryClient = new QueryClient();
 
@@ -76,6 +77,7 @@ const App = () => (
               <Route path="/rastrear-pedido" element={<OrderTrackingPage />} />
               <Route path="/conta/login" element={<StoreLoginPage />} />
               <Route path="/minha-conta" element={<MyAccountPage />} />
+              <Route path="/atacado" element={<WholesalePage />} />
 
               {/* Admin Routes */}
               <Route path="/login" element={<Login />} />
