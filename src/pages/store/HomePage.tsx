@@ -67,7 +67,11 @@ const HomePage = () => {
     <StoreLayout>
       {/* Hero Section */}
       <section className="relative h-[500px] md:h-[600px] lg:h-[700px] overflow-hidden">
-        {heroBanners.length > 0 ? (
+        {isLoading ? (
+          <div className="absolute inset-0 bg-store-dark flex items-center justify-center">
+            <Loader2 className="h-10 w-10 animate-spin text-store-gold" />
+          </div>
+        ) : heroBanners.length > 0 ? (
           <>
             {heroBanners.map((banner, index) => (
               <div
