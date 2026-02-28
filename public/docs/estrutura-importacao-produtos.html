@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Estrutura de Importação de Produtos - Lagoona FDG</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f8f9fa; color: #333; line-height: 1.6; padding: 2rem; max-width: 900px; margin: 0 auto; }
+    h1 { font-size: 1.6rem; color: #1a1a2e; margin-bottom: 1.5rem; border-bottom: 3px solid #e94560; padding-bottom: 0.5rem; }
+    h2 { font-size: 1.3rem; color: #1a1a2e; margin: 2rem 0 0.8rem; }
+    h3 { font-size: 1.1rem; color: #16213e; margin: 1.5rem 0 0.5rem; }
+    p { margin-bottom: 0.8rem; }
+    table { width: 100%; border-collapse: collapse; margin: 1rem 0; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    th { background: #1a1a2e; color: #fff; padding: 0.75rem 1rem; text-align: left; font-weight: 600; }
+    td { padding: 0.6rem 1rem; border-bottom: 1px solid #eee; }
+    tr:last-child td { border-bottom: none; }
+    code { background: #e8e8e8; padding: 0.15rem 0.4rem; border-radius: 3px; font-size: 0.9em; }
+    pre { background: #1a1a2e; color: #e0e0e0; padding: 1rem; border-radius: 8px; overflow-x: auto; margin: 1rem 0; font-size: 0.85rem; }
+    ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+    li { margin-bottom: 0.4rem; }
+    .badge { display: inline-block; background: #e94560; color: #fff; padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
+    .badge-optional { background: #6c757d; }
+    .note { background: #fff3cd; border-left: 4px solid #ffc107; padding: 1rem; border-radius: 0 8px 8px 0; margin: 1rem 0; }
+    .footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid #ddd; font-size: 0.85rem; color: #888; }
+    @media print { body { padding: 1rem; } pre { white-space: pre-wrap; } }
+  </style>
+</head>
+<body>
+
+<h1>Estrutura de Exportação de Produtos para Importação no Sistema Lagoona</h1>
+
+<h2>Formato do Arquivo</h2>
+<ul>
+  <li><strong>Tipo:</strong> CSV (Comma-Separated Values)</li>
+  <li><strong>Encoding:</strong> UTF-8 (com BOM)</li>
+  <li><strong>Separador:</strong> Ponto e vírgula (<code>;</code>) ou vírgula (<code>,</code>)</li>
+  <li><strong>Extensão:</strong> <code>.csv</code></li>
+</ul>
+
+<h2>Colunas</h2>
+
+<h3>Obrigatórias <span class="badge">OBRIGATÓRIO</span></h3>
+<table>
+  <thead><tr><th>Coluna</th><th>Tipo</th><th>Regras</th><th>Exemplo</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Nome</strong></td><td>Texto</td><td>Mínimo 2 caracteres, máximo 200</td><td><code>Camiseta Básica</code></td></tr>
+    <tr><td><strong>Preço (R$)</strong></td><td>Numérico</td><td>Aceita vírgula ou ponto como decimal. Não usar separador de milhar.</td><td><code>99,90</code> ou <code>99.90</code></td></tr>
+  </tbody>
+</table>
+
+<h3>Opcionais <span class="badge badge-optional">OPCIONAL</span></h3>
+<table>
+  <thead><tr><th>Coluna</th><th>Tipo</th><th>Regras</th><th>Exemplo</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Descrição</strong></td><td>Texto</td><td>Sem limite definido</td><td><code>Camiseta 100% algodão</code></td></tr>
+    <tr><td><strong>Categoria</strong></td><td>Texto</td><td>Deve corresponder ao nome exato de uma categoria já cadastrada no sistema</td><td><code>Camisetas</code></td></tr>
+    <tr><td><strong>Estoque</strong></td><td>Inteiro</td><td>Número inteiro &gt;= 0</td><td><code>50</code></td></tr>
+    <tr><td><strong>Status</strong></td><td>Texto</td><td><code>Ativo</code> ou <code>Inativo</code>. Se omitido, o padrão é <code>Ativo</code></td><td><code>Ativo</code></td></tr>
+  </tbody>
+</table>
+
+<h2>Nomes de Cabeçalho Aceitos</h2>
+<p>O sistema reconhece variações nos nomes das colunas:</p>
+<table>
+  <thead><tr><th>Campo</th><th>Cabeçalhos aceitos</th></tr></thead>
+  <tbody>
+    <tr><td>Nome</td><td><code>Nome</code>, <code>Name</code></td></tr>
+    <tr><td>Descrição</td><td><code>Descrição</code>, <code>Descricao</code>, <code>Description</code></td></tr>
+    <tr><td>Categoria</td><td><code>Categoria</code>, <code>Category</code></td></tr>
+    <tr><td>Preço</td><td><code>Preço</code>, <code>Preco</code>, <code>Price</code>, <code>Preço (R$)</code></td></tr>
+    <tr><td>Estoque</td><td><code>Estoque</code>, <code>Stock</code></td></tr>
+    <tr><td>Status</td><td><code>Status</code></td></tr>
+  </tbody>
+</table>
+
+<h2>Exemplo de Arquivo CSV</h2>
+<pre>Nome;Descrição;Categoria;Preço (R$);Estoque;Status
+Camiseta Básica;Camiseta 100% algodão;Camisetas;59,90;100;Ativo
+Bermuda Jeans;Bermuda masculina jeans;;129,90;30;Ativo
+Vestido Floral;Vestido estampado floral;Vestidos;189,90;0;Inativo
+Calça Skinny;Calça jeans skinny feminina;Calças;159,90;45;Ativo
+Blusa Cropped;;Blusas;79,90;80;Ativo</pre>
+
+<h2>Regras e Observações</h2>
+<ol>
+  <li><strong>A primeira linha deve ser o cabeçalho</strong> com os nomes das colunas.</li>
+  <li><strong>Valores que contenham o caractere separador</strong> (<code>;</code> ou <code>,</code>) devem estar entre aspas duplas. Exemplo: <code>"Produto grande, bonito"</code>.</li>
+  <li><strong>O campo Categoria</strong> deve conter o nome exato de uma categoria previamente cadastrada no sistema. Se a categoria não for encontrada, o produto será marcado com erro na validação.</li>
+  <li><strong>Preços com prefixo R$</strong> são aceitos — o sistema remove automaticamente o símbolo e espaços.</li>
+  <li><strong>Linhas em branco</strong> são ignoradas automaticamente.</li>
+</ol>
+
+<h2>Limitações da Importação</h2>
+<div class="note">
+  <strong>⚠️ Atenção:</strong> A importação via CSV cria <strong>apenas produtos simples</strong>. Os seguintes dados precisam ser adicionados manualmente após a importação:
+</div>
+<ul>
+  <li>Variações (cor, tamanho, etc.)</li>
+  <li>Imagens do produto</li>
+  <li>Preço de atacado</li>
+  <li>Preço exclusivo</li>
+  <li>Preço promocional</li>
+  <li>Código de barras</li>
+  <li>Peso e dimensões (para cálculo de frete)</li>
+  <li>SKU</li>
+</ul>
+
+<h2>Categorias Cadastradas</h2>
+<div class="note">
+  <strong>Importante:</strong> Solicitar ao administrador do sistema a lista atualizada de categorias cadastradas, pois os nomes devem ser idênticos para o mapeamento correto.
+</div>
+
+<div class="footer">
+  Documento gerado em 28/02/2026 — Sistema Lagoona FDG
+</div>
+
+</body>
+</html>
