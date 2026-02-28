@@ -1,0 +1,1 @@
+ALTER TABLE public.products ADD COLUMN min_stock integer NOT NULL DEFAULT 0;

@@ -50,6 +50,7 @@ interface StockProduct {
   category_name: string | null;
   is_active: boolean;
   stock_legacy: number;
+  min_stock: number;
   stores: Record<string, number>; // store_id -> quantity
   total: number;
   has_variations: boolean;
@@ -79,7 +80,7 @@ const Stock = () => {
     try {
       const [storesRes, productsRes, stockRes, variationsRes] = await Promise.all([
         supabase.from('stores').select('id, name, slug, type').eq('is_active', true).order('name'),
-        supabase.from('products').select('id, name, image_url, price, barcode, stock, is_active, categories(name)').order('name'),
+        supabase.from('products').select('id, name, image_url, price, barcode, stock, min_stock, is_active, categories(name)').order('name'),
         supabase.from('store_stock').select('store_id, product_id, variation_id, quantity'),
         supabase.from('product_variations').select('id, product_id').eq('is_active', true),
       ]);
@@ -128,6 +129,7 @@ const Stock = () => {
           category_name: p.categories?.name || null,
           is_active: p.is_active,
           stock_legacy: p.stock,
+          min_stock: p.min_stock || 0,
           stores: storeQuantities,
           total,
           has_variations: hasVariations,
@@ -151,7 +153,8 @@ const Stock = () => {
       const matchesStatus = filterStatus === 'all' ||
         (filterStatus === 'in-stock' && p.total > 0) ||
         (filterStatus === 'low-stock' && p.total > 0 && p.total <= 5) ||
-        (filterStatus === 'out-of-stock' && p.total === 0);
+        (filterStatus === 'out-of-stock' && p.total === 0) ||
+        (filterStatus === 'below-min' && p.min_stock > 0 && p.total <= p.min_stock);
 
       return matchesSearch && matchesStatus;
     });
@@ -214,6 +217,7 @@ const Stock = () => {
   const totalProducts = products.length;
   const outOfStock = products.filter(p => p.total === 0).length;
   const lowStock = products.filter(p => p.total > 0 && p.total <= 5).length;
+  const belowMinStock = products.filter(p => p.min_stock > 0 && p.total <= p.min_stock).length;
   const totalOnlineStock = products.reduce((sum, p) => sum + p.total, 0);
 
   const exportToCSV = () => {
@@ -293,6 +297,17 @@ const Stock = () => {
           <Card className="card-elevated">
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
+                <AlertTriangle className="h-8 w-8 text-amber-500" />
+                <div>
+                  <p className="text-2xl font-bold">{belowMinStock}</p>
+                  <p className="text-xs text-muted-foreground">Abaixo do mínimo</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="card-elevated">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
                 <AlertTriangle className="h-8 w-8 text-destructive" />
                 <div>
                   <p className="text-2xl font-bold">{outOfStock}</p>
@@ -322,6 +337,7 @@ const Stock = () => {
               <SelectItem value="all">Todos</SelectItem>
               <SelectItem value="in-stock">Em estoque</SelectItem>
               <SelectItem value="low-stock">Estoque baixo (≤5)</SelectItem>
+              <SelectItem value="below-min">Abaixo do mínimo</SelectItem>
               <SelectItem value="out-of-stock">Sem estoque</SelectItem>
             </SelectContent>
           </Select>
@@ -382,9 +398,17 @@ const Stock = () => {
                                 </div>
                               )}
                               <div>
-                                <p className="font-medium text-sm">{product.name}</p>
+                                <div className="flex items-center gap-1.5">
+                                  <p className="font-medium text-sm">{product.name}</p>
+                                  {product.min_stock > 0 && product.total <= product.min_stock && (
+                                    <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0" />
+                                  )}
+                                </div>
                                 {product.barcode && (
                                   <p className="text-xs text-muted-foreground">{product.barcode}</p>
+                                )}
+                                {product.min_stock > 0 && (
+                                  <p className="text-xs text-muted-foreground">Mín: {product.min_stock}</p>
                                 )}
                               </div>
                             </div>

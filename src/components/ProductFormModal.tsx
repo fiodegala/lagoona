@@ -57,6 +57,7 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
   const [exclusivePrice, setExclusivePrice] = useState('');
   const [promotionalPrice, setPromotionalPrice] = useState('');
   const [stock, setStock] = useState('0');
+  const [minStock, setMinStock] = useState('0');
   const [categoryId, setCategoryId] = useState<string>('none');
   const [imageUrl, setImageUrl] = useState('');
   const [galleryImages, setGalleryImages] = useState<string[]>([]);
@@ -93,6 +94,7 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
         setExclusivePrice((product as any).exclusive_price?.toString() || '');
         setPromotionalPrice((product as any).promotional_price?.toString() || '');
         setStock(product.stock.toString());
+        setMinStock((product as any).min_stock?.toString() || '0');
         setCategoryId(product.category_id || 'none');
         setImageUrl(product.image_url || '');
         const metadata = product.metadata as { gallery_images?: string[] } | null;
@@ -192,6 +194,7 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
     setExclusivePrice('');
     setPromotionalPrice('');
     setStock('0');
+    setMinStock('0');
     setCategoryId('none');
     setImageUrl('');
     setGalleryImages([]);
@@ -231,6 +234,7 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
           description: description.trim() || undefined,
           price: priceValue,
           stock: parseInt(stock) || 0,
+          min_stock: parseInt(minStock) || 0,
           category_id: (categoryId && categoryId !== 'none') ? categoryId : undefined,
           image_url: imageUrl.trim() || undefined,
           is_active: isActive,
@@ -282,6 +286,7 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
         description: description.trim() || undefined,
         price: priceValue,
         stock: parseInt(stock) || 0,
+        min_stock: parseInt(minStock) || 0,
         category_id: (categoryId && categoryId !== 'none') ? categoryId : undefined,
         image_url: imageUrl.trim() || undefined,
         is_active: isActive,
@@ -502,6 +507,23 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
             Gerenciado por variação
           </p>
         )}
+      </div>
+
+      {/* Minimum Stock */}
+      <div className="space-y-2">
+        <Label htmlFor="minStock">Estoque Mínimo</Label>
+        <Input
+          id="minStock"
+          type="number"
+          min="0"
+          placeholder="0"
+          value={minStock}
+          onChange={(e) => setMinStock(e.target.value)}
+          className="w-32"
+        />
+        <p className="text-xs text-muted-foreground">
+          Alerta será exibido quando o estoque total atingir esse valor
+        </p>
       </div>
 
       {/* Barcode field */}
