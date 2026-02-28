@@ -11,6 +11,7 @@ import insta6 from '@/assets/insta-6.jpg';
 import { Button } from '@/components/ui/button';
 import StoreLayout from '@/components/store/StoreLayout';
 import ProductCard from '@/components/store/ProductCard';
+import DealsCountdownSection from '@/components/store/DealsCountdownSection';
 import { productsService, Product } from '@/services/products';
 import { categoriesService, Category } from '@/services/categories';
 import { bannersService, Banner } from '@/services/banners';
@@ -199,45 +200,8 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* Ofertas */}
-      {!isLoading && dealProducts.length > 0 && (
-        <section className="py-16 md:py-20 bg-store-dark/5">
-          <div className="container mx-auto px-4">
-            <div className="flex items-center justify-between mb-10">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-store-deal/10 border border-store-deal/20">
-                  <Flame className="h-5 w-5 text-store-deal" />
-                </div>
-                <div>
-                  <h2 className="text-2xl md:text-3xl font-display font-bold">Ofertas</h2>
-                  <div className="w-12 h-0.5 bg-store-deal mt-2" />
-                </div>
-              </div>
-              <Button variant="outline" asChild className="gap-2 hidden sm:flex border-store-deal/30 text-store-deal hover:bg-store-deal/10">
-                <Link to="/loja?ordenar=ofertas">
-                  Ver todas
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </Button>
-            </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
-              {dealProducts.slice(0, 5).map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
-
-            <div className="mt-6 text-center sm:hidden">
-              <Button variant="outline" asChild className="gap-2 border-store-deal/30 text-store-deal">
-                <Link to="/loja?ordenar=ofertas">
-                  Ver todas as ofertas
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </Button>
-            </div>
-          </div>
-        </section>
-      )}
+      {/* Ofertas do Dia com Countdown */}
+      {!isLoading && <DealsCountdownSection products={dealProducts} />}
 
       {/* Lançamentos */}
       <section className="py-16 md:py-20">
