@@ -612,13 +612,13 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
       <div className="space-y-2">
         <Label htmlFor="videoUrl">Vídeo do Produto</Label>
         <p className="text-xs text-muted-foreground mb-1">
-          Cole a URL de um vídeo (YouTube, Vimeo ou link direto .mp4)
+          Cole a URL de um vídeo (YouTube, Instagram Reels, TikTok, Vimeo ou link direto .mp4)
         </p>
         <Input
           id="videoUrl"
           value={videoUrl}
           onChange={(e) => setVideoUrl(e.target.value)}
-          placeholder="https://www.youtube.com/watch?v=... ou https://exemplo.com/video.mp4"
+          placeholder="https://www.youtube.com/watch?v=... ou Instagram/TikTok/Vimeo"
         />
       </div>
 

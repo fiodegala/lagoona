@@ -22,7 +22,7 @@ interface ProductImageGalleryProps {
 
 function parseVideoUrl(url: string): { embedUrl: string; thumbnail: string } | null {
   // YouTube
-  const ytMatch = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+  const ytMatch = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
   if (ytMatch) {
     return {
       embedUrl: `https://www.youtube.com/embed/${ytMatch[1]}?autoplay=1`,
@@ -34,6 +34,22 @@ function parseVideoUrl(url: string): { embedUrl: string; thumbnail: string } | n
   if (vimeoMatch) {
     return {
       embedUrl: `https://player.vimeo.com/video/${vimeoMatch[1]}?autoplay=1`,
+      thumbnail: '',
+    };
+  }
+  // Instagram Reels / Posts
+  const instaMatch = url.match(/instagram\.com\/(?:reel|p)\/([a-zA-Z0-9_-]+)/);
+  if (instaMatch) {
+    return {
+      embedUrl: `https://www.instagram.com/p/${instaMatch[1]}/embed/`,
+      thumbnail: '',
+    };
+  }
+  // TikTok
+  const tiktokMatch = url.match(/tiktok\.com\/@[^/]+\/video\/(\d+)/);
+  if (tiktokMatch) {
+    return {
+      embedUrl: `https://www.tiktok.com/embed/v2/${tiktokMatch[1]}`,
       thumbnail: '',
     };
   }
