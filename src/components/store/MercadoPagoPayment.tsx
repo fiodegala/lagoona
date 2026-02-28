@@ -401,7 +401,7 @@ const MercadoPagoPayment = ({
               <form id="mp-card-form" onSubmit={handleCardPayment} className="space-y-4">
                 <div className="space-y-2">
                   <Label>Número do Cartão *</Label>
-                  <div id="mp-card-number" className="h-10 border rounded-md bg-background" />
+                  <div id="mp-card-number" className="h-10 border rounded-md bg-background [&>iframe]:!h-full [&>iframe]:!w-full" style={{ minHeight: '40px' }} />
                 </div>
                 <div className="space-y-2">
                   <Label>Nome no Cartão *</Label>
@@ -414,11 +414,11 @@ const MercadoPagoPayment = ({
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-2">
                     <Label>Validade *</Label>
-                    <div id="mp-expiration-date" className="h-10 border rounded-md bg-background" />
+                    <div id="mp-expiration-date" className="h-10 border rounded-md bg-background [&>iframe]:!h-full [&>iframe]:!w-full" style={{ minHeight: '40px' }} />
                   </div>
                   <div className="space-y-2">
                     <Label>CVV *</Label>
-                    <div id="mp-security-code" className="h-10 border rounded-md bg-background" />
+                    <div id="mp-security-code" className="h-10 border rounded-md bg-background [&>iframe]:!h-full [&>iframe]:!w-full" style={{ minHeight: '40px' }} />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
