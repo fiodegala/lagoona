@@ -377,7 +377,10 @@ const Stock = () => {
               </div>
             </CardContent>
           </Card>
-          <Card className="card-elevated">
+          <Card 
+            className={`card-elevated cursor-pointer transition-all ${filterStatus === 'below-min' ? 'ring-2 ring-primary' : 'hover:ring-1 hover:ring-border'}`}
+            onClick={() => setFilterStatus(filterStatus === 'below-min' ? 'all' : 'below-min')}
+          >
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
                 <AlertTriangle className="h-8 w-8 text-amber-500" />
@@ -388,7 +391,10 @@ const Stock = () => {
               </div>
             </CardContent>
           </Card>
-          <Card className="card-elevated">
+          <Card 
+            className={`card-elevated cursor-pointer transition-all ${filterStatus === 'out-of-stock' ? 'ring-2 ring-primary' : 'hover:ring-1 hover:ring-border'}`}
+            onClick={() => setFilterStatus(filterStatus === 'out-of-stock' ? 'all' : 'out-of-stock')}
+          >
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
                 <AlertTriangle className="h-8 w-8 text-destructive" />
