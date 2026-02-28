@@ -25,25 +25,22 @@ const StorePage = () => {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
-  // Filter states
-  const [searchQuery, setSearchQuery] = useState(searchParams.get('busca') || '');
-  const [selectedCategories, setSelectedCategories] = useState<string[]>(
-    searchParams.get('categorias')?.split(',').filter(Boolean) || []
-  );
-  const [sortBy, setSortBy] = useState(searchParams.get('ordenar') || 'recentes');
-  const [showOnlyOffers, setShowOnlyOffers] = useState(searchParams.get('ofertas') === 'true');
-  const [showInStock, setShowInStock] = useState(searchParams.get('estoque') === 'true');
+  // Derive filter state directly from URL (single source of truth)
+  const searchQuery = searchParams.get('busca') || '';
+  const selectedCategories = searchParams.get('categorias')?.split(',').filter(Boolean) || [];
+  const sortBy = searchParams.get('ordenar') || 'recentes';
+  const showOnlyOffers = searchParams.get('ofertas') === 'true';
+  const showInStock = searchParams.get('estoque') === 'true';
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Sync filter state from URL when searchParams change (e.g. clicking nav links)
-  useEffect(() => {
-    setSearchQuery(searchParams.get('busca') || '');
-    setSelectedCategories(searchParams.get('categorias')?.split(',').filter(Boolean) || []);
-    setSortBy(searchParams.get('ordenar') || 'recentes');
-    setShowOnlyOffers(searchParams.get('ofertas') === 'true');
-    setShowInStock(searchParams.get('estoque') === 'true');
-  }, [searchParams]);
+  // Reset page when filters change
+  const filterKey = `${searchQuery}|${selectedCategories.join(',')}|${sortBy}|${showOnlyOffers}|${showInStock}`;
+  const [prevFilterKey, setPrevFilterKey] = useState(filterKey);
+  if (filterKey !== prevFilterKey) {
+    setPrevFilterKey(filterKey);
+    setCurrentPage(1);
+  }
 
   useEffect(() => {
     const loadData = async () => {
@@ -67,17 +64,21 @@ const StorePage = () => {
     loadData();
   }, []);
 
-  // Update URL params when filters change
-  useEffect(() => {
-    const params = new URLSearchParams();
-    if (searchQuery) params.set('busca', searchQuery);
-    if (selectedCategories.length > 0) params.set('categorias', selectedCategories.join(','));
-    if (sortBy !== 'recentes') params.set('ordenar', sortBy);
-    if (showOnlyOffers) params.set('ofertas', 'true');
-    if (showInStock) params.set('estoque', 'true');
+  // Helper to update a single URL param
+  const updateParam = (key: string, value: string | null) => {
+    const params = new URLSearchParams(searchParams);
+    if (value) {
+      params.set(key, value);
+    } else {
+      params.delete(key);
+    }
     setSearchParams(params, { replace: true });
-    setCurrentPage(1);
-  }, [searchQuery, selectedCategories, sortBy, showOnlyOffers, showInStock, setSearchParams]);
+  };
+
+  const setSearchQuery = (value: string) => updateParam('busca', value || null);
+  const setSortBy = (value: string) => updateParam('ordenar', value === 'recentes' ? null : value);
+  const setShowInStock = (checked: boolean) => updateParam('estoque', checked ? 'true' : null);
+  const setShowOnlyOffers = (checked: boolean) => updateParam('ofertas', checked ? 'true' : null);
 
   // Filter and sort products
   const filteredProducts = useMemo(() => {
@@ -140,20 +141,15 @@ const StorePage = () => {
   );
 
   const toggleCategory = (categoryId: string) => {
-    setSelectedCategories(prev =>
-      prev.includes(categoryId)
-        ? prev.filter(id => id !== categoryId)
-        : [...prev, categoryId]
-    );
+    const newCats = selectedCategories.includes(categoryId)
+      ? selectedCategories.filter(id => id !== categoryId)
+      : [...selectedCategories, categoryId];
+    updateParam('categorias', newCats.length > 0 ? newCats.join(',') : null);
   };
 
   const clearFilters = () => {
-    setSearchQuery('');
-    setSelectedCategories([]);
-    setSortBy('recentes');
-    setShowOnlyOffers(false);
-    setShowInStock(false);
     setPriceRange([0, 10000]);
+    setSearchParams({}, { replace: true });
   };
 
   const activeFiltersCount = 
