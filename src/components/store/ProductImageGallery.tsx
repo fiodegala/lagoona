@@ -246,7 +246,7 @@ const ProductImageGallery = ({
         <div
           ref={imageContainerRef}
           className={cn(
-            "aspect-[5/4] rounded-xl overflow-hidden bg-muted border relative",
+            "aspect-[4/5] rounded-xl overflow-hidden bg-muted border relative",
             !isCurrentVideo && "cursor-zoom-in"
           )}
           onMouseMove={!isCurrentVideo ? handleMouseMove : undefined}
