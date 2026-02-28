@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { variationsService, ProductVariation, ProductAttribute } from '@/services/variations';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ProductVariationSelectorProps {
   productId: string;
@@ -14,17 +15,32 @@ const ProductVariationSelector = ({ productId, onVariationSelect }: ProductVaria
   const [variations, setVariations] = useState<ProductVariation[]>([]);
   const [selectedValues, setSelectedValues] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(true);
+  const [stockMap, setStockMap] = useState<Record<string, number>>({});
 
   useEffect(() => {
     const loadData = async () => {
       try {
         setIsLoading(true);
-        const [attrs, vars] = await Promise.all([
+        const [attrs, vars, stockRes] = await Promise.all([
           variationsService.getAttributesByProduct(productId),
           variationsService.getVariationsByProduct(productId),
+          supabase
+            .from('store_stock')
+            .select('variation_id, quantity')
+            .eq('product_id', productId)
+            .not('variation_id', 'is', null),
         ]);
         setAttributes(attrs);
         setVariations(vars.filter(v => v.is_active));
+
+        // Build stock map: variation_id -> total quantity across stores
+        const map: Record<string, number> = {};
+        (stockRes.data || []).forEach((row: any) => {
+          if (row.variation_id) {
+            map[row.variation_id] = (map[row.variation_id] || 0) + row.quantity;
+          }
+        });
+        setStockMap(map);
       } catch (error) {
         console.error('Error loading variations:', error);
       } finally {
@@ -36,18 +52,23 @@ const ProductVariationSelector = ({ productId, onVariationSelect }: ProductVaria
   }, [productId]);
 
   useEffect(() => {
-    // Find matching variation based on selected values
     if (Object.keys(selectedValues).length === attributes.length && attributes.length > 0) {
       const matchingVariation = variations.find((variation) => {
         return variation.attribute_values?.every((av) => {
           return selectedValues[av.attribute_name] === av.value;
         });
       });
-      onVariationSelect(matchingVariation || null);
+      if (matchingVariation) {
+        // Enrich with real stock before passing
+        const realStock = stockMap[matchingVariation.id] || 0;
+        onVariationSelect({ ...matchingVariation, stock: realStock });
+      } else {
+        onVariationSelect(null);
+      }
     } else {
       onVariationSelect(null);
     }
-  }, [selectedValues, variations, attributes, onVariationSelect]);
+  }, [selectedValues, variations, attributes, onVariationSelect, stockMap]);
 
   const handleValueSelect = (attributeName: string, value: string) => {
     setSelectedValues((prev) => ({
@@ -57,7 +78,6 @@ const ProductVariationSelector = ({ productId, onVariationSelect }: ProductVaria
   };
 
   const isValueAvailable = (attributeName: string, value: string): boolean => {
-    // Check if any active variation has this value combination
     const otherSelections = { ...selectedValues };
     delete otherSelections[attributeName];
 
@@ -68,7 +88,6 @@ const ProductVariationSelector = ({ productId, onVariationSelect }: ProductVaria
       
       if (!hasThisValue) return false;
 
-      // Check if other selected values match
       return Object.entries(otherSelections).every(([attrName, attrValue]) => {
         if (!attrValue) return true;
         return variation.attribute_values?.some(
@@ -85,7 +104,7 @@ const ProductVariationSelector = ({ productId, onVariationSelect }: ProductVaria
       );
     });
 
-    return matchingVariations.reduce((total, v) => total + v.stock, 0);
+    return matchingVariations.reduce((total, v) => total + (stockMap[v.id] || 0), 0);
   };
 
   if (isLoading) {
