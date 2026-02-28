@@ -52,6 +52,7 @@ interface StockProduct {
   stock_legacy: number;
   stores: Record<string, number>; // store_id -> quantity
   total: number;
+  has_variations: boolean;
 }
 
 const Stock = () => {
@@ -76,27 +77,44 @@ const Stock = () => {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const [storesRes, productsRes, stockRes] = await Promise.all([
+      const [storesRes, productsRes, stockRes, variationsRes] = await Promise.all([
         supabase.from('stores').select('id, name, slug, type').eq('is_active', true).order('name'),
         supabase.from('products').select('id, name, image_url, price, barcode, stock, is_active, categories(name)').order('name'),
-        supabase.from('store_stock').select('store_id, product_id, quantity'),
+        supabase.from('store_stock').select('store_id, product_id, variation_id, quantity'),
+        supabase.from('product_variations').select('id, product_id').eq('is_active', true),
       ]);
 
       const storesList = storesRes.data || [];
       const physicalStores = storesList.filter(s => s.type === 'physical');
       setStores(storesList);
 
-      const stockMap: Record<string, Record<string, number>> = {};
+      // Build set of products that have variations
+      const productsWithVariations = new Set<string>();
+      (variationsRes.data || []).forEach((v: any) => {
+        productsWithVariations.add(v.product_id);
+      });
+
+      // Build stock maps: one for simple products (variation_id is null), one for variation-level
+      const simpleStockMap: Record<string, Record<string, number>> = {};
+      const variationStockMap: Record<string, Record<string, number>> = {}; // product_id -> store_id -> sum
       (stockRes.data || []).forEach((s: any) => {
-        if (!stockMap[s.product_id]) stockMap[s.product_id] = {};
-        stockMap[s.product_id][s.store_id] = s.quantity;
+        if (s.variation_id) {
+          // Variation-level stock: aggregate by product_id + store_id
+          if (!variationStockMap[s.product_id]) variationStockMap[s.product_id] = {};
+          variationStockMap[s.product_id][s.store_id] = (variationStockMap[s.product_id][s.store_id] || 0) + s.quantity;
+        } else {
+          if (!simpleStockMap[s.product_id]) simpleStockMap[s.product_id] = {};
+          simpleStockMap[s.product_id][s.store_id] = s.quantity;
+        }
       });
 
       const mappedProducts: StockProduct[] = (productsRes.data || []).map((p: any) => {
+        const hasVariations = productsWithVariations.has(p.id);
+        const stockSource = hasVariations ? variationStockMap : simpleStockMap;
         const storeQuantities: Record<string, number> = {};
         let total = 0;
         physicalStores.forEach(store => {
-          const qty = stockMap[p.id]?.[store.id] || 0;
+          const qty = stockSource[p.id]?.[store.id] || 0;
           storeQuantities[store.id] = qty;
           total += qty;
         });
@@ -112,6 +130,7 @@ const Stock = () => {
           stock_legacy: p.stock,
           stores: storeQuantities,
           total,
+          has_variations: hasVariations,
         };
       });
 
@@ -401,9 +420,13 @@ const Stock = () => {
                           </TableCell>
                           {isAdmin && (
                             <TableCell className="text-right">
-                              <Button variant="ghost" size="sm" onClick={() => openEditModal(product)}>
-                                Editar
-                              </Button>
+                              {product.has_variations ? (
+                                <Badge variant="outline" className="text-xs">Variável</Badge>
+                              ) : (
+                                <Button variant="ghost" size="sm" onClick={() => openEditModal(product)}>
+                                  Editar
+                                </Button>
+                              )}
                             </TableCell>
                           )}
                         </TableRow>
