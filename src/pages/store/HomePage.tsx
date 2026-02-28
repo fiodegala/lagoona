@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import StoreLayout from '@/components/store/StoreLayout';
 import ProductCard from '@/components/store/ProductCard';
 import DealsCountdownSection from '@/components/store/DealsCountdownSection';
+import FeaturedProductSection from '@/components/store/FeaturedProductSection';
 import { productsService, Product } from '@/services/products';
 import { categoriesService, Category } from '@/services/categories';
 import { bannersService, Banner } from '@/services/banners';
@@ -296,6 +297,11 @@ const HomePage = () => {
             </div>
           </div>
         </section>
+      )}
+
+      {/* Produto em Destaque - Compra Rápida */}
+      {!isLoading && products.length > 0 && (
+        <FeaturedProductSection product={products[0]} />
       )}
 
       {/* Banners Promocionais */}
