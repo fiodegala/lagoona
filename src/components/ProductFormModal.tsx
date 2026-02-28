@@ -61,6 +61,7 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
   const [categoryId, setCategoryId] = useState<string>('none');
   const [imageUrl, setImageUrl] = useState('');
   const [galleryImages, setGalleryImages] = useState<string[]>([]);
+  const [videoUrl, setVideoUrl] = useState('');
   const [isActive, setIsActive] = useState(true);
   const [productType, setProductType] = useState<'simple' | 'variable'>('simple');
   const [hasVariations, setHasVariations] = useState(false);
@@ -97,8 +98,9 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
         setMinStock((product as any).min_stock?.toString() || '0');
         setCategoryId(product.category_id || 'none');
         setImageUrl(product.image_url || '');
-        const metadata = product.metadata as { gallery_images?: string[] } | null;
+        const metadata = product.metadata as { gallery_images?: string[]; video_url?: string } | null;
         setGalleryImages(metadata?.gallery_images || []);
+        setVideoUrl(metadata?.video_url || '');
         setIsActive(product.is_active);
         setBarcode((product as { barcode?: string }).barcode || '');
         setWeightKg(product.weight_kg?.toString() || '');
@@ -198,6 +200,7 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
     setCategoryId('none');
     setImageUrl('');
     setGalleryImages([]);
+    setVideoUrl('');
     setIsActive(true);
     setActiveTab('details');
     setProductType('simple');
@@ -246,7 +249,7 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
           width_cm: widthCm ? parseFloat(widthCm) : undefined,
           height_cm: heightCm ? parseFloat(heightCm) : undefined,
           depth_cm: depthCm ? parseFloat(depthCm) : undefined,
-          metadata: { gallery_images: galleryImages },
+          metadata: { gallery_images: galleryImages, video_url: videoUrl.trim() || undefined },
         };
 
         const newProduct = await productsService.create(data);
@@ -298,7 +301,7 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
         width_cm: widthCm ? parseFloat(widthCm) : undefined,
         height_cm: heightCm ? parseFloat(heightCm) : undefined,
         depth_cm: depthCm ? parseFloat(depthCm) : undefined,
-        metadata: { gallery_images: galleryImages },
+        metadata: { gallery_images: galleryImages, video_url: videoUrl.trim() || undefined },
       };
 
       let savedProductId: string;
@@ -602,6 +605,20 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
           bucket="product-images"
           folder="gallery"
           maxImages={10}
+        />
+      </div>
+
+      {/* Video Section */}
+      <div className="space-y-2">
+        <Label htmlFor="videoUrl">Vídeo do Produto</Label>
+        <p className="text-xs text-muted-foreground mb-1">
+          Cole a URL de um vídeo (YouTube, Vimeo ou link direto .mp4)
+        </p>
+        <Input
+          id="videoUrl"
+          value={videoUrl}
+          onChange={(e) => setVideoUrl(e.target.value)}
+          placeholder="https://www.youtube.com/watch?v=... ou https://exemplo.com/video.mp4"
         />
       </div>
 

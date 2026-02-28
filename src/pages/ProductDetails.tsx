@@ -91,7 +91,7 @@ const ProductDetails = () => {
     }
     
     // Add additional images from metadata if available
-    const metadata = product?.metadata as { gallery_images?: string[] } | null;
+    const metadata = product?.metadata as { gallery_images?: string[]; video_url?: string } | null;
     if (metadata?.gallery_images && Array.isArray(metadata.gallery_images)) {
       metadata.gallery_images.forEach((img: string) => {
         if (img && !images.includes(img)) {
@@ -101,6 +101,11 @@ const ProductDetails = () => {
     }
     
     return images;
+  }, [product]);
+
+  const videoUrl = useMemo(() => {
+    const metadata = product?.metadata as { video_url?: string } | null;
+    return metadata?.video_url || undefined;
   }, [product]);
 
   const basePrice = selectedVariation?.price ?? product?.price ?? 0;
@@ -218,6 +223,7 @@ const ProductDetails = () => {
             productName={product.name}
             selectedImage={selectedImage || undefined}
             onImageChange={setSelectedImage}
+            videoUrl={videoUrl}
           />
 
           {/* Product Info */}
