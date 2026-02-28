@@ -12,6 +12,7 @@ import { Slider } from '@/components/ui/slider';
 import StoreLayout from '@/components/store/StoreLayout';
 import ProductCard from '@/components/store/ProductCard';
 import { productsService, Product } from '@/services/products';
+import DealsCountdownSection from '@/components/store/DealsCountdownSection';
 import { categoriesService, Category } from '@/services/categories';
 import { enrichProductsWithStock } from '@/services/stockService';
 
@@ -267,6 +268,11 @@ const StorePage = () => {
 
   return (
     <StoreLayout>
+      {/* Countdown for offers page */}
+      {showOnlyOffers && (
+        <DealsCountdownSection products={filteredProducts} />
+      )}
+
       <div className="container mx-auto px-4 py-6">
         {/* Header */}
         <div className="mb-6">
