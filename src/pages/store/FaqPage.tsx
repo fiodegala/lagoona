@@ -72,7 +72,7 @@ const FaqPage = () => {
       questions: [
         {
           question: 'Quais formas de pagamento são aceitas?',
-          answer: 'Aceitamos cartões de crédito (Visa, Mastercard, Elo, American Express), cartão de débito, PIX e boleto bancário. No cartão de crédito, você pode parcelar em até 12x sem juros.',
+          answer: 'Aceitamos cartões de crédito (Visa, Mastercard, Elo, American Express), cartão de débito, PIX e boleto bancário. No cartão de crédito, você pode parcelar em até 6x sem juros.',
         },
         {
           question: 'É seguro comprar no site?',
@@ -80,7 +80,7 @@ const FaqPage = () => {
         },
         {
           question: 'Posso parcelar minhas compras?',
-          answer: 'Sim! Oferecemos parcelamento em até 12x sem juros no cartão de crédito para compras acima de R$100,00. O valor mínimo de cada parcela é R$20,00.',
+          answer: 'Sim! Oferecemos parcelamento em até 6x sem juros no cartão de crédito para compras acima de R$100,00. O valor mínimo de cada parcela é R$20,00.',
         },
         {
           question: 'Como funciona o pagamento via PIX?',

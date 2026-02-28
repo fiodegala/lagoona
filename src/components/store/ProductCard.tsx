@@ -191,7 +191,7 @@ const ProductCard = ({ product, showDiscount = true }: ProductCardProps) => {
               {formatPrice(displayPrice)}
             </p>
             <p className="text-xs text-muted-foreground">
-              em até <span className="font-semibold text-foreground">12x de {formatPrice(displayPrice / 12)}</span>
+              em até <span className="font-semibold text-foreground">6x de {formatPrice(displayPrice / 6)}</span>
             </p>
           </div>
 

@@ -269,7 +269,7 @@ const ProductDetails = () => {
                 {formatPrice(currentPrice)}
               </p>
               <p className="text-sm text-muted-foreground">
-                em até <span className="font-semibold text-foreground">12x de {formatPrice(currentPrice / 12)}</span> sem juros
+                em até <span className="font-semibold text-foreground">6x de {formatPrice(currentPrice / 6)}</span> sem juros
               </p>
               <p className="text-sm text-success font-medium">
                 {formatPrice(currentPrice * 0.95)} à vista no Pix (5% off)

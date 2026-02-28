@@ -193,7 +193,7 @@ const RelatedProducts = ({
                       {formatPrice(product.price)}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      ou 12x de {formatPrice(product.price / 12)}
+                      ou 6x de {formatPrice(product.price / 6)}
                     </p>
                   </div>
                 </CardContent>
