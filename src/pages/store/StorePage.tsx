@@ -31,9 +31,19 @@ const StorePage = () => {
     searchParams.get('categorias')?.split(',').filter(Boolean) || []
   );
   const [sortBy, setSortBy] = useState(searchParams.get('ordenar') || 'recentes');
+  const [showOnlyOffers, setShowOnlyOffers] = useState(searchParams.get('ofertas') === 'true');
   const [showInStock, setShowInStock] = useState(searchParams.get('estoque') === 'true');
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
   const [currentPage, setCurrentPage] = useState(1);
+
+  // Sync filter state from URL when searchParams change (e.g. clicking nav links)
+  useEffect(() => {
+    setSearchQuery(searchParams.get('busca') || '');
+    setSelectedCategories(searchParams.get('categorias')?.split(',').filter(Boolean) || []);
+    setSortBy(searchParams.get('ordenar') || 'recentes');
+    setShowOnlyOffers(searchParams.get('ofertas') === 'true');
+    setShowInStock(searchParams.get('estoque') === 'true');
+  }, [searchParams]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -63,10 +73,11 @@ const StorePage = () => {
     if (searchQuery) params.set('busca', searchQuery);
     if (selectedCategories.length > 0) params.set('categorias', selectedCategories.join(','));
     if (sortBy !== 'recentes') params.set('ordenar', sortBy);
+    if (showOnlyOffers) params.set('ofertas', 'true');
     if (showInStock) params.set('estoque', 'true');
     setSearchParams(params, { replace: true });
     setCurrentPage(1);
-  }, [searchQuery, selectedCategories, sortBy, showInStock, setSearchParams]);
+  }, [searchQuery, selectedCategories, sortBy, showOnlyOffers, showInStock, setSearchParams]);
 
   // Filter and sort products
   const filteredProducts = useMemo(() => {
@@ -84,6 +95,11 @@ const StorePage = () => {
     // Category filter
     if (selectedCategories.length > 0) {
       result = result.filter(p => p.category_id && selectedCategories.includes(p.category_id));
+    }
+
+    // Offers filter
+    if (showOnlyOffers) {
+      result = result.filter(p => p.promotional_price && p.promotional_price < p.price);
     }
 
     // Stock filter
@@ -114,7 +130,7 @@ const StorePage = () => {
     }
 
     return result;
-  }, [products, searchQuery, selectedCategories, sortBy, showInStock, priceRange]);
+  }, [products, searchQuery, selectedCategories, sortBy, showOnlyOffers, showInStock, priceRange]);
 
   // Pagination
   const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
@@ -135,6 +151,7 @@ const StorePage = () => {
     setSearchQuery('');
     setSelectedCategories([]);
     setSortBy('recentes');
+    setShowOnlyOffers(false);
     setShowInStock(false);
     setPriceRange([0, 10000]);
   };
@@ -143,7 +160,9 @@ const StorePage = () => {
     (searchQuery ? 1 : 0) + 
     selectedCategories.length + 
     (sortBy !== 'recentes' ? 1 : 0) + 
+    (showOnlyOffers ? 1 : 0) +
     (showInStock ? 1 : 0);
+
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('pt-BR', {
