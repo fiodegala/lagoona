@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 interface DealsCountdownSectionProps {
   products: Product[];
+  hideProducts?: boolean;
 }
 
 interface DealsConfig {
@@ -44,7 +45,7 @@ const TimeBlock = ({ value, label }: { value: number; label: string }) => (
   </div>
 );
 
-const DealsCountdownSection = ({ products }: DealsCountdownSectionProps) => {
+const DealsCountdownSection = ({ products, hideProducts = false }: DealsCountdownSectionProps) => {
   const [config, setConfig] = useState<DealsConfig>({ enabled: true, end_date: null });
   const [timeLeft, setTimeLeft] = useState(0);
   const [loaded, setLoaded] = useState(false);
@@ -127,20 +128,24 @@ const DealsCountdownSection = ({ products }: DealsCountdownSectionProps) => {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
-          {products.slice(0, 5).map((product) => (
-            <ProductCard key={product.id} product={product} showDiscount />
-          ))}
-        </div>
+        {!hideProducts && (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
+            {products.slice(0, 5).map((product) => (
+              <ProductCard key={product.id} product={product} showDiscount />
+            ))}
+          </div>
+        )}
 
-        <div className="mt-8 text-center">
-          <Button asChild variant="outline" className="gap-2 border-store-deal/30 text-store-deal hover:bg-store-deal/10 font-semibold">
-            <Link to="/loja?ordenar=ofertas">
-              Ver todas as ofertas
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </Button>
-        </div>
+        {!hideProducts && (
+          <div className="mt-8 text-center">
+            <Button asChild variant="outline" className="gap-2 border-store-deal/30 text-store-deal hover:bg-store-deal/10 font-semibold">
+              <Link to="/loja?ordenar=ofertas">
+                Ver todas as ofertas
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
+        )}
       </div>
     </section>
   );
