@@ -79,7 +79,7 @@ const ProductCard = forwardRef<HTMLAnchorElement, ProductCardProps>(({ product, 
     >
       <div className="relative bg-card rounded-none border overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-store-gold/30">
         {/* Image Container */}
-        <div className="relative aspect-square overflow-hidden bg-store-secondary/30">
+        <div className="relative aspect-[4/5] overflow-hidden bg-store-secondary/30">
           {product.image_url ? (
             <img
               src={product.image_url}
