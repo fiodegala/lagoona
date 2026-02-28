@@ -121,6 +121,7 @@ const ProductTableRow = ({
   };
 
   const totalVariationStock = variations.reduce((sum, v) => sum + (storeStockMap[v.id] || 0), 0);
+  const totalStock = hasVariations ? totalVariationStock : simpleProductStock;
   const priceRange = variations.length > 0 
     ? {
         min: Math.min(...variations.map(v => v.price ?? product.price)),
@@ -203,21 +204,12 @@ const ProductTableRow = ({
             )}
           </TableCell>
           <TableCell>
-            {hasVariations ? (
-              <Badge
-                variant={totalVariationStock > 0 ? 'secondary' : 'destructive'}
-                className={totalVariationStock > 0 ? '' : 'bg-destructive/10 text-destructive'}
-              >
-                {totalVariationStock} un. (total)
-              </Badge>
-            ) : (
-              <Badge
-                variant={simpleProductStock > 0 ? 'secondary' : 'destructive'}
-                className={simpleProductStock > 0 ? '' : 'bg-destructive/10 text-destructive'}
-              >
-                {simpleProductStock} un.
-              </Badge>
-            )}
+            <Badge
+              variant={totalStock > 0 ? 'secondary' : 'destructive'}
+              className={totalStock > 0 ? '' : 'bg-destructive/10 text-destructive'}
+            >
+              {totalStock} un.{hasVariations ? ' (total)' : ''}
+            </Badge>
           </TableCell>
           <TableCell>
             {product.is_active ? (
