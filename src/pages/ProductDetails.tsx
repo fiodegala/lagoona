@@ -86,16 +86,11 @@ const ProductDetails = () => {
   const galleryImages = useMemo(() => {
     const images: string[] = [];
     
-    // Add main product image
-    if (product?.image_url) {
-      images.push(product.image_url);
-    }
-    
-    // Add additional images from metadata if available
+    // Only additional images (main image is shown separately above)
     const metadata = product?.metadata as { gallery_images?: string[]; video_url?: string } | null;
     if (metadata?.gallery_images && Array.isArray(metadata.gallery_images)) {
       metadata.gallery_images.forEach((img: string) => {
-        if (img && !images.includes(img)) {
+        if (img && img !== product?.image_url && !images.includes(img)) {
           images.push(img);
         }
       });
