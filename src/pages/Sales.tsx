@@ -8,7 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Receipt, Search, Eye, Calendar, DollarSign, TrendingUp, ShoppingBag } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
+import { Receipt, Search, Eye, Calendar, DollarSign, TrendingUp, ShoppingBag, Printer, User, Phone, Mail, MapPin, FileText, Building2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { format, startOfDay, endOfDay, startOfWeek, startOfMonth, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -26,6 +27,93 @@ const Sales = () => {
   const [customStart, setCustomStart] = useState('');
   const [customEnd, setCustomEnd] = useState('');
   const [detailSale, setDetailSale] = useState<any>(null);
+  const [detailCustomer, setDetailCustomer] = useState<any>(null);
+  const [isLoadingCustomer, setIsLoadingCustomer] = useState(false);
+  
+
+  // Fetch full customer data when opening detail
+  const openSaleDetail = async (sale: any) => {
+    setDetailSale(sale);
+    setDetailCustomer(null);
+    if (sale.customer_id) {
+      setIsLoadingCustomer(true);
+      try {
+        const { data } = await supabase
+          .from('customers')
+          .select('*')
+          .eq('id', sale.customer_id)
+          .single();
+        setDetailCustomer(data);
+      } catch (e) {
+        console.error('Erro ao buscar cliente:', e);
+      } finally {
+        setIsLoadingCustomer(false);
+      }
+    }
+  };
+
+  const handlePrint = () => {
+    if (!detailSale) return;
+    const items = saleItems(detailSale.items);
+    const customerName = detailCustomer?.name || detailSale.customer_name || 'Consumidor Final';
+    const customerDoc = detailCustomer?.document || detailSale.customer_document;
+    const customerType = detailCustomer?.customer_type === 'pj' ? 'CNPJ' : 'CPF';
+
+    let customerHtml = `<div><span class="label">Nome:</span> <span class="value">${customerName}</span></div>`;
+    if (customerDoc) customerHtml += `<div><span class="label">${customerType}:</span> <span class="value">${customerDoc}</span></div>`;
+    if (detailCustomer?.phone) customerHtml += `<div><span class="label">WhatsApp:</span> <span class="value">${detailCustomer.phone}</span></div>`;
+    if (detailCustomer?.email) customerHtml += `<div><span class="label">E-mail:</span> <span class="value">${detailCustomer.email}</span></div>`;
+    if (detailCustomer?.birthday) customerHtml += `<div><span class="label">Nascimento:</span> <span class="value">${format(new Date(detailCustomer.birthday + 'T12:00:00'), 'dd/MM/yyyy')}</span></div>`;
+    if (detailCustomer?.customer_type === 'pj' && detailCustomer?.razao_social) customerHtml += `<div><span class="label">Razão Social:</span> <span class="value">${detailCustomer.razao_social}</span></div>`;
+    if (detailCustomer?.customer_type === 'pj' && detailCustomer?.nome_fantasia) customerHtml += `<div><span class="label">Nome Fantasia:</span> <span class="value">${detailCustomer.nome_fantasia}</span></div>`;
+    if (detailCustomer?.customer_type === 'pj' && detailCustomer?.inscricao_estadual) customerHtml += `<div><span class="label">Insc. Estadual:</span> <span class="value">${detailCustomer.inscricao_estadual}</span></div>`;
+    if (detailCustomer?.address) {
+      const addr = [detailCustomer.address, detailCustomer.city, detailCustomer.state].filter(Boolean).join(', ');
+      customerHtml += `<div style="grid-column:span 2"><span class="label">Endereço:</span> <span class="value">${addr}${detailCustomer.zip_code ? ` - CEP: ${detailCustomer.zip_code}` : ''}</span></div>`;
+    }
+
+    const itemsRows = items.map((item: any) => {
+      const unitPrice = Number(item.unit_price ?? item.price ?? 0);
+      const itemTotal = Number(item.total ?? (item.quantity * unitPrice));
+      return `<tr><td>${item.name}${item.sku ? ` (${item.sku})` : ''}</td><td class="text-right">${item.quantity}</td><td class="text-right">R$ ${unitPrice.toFixed(2)}</td><td class="text-right">R$ ${itemTotal.toFixed(2)}</td></tr>`;
+    }).join('');
+
+    let totalsHtml = `<div class="row"><span>Subtotal</span><span>R$ ${Number(detailSale.subtotal).toFixed(2)}</span></div>`;
+    if (Number(detailSale.discount_amount || 0) > 0) {
+      totalsHtml += `<div class="row discount"><span>Desconto${detailSale.discount_type === 'percentage' ? ` (${detailSale.discount_value}%)` : ''}</span><span>-R$ ${Number(detailSale.discount_amount).toFixed(2)}</span></div>`;
+    }
+    totalsHtml += `<div class="row total-row"><span>Total</span><span>R$ ${Number(detailSale.total).toFixed(2)}</span></div>`;
+    totalsHtml += `<div class="row"><span>Forma de pagamento</span><span>${paymentMethodLabels[detailSale.payment_method] || detailSale.payment_method}</span></div>`;
+    if (detailSale.payment_method === 'cash' && detailSale.amount_received) {
+      totalsHtml += `<div class="row"><span>Valor recebido</span><span>R$ ${Number(detailSale.amount_received).toFixed(2)}</span></div>`;
+      totalsHtml += `<div class="row"><span>Troco</span><span>R$ ${Number(detailSale.change_amount || 0).toFixed(2)}</span></div>`;
+    }
+
+    const notesHtml = detailSale.notes ? `<div class="section"><div class="section-title">Observações</div><div class="notes">${detailSale.notes}</div></div>` : '';
+
+    const printWindow = window.open('', '_blank', 'width=800,height=900');
+    if (!printWindow) return;
+    printWindow.document.write(`<!DOCTYPE html><html><head><title>Venda #${detailSale.id.slice(0, 8)}</title>
+      <style>
+        *{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;padding:24px;color:#1a1a1a;font-size:13px}
+        .header{text-align:center;margin-bottom:20px;border-bottom:2px solid #333;padding-bottom:12px}.header h1{font-size:18px;margin-bottom:4px}.header p{color:#666;font-size:12px}
+        .section{margin-bottom:16px}.section-title{font-weight:bold;font-size:14px;margin-bottom:8px;border-bottom:1px solid #ddd;padding-bottom:4px}
+        .grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 16px}.label{color:#666;font-size:11px}.value{font-weight:500}
+        table{width:100%;border-collapse:collapse;margin-top:8px}th,td{padding:6px 8px;text-align:left;border-bottom:1px solid #eee;font-size:12px}th{background:#f5f5f5;font-weight:600}
+        .text-right{text-align:right}.totals{margin-top:12px}.totals .row{display:flex;justify-content:space-between;padding:3px 0}
+        .totals .total-row{font-weight:bold;font-size:15px;border-top:2px solid #333;padding-top:6px;margin-top:4px}.discount{color:#dc2626}
+        .notes{background:#f9f9f9;padding:8px;border-radius:4px;margin-top:8px}@media print{body{padding:12px}}
+      </style></head><body>
+      <div class="header"><h1>Comprovante de Venda</h1><p>ID: ${detailSale.id}</p><p>${format(new Date(detailSale.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p></div>
+      <div class="section"><div class="section-title">Cliente</div><div class="grid">${customerHtml}</div></div>
+      <div class="section"><div class="section-title">Itens</div><table><thead><tr><th>Produto</th><th class="text-right">Qtd</th><th class="text-right">Unit.</th><th class="text-right">Total</th></tr></thead><tbody>${itemsRows}</tbody></table></div>
+      <div class="section totals">${totalsHtml}</div>
+      ${notesHtml}
+    </body></html>`);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => printWindow.print(), 300);
+  };
 
   const dateRange = useMemo(() => {
     const now = new Date();
@@ -232,7 +320,7 @@ const Sales = () => {
                           {format(new Date(sale.created_at), "dd/MM/yy HH:mm", { locale: ptBR })}
                         </TableCell>
                         <TableCell>
-                          <Button variant="outline" size="sm" onClick={() => setDetailSale(sale)}>
+                          <Button variant="outline" size="sm" onClick={() => openSaleDetail(sale)}>
                             <Eye className="h-3 w-3 mr-1" />
                             Detalhes
                           </Button>
@@ -261,43 +349,141 @@ const Sales = () => {
 
       {/* Sale Detail Modal */}
       <Dialog open={!!detailSale} onOpenChange={o => !o && setDetailSale(null)}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-hidden flex flex-col">
-          <DialogHeader>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+          <DialogHeader className="flex flex-row items-center justify-between">
             <DialogTitle>Detalhes da Venda</DialogTitle>
+            <Button variant="outline" size="sm" className="gap-1.5" onClick={handlePrint}>
+              <Printer className="h-4 w-4" /> Imprimir
+            </Button>
           </DialogHeader>
           {detailSale && (
             <div className="flex-1 overflow-y-auto pr-2 space-y-4" style={{ maxHeight: 'calc(90vh - 100px)' }}>
-              <div className="grid grid-cols-2 gap-3 text-sm">
+              {/* Sale info */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
                 <div>
-                  <p className="text-muted-foreground">ID</p>
+                  <p className="text-muted-foreground text-xs">ID da Venda</p>
                   <p className="font-mono text-xs">{detailSale.id}</p>
                 </div>
                 <div>
-                  <p className="text-muted-foreground">Data</p>
+                  <p className="text-muted-foreground text-xs">Data</p>
                   <p>{format(new Date(detailSale.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}</p>
                 </div>
                 <div>
-                  <p className="text-muted-foreground">Cliente</p>
-                  <p className="font-medium">{detailSale.customer_name || 'Consumidor Final'}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">Documento</p>
-                  <p>{detailSale.customer_document || '—'}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">Pagamento</p>
-                  <p>{paymentMethodLabels[detailSale.payment_method] || detailSale.payment_method}</p>
+                  <p className="text-muted-foreground text-xs">Pagamento</p>
+                  <div className="flex items-center gap-1">
+                    <Badge variant="outline" className="text-xs">
+                      {paymentMethodLabels[detailSale.payment_method] || detailSale.payment_method}
+                    </Badge>
+                  </div>
                 </div>
                 {detailSale.coupon_code && (
                   <div>
-                    <p className="text-muted-foreground">Cupom</p>
+                    <p className="text-muted-foreground text-xs">Cupom</p>
                     <p>{detailSale.coupon_code}</p>
                   </div>
                 )}
               </div>
 
+              <Separator />
+
+              {/* Customer info */}
               <div>
-                <p className="font-medium mb-2">Itens</p>
+                <p className="font-medium mb-2 flex items-center gap-1.5 text-sm">
+                  <User className="h-4 w-4" /> Dados do Cliente
+                </p>
+                {isLoadingCustomer ? (
+                  <p className="text-sm text-muted-foreground">Carregando dados do cliente...</p>
+                ) : detailCustomer ? (
+                  <div className="border rounded-lg p-3 space-y-2 text-sm">
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <p className="text-muted-foreground text-xs">Nome</p>
+                        <p className="font-medium">{detailCustomer.name}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground text-xs">Tipo</p>
+                        <p className="flex items-center gap-1">
+                          {detailCustomer.customer_type === 'pj' ? (
+                            <><Building2 className="h-3 w-3" /> Pessoa Jurídica</>
+                          ) : (
+                            <><User className="h-3 w-3" /> Pessoa Física</>
+                          )}
+                        </p>
+                      </div>
+                      {detailCustomer.document && (
+                        <div>
+                          <p className="text-muted-foreground text-xs flex items-center gap-1"><FileText className="h-3 w-3" /> {detailCustomer.customer_type === 'pj' ? 'CNPJ' : 'CPF'}</p>
+                          <p>{detailCustomer.document}</p>
+                        </div>
+                      )}
+                      {detailCustomer.phone && (
+                        <div>
+                          <p className="text-muted-foreground text-xs flex items-center gap-1"><Phone className="h-3 w-3" /> WhatsApp</p>
+                          <p>{detailCustomer.phone}</p>
+                        </div>
+                      )}
+                      {detailCustomer.email && (
+                        <div>
+                          <p className="text-muted-foreground text-xs flex items-center gap-1"><Mail className="h-3 w-3" /> E-mail</p>
+                          <p>{detailCustomer.email}</p>
+                        </div>
+                      )}
+                      {detailCustomer.birthday && (
+                        <div>
+                          <p className="text-muted-foreground text-xs">Data de Nascimento</p>
+                          <p>{format(new Date(detailCustomer.birthday + 'T12:00:00'), 'dd/MM/yyyy')}</p>
+                        </div>
+                      )}
+                      {detailCustomer.customer_type === 'pj' && detailCustomer.razao_social && (
+                        <div>
+                          <p className="text-muted-foreground text-xs">Razão Social</p>
+                          <p>{detailCustomer.razao_social}</p>
+                        </div>
+                      )}
+                      {detailCustomer.customer_type === 'pj' && detailCustomer.nome_fantasia && (
+                        <div>
+                          <p className="text-muted-foreground text-xs">Nome Fantasia</p>
+                          <p>{detailCustomer.nome_fantasia}</p>
+                        </div>
+                      )}
+                      {detailCustomer.customer_type === 'pj' && detailCustomer.inscricao_estadual && (
+                        <div>
+                          <p className="text-muted-foreground text-xs">Inscrição Estadual</p>
+                          <p>{detailCustomer.inscricao_estadual}</p>
+                        </div>
+                      )}
+                    </div>
+                    {(detailCustomer.address || detailCustomer.city) && (
+                      <div className="pt-2 border-t">
+                        <p className="text-muted-foreground text-xs flex items-center gap-1 mb-1"><MapPin className="h-3 w-3" /> Endereço</p>
+                        <p className="text-sm">
+                          {[detailCustomer.address, detailCustomer.city, detailCustomer.state].filter(Boolean).join(', ')}
+                          {detailCustomer.zip_code && ` - CEP: ${detailCustomer.zip_code}`}
+                        </p>
+                      </div>
+                    )}
+                    {detailCustomer.notes && (
+                      <div className="pt-2 border-t">
+                        <p className="text-muted-foreground text-xs">Observações do Cliente</p>
+                        <p className="text-sm">{detailCustomer.notes}</p>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="border rounded-lg p-3 text-sm">
+                    <p className="font-medium">{detailSale.customer_name || 'Consumidor Final'}</p>
+                    {detailSale.customer_document && (
+                      <p className="text-muted-foreground text-xs mt-1">{detailSale.customer_document}</p>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <Separator />
+
+              {/* Items */}
+              <div>
+                <p className="font-medium mb-2 text-sm">Itens da Venda</p>
                 <div className="border rounded-lg divide-y">
                   {saleItems(detailSale.items).map((item: any, i: number) => (
                     <div key={i} className="flex items-center gap-3 p-3">
@@ -307,9 +493,13 @@ const Sales = () => {
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium truncate">{item.name}</p>
                         {item.variation && <p className="text-xs text-muted-foreground">{item.variation}</p>}
+                        {item.sku && <p className="text-xs text-muted-foreground">SKU: {item.sku}</p>}
                       </div>
                       <div className="text-right text-sm">
                         <p>{item.quantity}x R$ {Number(item.unit_price ?? item.price ?? 0).toFixed(2)}</p>
+                        {Number(item.discount_amount || 0) > 0 && (
+                          <p className="text-xs text-destructive">-R$ {Number(item.discount_amount).toFixed(2)}</p>
+                        )}
                         <p className="font-medium">R$ {Number(item.total ?? (item.quantity * Number(item.unit_price ?? item.price ?? 0))).toFixed(2)}</p>
                       </div>
                     </div>
@@ -317,6 +507,7 @@ const Sales = () => {
                 </div>
               </div>
 
+              {/* Totals */}
               <div className="space-y-1 text-sm border-t pt-3">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Subtotal</span>
@@ -354,6 +545,7 @@ const Sales = () => {
               )}
             </div>
           )}
+
         </DialogContent>
       </Dialog>
     </AdminLayout>
