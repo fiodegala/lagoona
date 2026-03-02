@@ -129,15 +129,71 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { messages } = await req.json();
+    const body = await req.json();
+    const { messages } = body;
 
-    // Validate messages input
-    if (!Array.isArray(messages) || messages.length === 0 || messages.length > 50) {
+    // Validate messages array
+    if (!Array.isArray(messages) || messages.length === 0) {
       return new Response(JSON.stringify({ error: "Invalid messages format" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    // Limit conversation length to prevent abuse
+    const MAX_MESSAGES = 30;
+    const MAX_MESSAGE_LENGTH = 500;
+    const MAX_TOTAL_LENGTH = 10_000;
+
+    if (messages.length > MAX_MESSAGES) {
+      return new Response(JSON.stringify({ error: "Conversa muito longa. Por favor, inicie uma nova conversa." }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Validate each message structure and content
+    let totalLength = 0;
+    for (const msg of messages) {
+      if (!msg || typeof msg !== 'object') {
+        return new Response(JSON.stringify({ error: "Formato de mensagem inválido." }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (msg.role !== 'user' && msg.role !== 'assistant') {
+        return new Response(JSON.stringify({ error: "Role de mensagem inválido." }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (typeof msg.content !== 'string' || msg.content.length === 0) {
+        return new Response(JSON.stringify({ error: "Conteúdo de mensagem inválido." }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (msg.role === 'user' && msg.content.length > MAX_MESSAGE_LENGTH) {
+        return new Response(JSON.stringify({ error: `Mensagem muito longa. Limite de ${MAX_MESSAGE_LENGTH} caracteres.` }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      totalLength += msg.content.length;
+    }
+
+    if (totalLength > MAX_TOTAL_LENGTH) {
+      return new Response(JSON.stringify({ error: "Conversa muito longa. Por favor, inicie uma nova conversa." }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Sanitize: only pass role and content, strip any extra fields
+    const sanitizedMessages = messages.map((m: any) => ({
+      role: m.role as 'user' | 'assistant',
+      content: m.content.slice(0, m.role === 'user' ? MAX_MESSAGE_LENGTH : 2000),
+    }));
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
@@ -199,7 +255,7 @@ Deno.serve(async (req) => {
         model: "google/gemini-2.5-flash-lite",
         messages: [
           { role: "system", content: fullSystemPrompt },
-          ...messages,
+          ...sanitizedMessages,
         ],
         stream: true,
       }),

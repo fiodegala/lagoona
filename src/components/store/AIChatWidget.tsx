@@ -25,9 +25,17 @@ const AIChatWidget = () => {
     if (isOpen) inputRef.current?.focus();
   }, [isOpen]);
 
+  const MAX_INPUT_LENGTH = 500;
+  const MAX_MESSAGES = 30;
+
   const sendMessage = useCallback(async () => {
-    const text = input.trim();
+    const text = input.trim().slice(0, MAX_INPUT_LENGTH);
     if (!text || isLoading) return;
+
+    if (messages.length >= MAX_MESSAGES) {
+      setMessages(prev => [...prev, { role: 'assistant', content: 'A conversa atingiu o limite. Por favor, feche e abra novamente para iniciar uma nova conversa. 😊' }]);
+      return;
+    }
 
     const userMsg: Message = { role: 'user', content: text };
     const newMessages = [...messages, userMsg];
@@ -253,8 +261,9 @@ const AIChatWidget = () => {
               <input
                 ref={inputRef}
                 value={input}
-                onChange={(e) => setInput(e.target.value)}
+                onChange={(e) => setInput(e.target.value.slice(0, MAX_INPUT_LENGTH))}
                 placeholder="Digite sua mensagem..."
+                maxLength={MAX_INPUT_LENGTH}
                 className="flex-1 bg-muted rounded-full px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-store-gold/30 placeholder:text-muted-foreground"
                 disabled={isLoading}
               />
