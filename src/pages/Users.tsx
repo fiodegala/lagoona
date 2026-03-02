@@ -160,31 +160,23 @@ const UsersPage = () => {
 
   const createUserMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
-      // Create user via Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: data.email,
-        password: data.password,
-        options: {
-          emailRedirectTo: window.location.origin,
-          data: { full_name: data.fullName }
-        }
-      });
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Sessão não encontrada');
 
-      if (authError) throw authError;
-      if (!authData.user) throw new Error('Falha ao criar usuário');
-
-      // Assign role with store
-      const { error: roleError } = await supabase
-        .from('user_roles')
-        .insert({
-          user_id: authData.user.id,
+      const response = await supabase.functions.invoke('create-user', {
+        body: {
+          email: data.email,
+          password: data.password,
+          fullName: data.fullName,
           role: data.role,
           store_id: data.store_id || null,
-        } as never);
+        },
+      });
 
-      if (roleError) throw roleError;
+      if (response.error) throw new Error(response.error.message);
+      if (response.data?.error) throw new Error(response.data.error);
 
-      return authData.user;
+      return response.data.user;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users-with-roles'] });
