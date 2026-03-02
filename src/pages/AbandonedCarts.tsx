@@ -30,6 +30,7 @@ import {
   CheckCircle,
   RefreshCw,
   ExternalLink,
+  MessageCircle,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -47,6 +48,7 @@ interface AbandonedCart {
   item_count: number;
   status: string;
   recovered_at: string | null;
+  notified_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -240,9 +242,17 @@ const AbandonedCarts = () => {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant={cart.status === 'recovered' ? 'default' : 'secondary'} className={cart.status === 'recovered' ? 'bg-green-600' : 'bg-amber-500 text-white'}>
-                          {cart.status === 'recovered' ? 'Recuperado' : 'Abandonado'}
-                        </Badge>
+                        <div className="flex flex-col gap-1">
+                          <Badge variant={cart.status === 'recovered' ? 'default' : 'secondary'} className={cart.status === 'recovered' ? 'bg-green-600' : 'bg-amber-500 text-white'}>
+                            {cart.status === 'recovered' ? 'Recuperado' : 'Abandonado'}
+                          </Badge>
+                          {cart.notified_at && (
+                            <span className="text-xs text-muted-foreground flex items-center gap-1">
+                              <MessageCircle className="h-3 w-3" />
+                              Notificado
+                            </span>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell className="text-right">
                         <Button size="sm" variant="ghost" onClick={() => setSelectedCart(cart)}>
@@ -304,6 +314,13 @@ const AbandonedCarts = () => {
                   <span className="text-muted-foreground">Última atividade:</span>{' '}
                   {format(new Date(selectedCart.updated_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
                 </div>
+                {selectedCart.notified_at && (
+                  <div className="flex items-center gap-1 text-green-600">
+                    <MessageCircle className="h-3.5 w-3.5" />
+                    <span className="text-muted-foreground">Notificado via WhatsApp:</span>{' '}
+                    {format(new Date(selectedCart.notified_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                  </div>
+                )}
               </div>
 
               <Separator />
