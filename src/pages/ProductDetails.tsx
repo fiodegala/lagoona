@@ -112,7 +112,8 @@ const ProductDetails = () => {
 
   const thumbnailVideoUrl = useMemo(() => {
     const metadata = product?.metadata as { thumbnail_video_url?: string } | null;
-    return metadata?.thumbnail_video_url || undefined;
+    const url = metadata?.thumbnail_video_url?.trim();
+    return url && url.length > 0 ? url : undefined;
   }, [product]);
 
   const basePrice = selectedVariation?.price ?? product?.price ?? 0;
