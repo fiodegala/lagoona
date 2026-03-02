@@ -105,7 +105,7 @@ const App = () => (
               <Route
                 path="/admin/products"
                 element={
-                  <ProtectedRoute>
+                  <ProtectedRoute requiredRole="admin">
                     <Products />
                   </ProtectedRoute>
                 }
@@ -153,7 +153,7 @@ const App = () => (
               <Route
                 path="/admin/reviews"
                 element={
-                  <ProtectedRoute>
+                  <ProtectedRoute requiredRole="admin">
                     <Reviews />
                   </ProtectedRoute>
                 }
@@ -161,7 +161,7 @@ const App = () => (
               <Route
                 path="/admin/coupons"
                 element={
-                  <ProtectedRoute>
+                  <ProtectedRoute requiredRole="admin">
                     <Coupons />
                   </ProtectedRoute>
                 }
@@ -169,7 +169,7 @@ const App = () => (
               <Route
                 path="/admin/shipping"
                 element={
-                  <ProtectedRoute>
+                  <ProtectedRoute requiredRole="admin">
                     <Shipping />
                   </ProtectedRoute>
                 }
@@ -177,7 +177,7 @@ const App = () => (
               <Route
                 path="/admin/banners"
                 element={
-                  <ProtectedRoute>
+                  <ProtectedRoute requiredRole="admin">
                     <Banners />
                   </ProtectedRoute>
                 }
