@@ -128,7 +128,7 @@ interface SalesGoal {
 const SITE_STORE_ID = 'e0b8ebbc-1b3b-4aec-b5f7-6925762e6ea1';
 
 const Dashboard = () => {
-  const { profile, roles, isAdmin, userStoreId, userStore } = useAuth();
+  const { profile, roles, isAdmin, userStoreId, userStore, accessibleStoreIds } = useAuth();
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('all');
   const [selectedStoreId, setSelectedStoreId] = useState<string>('all');
   const [stores, setStores] = useState<{ id: string; name: string; type: string }[]>([]);
@@ -153,6 +153,7 @@ const Dashboard = () => {
   }, [isAdmin]);
 
   const activeStoreFilter = isAdmin ? (selectedStoreId === 'all' ? null : selectedStoreId) : userStoreId;
+  const canAccessSiteStore = isAdmin || accessibleStoreIds.includes(SITE_STORE_ID);
   const isSiteStoreSelected = activeStoreFilter === SITE_STORE_ID;
   const isViewingAllStores = !activeStoreFilter;
   const selectedStoreType = stores.find(s => s.id === activeStoreFilter)?.type || userStore?.type || null;
@@ -168,20 +169,21 @@ const Dashboard = () => {
       // Fetch all data in parallel
       const storeFilter = activeStoreFilter;
 
-      // Orders: filter by Site store_id when viewing Site, or show all site orders when viewing all
+      // Orders: filter by store
       let ordersQuery = supabase.from('orders').select('id, status, total, customer_name, customer_email, created_at, shipping_address');
       if (isSiteStoreSelected) {
         ordersQuery = ordersQuery.eq('store_id', SITE_STORE_ID);
+      } else if (storeFilter && canAccessSiteStore) {
+        // Online store user: also show site orders
+        ordersQuery = ordersQuery.eq('store_id', SITE_STORE_ID);
       } else if (storeFilter) {
-        // Non-site store selected: no orders to show (orders come from site only)
+        // Physical store: no orders
         ordersQuery = ordersQuery.eq('store_id', SITE_STORE_ID).limit(0);
       }
-      // When viewing all stores, show all orders (no filter)
 
-      // POS Sales: filter by store when a specific store is selected
+      // POS Sales: filter by store
       let posSalesQuery = supabase.from('pos_sales').select('*').order('created_at', { ascending: false });
       if (isSiteStoreSelected) {
-        // Site store has no POS sales
         posSalesQuery = posSalesQuery.eq('store_id', SITE_STORE_ID).limit(0);
       } else if (storeFilter) {
         posSalesQuery = posSalesQuery.eq('store_id', storeFilter);
