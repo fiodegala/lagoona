@@ -12,6 +12,7 @@ import CustomerStep from '@/components/pos/steps/CustomerStep';
 import ProductsStep from '@/components/pos/steps/ProductsStep';
 import PaymentStep from '@/components/pos/steps/PaymentStep';
 import ExchangePanel, { ExchangeData } from '@/components/pos/ExchangePanel';
+import FiscalReceiptModal from '@/components/pos/FiscalReceiptModal';
 import { OpenSessionModal, CloseSessionModal, CashMovementModal } from '@/components/pos/CashDrawerModals';
 import { posService, POSSession, CreateSaleData } from '@/services/posService';
 import { offlineService } from '@/services/offlineService';
@@ -56,6 +57,13 @@ const POSPage = () => {
   const [openSessionModal, setOpenSessionModal] = useState(false);
   const [closeSessionModal, setCloseSessionModal] = useState(false);
   const [cashMovementModal, setCashMovementModal] = useState(false);
+  const [fiscalModalOpen, setFiscalModalOpen] = useState(false);
+  const [completedSaleId, setCompletedSaleId] = useState<string | null>(null);
+  const [completedSaleTotal, setCompletedSaleTotal] = useState(0);
+  const [completedCustomerData, setCompletedCustomerData] = useState<{
+    name?: string; document?: string; email?: string; phone?: string;
+    address?: string; city?: string; state?: string; zip_code?: string;
+  } | null>(null);
 
   const isExchangeMode = saleType === 'troca';
 
@@ -218,15 +226,29 @@ const POSPage = () => {
     };
 
     try {
+      let saleResult: any = null;
       if (isOnline) {
-        await posService.createSale(saleData);
+        saleResult = await posService.createSale(saleData);
       } else {
         await offlineService.savePendingSale(saleData);
       }
       toast({ title: 'Venda finalizada!', description: `Total: R$ ${total.toFixed(2)}${selectedCustomer ? ` • Cliente: ${selectedCustomer.name}` : ''}` });
       
-      // Reset wizard
-      resetWizard();
+      // Show fiscal receipt modal
+      setCompletedSaleId(saleResult?.id || null);
+      setCompletedSaleTotal(total);
+      if (selectedCustomer) {
+        // Fetch full customer data for pre-fill
+        const { data: fullCustomer } = await supabase
+          .from('customers')
+          .select('name, document, email, phone, address, city, state, zip_code')
+          .eq('id', selectedCustomer.id)
+          .single();
+        setCompletedCustomerData(fullCustomer || { name: selectedCustomer.name, document: selectedCustomer.document });
+      } else {
+        setCompletedCustomerData(null);
+      }
+      setFiscalModalOpen(true);
     } catch (error) {
       console.error('Error processing sale:', error);
       toast({ title: 'Erro ao processar venda', variant: 'destructive' });
@@ -330,7 +352,21 @@ const POSPage = () => {
       if (data.amountToPay > 0) messages.push(`Diferença de R$ ${data.amountToPay.toFixed(2)} paga`);
 
       toast({ title: 'Troca finalizada!', description: messages.join(' • ') });
-      resetWizard();
+      
+      // Show fiscal modal for exchanges too
+      setCompletedSaleId(null);
+      setCompletedSaleTotal(data.amountToPay || 0);
+      if (selectedCustomer) {
+        const { data: fullCustomer } = await supabase
+          .from('customers')
+          .select('name, document, email, phone, address, city, state, zip_code')
+          .eq('id', selectedCustomer.id)
+          .single();
+        setCompletedCustomerData(fullCustomer || { name: selectedCustomer.name, document: selectedCustomer.document });
+      } else {
+        setCompletedCustomerData(null);
+      }
+      setFiscalModalOpen(true);
     } catch (error) {
       console.error('Error processing exchange:', error);
       toast({ title: 'Erro ao processar troca', variant: 'destructive' });
@@ -542,6 +578,14 @@ const POSPage = () => {
       <OpenSessionModal open={openSessionModal} onOpenChange={setOpenSessionModal} onConfirm={handleOpenSession} />
       <CloseSessionModal open={closeSessionModal} onOpenChange={setCloseSessionModal} expectedBalance={session.opening_balance} onConfirm={handleCloseSession} />
       <CashMovementModal open={cashMovementModal} onOpenChange={setCashMovementModal} onConfirm={handleCashMovement} />
+      <FiscalReceiptModal
+        open={fiscalModalOpen}
+        onOpenChange={setFiscalModalOpen}
+        saleId={completedSaleId}
+        customerData={completedCustomerData}
+        total={completedSaleTotal}
+        onComplete={resetWizard}
+      />
     </POSLayout>
   );
 };

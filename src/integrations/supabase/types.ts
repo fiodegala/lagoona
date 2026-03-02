@@ -486,6 +486,87 @@ export type Database = {
         }
         Relationships: []
       }
+      fiscal_requests: {
+        Row: {
+          created_at: string
+          customer_address: Json | null
+          customer_document: string | null
+          customer_email: string | null
+          customer_name: string | null
+          customer_phone: string | null
+          error_message: string | null
+          fiscal_key: string | null
+          fiscal_number: string | null
+          fiscal_pdf_url: string | null
+          fiscal_type: string
+          fiscal_url: string | null
+          id: string
+          metadata: Json | null
+          order_id: string | null
+          requested_by: string | null
+          sale_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          customer_address?: Json | null
+          customer_document?: string | null
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          error_message?: string | null
+          fiscal_key?: string | null
+          fiscal_number?: string | null
+          fiscal_pdf_url?: string | null
+          fiscal_type: string
+          fiscal_url?: string | null
+          id?: string
+          metadata?: Json | null
+          order_id?: string | null
+          requested_by?: string | null
+          sale_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          customer_address?: Json | null
+          customer_document?: string | null
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          error_message?: string | null
+          fiscal_key?: string | null
+          fiscal_number?: string | null
+          fiscal_pdf_url?: string | null
+          fiscal_type?: string
+          fiscal_url?: string | null
+          id?: string
+          metadata?: Json | null
+          order_id?: string | null
+          requested_by?: string | null
+          sale_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fiscal_requests_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fiscal_requests_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "pos_sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       job_applications: {
         Row: {
           created_at: string
