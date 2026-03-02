@@ -9,6 +9,46 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
+const GoalInputs = ({ daily, monthly, onDailyChange, onMonthlyChange, disabled, idPrefix }: {
+  daily: string; monthly: string;
+  onDailyChange: (v: string) => void; onMonthlyChange: (v: string) => void;
+  disabled: boolean; idPrefix: string;
+}) => {
+  const formatCurrency = (value: string) => {
+    const num = parseFloat(value) || 0;
+    return num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  };
+
+  return (
+    <div className="grid gap-6 sm:grid-cols-2">
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          <TrendingUp className="h-4 w-4 text-primary" />
+          <Label htmlFor={`${idPrefix}-daily`}>Meta Diária</Label>
+        </div>
+        <div className="relative">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">R$</span>
+          <Input id={`${idPrefix}-daily`} type="number" min="0" step="100" value={daily}
+            onChange={(e) => onDailyChange(e.target.value)} className="pl-10" placeholder="1000" disabled={disabled} />
+        </div>
+        {daily && <p className="text-xs text-muted-foreground">Meta atual: {formatCurrency(daily)}</p>}
+      </div>
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          <Calendar className="h-4 w-4 text-primary" />
+          <Label htmlFor={`${idPrefix}-monthly`}>Meta Mensal</Label>
+        </div>
+        <div className="relative">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">R$</span>
+          <Input id={`${idPrefix}-monthly`} type="number" min="0" step="1000" value={monthly}
+            onChange={(e) => onMonthlyChange(e.target.value)} className="pl-10" placeholder="30000" disabled={disabled} />
+        </div>
+        {monthly && <p className="text-xs text-muted-foreground">Meta atual: {formatCurrency(monthly)}</p>}
+      </div>
+    </div>
+  );
+};
+
 interface SalesGoal {
   id: string;
   type: string;
@@ -159,53 +199,6 @@ const SalesGoalsSettings = () => {
     }));
   };
 
-  const formatCurrency = (value: string) => {
-    const num = parseFloat(value) || 0;
-    return num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-  };
-
-  const GoalInputs = ({ daily, monthly, onDailyChange, onMonthlyChange, disabled, idPrefix }: {
-    daily: string; monthly: string;
-    onDailyChange: (v: string) => void; onMonthlyChange: (v: string) => void;
-    disabled: boolean; idPrefix: string;
-  }) => (
-    <div className="grid gap-6 sm:grid-cols-2">
-      <div className="space-y-3">
-        <div className="flex items-center gap-2">
-          <TrendingUp className="h-4 w-4 text-primary" />
-          <Label htmlFor={`${idPrefix}-daily`}>Meta Diária</Label>
-        </div>
-        <div className="relative">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">R$</span>
-          <Input id={`${idPrefix}-daily`} type="number" min="0" step="100" value={daily}
-            onChange={(e) => onDailyChange(e.target.value)} className="pl-10" placeholder="1000" disabled={disabled} />
-        </div>
-        {daily && <p className="text-xs text-muted-foreground">Meta atual: {formatCurrency(daily)}</p>}
-      </div>
-      <div className="space-y-3">
-        <div className="flex items-center gap-2">
-          <Calendar className="h-4 w-4 text-primary" />
-          <Label htmlFor={`${idPrefix}-monthly`}>Meta Mensal</Label>
-        </div>
-        <div className="relative">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">R$</span>
-          <Input id={`${idPrefix}-monthly`} type="number" min="0" step="1000" value={monthly}
-            onChange={(e) => onMonthlyChange(e.target.value)} className="pl-10" placeholder="30000" disabled={disabled} />
-        </div>
-        {monthly && <p className="text-xs text-muted-foreground">Meta atual: {formatCurrency(monthly)}</p>}
-      </div>
-    </div>
-  );
-
-  if (loading) {
-    return (
-      <Card className="card-elevated">
-        <CardContent className="flex items-center justify-center py-8">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-        </CardContent>
-      </Card>
-    );
-  }
 
   return (
     <Card className="card-elevated">
