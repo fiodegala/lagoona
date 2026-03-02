@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, UserCheck, SkipForward } from 'lucide-react';
+import { ChevronLeft, UserCheck, SkipForward, RefreshCw } from 'lucide-react';
 import CustomerSelector, { Customer } from '@/components/pos/CustomerSelector';
 import { SaleType } from '@/components/pos/ProductSearch';
 
@@ -34,7 +34,7 @@ const CustomerStep = ({ selectedCustomer, onSelectCustomer, saleType, onNext, on
             <div className="p-2 rounded-full bg-primary text-primary-foreground">
               <UserCheck className="h-5 w-5" />
             </div>
-            <div>
+            <div className="flex-1">
               <div className="font-semibold">{selectedCustomer.name}</div>
               {selectedCustomer.document && (
                 <div className="text-sm text-muted-foreground">{selectedCustomer.document}</div>
@@ -43,6 +43,14 @@ const CustomerStep = ({ selectedCustomer, onSelectCustomer, saleType, onNext, on
                 <div className="text-sm text-muted-foreground">{selectedCustomer.phone}</div>
               )}
             </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-destructive hover:text-destructive"
+              onClick={() => onSelectCustomer(null)}
+            >
+              <RefreshCw className="h-4 w-4 mr-1" /> Alterar
+            </Button>
           </div>
         )}
 
