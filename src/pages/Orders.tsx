@@ -56,6 +56,7 @@ const messageTypeLabels: Record<string, string> = {
 const Orders = () => {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
   const [trackingModal, setTrackingModal] = useState<{ open: boolean; orderId: string; order?: any }>({ open: false, orderId: '' });
   const [trackingCode, setTrackingCode] = useState('');
   const [carrier, setCarrier] = useState('');
@@ -228,12 +229,14 @@ const Orders = () => {
     );
   };
 
-  const filteredOrders = orders.filter(o =>
-    (o.customer_name?.toLowerCase().includes(search.toLowerCase()) ||
+  const filteredOrders = orders.filter(o => {
+    const matchesSearch = (o.customer_name?.toLowerCase().includes(search.toLowerCase()) ||
      o.customer_email?.toLowerCase().includes(search.toLowerCase()) ||
      o.tracking_code?.toLowerCase().includes(search.toLowerCase()) ||
-     o.id.toLowerCase().includes(search.toLowerCase()))
-  );
+     o.id.toLowerCase().includes(search.toLowerCase()));
+    const matchesStatus = statusFilter === 'all' || o.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
 
   return (
     <AdminLayout>
@@ -243,11 +246,22 @@ const Orders = () => {
           <p className="text-muted-foreground mt-1">Visualize e gerencie os pedidos</p>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 flex-wrap">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input placeholder="Buscar por nome, email ou rastreio..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
           </div>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-[160px]">
+              <SelectValue placeholder="Filtrar status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os status</SelectItem>
+              {Object.entries(statusMap).map(([key, val]) => (
+                <SelectItem key={key} value={key}>{val.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {isLoading ? (
