@@ -147,7 +147,15 @@ const CustomerStep = ({ selectedCustomer, onSelectCustomer, saleType, onNext, on
       return;
     }
     if (!isPJ && !formData.name.trim()) {
-      toast.error('Nome é obrigatório');
+      toast.error('Nome Completo é obrigatório');
+      return;
+    }
+    if (!isPJ && !formData.phone.trim()) {
+      toast.error('WhatsApp é obrigatório');
+      return;
+    }
+    if (!isPJ && !formData.birthday) {
+      toast.error('Data de Nascimento é obrigatória');
       return;
     }
 
@@ -364,11 +372,11 @@ const CustomerStep = ({ selectedCustomer, onSelectCustomer, saleType, onNext, on
                     <Input placeholder="000.000.000-00" value={formData.document} onChange={(e) => updateField('document', e.target.value)} />
                   </div>
                   <div>
-                    <Label className="text-sm">Data de Nascimento</Label>
+                    <Label className="text-sm">Data de Nascimento *</Label>
                     <Input type="date" value={formData.birthday} onChange={(e) => updateField('birthday', e.target.value)} />
                   </div>
                   <div>
-                    <Label className="text-sm">Telefone</Label>
+                    <Label className="text-sm">WhatsApp *</Label>
                     <Input placeholder="(00) 00000-0000" value={formData.phone} onChange={(e) => updateField('phone', e.target.value)} />
                   </div>
                   <div>
@@ -395,7 +403,7 @@ const CustomerStep = ({ selectedCustomer, onSelectCustomer, saleType, onNext, on
                     <Input placeholder="Inscrição estadual" value={formData.inscricao_estadual} onChange={(e) => updateField('inscricao_estadual', e.target.value)} />
                   </div>
                   <div>
-                    <Label className="text-sm">Telefone</Label>
+                    <Label className="text-sm">WhatsApp</Label>
                     <Input placeholder="(00) 0000-0000" value={formData.phone} onChange={(e) => updateField('phone', e.target.value)} />
                   </div>
                   <div>
@@ -407,7 +415,7 @@ const CustomerStep = ({ selectedCustomer, onSelectCustomer, saleType, onNext, on
                     <Input placeholder="Nome do responsável" value={formData.responsavel_nome} onChange={(e) => updateField('responsavel_nome', e.target.value)} />
                   </div>
                   <div>
-                    <Label className="text-sm">Telefone do Responsável</Label>
+                    <Label className="text-sm">WhatsApp do Responsável</Label>
                     <Input placeholder="(00) 00000-0000" value={formData.responsavel_telefone} onChange={(e) => updateField('responsavel_telefone', e.target.value)} />
                   </div>
                 </div>
