@@ -23,6 +23,7 @@ export type Database = {
           id: string
           item_count: number
           items: Json
+          notified_at: string | null
           recovered_at: string | null
           session_id: string
           shipping_address: Json | null
@@ -38,6 +39,7 @@ export type Database = {
           id?: string
           item_count?: number
           items?: Json
+          notified_at?: string | null
           recovered_at?: string | null
           session_id: string
           shipping_address?: Json | null
@@ -53,6 +55,7 @@ export type Database = {
           id?: string
           item_count?: number
           items?: Json
+          notified_at?: string | null
           recovered_at?: string | null
           session_id?: string
           shipping_address?: Json | null
