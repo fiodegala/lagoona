@@ -26,6 +26,7 @@ export interface CartItem {
   variation_id?: string;
   name: string;
   sku?: string;
+  image_url?: string | null;
   unit_price: number;
   quantity: number;
   discount_type?: 'percentage' | 'fixed';

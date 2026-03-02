@@ -31,6 +31,7 @@ export interface POSSaleItem {
   variation_id?: string;
   name: string;
   sku?: string;
+  image_url?: string | null;
   quantity: number;
   unit_price: number;
   discount_type?: 'percentage' | 'fixed';
