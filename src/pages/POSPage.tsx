@@ -2,11 +2,15 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import POSLayout from '@/components/pos/POSLayout';
-import ProductSearch, { ProductResult, SaleType } from '@/components/pos/ProductSearch';
-import ProductGrid from '@/components/pos/ProductGrid';
-import POSCart, { CartItem } from '@/components/pos/POSCart';
-import PaymentPanel from '@/components/pos/PaymentPanel';
-import CustomerSelector, { Customer } from '@/components/pos/CustomerSelector';
+import { ProductResult, SaleType } from '@/components/pos/ProductSearch';
+import { CartItem } from '@/components/pos/POSCart';
+import { Customer } from '@/components/pos/CustomerSelector';
+import { Seller } from '@/components/pos/steps/SellerStep';
+import SaleTypeStep from '@/components/pos/steps/SaleTypeStep';
+import SellerStep from '@/components/pos/steps/SellerStep';
+import CustomerStep from '@/components/pos/steps/CustomerStep';
+import ProductsStep from '@/components/pos/steps/ProductsStep';
+import PaymentStep from '@/components/pos/steps/PaymentStep';
 import ExchangePanel, { ExchangeData } from '@/components/pos/ExchangePanel';
 import { OpenSessionModal, CloseSessionModal, CashMovementModal } from '@/components/pos/CashDrawerModals';
 import { posService, POSSession, CreateSaleData } from '@/services/posService';
@@ -14,9 +18,19 @@ import { offlineService } from '@/services/offlineService';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { DollarSign, ArrowUpDown, ShoppingBag, Package, Star, RefreshCw } from 'lucide-react';
+import { DollarSign, ArrowUpDown, Check } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+type WizardStep = 'sale-type' | 'seller' | 'customer' | 'products' | 'payment';
+
+const STEPS: { key: WizardStep; label: string }[] = [
+  { key: 'sale-type', label: 'Tipo' },
+  { key: 'seller', label: 'Vendedor' },
+  { key: 'customer', label: 'Cliente' },
+  { key: 'products', label: 'Produtos' },
+  { key: 'payment', label: 'Pagamento' },
+];
 
 const POSPage = () => {
   const navigate = useNavigate();
@@ -26,14 +40,17 @@ const POSPage = () => {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // Wizard state
+  const [currentStep, setCurrentStep] = useState<WizardStep>('sale-type');
   const [saleType, setSaleType] = useState<SaleType>('varejo');
+  const [selectedSeller, setSelectedSeller] = useState<Seller | null>(null);
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [customerCreditBalance, setCustomerCreditBalance] = useState(0);
 
   // Cart state
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [generalDiscount, setGeneralDiscount] = useState<{ type: 'percentage' | 'fixed'; value: number }>({ type: 'percentage', value: 0 });
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
-  const [customerCreditBalance, setCustomerCreditBalance] = useState(0);
 
   // Modals
   const [openSessionModal, setOpenSessionModal] = useState(false);
@@ -47,7 +64,6 @@ const POSPage = () => {
     return unsubscribe;
   }, []);
 
-  // Fetch customer credit balance when customer changes
   useEffect(() => {
     const fetchCreditBalance = async () => {
       if (selectedCustomer?.id) {
@@ -113,7 +129,7 @@ const POSPage = () => {
   const handleProductSelect = useCallback((product: ProductResult) => {
     const unitPrice = resolvePrice(product);
     const existingItem = cartItems.find((item) => item.product_id === product.id && !item.variation_id);
-    
+
     if (existingItem) {
       setCartItems((items) =>
         items.map((item) =>
@@ -144,8 +160,7 @@ const POSPage = () => {
       items.map((item) => {
         if (item.id !== itemId) return item;
         const newQty = Math.min(quantity, item.max_stock);
-        const itemTotal = item.unit_price * newQty - item.discount_amount;
-        return { ...item, quantity: newQty, total: itemTotal };
+        return { ...item, quantity: newQty, total: item.unit_price * newQty - item.discount_amount };
       })
     );
   };
@@ -199,6 +214,7 @@ const POSPage = () => {
       payment_details: paymentDetails,
       amount_received: amountReceived,
       change_amount: amountReceived ? Math.max(0, amountReceived - total) : 0,
+      notes: selectedSeller ? `Vendedor: ${selectedSeller.full_name}` : undefined,
     };
 
     try {
@@ -208,9 +224,9 @@ const POSPage = () => {
         await offlineService.savePendingSale(saleData);
       }
       toast({ title: 'Venda finalizada!', description: `Total: R$ ${total.toFixed(2)}${selectedCustomer ? ` • Cliente: ${selectedCustomer.name}` : ''}` });
-      setCartItems([]);
-      setGeneralDiscount({ type: 'percentage', value: 0 });
-      setSelectedCustomer(null);
+      
+      // Reset wizard
+      resetWizard();
     } catch (error) {
       console.error('Error processing sale:', error);
       toast({ title: 'Erro ao processar venda', variant: 'destructive' });
@@ -227,7 +243,6 @@ const POSPage = () => {
     setIsProcessing(true);
 
     try {
-      // 1. Create sale record for the exchange (new items going out)
       if (data.newItems.length > 0 && data.amountToPay > 0) {
         const saleData: CreateSaleData = {
           local_id: offlineService.generateLocalId(),
@@ -252,21 +267,19 @@ const POSPage = () => {
           payment_method: data.paymentMethod || 'cash',
           amount_received: data.amountReceived,
           change_amount: data.amountReceived ? Math.max(0, data.amountReceived - data.amountToPay) : 0,
-          notes: `TROCA - Devolvidos: ${data.returnedItems.map(i => `${i.quantity}x ${i.name}`).join(', ')}`,
+          notes: `TROCA - Devolvidos: ${data.returnedItems.map(i => `${i.quantity}x ${i.name}`).join(', ')}${selectedSeller ? ` | Vendedor: ${selectedSeller.full_name}` : ''}`,
         };
         await posService.createSale(saleData);
       }
 
-      // 2. Return stock for returned items
       for (const item of data.returnedItems) {
         if (userStoreId) {
-          // Update store_stock
           let stockQuery = supabase
             .from('store_stock')
             .select('id, quantity')
             .eq('store_id', userStoreId)
             .eq('product_id', item.product_id);
-          
+
           if (item.variation_id) {
             stockQuery = stockQuery.eq('variation_id', item.variation_id);
           } else {
@@ -291,7 +304,6 @@ const POSPage = () => {
               });
           }
         }
-        // Also update main product stock
         const { data: product } = await supabase
           .from('products')
           .select('stock')
@@ -305,7 +317,6 @@ const POSPage = () => {
         }
       }
 
-      // 3. Update customer credit balance
       const newCreditBalance = customerCreditBalance - data.creditUsed + data.creditToStore;
       await supabase
         .from('customers')
@@ -318,19 +329,24 @@ const POSPage = () => {
       if (data.creditToStore > 0) messages.push(`Crédito de R$ ${data.creditToStore.toFixed(2)} gerado`);
       if (data.amountToPay > 0) messages.push(`Diferença de R$ ${data.amountToPay.toFixed(2)} paga`);
 
-      toast({
-        title: 'Troca finalizada!',
-        description: messages.join(' • '),
-      });
-
-      setSelectedCustomer(null);
-      setCustomerCreditBalance(0);
+      toast({ title: 'Troca finalizada!', description: messages.join(' • ') });
+      resetWizard();
     } catch (error) {
       console.error('Error processing exchange:', error);
       toast({ title: 'Erro ao processar troca', variant: 'destructive' });
     } finally {
       setIsProcessing(false);
     }
+  };
+
+  const resetWizard = () => {
+    setCurrentStep('sale-type');
+    setSaleType('varejo');
+    setSelectedSeller(null);
+    setSelectedCustomer(null);
+    setCustomerCreditBalance(0);
+    setCartItems([]);
+    setGeneralDiscount({ type: 'percentage', value: 0 });
   };
 
   const handleOpenSession = async (openingBalance: number, notes?: string) => {
@@ -354,6 +370,8 @@ const POSPage = () => {
     toast({ title: type === 'withdrawal' ? 'Sangria registrada' : 'Suprimento registrado' });
   };
 
+  const stepIndex = STEPS.findIndex(s => s.key === currentStep);
+
   if (isLoading) {
     return <div className="h-screen flex items-center justify-center">Carregando...</div>;
   }
@@ -373,102 +391,152 @@ const POSPage = () => {
 
   return (
     <POSLayout session={session} onOpenCashDrawer={() => setCashMovementModal(true)}>
-      <div className="h-full flex">
-        {/* Left side - Products / Exchange */}
-        <div className="flex-1 flex flex-col">
-          <div className="p-4 border-b space-y-3">
-            {/* Sale type selector */}
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">Tipo de venda:</span>
-              <div className="flex gap-1.5 flex-1">
-                {([
-                  { value: 'varejo' as SaleType, label: 'Varejo', icon: ShoppingBag },
-                  { value: 'atacado' as SaleType, label: 'Atacado', icon: Package },
-                  { value: 'exclusivo' as SaleType, label: 'Exclusivo', icon: Star },
-                  { value: 'troca' as SaleType, label: 'Troca', icon: RefreshCw },
-                ]).map(({ value, label, icon: Icon }) => (
-                  <Button
-                    key={value}
-                    variant={saleType === value ? 'default' : 'outline'}
-                    size="sm"
-                    className="flex-1 gap-1.5"
-                    onClick={() => {
-                      if (saleType !== value) {
-                        if (cartItems.length > 0) {
-                          setCartItems([]);
-                          setGeneralDiscount({ type: 'percentage', value: 0 });
-                        }
-                        setSaleType(value);
-                      }
-                    }}
-                  >
-                    <Icon className="h-3.5 w-3.5" />
-                    {label}
-                  </Button>
-                ))}
-              </div>
-            </div>
-            <CustomerSelector 
-              selectedCustomer={selectedCustomer} 
-              onSelectCustomer={setSelectedCustomer} 
-            />
-            {isExchangeMode && !selectedCustomer && (
-              <div className="text-sm text-destructive bg-destructive/10 rounded-md px-3 py-2">
-                ⚠️ Selecione um cliente para realizar a troca
-              </div>
-            )}
-          </div>
+      <div className="h-full flex flex-col">
+        {/* Stepper */}
+        <div className="border-b bg-card px-6 py-3">
+          <div className="flex items-center justify-between max-w-2xl mx-auto">
+            {STEPS.map((step, index) => {
+              const isCompleted = index < stepIndex;
+              const isCurrent = index === stepIndex;
 
-          {isExchangeMode ? (
-            <div className="flex-1 overflow-hidden">
-              <ExchangePanel
-                isOnline={isOnline}
-                customerCreditBalance={customerCreditBalance}
-                onConfirmExchange={handleExchange}
-                isProcessing={isProcessing}
-              />
-            </div>
-          ) : (
-            <>
-              <div className="px-4 pt-3">
-                <ProductSearch onProductSelect={handleProductSelect} isOnline={isOnline} />
+              // Skip products step display for exchange mode
+              if (step.key === 'products' && isExchangeMode) {
+                return (
+                  <div key={step.key} className="flex items-center gap-2">
+                    <div className={cn(
+                      'w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold border-2 transition-all',
+                      isCompleted ? 'bg-primary border-primary text-primary-foreground' :
+                      isCurrent ? 'border-primary text-primary bg-primary/10' :
+                      'border-muted-foreground/30 text-muted-foreground'
+                    )}>
+                      {isCompleted ? <Check className="h-4 w-4" /> : index + 1}
+                    </div>
+                    <span className={cn('text-sm font-medium hidden sm:block', isCurrent ? 'text-primary' : isCompleted ? 'text-foreground' : 'text-muted-foreground')}>
+                      Troca
+                    </span>
+                    {index < STEPS.length - 1 && <div className={cn('w-8 h-0.5 mx-2', isCompleted ? 'bg-primary' : 'bg-muted-foreground/20')} />}
+                  </div>
+                );
+              }
+
+              return (
+                <div key={step.key} className="flex items-center gap-2">
+                  <div className={cn(
+                    'w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold border-2 transition-all',
+                    isCompleted ? 'bg-primary border-primary text-primary-foreground' :
+                    isCurrent ? 'border-primary text-primary bg-primary/10' :
+                    'border-muted-foreground/30 text-muted-foreground'
+                  )}>
+                    {isCompleted ? <Check className="h-4 w-4" /> : index + 1}
+                  </div>
+                  <span className={cn('text-sm font-medium hidden sm:block', isCurrent ? 'text-primary' : isCompleted ? 'text-foreground' : 'text-muted-foreground')}>
+                    {step.label}
+                  </span>
+                  {index < STEPS.length - 1 && <div className={cn('w-8 h-0.5 mx-2', isCompleted ? 'bg-primary' : 'bg-muted-foreground/20')} />}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Step content */}
+        <div className="flex-1 overflow-hidden flex flex-col">
+          {currentStep === 'sale-type' && (
+            <SaleTypeStep
+              saleType={saleType}
+              onSelect={(type) => {
+                if (type !== saleType) {
+                  setCartItems([]);
+                  setGeneralDiscount({ type: 'percentage', value: 0 });
+                }
+                setSaleType(type);
+              }}
+              onNext={() => setCurrentStep('seller')}
+            />
+          )}
+
+          {currentStep === 'seller' && (
+            <SellerStep
+              selectedSeller={selectedSeller}
+              onSelect={setSelectedSeller}
+              onNext={() => setCurrentStep('customer')}
+              onBack={() => setCurrentStep('sale-type')}
+            />
+          )}
+
+          {currentStep === 'customer' && (
+            <CustomerStep
+              selectedCustomer={selectedCustomer}
+              onSelectCustomer={setSelectedCustomer}
+              saleType={saleType}
+              onNext={() => setCurrentStep(isExchangeMode ? 'products' : 'products')}
+              onBack={() => setCurrentStep('seller')}
+            />
+          )}
+
+          {currentStep === 'products' && !isExchangeMode && (
+            <ProductsStep
+              cartItems={cartItems}
+              onProductSelect={handleProductSelect}
+              onUpdateQuantity={handleUpdateQuantity}
+              onRemoveItem={handleRemoveItem}
+              onApplyItemDiscount={handleApplyItemDiscount}
+              generalDiscount={generalDiscount}
+              onApplyGeneralDiscount={(type, value) => setGeneralDiscount({ type, value })}
+              subtotal={subtotal}
+              discountAmount={totalDiscount}
+              total={total}
+              isOnline={isOnline}
+              onNext={() => setCurrentStep('payment')}
+              onBack={() => setCurrentStep('customer')}
+            />
+          )}
+
+          {currentStep === 'products' && isExchangeMode && (
+            <div className="flex-1 overflow-hidden flex flex-col">
+              <div className="p-4 border-b flex items-center gap-4">
+                <Button variant="outline" onClick={() => setCurrentStep('customer')}>
+                  ← Voltar
+                </Button>
+                <h2 className="text-lg font-bold">Troca de Produtos</h2>
               </div>
-              <ProductGrid selectedCategoryId={selectedCategoryId} onCategoryChange={setSelectedCategoryId} onProductSelect={handleProductSelect} isOnline={isOnline} />
-            </>
+              <div className="flex-1 overflow-hidden">
+                <ExchangePanel
+                  isOnline={isOnline}
+                  customerCreditBalance={customerCreditBalance}
+                  onConfirmExchange={handleExchange}
+                  isProcessing={isProcessing}
+                />
+              </div>
+            </div>
+          )}
+
+          {currentStep === 'payment' && (
+            <PaymentStep
+              cartItems={cartItems}
+              subtotal={subtotal}
+              discountAmount={totalDiscount}
+              total={total}
+              saleType={saleType}
+              selectedSeller={selectedSeller}
+              selectedCustomer={selectedCustomer}
+              isProcessing={isProcessing}
+              onPayment={handlePayment}
+              onBack={() => setCurrentStep('products')}
+            />
           )}
         </div>
 
-        {/* Right side - Cart & Payment (hidden in exchange mode) */}
-        {!isExchangeMode && (
-          <div className="w-96 flex flex-col border-l">
-            <Tabs defaultValue="cart" className="flex-1 flex flex-col">
-              <TabsList className="w-full rounded-none border-b">
-                <TabsTrigger value="cart" className="flex-1">Carrinho</TabsTrigger>
-                <TabsTrigger value="payment" className="flex-1" disabled={cartItems.length === 0}>Pagamento</TabsTrigger>
-              </TabsList>
-              <TabsContent value="cart" className="flex-1 m-0">
-                <POSCart items={cartItems} onUpdateQuantity={handleUpdateQuantity} onRemoveItem={handleRemoveItem} onApplyItemDiscount={handleApplyItemDiscount} generalDiscount={generalDiscount} onApplyGeneralDiscount={(type, value) => setGeneralDiscount({ type, value })} subtotal={subtotal} discountAmount={totalDiscount} total={total} />
-              </TabsContent>
-              <TabsContent value="payment" className="flex-1 m-0 overflow-auto">
-                <PaymentPanel total={total} onPayment={handlePayment} isProcessing={isProcessing} disabled={cartItems.length === 0} />
-              </TabsContent>
-            </Tabs>
-            
-            <div className="p-2 border-t flex gap-2">
-              <Button variant="outline" size="sm" className="flex-1" onClick={() => setCashMovementModal(true)}>
-                <ArrowUpDown className="h-4 w-4 mr-1" /> Sangria/Suprimento
-              </Button>
-              <Button variant="destructive" size="sm" onClick={() => setCloseSessionModal(true)}>Fechar Caixa</Button>
-            </div>
-          </div>
-        )}
-
-        {/* Bottom bar in exchange mode */}
-        {isExchangeMode && (
-          <div className="w-0">
-            {/* Exchange panel is full-width in the left side */}
-          </div>
-        )}
+        {/* Bottom bar */}
+        <div className="p-2 border-t flex gap-2 bg-card">
+          <Button variant="outline" size="sm" className="flex-1" onClick={() => setCashMovementModal(true)}>
+            <ArrowUpDown className="h-4 w-4 mr-1" /> Sangria/Suprimento
+          </Button>
+          <Button variant="outline" size="sm" onClick={resetWizard}>
+            Nova Venda
+          </Button>
+          <Button variant="destructive" size="sm" onClick={() => setCloseSessionModal(true)}>Fechar Caixa</Button>
+        </div>
       </div>
 
       <OpenSessionModal open={openSessionModal} onOpenChange={setOpenSessionModal} onConfirm={handleOpenSession} />
