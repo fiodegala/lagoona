@@ -108,9 +108,8 @@ serve(async (req) => {
 
     const { data: products } = await supabase
       .from("products")
-      .select("id, name, price, promotional_price, category_id, is_active, stock, description")
+      .select("id, name, price, promotional_price, category_id, is_active, description")
       .eq("is_active", true)
-      .gt("stock", 0)
       .order("name");
 
     const { data: categories } = await supabase
@@ -118,17 +117,31 @@ serve(async (req) => {
       .select("id, name, slug")
       .eq("is_active", true);
 
+    // Fetch real stock from store_stock (aggregated across all stores)
+    const { data: stockData } = await supabase
+      .from("store_stock")
+      .select("product_id, quantity");
+
+    const stockMap = new Map<string, number>();
+    if (stockData) {
+      for (const s of stockData) {
+        stockMap.set(s.product_id, (stockMap.get(s.product_id) || 0) + s.quantity);
+      }
+    }
+
     const categoryMap = new Map((categories || []).map(c => [c.id, c.name]));
 
     let catalogText = "\n\n## Catálogo de Produtos Disponíveis\n";
     if (products && products.length > 0) {
       for (const p of products) {
+        const realStock = stockMap.get(p.id) || 0;
+        if (realStock <= 0) continue; // Skip out-of-stock products
         const cat = p.category_id ? categoryMap.get(p.category_id) || "Sem categoria" : "Sem categoria";
         const priceStr = p.promotional_price
           ? `~~R$ ${p.price.toFixed(2)}~~ por R$ ${p.promotional_price.toFixed(2)}`
           : `R$ ${p.price.toFixed(2)}`;
         const link = `${STORE_URL}/produto/${p.id}`;
-        catalogText += `- **${p.name}** | Categoria: ${cat} | ${priceStr} | Estoque: ${p.stock} | Link: ${link}\n`;
+        catalogText += `- **${p.name}** | Categoria: ${cat} | ${priceStr} | Link: ${link}\n`;
       }
     } else {
       catalogText += "Nenhum produto disponível no momento.\n";
