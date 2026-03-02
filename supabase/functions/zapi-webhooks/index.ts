@@ -1,17 +1,29 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, client-token",
 };
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    // Validate Z-API Client-Token header
+    const zapiToken = Deno.env.get("ZAPI_TOKEN");
+    if (zapiToken) {
+      const clientToken = req.headers.get("Client-Token") || req.headers.get("client-token");
+      if (!clientToken || clientToken !== zapiToken) {
+        console.warn("Z-API webhook rejected: invalid Client-Token");
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
     const body = await req.json();
     console.log("Z-API Webhook received:", JSON.stringify(body));
 
