@@ -225,14 +225,6 @@ const ProductDetails = () => {
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
           {/* Product Images Gallery */}
           <div className="space-y-4">
-            <ProductImageGallery
-              images={galleryImages}
-              productName={product.name}
-              selectedImage={selectedImage || undefined}
-              onImageChange={setSelectedImage}
-              videoUrl={videoUrl}
-            />
-
             {/* Thumbnail Video */}
             {thumbnailVideoUrl && (
               <>
@@ -284,6 +276,15 @@ const ProductDetails = () => {
                 )}
               </>
             )}
+
+            {/* Product Images Gallery */}
+            <ProductImageGallery
+              images={galleryImages}
+              productName={product.name}
+              selectedImage={selectedImage || undefined}
+              onImageChange={setSelectedImage}
+              videoUrl={videoUrl}
+            />
           </div>
 
           {/* Product Info */}
