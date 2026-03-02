@@ -25,6 +25,7 @@ export type Database = {
           items: Json
           notified_at: string | null
           recovered_at: string | null
+          recovery_coupon_code: string | null
           session_id: string
           shipping_address: Json | null
           status: string
@@ -41,6 +42,7 @@ export type Database = {
           items?: Json
           notified_at?: string | null
           recovered_at?: string | null
+          recovery_coupon_code?: string | null
           session_id: string
           shipping_address?: Json | null
           status?: string
@@ -57,6 +59,7 @@ export type Database = {
           items?: Json
           notified_at?: string | null
           recovered_at?: string | null
+          recovery_coupon_code?: string | null
           session_id?: string
           shipping_address?: Json | null
           status?: string

@@ -32,6 +32,7 @@ const DEFAULT_TEMPLATES: Record<string, string> = {
   delivered: 'Olá {nome}! 🎉\n\nSeu pedido foi *entregue*!\n\nEsperamos que você aproveite! Se precisar de algo, estamos à disposição. 💛',
   cancelled: 'Olá {nome}.\n\nInformamos que seu pedido foi *cancelado*.\n\nSe tiver dúvidas, entre em contato conosco. 🙏',
   tracking: 'Olá {nome}! 🎉\n\nSeu pedido foi enviado!\n\n📦 *Transportadora:* {transportadora}\n🔍 *Código de rastreio:* {codigo}\n\n🔗 Acompanhe aqui: {url}\n\nQualquer dúvida, estamos à disposição! 😊',
+  abandoned_cart: 'Olá {nome}! 👋\n\nNotamos que você deixou alguns itens no carrinho da *Fio de Gala*! 🛒\n\n{produtos}\n💰 *Total: {total}*\n\n🎁 Use o cupom *{cupom}* e ganhe *10% de desconto* para finalizar sua compra!\n\n👉 Acesse: https://fiodegalafdg.lovable.app/loja\n\nPrecisa de ajuda? Responda essa mensagem! 💬',
 };
 
 const TEMPLATE_LABELS: Record<string, string> = {
@@ -41,6 +42,7 @@ const TEMPLATE_LABELS: Record<string, string> = {
   delivered: 'Entregue',
   cancelled: 'Cancelado',
   tracking: 'Rastreio',
+  abandoned_cart: 'Carrinho Abandonado',
 };
 
 const TEMPLATE_VARIABLES: Record<string, string[]> = {
@@ -50,6 +52,7 @@ const TEMPLATE_VARIABLES: Record<string, string[]> = {
   delivered: ['{nome}'],
   cancelled: ['{nome}'],
   tracking: ['{nome}', '{transportadora}', '{codigo}', '{url}'],
+  abandoned_cart: ['{nome}', '{produtos}', '{total}', '{cupom}'],
 };
 
 const SAMPLE_VALUES: Record<string, string> = {
@@ -57,6 +60,9 @@ const SAMPLE_VALUES: Record<string, string> = {
   '{transportadora}': 'Correios',
   '{codigo}': 'QR123456789BR',
   '{url}': 'https://rastreio.correios.com.br/QR123456789BR',
+  '{produtos}': '• Camisa Polo Premium (Branco/M) x1\n• Calça Slim Fit (Preta/42) x1',
+  '{total}': 'R$ 259,90',
+  '{cupom}': 'VOLTA10-ABC12',
 };
 
 function formatPreview(template: string): string {
@@ -332,6 +338,9 @@ const WhatsAppTemplatesSettings = () => {
                               {v === '{transportadora}' && 'Nome da transportadora'}
                               {v === '{codigo}' && 'Código de rastreio'}
                               {v === '{url}' && 'URL de rastreio'}
+                              {v === '{produtos}' && 'Lista de produtos do carrinho'}
+                              {v === '{total}' && 'Valor total do carrinho'}
+                              {v === '{cupom}' && 'Código do cupom de desconto gerado automaticamente'}
                             </TooltipContent>
                           </Tooltip>
                         ))}
