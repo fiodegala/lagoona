@@ -15,7 +15,7 @@ export interface UserStore {
   id: string;
   name: string;
   slug: string;
-  type: 'physical' | 'online';
+  type: 'physical' | 'online' | 'website';
 }
 
 interface AuthContextType {
@@ -167,7 +167,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const canManageUsers = isAdmin;
   const canManageGoals = isAdmin || isManager;
   const userStoreId = userStore?.id || null;
-  const isOnlineStore = userStore?.type === 'online';
+  const isOnlineStore = userStore?.type === 'online' || userStore?.type === 'website';
 
   return (
     <AuthContext.Provider
