@@ -111,13 +111,16 @@ const CheckoutPage = () => {
       if (orderId) {
         await supabase
           .from('orders')
-          .update({
+           .update({
             payment_status: paymentData.status === 'approved' ? 'paid' : 'pending',
             payment_method: paymentData.payment_method_id,
             metadata: {
               mercadopago_payment_id: paymentData.id,
               payment_status: paymentData.status,
               payment_status_detail: paymentData.status_detail,
+              payment_type_id: paymentData.payment_type_id,
+              installments: paymentData.installments || 1,
+              transaction_amount: paymentData.transaction_amount || null,
             },
           })
           .eq('id', orderId);

@@ -49,15 +49,35 @@ const OrderDetailModal = ({ open, onOpenChange, order }: OrderDetailModalProps) 
   const addr = order.shipping_address || {};
 
   const meta = order.metadata || {};
-  const installments = meta.installments || meta.installment_count || null;
-  const installmentAmount = meta.installment_amount || (installments ? (Number(order.total) / installments) : null);
+  const paymentTypeId = meta.payment_type_id || '';
+  const installments = meta.installments || null;
+  const installmentAmount = installments && installments > 0 ? (Number(order.total) / installments) : null;
+
+  const brandMap: Record<string, string> = {
+    master: 'Mastercard', visa: 'Visa', amex: 'American Express',
+    elo: 'Elo', hipercard: 'Hipercard', cabal: 'Cabal',
+  };
 
   const paymentMethodLabel = (() => {
     const method = order.payment_method || '';
-    if (method === 'pix' || method === 'bank_transfer') return 'PIX';
-    if (method === 'bolbradesco' || method === 'boleto') return 'Boleto Bancário';
-    if (method === 'credit_card' || method === 'credit') return 'Cartão de Crédito';
-    if (method === 'debit_card' || method === 'debit') return 'Cartão de Débito';
+    const type = paymentTypeId;
+
+    // If payment_type_id is available, use it to determine type
+    if (type === 'credit_card') {
+      const brand = brandMap[method] || method.charAt(0).toUpperCase() + method.slice(1);
+      return `Cartão de Crédito (${brand})`;
+    }
+    if (type === 'debit_card') {
+      const brand = brandMap[method] || method.charAt(0).toUpperCase() + method.slice(1);
+      return `Cartão de Débito (${brand})`;
+    }
+    if (type === 'bank_transfer' || method === 'pix') return 'PIX';
+    if (type === 'ticket' || method === 'bolbradesco' || method === 'boleto') return 'Boleto Bancário';
+
+    // Fallback: check if method is a known brand (older orders without payment_type_id)
+    if (brandMap[method]) return `Cartão (${brandMap[method]})`;
+    if (method === 'credit_card') return 'Cartão de Crédito';
+    if (method === 'debit_card') return 'Cartão de Débito';
     if (method) return method.charAt(0).toUpperCase() + method.slice(1);
     return null;
   })();

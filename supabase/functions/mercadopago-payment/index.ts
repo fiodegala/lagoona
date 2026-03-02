@@ -106,6 +106,8 @@ async function createPayment(body: any, accessToken: string) {
     status_detail: data.status_detail,
     payment_method_id: data.payment_method_id,
     payment_type_id: data.payment_type_id,
+    installments: data.installments || 1,
+    transaction_amount: data.transaction_amount,
     external_reference: data.external_reference,
   };
 
