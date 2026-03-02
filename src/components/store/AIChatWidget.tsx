@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { MessageCircle, X, Send, Bot, User, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import ReactMarkdown from 'react-markdown';
 
 type Message = { role: 'user' | 'assistant'; content: string };
 
@@ -182,12 +183,29 @@ const AIChatWidget = () => {
                     <Bot className="h-4 w-4 text-store-gold" />
                   </div>
                 )}
-                <div className={`max-w-[80%] px-3 py-2 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${
+                <div className={`max-w-[80%] px-3 py-2 rounded-2xl text-sm leading-relaxed ${
                   msg.role === 'user'
                     ? 'bg-store-dark text-white rounded-br-md'
                     : 'bg-muted text-foreground rounded-bl-md'
                 }`}>
-                  {msg.content}
+                  {msg.role === 'assistant' ? (
+                    <ReactMarkdown
+                      components={{
+                        a: ({ href, children }) => (
+                          <a href={href} target="_blank" rel="noopener noreferrer" className="text-store-gold underline hover:text-store-gold/80 font-medium">
+                            {children}
+                          </a>
+                        ),
+                        p: ({ children }) => <p className="mb-1 last:mb-0">{children}</p>,
+                        strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+                        del: ({ children }) => <del className="opacity-60">{children}</del>,
+                      }}
+                    >
+                      {msg.content}
+                    </ReactMarkdown>
+                  ) : (
+                    msg.content
+                  )}
                 </div>
                 {msg.role === 'user' && (
                   <div className="w-7 h-7 rounded-full bg-store-dark/10 flex items-center justify-center shrink-0 mt-0.5">
