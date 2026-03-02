@@ -1,7 +1,8 @@
-import { useRef } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Printer } from 'lucide-react';
+import logoEtiqueta from '@/assets/logo-etiqueta.png';
 
 interface ShippingLabelProps {
   open: boolean;
@@ -28,6 +29,20 @@ interface ShippingLabelProps {
 
 const ShippingLabelModal = ({ open, onOpenChange, order }: ShippingLabelProps) => {
   const labelRef = useRef<HTMLDivElement>(null);
+  const [logoBase64, setLogoBase64] = useState<string>('');
+
+  useEffect(() => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      canvas.getContext('2d')?.drawImage(img, 0, 0);
+      setLogoBase64(canvas.toDataURL('image/png'));
+    };
+    img.src = logoEtiqueta;
+  }, []);
 
   if (!order) return null;
 
@@ -101,6 +116,10 @@ const ShippingLabelModal = ({ open, onOpenChange, order }: ShippingLabelProps) =
 
         <div ref={labelRef}>
           <div className="label-container" style={{ border: '2px solid #000', padding: '16px', fontFamily: 'Arial, sans-serif' }}>
+            {/* Logo */}
+            <div style={{ textAlign: 'center', marginBottom: '10px', paddingBottom: '10px', borderBottom: '1px dashed #999' }}>
+              <img src={logoBase64 || logoEtiqueta} alt="Fio de Gala" style={{ height: '40px', margin: '0 auto' }} />
+            </div>
             {/* Destinatário */}
             <div className="section" style={{ marginBottom: '12px', paddingBottom: '10px', borderBottom: '1px dashed #999' }}>
               <div className="section-title" style={{ fontSize: '9px', textTransform: 'uppercase', letterSpacing: '1px', color: '#666', marginBottom: '4px', fontWeight: 'bold' }}>
