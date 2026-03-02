@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import AdminLayout from '@/components/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,6 +20,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
   ShoppingCart,
   Search,
@@ -31,10 +32,12 @@ import {
   RefreshCw,
   ExternalLink,
   MessageCircle,
+  BarChart3,
 } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, subDays, startOfDay, startOfWeek, endOfWeek, eachDayOfInterval, eachWeekOfInterval } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend, AreaChart, Area } from 'recharts';
 
 interface AbandonedCart {
   id: string;
@@ -102,6 +105,52 @@ const AbandonedCarts = () => {
     .filter((c) => c.status === 'abandoned')
     .reduce((acc, c) => acc + c.subtotal, 0);
 
+  // Chart data: daily (last 14 days)
+  const dailyChartData = useMemo(() => {
+    const days = eachDayOfInterval({ start: subDays(new Date(), 13), end: new Date() });
+    return days.map((day) => {
+      const dayStart = startOfDay(day);
+      const nextDay = startOfDay(subDays(day, -1));
+      const dayCarts = carts.filter((c) => {
+        const d = new Date(c.created_at);
+        return d >= dayStart && d < nextDay;
+      });
+      const abandoned = dayCarts.filter((c) => c.status === 'abandoned').length;
+      const recovered = dayCarts.filter((c) => c.status === 'recovered').length;
+      const total = dayCarts.length;
+      return {
+        name: format(day, 'dd/MM', { locale: ptBR }),
+        abandonados: abandoned,
+        recuperados: recovered,
+        taxa: total > 0 ? Math.round((abandoned / total) * 100) : 0,
+      };
+    });
+  }, [carts]);
+
+  // Chart data: weekly (last 8 weeks)
+  const weeklyChartData = useMemo(() => {
+    const weeks = eachWeekOfInterval(
+      { start: subDays(new Date(), 55), end: new Date() },
+      { weekStartsOn: 1 }
+    );
+    return weeks.map((weekStart) => {
+      const wEnd = endOfWeek(weekStart, { weekStartsOn: 1 });
+      const weekCarts = carts.filter((c) => {
+        const d = new Date(c.created_at);
+        return d >= weekStart && d <= wEnd;
+      });
+      const abandoned = weekCarts.filter((c) => c.status === 'abandoned').length;
+      const recovered = weekCarts.filter((c) => c.status === 'recovered').length;
+      const total = weekCarts.length;
+      return {
+        name: `${format(weekStart, 'dd/MM')} - ${format(wEnd, 'dd/MM')}`,
+        abandonados: abandoned,
+        recuperados: recovered,
+        taxa: total > 0 ? Math.round((abandoned / total) * 100) : 0,
+      };
+    });
+  }, [carts]);
+
   const markAsRecovered = async (id: string) => {
     try {
       const { error } = await supabase
@@ -164,7 +213,124 @@ const AbandonedCarts = () => {
           </Card>
         </div>
 
-        {/* Search & Refresh */}
+        {/* Charts */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <BarChart3 className="h-4 w-4 text-primary" />
+              Taxa de Abandono
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Tabs defaultValue="daily">
+              <TabsList>
+                <TabsTrigger value="daily">Diário (14 dias)</TabsTrigger>
+                <TabsTrigger value="weekly">Semanal (8 semanas)</TabsTrigger>
+              </TabsList>
+              <TabsContent value="daily" className="pt-4">
+                <div className="h-[280px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={dailyChartData} barGap={2}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-border/40" />
+                      <XAxis dataKey="name" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+                      <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} allowDecimals={false} />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: 'hsl(var(--background))',
+                          border: '1px solid hsl(var(--border))',
+                          borderRadius: '8px',
+                          fontSize: '12px',
+                        }}
+                        formatter={(value: number, name: string) => {
+                          const labels: Record<string, string> = { abandonados: 'Abandonados', recuperados: 'Recuperados', taxa: 'Taxa (%)' };
+                          return [name === 'taxa' ? `${value}%` : value, labels[name] || name];
+                        }}
+                      />
+                      <Legend formatter={(value) => {
+                        const labels: Record<string, string> = { abandonados: 'Abandonados', recuperados: 'Recuperados', taxa: 'Taxa (%)' };
+                        return labels[value] || value;
+                      }} />
+                      <Bar dataKey="abandonados" fill="hsl(var(--destructive))" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="recuperados" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+                {/* Abandonment rate line */}
+                <div className="mt-4 h-[160px]">
+                  <p className="text-xs text-muted-foreground mb-2 font-medium">Taxa de Abandono (%)</p>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={dailyChartData}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-border/40" />
+                      <XAxis dataKey="name" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+                      <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} unit="%" domain={[0, 100]} />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: 'hsl(var(--background))',
+                          border: '1px solid hsl(var(--border))',
+                          borderRadius: '8px',
+                          fontSize: '12px',
+                        }}
+                        formatter={(value: number) => [`${value}%`, 'Taxa']}
+                      />
+                      <Area type="monotone" dataKey="taxa" stroke="hsl(var(--destructive))" fill="hsl(var(--destructive)/0.15)" strokeWidth={2} />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </TabsContent>
+              <TabsContent value="weekly" className="pt-4">
+                <div className="h-[280px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={weeklyChartData} barGap={2}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-border/40" />
+                      <XAxis dataKey="name" tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
+                      <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} allowDecimals={false} />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: 'hsl(var(--background))',
+                          border: '1px solid hsl(var(--border))',
+                          borderRadius: '8px',
+                          fontSize: '12px',
+                        }}
+                        formatter={(value: number, name: string) => {
+                          const labels: Record<string, string> = { abandonados: 'Abandonados', recuperados: 'Recuperados', taxa: 'Taxa (%)' };
+                          return [name === 'taxa' ? `${value}%` : value, labels[name] || name];
+                        }}
+                      />
+                      <Legend formatter={(value) => {
+                        const labels: Record<string, string> = { abandonados: 'Abandonados', recuperados: 'Recuperados', taxa: 'Taxa (%)' };
+                        return labels[value] || value;
+                      }} />
+                      <Bar dataKey="abandonados" fill="hsl(var(--destructive))" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="recuperados" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="mt-4 h-[160px]">
+                  <p className="text-xs text-muted-foreground mb-2 font-medium">Taxa de Abandono (%)</p>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={weeklyChartData}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-border/40" />
+                      <XAxis dataKey="name" tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
+                      <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} unit="%" domain={[0, 100]} />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: 'hsl(var(--background))',
+                          border: '1px solid hsl(var(--border))',
+                          borderRadius: '8px',
+                          fontSize: '12px',
+                        }}
+                        formatter={(value: number) => [`${value}%`, 'Taxa']}
+                      />
+                      <Area type="monotone" dataKey="taxa" stroke="hsl(var(--destructive))" fill="hsl(var(--destructive)/0.15)" strokeWidth={2} />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
+
+
         <div className="flex items-center gap-3">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
