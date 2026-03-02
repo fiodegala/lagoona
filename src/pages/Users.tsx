@@ -174,13 +174,25 @@ const UsersPage = () => {
       });
 
       if (fnError) {
-        // When edge function returns non-2xx, responseData contains the JSON body
-        const errorMsg = responseData?.error || fnError.message || 'Erro ao criar usuário';
+        // Try to parse error from response body or fnError context
+        let errorMsg = 'Erro ao criar usuário';
+        try {
+          if (responseData?.error) {
+            errorMsg = responseData.error;
+          } else if (fnError.context) {
+            const body = await fnError.context.json();
+            errorMsg = body?.error || fnError.message;
+          } else {
+            errorMsg = fnError.message;
+          }
+        } catch {
+          errorMsg = fnError.message || errorMsg;
+        }
         throw new Error(errorMsg);
       }
       if (responseData?.error) throw new Error(responseData.error);
 
-      return responseData.user;
+      return responseData?.user;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users-with-roles'] });
