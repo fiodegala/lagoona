@@ -28,6 +28,7 @@ const VideoTestimonialsSettings = () => {
   const [newTitle, setNewTitle] = useState('');
   const [newCustomerName, setNewCustomerName] = useState('');
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const loadTestimonials = async () => {
     try {
@@ -96,15 +97,37 @@ const VideoTestimonialsSettings = () => {
     }
 
     setIsUploading(true);
+    setUploadProgress(0);
     try {
       const ext = file.name.split('.').pop();
       const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
 
-      const { error: uploadError } = await supabase.storage
-        .from('testimonial-videos')
-        .upload(fileName, file, { contentType: file.type });
+      // Use XMLHttpRequest for progress tracking
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token || supabaseKey;
 
-      if (uploadError) throw uploadError;
+      await new Promise<void>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', `${supabaseUrl}/storage/v1/object/testimonial-videos/${fileName}`);
+        xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+        xhr.setRequestHeader('apikey', supabaseKey);
+        xhr.setRequestHeader('Content-Type', file.type);
+
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) {
+            setUploadProgress(Math.round((e.loaded / e.total) * 100));
+          }
+        };
+
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) resolve();
+          else reject(new Error(`Upload falhou (${xhr.status})`));
+        };
+        xhr.onerror = () => reject(new Error('Erro de rede'));
+        xhr.send(file);
+      });
 
       const { data: urlData } = supabase.storage
         .from('testimonial-videos')
@@ -117,6 +140,7 @@ const VideoTestimonialsSettings = () => {
       toast.error('Erro ao enviar vídeo: ' + err.message);
     } finally {
       setIsUploading(false);
+      setUploadProgress(0);
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
@@ -255,8 +279,19 @@ const VideoTestimonialsSettings = () => {
                   disabled={isUploading}
                 >
                   {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-                  {isUploading ? 'Enviando...' : 'Selecionar vídeo'}
+                  {isUploading ? `Enviando... ${uploadProgress}%` : 'Selecionar vídeo'}
                 </Button>
+                {isUploading && (
+                  <div className="space-y-1">
+                    <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
+                      <div
+                        className="h-full bg-primary rounded-full transition-all duration-300 ease-out"
+                        style={{ width: `${uploadProgress}%` }}
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground text-center">{uploadProgress}% concluído</p>
+                  </div>
+                )}
                 <p className="text-xs text-muted-foreground">Formatos: MP4, WebM, MOV. Recomendado: 9:16 (vertical).</p>
               </div>
             </TabsContent>
