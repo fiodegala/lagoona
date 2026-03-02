@@ -9,7 +9,7 @@ const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/store-chat`;
 const AIChatWidget = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
-    { role: 'assistant', content: 'Olá! 👋 Sou a Clara, assistente virtual da Fio de Gala. Como posso ajudar você hoje?' }
+    { role: 'assistant', content: 'Olá! Me chamo Clara, como posso ajudar você hoje?' }
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
