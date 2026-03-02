@@ -52,6 +52,7 @@ interface AbandonedCart {
   status: string;
   recovered_at: string | null;
   notified_at: string | null;
+  recovery_coupon_code: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -418,6 +419,11 @@ const AbandonedCarts = () => {
                               Notificado
                             </span>
                           )}
+                          {cart.recovery_coupon_code && (
+                            <Badge variant="outline" className="text-xs font-mono">
+                              🎁 {cart.recovery_coupon_code}
+                            </Badge>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell className="text-right">
@@ -485,6 +491,16 @@ const AbandonedCarts = () => {
                     <MessageCircle className="h-3.5 w-3.5" />
                     <span className="text-muted-foreground">Notificado via WhatsApp:</span>{' '}
                     {format(new Date(selectedCart.notified_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                  </div>
+                )}
+                {selectedCart.recovery_coupon_code && (
+                  <div className="bg-primary/10 rounded-lg p-3 flex items-center gap-2">
+                    <span className="text-lg">🎁</span>
+                    <div>
+                      <p className="text-sm font-medium">Cupom de Recuperação</p>
+                      <p className="text-lg font-bold font-mono text-primary">{selectedCart.recovery_coupon_code}</p>
+                      <p className="text-xs text-muted-foreground">10% de desconto • Uso único • Expira em 48h</p>
+                    </div>
                   </div>
                 )}
               </div>

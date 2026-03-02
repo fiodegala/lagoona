@@ -7,6 +7,15 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+function generateCouponCode(): string {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let suffix = "";
+  for (let i = 0; i < 5; i++) {
+    suffix += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return `VOLTA10-${suffix}`;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -58,7 +67,7 @@ serve(async (req) => {
     let sentCount = 0;
 
     // Load custom template if exists
-    let messageTemplate = "Olá {nome}! 👋\n\nNotamos que você deixou alguns itens no carrinho da *Fio de Gala*! 🛒\n\n{produtos}\n💰 *Total: {total}*\n\nFinalize sua compra e garanta suas peças! 😊\n\n👉 Acesse: https://fiodegalafdg.lovable.app/loja\n\nPrecisa de ajuda? Responda essa mensagem! 💬";
+    let messageTemplate = "Olá {nome}! 👋\n\nNotamos que você deixou alguns itens no carrinho da *Fio de Gala*! 🛒\n\n{produtos}\n💰 *Total: {total}*\n\n🎁 Use o cupom *{cupom}* e ganhe *10% de desconto* para finalizar sua compra!\n\n👉 Acesse: https://fiodegalafdg.lovable.app/loja\n\nPrecisa de ajuda? Responda essa mensagem! 💬";
     
     try {
       const { data: configData } = await supabase
@@ -95,11 +104,28 @@ serve(async (req) => {
           currency: "BRL",
         }).format(cart.subtotal || 0);
 
+        // Auto-generate a unique recovery coupon
+        const couponCode = generateCouponCode();
+
+        // Create the coupon in the database (10% off, single use, expires in 48h)
+        const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
+        await supabase.from("coupons").insert({
+          code: couponCode,
+          description: `Cupom de recuperação - Carrinho abandonado (${name})`,
+          discount_type: "percentage",
+          discount_value: 10,
+          max_uses: 1,
+          max_uses_per_customer: 1,
+          is_active: true,
+          expires_at: expiresAt,
+        });
+
         const message = messageTemplate
           .replaceAll("{nome}", name)
           .replaceAll("{produtos}", produtos)
           .replaceAll("{total}", total)
-          .replaceAll("{email}", cart.customer_email || "");
+          .replaceAll("{email}", cart.customer_email || "")
+          .replaceAll("{cupom}", couponCode);
 
         const zapiResponse = await fetch(zapiUrl, {
           method: "POST",
@@ -122,16 +148,19 @@ serve(async (req) => {
           error_message: zapiResponse.ok ? null : JSON.stringify(zapiData),
         });
 
-        // Mark as notified
+        // Mark as notified and store the coupon code
         if (zapiResponse.ok) {
           await supabase
             .from("abandoned_carts")
-            .update({ notified_at: new Date().toISOString() })
+            .update({
+              notified_at: new Date().toISOString(),
+              recovery_coupon_code: couponCode,
+            })
             .eq("id", cart.id);
           sentCount++;
         }
 
-        console.log(`Notification ${zapiResponse.ok ? "sent" : "failed"} for cart ${cart.id} (${formattedPhone})`);
+        console.log(`Notification ${zapiResponse.ok ? "sent" : "failed"} for cart ${cart.id} (${formattedPhone}) with coupon ${couponCode}`);
       } catch (cartErr) {
         console.error(`Error processing cart ${cart.id}:`, cartErr);
       }
