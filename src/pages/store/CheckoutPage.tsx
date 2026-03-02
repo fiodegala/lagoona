@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Loader2, Package, CheckCircle } from 'lucide-react';
 import ShippingCalculator from '@/components/store/ShippingCalculator';
@@ -13,12 +13,24 @@ import StoreLayout from '@/components/store/StoreLayout';
 import { useCart } from '@/contexts/CartContext';
 import { supabase } from '@/integrations/supabase/client';
 
+const ABANDONED_CART_SESSION_KEY = 'abandoned-cart-session';
+
+const getOrCreateSessionId = () => {
+  let sessionId = localStorage.getItem(ABANDONED_CART_SESSION_KEY);
+  if (!sessionId) {
+    sessionId = crypto.randomUUID();
+    localStorage.setItem(ABANDONED_CART_SESSION_KEY, sessionId);
+  }
+  return sessionId;
+};
+
 const CheckoutPage = () => {
-  const { items, getTotal, clearCart } = useCart();
+  const { items, getTotal, getSubtotal, clearCart, getItemCount } = useCart();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderComplete, setOrderComplete] = useState(false);
   const [orderId, setOrderId] = useState<string | null>(null);
   const [step, setStep] = useState<'info' | 'payment'>('info');
+  const [abandonedCartSaved, setAbandonedCartSaved] = useState(false);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -36,6 +48,86 @@ const CheckoutPage = () => {
       style: 'currency',
       currency: 'BRL',
     }).format(price);
+  };
+
+  // Save/update abandoned cart when form data or items change
+  useEffect(() => {
+    if (items.length === 0 || orderComplete) return;
+    // Only save if user has entered at least some data
+    const hasData = formData.name || formData.email || formData.phone;
+    if (!hasData && abandonedCartSaved) return;
+    if (!hasData) return;
+
+    const sessionId = getOrCreateSessionId();
+    const saveTimeout = setTimeout(async () => {
+      try {
+        const cartData = {
+          session_id: sessionId,
+          customer_name: formData.name || null,
+          customer_email: formData.email || null,
+          customer_phone: formData.phone || null,
+          shipping_address: formData.address ? {
+            address: formData.address,
+            city: formData.city,
+            state: formData.state,
+            zip_code: formData.zipCode,
+            complement: formData.complement,
+          } : null,
+          items: items.map(item => ({
+            productId: item.productId,
+            variationId: item.variationId,
+            name: item.name,
+            variationLabel: item.variationLabel,
+            price: item.price,
+            quantity: item.quantity,
+            imageUrl: item.imageUrl,
+          })),
+          subtotal: getSubtotal(),
+          item_count: getItemCount(),
+          status: 'abandoned' as const,
+        };
+
+        // Upsert: try update first, then insert
+        const { data: existing } = await supabase
+          .from('abandoned_carts')
+          .select('id')
+          .eq('session_id', sessionId)
+          .eq('status', 'abandoned')
+          .maybeSingle();
+
+        if (existing) {
+          await supabase
+            .from('abandoned_carts')
+            .update(cartData)
+            .eq('id', existing.id);
+        } else {
+          await supabase
+            .from('abandoned_carts')
+            .insert(cartData);
+        }
+        setAbandonedCartSaved(true);
+      } catch (err) {
+        console.error('Error saving abandoned cart:', err);
+      }
+    }, 2000); // Debounce 2s
+
+    return () => clearTimeout(saveTimeout);
+  }, [formData, items, orderComplete]);
+
+  // Mark cart as recovered when order is completed
+  const markCartRecovered = async () => {
+    const sessionId = localStorage.getItem(ABANDONED_CART_SESSION_KEY);
+    if (!sessionId) return;
+    try {
+      await supabase
+        .from('abandoned_carts')
+        .update({ status: 'recovered', recovered_at: new Date().toISOString() })
+        .eq('session_id', sessionId)
+        .eq('status', 'abandoned');
+      localStorage.removeItem(ABANDONED_CART_SESSION_KEY);
+    } catch (err) {
+      console.error('Error marking cart as recovered:', err);
+    }
   };
 
   const total = getTotal();
@@ -131,6 +223,7 @@ const CheckoutPage = () => {
 
     setOrderComplete(true);
     clearCart();
+    markCartRecovered();
   };
 
   const handlePaymentError = (error: string) => {

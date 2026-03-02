@@ -25,6 +25,7 @@ import Coupons from "./pages/Coupons";
 import NotFound from "./pages/NotFound";
 import ProductDetails from "./pages/ProductDetails";
 import POSPage from "./pages/POSPage";
+import AbandonedCarts from "./pages/AbandonedCarts";
 import Customers from "./pages/Customers";
 import Stock from "./pages/Stock";
 import Shipping from "./pages/Shipping";
@@ -114,6 +115,14 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <Categories />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/abandoned-carts"
+                element={
+                  <ProtectedRoute>
+                    <AbandonedCarts />
                   </ProtectedRoute>
                 }
               />

@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      abandoned_carts: {
+        Row: {
+          created_at: string
+          customer_email: string | null
+          customer_name: string | null
+          customer_phone: string | null
+          id: string
+          item_count: number
+          items: Json
+          recovered_at: string | null
+          session_id: string
+          shipping_address: Json | null
+          status: string
+          subtotal: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          id?: string
+          item_count?: number
+          items?: Json
+          recovered_at?: string | null
+          session_id: string
+          shipping_address?: Json | null
+          status?: string
+          subtotal?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          id?: string
+          item_count?: number
+          items?: Json
+          recovered_at?: string | null
+          session_id?: string
+          shipping_address?: Json | null
+          status?: string
+          subtotal?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       api_key_logs: {
         Row: {
           api_key_id: string
