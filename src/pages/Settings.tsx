@@ -9,6 +9,7 @@ import SalesGoalsSettings from '@/components/settings/SalesGoalsSettings';
 import WhatsAppTemplatesSettings from '@/components/settings/WhatsAppTemplatesSettings';
 import DealsCountdownSettings from '@/components/settings/DealsCountdownSettings';
 import FeaturedProductSettings from '@/components/settings/FeaturedProductSettings';
+import VideoTestimonialsSettings from '@/components/settings/VideoTestimonialsSettings';
 
 const Settings = () => {
   const { profile } = useAuth();
@@ -26,6 +27,8 @@ const Settings = () => {
         <DealsCountdownSettings />
 
         <FeaturedProductSettings />
+
+        <VideoTestimonialsSettings />
 
         <WhatsAppTemplatesSettings />
 

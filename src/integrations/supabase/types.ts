@@ -1445,6 +1445,39 @@ export type Database = {
           },
         ]
       }
+      video_testimonials: {
+        Row: {
+          created_at: string
+          customer_name: string
+          id: string
+          is_active: boolean
+          sort_order: number
+          title: string
+          updated_at: string
+          video_url: string
+        }
+        Insert: {
+          created_at?: string
+          customer_name?: string
+          id?: string
+          is_active?: boolean
+          sort_order?: number
+          title?: string
+          updated_at?: string
+          video_url: string
+        }
+        Update: {
+          created_at?: string
+          customer_name?: string
+          id?: string
+          is_active?: boolean
+          sort_order?: number
+          title?: string
+          updated_at?: string
+          video_url?: string
+        }
+        Relationships: []
+      }
       whatsapp_logs: {
         Row: {
           created_at: string

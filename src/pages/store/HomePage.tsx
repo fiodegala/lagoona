@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import StoreLayout from '@/components/store/StoreLayout';
 import ProductCard from '@/components/store/ProductCard';
 import DealsCountdownSection from '@/components/store/DealsCountdownSection';
+import VideoTestimonialsSection from '@/components/store/VideoTestimonialsSection';
 import FeaturedProductSection from '@/components/store/FeaturedProductSection';
 import { productsService, Product } from '@/services/products';
 import { categoriesService, Category } from '@/services/categories';
@@ -388,6 +389,9 @@ const HomePage = () => {
           )}
         </div>
       </section>
+
+      {/* Depoimentos em Vídeo */}
+      <VideoTestimonialsSection />
 
       {/* Instagram Feed - Elfsight Widget */}
       <section className="py-16 md:py-20 bg-store-secondary/30">
