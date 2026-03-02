@@ -9,6 +9,20 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
+const getWorkingDaysInMonth = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  const lastDay = new Date(year, month + 1, 0).getDate();
+  let count = 0;
+  for (let d = 1; d <= lastDay; d++) {
+    const day = new Date(year, month, d).getDay();
+    // 0=Sun, 1=Mon..6=Sat — count Mon-Sat (1-6)
+    if (day >= 1 && day <= 6) count++;
+  }
+  return count;
+};
+
 const GoalInputs = ({ daily, monthly, onDailyChange, onMonthlyChange, disabled, idPrefix }: {
   daily: string; monthly: string;
   onDailyChange: (v: string) => void; onMonthlyChange: (v: string) => void;
@@ -17,6 +31,16 @@ const GoalInputs = ({ daily, monthly, onDailyChange, onMonthlyChange, disabled, 
   const formatCurrency = (value: string) => {
     const num = parseFloat(value) || 0;
     return num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  };
+
+  const workingDays = getWorkingDaysInMonth();
+
+  const handleMonthlyChange = (value: string) => {
+    onMonthlyChange(value);
+    const num = parseFloat(value);
+    if (num > 0 && workingDays > 0) {
+      onDailyChange(Math.ceil(num / workingDays).toString());
+    }
   };
 
   return (
@@ -41,9 +65,9 @@ const GoalInputs = ({ daily, monthly, onDailyChange, onMonthlyChange, disabled, 
         <div className="relative">
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">R$</span>
           <Input id={`${idPrefix}-monthly`} type="number" min="0" step="1000" value={monthly}
-            onChange={(e) => onMonthlyChange(e.target.value)} className="pl-10" placeholder="30000" disabled={disabled} />
+            onChange={(e) => handleMonthlyChange(e.target.value)} className="pl-10" placeholder="30000" disabled={disabled} />
         </div>
-        {monthly && <p className="text-xs text-muted-foreground">Meta atual: {formatCurrency(monthly)}</p>}
+        {monthly && <p className="text-xs text-muted-foreground">Meta atual: {formatCurrency(monthly)} ({workingDays} dias úteis no mês)</p>}
       </div>
     </div>
   );
