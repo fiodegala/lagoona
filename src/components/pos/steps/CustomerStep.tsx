@@ -62,6 +62,7 @@ const emptyForm = {
   inscricao_municipal: '',
   responsavel_nome: '',
   responsavel_telefone: '',
+  notes: '',
 };
 
 const CustomerStep = ({ selectedCustomer, onSelectCustomer, saleType, onNext, onBack }: CustomerStepProps) => {
@@ -178,6 +179,7 @@ const CustomerStep = ({ selectedCustomer, onSelectCustomer, saleType, onNext, on
         inscricao_municipal: isPJ ? (formData.inscricao_municipal.trim() || null) : null,
         responsavel_nome: isPJ ? (formData.responsavel_nome.trim() || null) : null,
         responsavel_telefone: isPJ ? (formData.responsavel_telefone.trim() || null) : null,
+        notes: formData.notes.trim() || null,
       };
 
       const { data, error } = await supabase
@@ -420,6 +422,18 @@ const CustomerStep = ({ selectedCustomer, onSelectCustomer, saleType, onNext, on
                   </div>
                 </div>
               )}
+
+              {/* Notes */}
+              <div>
+                <Label className="text-sm">Observações</Label>
+                <textarea
+                  className="flex min-h-[60px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  placeholder="Observações sobre o cliente..."
+                  value={formData.notes}
+                  onChange={(e) => updateField('notes', e.target.value)}
+                  rows={2}
+                />
+              </div>
 
               {/* Address section */}
               <div className="pt-2 border-t">
