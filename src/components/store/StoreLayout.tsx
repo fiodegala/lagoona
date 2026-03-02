@@ -1,7 +1,7 @@
 import { ReactNode, useEffect, useState } from 'react';
 import StoreHeader from './StoreHeader';
 import StoreFooter from './StoreFooter';
-import WhatsAppButton from './WhatsAppButton';
+import AIChatWidget from './AIChatWidget';
 import SpinWheel from './SpinWheel';
 import { categoriesService, Category } from '@/services/categories';
 
@@ -31,7 +31,7 @@ const StoreLayout = ({ children }: StoreLayoutProps) => {
         {children}
       </main>
       <StoreFooter />
-      <WhatsAppButton />
+      <AIChatWidget />
       <SpinWheel />
     </div>
   );
