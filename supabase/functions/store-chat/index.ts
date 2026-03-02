@@ -1,11 +1,14 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-const SYSTEM_PROMPT = `Você é a assistente virtual da Fio de Gala (FDG), uma loja de moda masculina premium localizada em Goiânia - GO. Seu nome é Clara. Você é simpática, prestativa e conhece tudo sobre a loja.
+const STORE_URL = Deno.env.get("STORE_URL") || "https://fiodegalafdg.lovable.app";
+
+const BASE_SYSTEM_PROMPT = `Você é a assistente virtual da Fio de Gala (FDG), uma loja de moda masculina premium localizada em Goiânia - GO. Seu nome é Clara. Você é simpática, prestativa e conhece tudo sobre a loja.
 
 ## Sobre a Fio de Gala
 - Loja de moda masculina premium para o homem contemporâneo
@@ -71,14 +74,22 @@ Camisetas, Camisas, Calças, Blazers, e outras peças de moda masculina.
 ## Trabalhe Conosco
 - A FDG aceita candidaturas pelo site na página "Trabalhe Conosco"
 
-## Instruções de Comportamento
+## Instruções de Comportamento para Produtos
+- Quando o cliente perguntar sobre um produto específico (ex: "tem camiseta?", "vocês vendem calça?", "quero ver blazers"), SEMPRE busque no catálogo abaixo os produtos que correspondem.
+- Se encontrar produtos correspondentes, apresente-os com nome, preço e o LINK DIRETO para a página do produto. Formate assim:
+  👉 **[Nome do Produto]** - R$ XX,XX
+  🔗 [Ver produto](LINK)
+- Se o produto tiver preço promocional, mostre ambos: ~~R$ preço original~~ por **R$ preço promocional**
+- Se NÃO encontrar o produto exato, sugira produtos semelhantes do catálogo (mesma categoria ou tipo parecido)
+- Se não houver nenhum produto semelhante, diga educadamente que não temos no momento e ofereça a opção de falar com um atendente pelo WhatsApp: "Você pode falar diretamente com nossa equipe pelo WhatsApp: https://wa.me/5562994165785"
+- Nunca invente produtos que não estão no catálogo abaixo
+
+## Instruções Gerais
 - Seja sempre educada, simpática e profissional
 - Responda de forma concisa e objetiva
-- Se não souber algo específico sobre um produto, sugira que o cliente entre em contato pelo WhatsApp (62) 99416-5785
-- Nunca invente informações sobre preços ou estoque de produtos específicos
-- Quando perguntarem sobre produtos específicos, diga que podem ver o catálogo completo na loja online ou perguntar pelo WhatsApp
 - Use emojis com moderação para tornar a conversa mais agradável
-- Responda sempre em português brasileiro`;
+- Responda sempre em português brasileiro
+- Para dúvidas que não conseguir resolver, sugira contato pelo WhatsApp: https://wa.me/5562994165785`;
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -90,6 +101,41 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
+    // Fetch products from database
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    const { data: products } = await supabase
+      .from("products")
+      .select("id, name, price, promotional_price, category_id, is_active, stock, description")
+      .eq("is_active", true)
+      .gt("stock", 0)
+      .order("name");
+
+    const { data: categories } = await supabase
+      .from("categories")
+      .select("id, name, slug")
+      .eq("is_active", true);
+
+    const categoryMap = new Map((categories || []).map(c => [c.id, c.name]));
+
+    let catalogText = "\n\n## Catálogo de Produtos Disponíveis\n";
+    if (products && products.length > 0) {
+      for (const p of products) {
+        const cat = p.category_id ? categoryMap.get(p.category_id) || "Sem categoria" : "Sem categoria";
+        const priceStr = p.promotional_price
+          ? `~~R$ ${p.price.toFixed(2)}~~ por R$ ${p.promotional_price.toFixed(2)}`
+          : `R$ ${p.price.toFixed(2)}`;
+        const link = `${STORE_URL}/produto/${p.id}`;
+        catalogText += `- **${p.name}** | Categoria: ${cat} | ${priceStr} | Estoque: ${p.stock} | Link: ${link}\n`;
+      }
+    } else {
+      catalogText += "Nenhum produto disponível no momento.\n";
+    }
+
+    const fullSystemPrompt = BASE_SYSTEM_PROMPT + catalogText;
+
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -99,7 +145,7 @@ serve(async (req) => {
       body: JSON.stringify({
         model: "google/gemini-2.5-flash-lite",
         messages: [
-          { role: "system", content: SYSTEM_PROMPT },
+          { role: "system", content: fullSystemPrompt },
           ...messages,
         ],
         stream: true,
