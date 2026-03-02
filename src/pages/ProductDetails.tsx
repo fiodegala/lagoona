@@ -225,6 +225,17 @@ const ProductDetails = () => {
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
           {/* Product Images Gallery */}
           <div className="space-y-4">
+            {/* Main Product Image */}
+            {product.image_url && (
+              <div className="rounded-xl overflow-hidden border bg-muted">
+                <img
+                  src={selectedImage || product.image_url}
+                  alt={product.name}
+                  className="w-full aspect-square object-cover"
+                />
+              </div>
+            )}
+
             {/* Thumbnail Video */}
             {thumbnailVideoUrl && (
               <>
@@ -277,7 +288,7 @@ const ProductDetails = () => {
               </>
             )}
 
-            {/* Product Images Gallery */}
+            {/* Gallery (remaining images) */}
             <ProductImageGallery
               images={galleryImages}
               productName={product.name}
