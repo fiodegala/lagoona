@@ -83,21 +83,27 @@ const ProductDetails = () => {
   }, [product?.image_url]);
 
   // Build gallery images array from product and variations
-  const galleryImages = useMemo(() => {
+  // All images for navigation (main + gallery)
+  const allImages = useMemo(() => {
     const images: string[] = [];
-    
-    // Only additional images (main image is shown separately above)
+    if (product?.image_url) {
+      images.push(product.image_url);
+    }
     const metadata = product?.metadata as { gallery_images?: string[]; video_url?: string } | null;
     if (metadata?.gallery_images && Array.isArray(metadata.gallery_images)) {
       metadata.gallery_images.forEach((img: string) => {
-        if (img && img !== product?.image_url && !images.includes(img)) {
+        if (img && !images.includes(img)) {
           images.push(img);
         }
       });
     }
-    
     return images;
   }, [product]);
+
+  // Only additional images for thumbnail strip below video
+  const galleryImages = useMemo(() => {
+    return allImages.filter(img => img !== product?.image_url);
+  }, [allImages, product?.image_url]);
 
   const videoUrl = useMemo(() => {
     const metadata = product?.metadata as { video_url?: string } | null;
@@ -220,14 +226,41 @@ const ProductDetails = () => {
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
           {/* Product Images Gallery */}
           <div className="space-y-4">
-            {/* Main Product Image */}
+            {/* Main Product Image with Navigation */}
             {product.image_url && (
-              <div className="rounded-xl overflow-hidden border bg-muted">
+              <div className="rounded-xl overflow-hidden border bg-muted relative group">
                 <img
                   src={selectedImage || product.image_url}
                   alt={product.name}
                   className="w-full aspect-square object-cover"
                 />
+                {allImages.length > 1 && (
+                  <>
+                    <button
+                      onClick={() => {
+                        const currentIdx = allImages.indexOf(selectedImage || product.image_url || '');
+                        const prevIdx = (currentIdx - 1 + allImages.length) % allImages.length;
+                        setSelectedImage(allImages[prevIdx]);
+                      }}
+                      className="absolute left-2 top-1/2 -translate-y-1/2 bg-background/80 backdrop-blur-sm hover:bg-background rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <ArrowLeft className="h-5 w-5" />
+                    </button>
+                    <button
+                      onClick={() => {
+                        const currentIdx = allImages.indexOf(selectedImage || product.image_url || '');
+                        const nextIdx = (currentIdx + 1) % allImages.length;
+                        setSelectedImage(allImages[nextIdx]);
+                      }}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 bg-background/80 backdrop-blur-sm hover:bg-background rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                    </button>
+                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-background/70 backdrop-blur-sm rounded-full px-3 py-1 text-xs font-medium">
+                      {allImages.indexOf(selectedImage || product.image_url || '') + 1} / {allImages.length}
+                    </div>
+                  </>
+                )}
               </div>
             )}
 
@@ -283,14 +316,25 @@ const ProductDetails = () => {
               </>
             )}
 
-            {/* Gallery (remaining images) */}
-            <ProductImageGallery
-              images={galleryImages}
-              productName={product.name}
-              selectedImage={selectedImage || undefined}
-              onImageChange={setSelectedImage}
-              videoUrl={videoUrl}
-            />
+            {/* Gallery Thumbnails */}
+            {galleryImages.length > 0 && (
+              <div className="grid grid-cols-4 gap-2">
+                {galleryImages.map((img, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setSelectedImage(img)}
+                    className={cn(
+                      "rounded-lg overflow-hidden border-2 transition-all aspect-square",
+                      (selectedImage || product.image_url) === img
+                        ? "border-store-primary ring-2 ring-store-primary/30"
+                        : "border-transparent hover:border-muted-foreground/30"
+                    )}
+                  >
+                    <img src={img} alt={`${product.name} ${idx + 2}`} className="w-full h-full object-cover" />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Product Info */}
