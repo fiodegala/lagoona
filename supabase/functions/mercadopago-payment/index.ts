@@ -72,6 +72,14 @@ Deno.serve(async (req) => {
           .eq('id', body.order_id)
           .single();
 
+        // Only allow payment for pending orders
+        if (order && order.status !== 'pending') {
+          return new Response(
+            JSON.stringify({ error: 'Order is not in a payable state' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
         if (orderError || !order) {
           return new Response(
             JSON.stringify({ error: 'Invalid order' }),
