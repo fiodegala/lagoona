@@ -9,8 +9,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { ShoppingCart, Truck, ExternalLink, Package, Search, MessageCircle, Clock, CheckCircle2, XCircle, Printer } from 'lucide-react';
+import { ShoppingCart, Truck, ExternalLink, Package, Search, MessageCircle, Clock, CheckCircle2, XCircle, Printer, Eye } from 'lucide-react';
 import ShippingLabelModal from '@/components/ShippingLabelModal';
+import OrderDetailModal from '@/components/OrderDetailModal';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
@@ -65,6 +66,7 @@ const Orders = () => {
   const [whatsappPhone, setWhatsappPhone] = useState('');
   const [sendWhatsapp, setSendWhatsapp] = useState(true);
   const [labelOrder, setLabelOrder] = useState<any>(null);
+  const [detailOrder, setDetailOrder] = useState<any>(null);
 
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ['orders'],
@@ -351,6 +353,10 @@ const Orders = () => {
                           {format(new Date(order.created_at), "dd/MM/yy HH:mm", { locale: ptBR })}
                         </TableCell>
                         <TableCell className="flex items-center gap-1">
+                          <Button variant="outline" size="sm" onClick={() => setDetailOrder(order)}>
+                            <Eye className="h-3 w-3 mr-1" />
+                            Detalhes
+                          </Button>
                           <Button variant="outline" size="sm" onClick={() => openTrackingModal(order)}>
                             <Truck className="h-3 w-3 mr-1" />
                             Rastreio
@@ -472,6 +478,12 @@ const Orders = () => {
         open={!!labelOrder}
         onOpenChange={(open) => !open && setLabelOrder(null)}
         order={labelOrder}
+      />
+
+      <OrderDetailModal
+        open={!!detailOrder}
+        onOpenChange={(open) => !open && setDetailOrder(null)}
+        order={detailOrder}
       />
     </AdminLayout>
   );
