@@ -208,7 +208,7 @@ const OrderDetailModal = ({ open, onOpenChange, order }: OrderDetailModalProps) 
                     <div key={idx} className="flex items-center justify-between rounded-md border p-2.5 text-sm">
                       <div className="flex items-center gap-3 min-w-0">
                         <img
-                          src={item.image_url || '/placeholder.svg'}
+                          src={item.image_url || item.imageUrl || '/placeholder.svg'}
                           alt={item.name || 'Produto'}
                           className="h-12 w-12 rounded-md object-cover shrink-0 border bg-muted"
                         />

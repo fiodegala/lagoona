@@ -140,6 +140,7 @@ const CheckoutPage = () => {
         variation_label: item.variationLabel || null,
         price: item.price,
         quantity: item.quantity,
+        image_url: item.imageUrl || null,
       }));
 
       const { data, error } = await supabase
