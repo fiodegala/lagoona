@@ -32,7 +32,8 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Search, Pencil, Trash2, UserPlus, Loader2, Phone, Mail, MapPin, History, Check, X, Eye } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2, UserPlus, Loader2, Phone, Mail, MapPin, History, Check, X, Eye, User, Building2 } from 'lucide-react';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import CustomerPurchaseHistory from '@/components/customers/CustomerPurchaseHistory';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -52,11 +53,20 @@ interface Customer {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  customer_type: string;
+  birthday: string | null;
+  razao_social: string | null;
+  nome_fantasia: string | null;
+  inscricao_estadual: string | null;
+  inscricao_municipal: string | null;
+  responsavel_nome: string | null;
+  responsavel_telefone: string | null;
 }
 
 type CustomerFormData = Omit<Customer, 'id' | 'created_at' | 'updated_at'>;
 
 const emptyFormData: CustomerFormData = {
+  customer_type: 'pf',
   name: '',
   email: '',
   phone: '',
@@ -67,6 +77,13 @@ const emptyFormData: CustomerFormData = {
   zip_code: '',
   notes: '',
   is_active: true,
+  birthday: '',
+  razao_social: '',
+  nome_fantasia: '',
+  inscricao_estadual: '',
+  inscricao_municipal: '',
+  responsavel_nome: '',
+  responsavel_telefone: '',
 };
 
 const Customers = () => {
@@ -143,6 +160,7 @@ const Customers = () => {
     if (customer) {
       setSelectedCustomer(customer);
       setFormData({
+        customer_type: customer.customer_type || 'pf',
         name: customer.name,
         email: customer.email || '',
         phone: customer.phone || '',
@@ -153,6 +171,13 @@ const Customers = () => {
         zip_code: customer.zip_code || '',
         notes: customer.notes || '',
         is_active: customer.is_active,
+        birthday: customer.birthday || '',
+        razao_social: customer.razao_social || '',
+        nome_fantasia: customer.nome_fantasia || '',
+        inscricao_estadual: customer.inscricao_estadual || '',
+        inscricao_municipal: customer.inscricao_municipal || '',
+        responsavel_nome: customer.responsavel_nome || '',
+        responsavel_telefone: customer.responsavel_telefone || '',
       });
     } else {
       setSelectedCustomer(null);
@@ -169,7 +194,13 @@ const Customers = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name.trim()) {
+    const isPJ = formData.customer_type === 'pj';
+    
+    if (isPJ && !formData.razao_social?.trim()) {
+      toast({ title: 'Razão Social é obrigatória para PJ', variant: 'destructive' });
+      return;
+    }
+    if (!isPJ && !formData.name.trim()) {
       toast({ title: 'Nome é obrigatório', variant: 'destructive' });
       return;
     }
@@ -183,10 +214,15 @@ const Customers = () => {
       }
     }
 
+    const submitData = {
+      ...formData,
+      name: isPJ ? (formData.razao_social?.trim() || '') : formData.name.trim(),
+    };
+
     if (selectedCustomer) {
-      updateMutation.mutate({ id: selectedCustomer.id, data: formData });
+      updateMutation.mutate({ id: selectedCustomer.id, data: submitData });
     } else {
-      createMutation.mutate(formData);
+      createMutation.mutate(submitData);
     }
   };
 
@@ -537,71 +573,206 @@ const Customers = () => {
           </DialogHeader>
           <form onSubmit={handleSubmit}>
             <div className="grid gap-4 py-4">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Nome *</Label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="Nome completo"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="document">CPF/CNPJ</Label>
-                  <div className="relative">
-                    <Input
-                      id="document"
-                      value={formData.document || ''}
-                      onChange={(e) => handleDocumentChange(e.target.value)}
-                      placeholder="000.000.000-00"
-                      className={formData.document ? (
-                        validateDocument(formData.document).valid 
-                          ? 'pr-10 border-primary focus-visible:ring-primary' 
-                          : 'pr-10 border-destructive focus-visible:ring-destructive'
-                      ) : ''}
-                    />
-                    {formData.document && formData.document.replace(/\D/g, '').length >= 11 && (
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                        {validateDocument(formData.document).valid ? (
-                          <Check className="h-4 w-4 text-primary" />
-                        ) : (
-                          <X className="h-4 w-4 text-destructive" />
+              {/* Tipo de Pessoa */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Tipo de Pessoa</Label>
+                <RadioGroup
+                  value={formData.customer_type}
+                  onValueChange={(v) => setFormData({ ...formData, customer_type: v })}
+                  className="flex gap-4"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="pf" id="form-pf" />
+                    <Label htmlFor="form-pf" className="cursor-pointer font-normal flex items-center gap-1.5">
+                      <User className="h-3.5 w-3.5" /> Pessoa Física
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="pj" id="form-pj" />
+                    <Label htmlFor="form-pj" className="cursor-pointer font-normal flex items-center gap-1.5">
+                      <Building2 className="h-3.5 w-3.5" /> Pessoa Jurídica
+                    </Label>
+                  </div>
+                </RadioGroup>
+              </div>
+
+              {formData.customer_type === 'pf' ? (
+                <>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="name">Nome Completo *</Label>
+                      <Input
+                        id="name"
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        placeholder="Nome completo"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="document">CPF</Label>
+                      <div className="relative">
+                        <Input
+                          id="document"
+                          value={formData.document || ''}
+                          onChange={(e) => handleDocumentChange(e.target.value)}
+                          placeholder="000.000.000-00"
+                          className={formData.document ? (
+                            validateDocument(formData.document).valid 
+                              ? 'pr-10 border-primary focus-visible:ring-primary' 
+                              : 'pr-10 border-destructive focus-visible:ring-destructive'
+                          ) : ''}
+                        />
+                        {formData.document && formData.document.replace(/\D/g, '').length >= 11 && (
+                          <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                            {validateDocument(formData.document).valid ? (
+                              <Check className="h-4 w-4 text-primary" />
+                            ) : (
+                              <X className="h-4 w-4 text-destructive" />
+                            )}
+                          </div>
                         )}
                       </div>
-                    )}
+                      {formData.document && formData.document.replace(/\D/g, '').length >= 11 && !validateDocument(formData.document).valid && (
+                        <p className="text-xs text-destructive">
+                          {validateDocument(formData.document).message}
+                        </p>
+                      )}
+                    </div>
                   </div>
-                  {formData.document && formData.document.replace(/\D/g, '').length >= 11 && !validateDocument(formData.document).valid && (
-                    <p className="text-xs text-destructive">
-                      {validateDocument(formData.document).message}
-                    </p>
-                  )}
-                </div>
-              </div>
+                  <div className="grid gap-4 sm:grid-cols-3">
+                    <div className="space-y-2">
+                      <Label htmlFor="birthday">Data de Nascimento</Label>
+                      <Input
+                        id="birthday"
+                        type="date"
+                        value={formData.birthday || ''}
+                        onChange={(e) => setFormData({ ...formData, birthday: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="phone">Telefone</Label>
+                      <Input
+                        id="phone"
+                        value={formData.phone || ''}
+                        onChange={(e) => handlePhoneChange(e.target.value)}
+                        placeholder="(00) 00000-0000"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="email">E-mail</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        value={formData.email || ''}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        placeholder="email@exemplo.com"
+                      />
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="razao_social">Razão Social *</Label>
+                      <Input
+                        id="razao_social"
+                        value={formData.razao_social || ''}
+                        onChange={(e) => setFormData({ ...formData, razao_social: e.target.value })}
+                        placeholder="Razão Social"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="nome_fantasia">Nome Fantasia</Label>
+                      <Input
+                        id="nome_fantasia"
+                        value={formData.nome_fantasia || ''}
+                        onChange={(e) => setFormData({ ...formData, nome_fantasia: e.target.value })}
+                        placeholder="Nome fantasia"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="document">CNPJ</Label>
+                      <div className="relative">
+                        <Input
+                          id="document"
+                          value={formData.document || ''}
+                          onChange={(e) => handleDocumentChange(e.target.value)}
+                          placeholder="00.000.000/0000-00"
+                          className={formData.document ? (
+                            validateDocument(formData.document).valid 
+                              ? 'pr-10 border-primary focus-visible:ring-primary' 
+                              : 'pr-10 border-destructive focus-visible:ring-destructive'
+                          ) : ''}
+                        />
+                        {formData.document && formData.document.replace(/\D/g, '').length >= 11 && (
+                          <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                            {validateDocument(formData.document).valid ? (
+                              <Check className="h-4 w-4 text-primary" />
+                            ) : (
+                              <X className="h-4 w-4 text-destructive" />
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="inscricao_estadual">Inscrição Estadual</Label>
+                      <Input
+                        id="inscricao_estadual"
+                        value={formData.inscricao_estadual || ''}
+                        onChange={(e) => setFormData({ ...formData, inscricao_estadual: e.target.value })}
+                        placeholder="Inscrição estadual"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="phone">Telefone</Label>
+                      <Input
+                        id="phone"
+                        value={formData.phone || ''}
+                        onChange={(e) => handlePhoneChange(e.target.value)}
+                        placeholder="(00) 0000-0000"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="email">E-mail</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        value={formData.email || ''}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        placeholder="contato@empresa.com"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="responsavel_nome">Responsável</Label>
+                      <Input
+                        id="responsavel_nome"
+                        value={formData.responsavel_nome || ''}
+                        onChange={(e) => setFormData({ ...formData, responsavel_nome: e.target.value })}
+                        placeholder="Nome do responsável"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="responsavel_telefone">Telefone do Responsável</Label>
+                      <Input
+                        id="responsavel_telefone"
+                        value={formData.responsavel_telefone || ''}
+                        onChange={(e) => setFormData({ ...formData, responsavel_telefone: e.target.value })}
+                        placeholder="(00) 00000-0000"
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
 
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="email">E-mail</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={formData.email || ''}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    placeholder="email@exemplo.com"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Telefone</Label>
-                  <Input
-                    id="phone"
-                    value={formData.phone || ''}
-                    onChange={(e) => handlePhoneChange(e.target.value)}
-                    placeholder="(00) 00000-0000"
-                  />
-                </div>
-              </div>
-
+              {/* Endereço */}
               <div className="grid gap-4 sm:grid-cols-3">
                 <div className="space-y-2">
                   <Label htmlFor="zip_code" className="flex items-center gap-2">
@@ -622,9 +793,6 @@ const Customers = () => {
                       </div>
                     )}
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    Digite o CEP para preencher automaticamente
-                  </p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="city">Cidade</Label>
@@ -636,7 +804,7 @@ const Customers = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="state">Estado</Label>
+                  <Label htmlFor="state">UF</Label>
                   <Input
                     id="state"
                     value={formData.state || ''}
@@ -735,13 +903,57 @@ const Customers = () => {
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
+                  <p className="text-xs text-muted-foreground">Tipo</p>
+                  <p className="font-medium">{selectedCustomer.customer_type === 'pj' ? 'Pessoa Jurídica' : 'Pessoa Física'}</p>
+                </div>
+                <div>
                   <p className="text-xs text-muted-foreground">Nome</p>
                   <p className="font-medium">{selectedCustomer.name}</p>
                 </div>
+                {selectedCustomer.customer_type === 'pj' && (
+                  <>
+                    {selectedCustomer.razao_social && (
+                      <div>
+                        <p className="text-xs text-muted-foreground">Razão Social</p>
+                        <p className="font-medium">{selectedCustomer.razao_social}</p>
+                      </div>
+                    )}
+                    {selectedCustomer.nome_fantasia && (
+                      <div>
+                        <p className="text-xs text-muted-foreground">Nome Fantasia</p>
+                        <p className="font-medium">{selectedCustomer.nome_fantasia}</p>
+                      </div>
+                    )}
+                    {selectedCustomer.inscricao_estadual && (
+                      <div>
+                        <p className="text-xs text-muted-foreground">Inscrição Estadual</p>
+                        <p className="font-medium">{selectedCustomer.inscricao_estadual}</p>
+                      </div>
+                    )}
+                    {selectedCustomer.responsavel_nome && (
+                      <div>
+                        <p className="text-xs text-muted-foreground">Responsável</p>
+                        <p className="font-medium">{selectedCustomer.responsavel_nome}</p>
+                      </div>
+                    )}
+                    {selectedCustomer.responsavel_telefone && (
+                      <div>
+                        <p className="text-xs text-muted-foreground">Tel. Responsável</p>
+                        <p className="font-medium">{selectedCustomer.responsavel_telefone}</p>
+                      </div>
+                    )}
+                  </>
+                )}
                 <div>
                   <p className="text-xs text-muted-foreground">Documento</p>
                   <p className="font-medium">{selectedCustomer.document || '-'}</p>
                 </div>
+                {selectedCustomer.birthday && (
+                  <div>
+                    <p className="text-xs text-muted-foreground">Data de Nascimento</p>
+                    <p className="font-medium">{new Date(selectedCustomer.birthday + 'T00:00:00').toLocaleDateString('pt-BR')}</p>
+                  </div>
+                )}
                 <div>
                   <p className="text-xs text-muted-foreground">E-mail</p>
                   <p className="font-medium">{selectedCustomer.email || '-'}</p>
