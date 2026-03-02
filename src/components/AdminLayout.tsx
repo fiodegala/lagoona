@@ -49,7 +49,7 @@ const navItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/admin' },
   { icon: Monitor, label: 'PDV', path: '/admin/pos' },
   { icon: Package, label: 'Produtos', path: '/admin/products', requireAdmin: true },
-  { icon: FolderTree, label: 'Categorias', path: '/admin/categories' },
+  { icon: FolderTree, label: 'Categorias', path: '/admin/categories', requireAdmin: true },
   { icon: Warehouse, label: 'Estoque', path: '/admin/stock' },
   { icon: UserPlus, label: 'Clientes', path: '/admin/customers' },
   { icon: ShoppingCart, label: 'Pedidos', path: '/admin/orders' },
