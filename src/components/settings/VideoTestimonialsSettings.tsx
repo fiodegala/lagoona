@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Video, Plus, Trash2, Loader2, GripVertical, Save } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Video, Plus, Trash2, Loader2, GripVertical, Upload } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -26,7 +27,8 @@ const VideoTestimonialsSettings = () => {
   const [newVideoUrl, setNewVideoUrl] = useState('');
   const [newTitle, setNewTitle] = useState('');
   const [newCustomerName, setNewCustomerName] = useState('');
-
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const loadTestimonials = async () => {
     try {
       const { data, error } = await supabase
@@ -47,8 +49,9 @@ const VideoTestimonialsSettings = () => {
     loadTestimonials();
   }, []);
 
-  const handleAdd = async () => {
-    if (!newVideoUrl.trim()) {
+  const handleAdd = async (videoUrl?: string) => {
+    const url = videoUrl || newVideoUrl.trim();
+    if (!url) {
       toast.error('Informe a URL do vídeo');
       return;
     }
@@ -56,7 +59,7 @@ const VideoTestimonialsSettings = () => {
     setIsSaving(true);
     try {
       const { error } = await supabase.from('video_testimonials').insert({
-        video_url: newVideoUrl.trim(),
+        video_url: url,
         title: newTitle.trim(),
         customer_name: newCustomerName.trim(),
         sort_order: testimonials.length,
@@ -75,6 +78,46 @@ const VideoTestimonialsSettings = () => {
       toast.error('Erro ao adicionar: ' + err.message);
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('video/')) {
+      toast.error('Selecione um arquivo de vídeo válido');
+      return;
+    }
+
+    if (file.size > 100 * 1024 * 1024) {
+      toast.error('O vídeo deve ter no máximo 100MB');
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const ext = file.name.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('testimonial-videos')
+        .upload(fileName, file, { contentType: file.type });
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from('testimonial-videos')
+        .getPublicUrl(fileName);
+
+      await handleAdd(urlData.publicUrl);
+      toast.success('Vídeo enviado com sucesso!');
+    } catch (err: any) {
+      console.error(err);
+      toast.error('Erro ao enviar vídeo: ' + err.message);
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
@@ -148,22 +191,15 @@ const VideoTestimonialsSettings = () => {
           Depoimentos em Vídeo
         </CardTitle>
         <CardDescription>
-          Gerencie os vídeos de depoimentos exibidos na página inicial. Use URLs do YouTube, Instagram ou links diretos (.mp4).
+          Gerencie os vídeos de depoimentos exibidos na página inicial. Use URLs do YouTube, Instagram, links diretos (.mp4) ou envie seu próprio vídeo.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Add new */}
         <div className="border rounded-lg p-4 space-y-3 bg-muted/30">
           <h4 className="font-medium text-sm">Adicionar novo depoimento</h4>
-          <div className="grid gap-3 sm:grid-cols-3">
-            <div className="space-y-1">
-              <Label className="text-xs">URL do vídeo *</Label>
-              <Input
-                placeholder="https://youtube.com/shorts/..."
-                value={newVideoUrl}
-                onChange={(e) => setNewVideoUrl(e.target.value)}
-              />
-            </div>
+          
+          <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1">
               <Label className="text-xs">Título</Label>
               <Input
@@ -181,10 +217,50 @@ const VideoTestimonialsSettings = () => {
               />
             </div>
           </div>
-          <Button onClick={handleAdd} disabled={isSaving} size="sm" className="gap-2">
-            {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-            Adicionar
-          </Button>
+
+          <Tabs defaultValue="url" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 h-9">
+              <TabsTrigger value="url" className="text-xs">URL externa</TabsTrigger>
+              <TabsTrigger value="upload" className="text-xs">Enviar vídeo</TabsTrigger>
+            </TabsList>
+            <TabsContent value="url" className="space-y-3 mt-3">
+              <div className="space-y-1">
+                <Label className="text-xs">URL do vídeo *</Label>
+                <Input
+                  placeholder="https://youtube.com/shorts/..."
+                  value={newVideoUrl}
+                  onChange={(e) => setNewVideoUrl(e.target.value)}
+                />
+              </div>
+              <Button onClick={() => handleAdd()} disabled={isSaving} size="sm" className="gap-2">
+                {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+                Adicionar
+              </Button>
+            </TabsContent>
+            <TabsContent value="upload" className="space-y-3 mt-3">
+              <div className="space-y-1">
+                <Label className="text-xs">Arquivo de vídeo (máx 100MB)</Label>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="video/*"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2 w-full"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploading}
+                >
+                  {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                  {isUploading ? 'Enviando...' : 'Selecionar vídeo'}
+                </Button>
+                <p className="text-xs text-muted-foreground">Formatos: MP4, WebM, MOV. Recomendado: 9:16 (vertical).</p>
+              </div>
+            </TabsContent>
+          </Tabs>
         </div>
 
         {/* List */}
