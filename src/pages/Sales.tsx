@@ -309,8 +309,8 @@ const Sales = () => {
                         {item.variation && <p className="text-xs text-muted-foreground">{item.variation}</p>}
                       </div>
                       <div className="text-right text-sm">
-                        <p>{item.quantity}x R$ {Number(item.price).toFixed(2)}</p>
-                        <p className="font-medium">R$ {(item.quantity * Number(item.price)).toFixed(2)}</p>
+                        <p>{item.quantity}x R$ {Number(item.unit_price ?? item.price ?? 0).toFixed(2)}</p>
+                        <p className="font-medium">R$ {Number(item.total ?? (item.quantity * Number(item.unit_price ?? item.price ?? 0))).toFixed(2)}</p>
                       </div>
                     </div>
                   ))}
