@@ -30,6 +30,7 @@ import Customers from "./pages/Customers";
 import Stock from "./pages/Stock";
 import Shipping from "./pages/Shipping";
 import Banners from "./pages/Banners";
+import Sales from "./pages/Sales";
 // Store Pages
 import HomePage from "./pages/store/HomePage";
 import StorePage from "./pages/store/StorePage";
@@ -147,6 +148,14 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <Orders />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/sales"
+                element={
+                  <ProtectedRoute>
+                    <Sales />
                   </ProtectedRoute>
                 }
               />
