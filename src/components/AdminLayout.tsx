@@ -24,6 +24,7 @@ import {
   Warehouse,
   Truck,
   Image as ImageIcon,
+  ShoppingBasket,
 } from 'lucide-react';
 import logoLagoona from '@/assets/logo-lagoona-white.png';
 import { Button } from '@/components/ui/button';
@@ -51,6 +52,7 @@ const navItems = [
   { icon: Warehouse, label: 'Estoque', path: '/admin/stock' },
   { icon: UserPlus, label: 'Clientes', path: '/admin/customers' },
   { icon: ShoppingCart, label: 'Pedidos', path: '/admin/orders' },
+  { icon: ShoppingBasket, label: 'Carrinhos Abandonados', path: '/admin/abandoned-carts' },
   { icon: Star, label: 'Avaliações', path: '/admin/reviews' },
   { icon: Tag, label: 'Cupons', path: '/admin/coupons' },
   { icon: Truck, label: 'Frete', path: '/admin/shipping' },
