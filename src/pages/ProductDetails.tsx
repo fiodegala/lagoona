@@ -108,6 +108,11 @@ const ProductDetails = () => {
     return metadata?.video_url || undefined;
   }, [product]);
 
+  const thumbnailVideoUrl = useMemo(() => {
+    const metadata = product?.metadata as { thumbnail_video_url?: string } | null;
+    return metadata?.thumbnail_video_url || undefined;
+  }, [product]);
+
   const basePrice = selectedVariation?.price ?? product?.price ?? 0;
   const promotionalPrice = selectedVariation?.promotional_price ?? product?.promotional_price ?? null;
   const currentPrice = promotionalPrice && promotionalPrice < basePrice ? promotionalPrice : basePrice;
@@ -218,13 +223,29 @@ const ProductDetails = () => {
 
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
           {/* Product Images Gallery */}
-          <ProductImageGallery
-            images={galleryImages}
-            productName={product.name}
-            selectedImage={selectedImage || undefined}
-            onImageChange={setSelectedImage}
-            videoUrl={videoUrl}
-          />
+          <div className="space-y-4">
+            <ProductImageGallery
+              images={galleryImages}
+              productName={product.name}
+              selectedImage={selectedImage || undefined}
+              onImageChange={setSelectedImage}
+              videoUrl={videoUrl}
+            />
+
+            {/* Thumbnail Video */}
+            {thumbnailVideoUrl && (
+              <div className="rounded-xl overflow-hidden border bg-muted">
+                <video
+                  src={thumbnailVideoUrl}
+                  muted
+                  autoPlay
+                  loop
+                  playsInline
+                  className="w-full aspect-video object-cover"
+                />
+              </div>
+            )}
+          </div>
 
           {/* Product Info */}
           <div className="space-y-6">
