@@ -650,7 +650,7 @@ const Customers = () => {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="phone">Telefone</Label>
+                      <Label htmlFor="phone">WhatsApp</Label>
                       <Input
                         id="phone"
                         value={formData.phone || ''}
@@ -730,7 +730,7 @@ const Customers = () => {
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div className="space-y-2">
-                      <Label htmlFor="phone">Telefone</Label>
+                      <Label htmlFor="phone">WhatsApp</Label>
                       <Input
                         id="phone"
                         value={formData.phone || ''}
@@ -760,7 +760,7 @@ const Customers = () => {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="responsavel_telefone">Telefone do Responsável</Label>
+                      <Label htmlFor="responsavel_telefone">WhatsApp do Responsável</Label>
                       <Input
                         id="responsavel_telefone"
                         value={formData.responsavel_telefone || ''}
@@ -938,7 +938,7 @@ const Customers = () => {
                     )}
                     {selectedCustomer.responsavel_telefone && (
                       <div>
-                        <p className="text-xs text-muted-foreground">Tel. Responsável</p>
+                        <p className="text-xs text-muted-foreground">WhatsApp Responsável</p>
                         <p className="font-medium">{selectedCustomer.responsavel_telefone}</p>
                       </div>
                     )}
@@ -957,7 +957,7 @@ const Customers = () => {
                   <p className="font-medium">{selectedCustomer.email || '-'}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">Telefone</p>
+                  <p className="text-xs text-muted-foreground">WhatsApp</p>
                   <p className="font-medium">{selectedCustomer.phone || '-'}</p>
                 </div>
                 <div>
