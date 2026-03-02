@@ -125,6 +125,8 @@ interface SalesGoal {
   store_id: string | null;
 }
 
+const SITE_STORE_ID = 'e0b8ebbc-1b3b-4aec-b5f7-6925762e6ea1';
+
 const Dashboard = () => {
   const { profile, roles, isAdmin, userStoreId, userStore } = useAuth();
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('all');
@@ -151,6 +153,9 @@ const Dashboard = () => {
   }, [isAdmin]);
 
   const activeStoreFilter = isAdmin ? (selectedStoreId === 'all' ? null : selectedStoreId) : userStoreId;
+  const isSiteStoreSelected = activeStoreFilter === SITE_STORE_ID;
+  const isViewingAllStores = !activeStoreFilter;
+  const selectedStoreType = stores.find(s => s.id === activeStoreFilter)?.type || userStore?.type || null;
 
   useEffect(() => {
     loadDashboardData();
@@ -161,8 +166,26 @@ const Dashboard = () => {
       setIsLoading(true);
 
       // Fetch all data in parallel
-      // Use activeStoreFilter computed above
       const storeFilter = activeStoreFilter;
+
+      // Orders: filter by Site store_id when viewing Site, or show all site orders when viewing all
+      let ordersQuery = supabase.from('orders').select('id, status, total, customer_name, customer_email, created_at, shipping_address');
+      if (isSiteStoreSelected) {
+        ordersQuery = ordersQuery.eq('store_id', SITE_STORE_ID);
+      } else if (storeFilter) {
+        // Non-site store selected: no orders to show (orders come from site only)
+        ordersQuery = ordersQuery.eq('store_id', SITE_STORE_ID).limit(0);
+      }
+      // When viewing all stores, show all orders (no filter)
+
+      // POS Sales: filter by store when a specific store is selected
+      let posSalesQuery = supabase.from('pos_sales').select('*').order('created_at', { ascending: false });
+      if (isSiteStoreSelected) {
+        // Site store has no POS sales
+        posSalesQuery = posSalesQuery.eq('store_id', SITE_STORE_ID).limit(0);
+      } else if (storeFilter) {
+        posSalesQuery = posSalesQuery.eq('store_id', storeFilter);
+      }
 
       const [
         productsRes,
@@ -175,15 +198,11 @@ const Dashboard = () => {
         customersRes
       ] = await Promise.all([
         supabase.from('products').select('id, is_active'),
-        storeFilter
-          ? supabase.from('orders').select('id, status, total, customer_name, customer_email, created_at, shipping_address').eq('store_id', storeFilter)
-          : supabase.from('orders').select('id, status, total, customer_name, customer_email, created_at, shipping_address'),
+        ordersQuery,
         supabase.from('product_reviews').select('id, is_approved'),
         supabase.from('coupons').select('id, is_active'),
         supabase.from('categories').select('id, is_active'),
-        storeFilter
-          ? supabase.from('pos_sales').select('*').eq('store_id', storeFilter).order('created_at', { ascending: false })
-          : supabase.from('pos_sales').select('*').order('created_at', { ascending: false }),
+        posSalesQuery,
         supabase.from('sales_goals').select('*').eq('is_active', true),
         supabase.from('customers').select('id, state, city'),
       ]);
@@ -495,11 +514,11 @@ const Dashboard = () => {
     }
     
     // Create combined data for comparison chart
-    const comparisonData = chartData.map((online, index) => ({
-      name: online.name,
-      online: online.receita,
+    const comparisonData = chartData.map((siteData, index) => ({
+      name: siteData.name,
+      site: siteData.receita,
       pdv: chartDataPOS[index]?.receita || 0,
-      onlineVendas: online.vendas,
+      siteVendas: siteData.vendas,
       pdvVendas: chartDataPOS[index]?.vendas || 0,
     }));
 
@@ -842,7 +861,9 @@ const Dashboard = () => {
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground">Receita Online</p>
+                      <p className="text-sm font-medium text-muted-foreground">
+                        {isSiteStoreSelected ? 'Receita Site' : 'Receita Pedidos'}
+                      </p>
                       <p className="text-2xl font-bold mt-1">{formatCurrency(stats?.totalRevenue || 0)}</p>
                       <p className="text-xs text-muted-foreground mt-1">
                         {getPeriodLabel(periodFilter)}
@@ -914,10 +935,10 @@ const Dashboard = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5 text-primary" />
-              Comparativo: PDV vs Online
+              Comparativo: PDV vs Site
             </CardTitle>
             <CardDescription>
-              Receita comparativa entre vendas na loja física e online - {getPeriodLabel(periodFilter)}
+              Receita comparativa entre vendas no PDV e no Site - {getPeriodLabel(periodFilter)}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -933,7 +954,7 @@ const Dashboard = () => {
                     <Tooltip 
                       formatter={(value: number, name: string) => [
                         formatCurrency(value), 
-                        name === 'online' ? 'Online' : 'PDV'
+                        name === 'site' ? 'Site' : 'PDV'
                       ]}
                       contentStyle={{ 
                         backgroundColor: 'hsl(var(--card))', 
@@ -942,8 +963,8 @@ const Dashboard = () => {
                       }}
                     />
                     <Bar 
-                      dataKey="online" 
-                      name="Online"
+                      dataKey="site" 
+                      name="Site"
                       fill="hsl(var(--primary))" 
                       radius={[4, 4, 0, 0]}
                     />
@@ -961,7 +982,7 @@ const Dashboard = () => {
                   <div className="flex items-center gap-2">
                     <div className="w-4 h-4 rounded bg-primary" />
                     <div className="text-sm">
-                      <span className="text-muted-foreground">Online: </span>
+                      <span className="text-muted-foreground">Site: </span>
                       <span className="font-semibold">{formatCurrency(stats?.totalRevenue || 0)}</span>
                       <span className="text-muted-foreground text-xs ml-1">({stats?.totalOrders || 0} pedidos)</span>
                     </div>
@@ -995,7 +1016,7 @@ const Dashboard = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <TrendingUp className="h-5 w-5 text-primary" />
-                Vendas Online - {getPeriodLabel(periodFilter)}
+                Vendas Site - {getPeriodLabel(periodFilter)}
               </CardTitle>
               <CardDescription>
                 Acompanhe o desempenho de vendas diário
@@ -1090,11 +1111,12 @@ const Dashboard = () => {
           </Card>
         </div>
 
-        {/* POS Sales Section */}
+        {/* POS Sales Section - Hidden when viewing Site store */}
+        {!isSiteStoreSelected && (
         <div className="space-y-4">
           <div className="flex items-center gap-2">
             <Store className="h-5 w-5 text-primary" />
-            <h2 className="text-lg font-semibold">Vendas PDV (Loja Física)</h2>
+            <h2 className="text-lg font-semibold">Vendas PDV</h2>
           </div>
           
           {/* POS Stats Grid */}
@@ -1447,6 +1469,7 @@ const Dashboard = () => {
             </CardContent>
           </Card>
         </div>
+        )}
 
         {/* Sales by Region Map */}
         <BrazilSalesMap salesByState={salesByState} isLoading={isLoading} />

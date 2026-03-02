@@ -83,6 +83,7 @@ serve(async (req) => {
         payment_method: body.payment_method || null,
         notes: body.notes || null,
         metadata: body.metadata || {},
+        store_id: 'e0b8ebbc-1b3b-4aec-b5f7-6925762e6ea1', // Site store
       };
 
       const { data, error } = await supabase
