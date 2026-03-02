@@ -1244,28 +1244,58 @@ export type Database = {
       }
       profiles: {
         Row: {
+          address: string | null
+          address_number: string | null
           avatar_url: string | null
+          birthday: string | null
+          city: string | null
+          complement: string | null
           created_at: string
+          document: string | null
           full_name: string
           id: string
+          neighborhood: string | null
+          phone: string | null
+          state: string | null
           updated_at: string
           user_id: string
+          zip_code: string | null
         }
         Insert: {
+          address?: string | null
+          address_number?: string | null
           avatar_url?: string | null
+          birthday?: string | null
+          city?: string | null
+          complement?: string | null
           created_at?: string
+          document?: string | null
           full_name: string
           id?: string
+          neighborhood?: string | null
+          phone?: string | null
+          state?: string | null
           updated_at?: string
           user_id: string
+          zip_code?: string | null
         }
         Update: {
+          address?: string | null
+          address_number?: string | null
           avatar_url?: string | null
+          birthday?: string | null
+          city?: string | null
+          complement?: string | null
           created_at?: string
+          document?: string | null
           full_name?: string
           id?: string
+          neighborhood?: string | null
+          phone?: string | null
+          state?: string | null
           updated_at?: string
           user_id?: string
+          zip_code?: string | null
         }
         Relationships: []
       }
