@@ -323,12 +323,12 @@ const CustomerStep = ({ selectedCustomer, onSelectCustomer, saleType, onNext, on
 
       {/* Register Dialog */}
       <Dialog open={showRegisterDialog} onOpenChange={setShowRegisterDialog}>
-        <DialogContent className="max-w-lg max-h-[90vh] flex flex-col">
+        <DialogContent className="max-w-lg max-h-[90vh] flex flex-col overflow-hidden">
           <DialogHeader>
             <DialogTitle>Cadastrar Novo Cliente</DialogTitle>
           </DialogHeader>
 
-          <ScrollArea className="flex-1 pr-4">
+          <div className="flex-1 overflow-y-auto pr-2" style={{ maxHeight: 'calc(90vh - 140px)' }}>
             <div className="space-y-4 py-2">
               {/* Customer type */}
               <div className="space-y-2">
@@ -441,7 +441,7 @@ const CustomerStep = ({ selectedCustomer, onSelectCustomer, saleType, onNext, on
                 </div>
               </div>
             </div>
-          </ScrollArea>
+          </div>
 
           <div className="pt-4 border-t">
             <Button className="w-full" onClick={handleSaveCustomer} disabled={isSaving}>
