@@ -1616,6 +1616,10 @@ export type Database = {
       }
       is_admin_or_manager: { Args: { _user_id: string }; Returns: boolean }
       is_online_store_user: { Args: { _user_id: string }; Returns: boolean }
+      user_accessible_store_ids: {
+        Args: { _user_id: string }
+        Returns: string[]
+      }
       user_store_id: { Args: { _user_id: string }; Returns: string }
     }
     Enums: {

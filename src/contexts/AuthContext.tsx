@@ -25,6 +25,7 @@ interface AuthContextType {
   roles: AppRole[];
   userStore: UserStore | null;
   userStoreId: string | null;
+  accessibleStoreIds: string[];
   isOnlineStore: boolean;
   isLoading: boolean;
   isAdmin: boolean;
@@ -55,6 +56,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [profile, setProfile] = useState<Profile | null>(null);
   const [roles, setRoles] = useState<AppRole[]>([]);
   const [userStore, setUserStore] = useState<UserStore | null>(null);
+  const [accessibleStoreIds, setAccessibleStoreIds] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchUserData = async (userId: string) => {
@@ -90,9 +92,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           
           if (storeData) {
             setUserStore(storeData as UserStore);
+            
+            // If user is from 'online' store, also include 'website' store
+            if (storeData.type === 'online') {
+              const { data: websiteStore } = await supabase
+                .from('stores')
+                .select('id')
+                .eq('type', 'website')
+                .maybeSingle();
+              setAccessibleStoreIds(websiteStore ? [storeId, websiteStore.id] : [storeId]);
+            } else {
+              setAccessibleStoreIds([storeId]);
+            }
           }
         } else {
           setUserStore(null);
+          setAccessibleStoreIds([]);
         }
       }
     } catch (error) {
@@ -155,8 +170,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(null);
     setSession(null);
     setProfile(null);
-    setRoles([]);
-    setUserStore(null);
+          setRoles([]);
+          setUserStore(null);
+          setAccessibleStoreIds([]);
   };
 
   const hasRole = (role: AppRole) => roles.includes(role);
@@ -178,6 +194,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         roles,
         userStore,
         userStoreId,
+        accessibleStoreIds,
         isOnlineStore,
         isLoading,
         isAdmin,
