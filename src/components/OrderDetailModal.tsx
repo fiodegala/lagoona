@@ -48,6 +48,20 @@ const OrderDetailModal = ({ open, onOpenChange, order }: OrderDetailModalProps) 
 
   const addr = order.shipping_address || {};
 
+  const meta = order.metadata || {};
+  const installments = meta.installments || meta.installment_count || null;
+  const installmentAmount = meta.installment_amount || (installments ? (Number(order.total) / installments) : null);
+
+  const paymentMethodLabel = (() => {
+    const method = order.payment_method || '';
+    if (method === 'pix' || method === 'bank_transfer') return 'PIX';
+    if (method === 'bolbradesco' || method === 'boleto') return 'Boleto Bancário';
+    if (method === 'credit_card' || method === 'credit') return 'Cartão de Crédito';
+    if (method === 'debit_card' || method === 'debit') return 'Cartão de Débito';
+    if (method) return method.charAt(0).toUpperCase() + method.slice(1);
+    return null;
+  })();
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg max-h-[90vh] flex flex-col">
@@ -105,6 +119,29 @@ const OrderDetailModal = ({ open, onOpenChange, order }: OrderDetailModalProps) 
                     {addr.neighborhood && <p>{addr.neighborhood}</p>}
                     {(addr.city || addr.state) && <p>{[addr.city, addr.state].filter(Boolean).join(' - ')}</p>}
                     {addr.zip_code && <p className="font-mono">CEP: {addr.zip_code}</p>}
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* Pagamento */}
+            {paymentMethodLabel && (
+              <>
+                <Separator />
+                <div>
+                  <h4 className="text-sm font-semibold mb-2 flex items-center gap-1.5">
+                    <CreditCard className="h-3.5 w-3.5 text-muted-foreground" />
+                    Forma de Pagamento
+                  </h4>
+                  <div className="text-sm space-y-0.5">
+                    <p className="font-medium">{paymentMethodLabel}</p>
+                    {installments && installments > 1 ? (
+                      <p className="text-muted-foreground">
+                        {installments}x de R$ {Number(installmentAmount).toFixed(2)} sem juros
+                      </p>
+                    ) : installments === 1 ? (
+                      <p className="text-muted-foreground">À vista</p>
+                    ) : null}
                   </div>
                 </div>
               </>
