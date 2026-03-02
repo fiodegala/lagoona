@@ -143,16 +143,27 @@ const Dashboard = () => {
   const [customers, setCustomers] = useState<CustomerWithLocation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load stores for admin selector
+  // Load stores for selector (admin sees all, online users see their accessible stores)
   useEffect(() => {
     if (isAdmin) {
       supabase.from('stores').select('id, name, type').eq('is_active', true).order('name').then(({ data }) => {
         setStores(data || []);
       });
+    } else if (accessibleStoreIds.length > 1) {
+      supabase.from('stores').select('id, name, type').in('id', accessibleStoreIds).eq('is_active', true).order('name').then(({ data }) => {
+        setStores(data || []);
+      });
     }
-  }, [isAdmin]);
+  }, [isAdmin, accessibleStoreIds]);
 
-  const activeStoreFilter = isAdmin ? (selectedStoreId === 'all' ? null : selectedStoreId) : userStoreId;
+  // Set default store for non-admin users with multiple stores
+  useEffect(() => {
+    if (!isAdmin && accessibleStoreIds.length > 1 && selectedStoreId === 'all' && userStoreId) {
+      setSelectedStoreId(userStoreId);
+    }
+  }, [isAdmin, accessibleStoreIds, userStoreId]);
+  const showStoreSelector = isAdmin || accessibleStoreIds.length > 1;
+  const activeStoreFilter = isAdmin ? (selectedStoreId === 'all' ? null : selectedStoreId) : (accessibleStoreIds.length > 1 ? (selectedStoreId === 'all' ? null : selectedStoreId) : userStoreId);
   const canAccessSiteStore = isAdmin || accessibleStoreIds.includes(SITE_STORE_ID);
   const isSiteStoreSelected = activeStoreFilter === SITE_STORE_ID;
   const isViewingAllStores = !activeStoreFilter;
@@ -650,14 +661,14 @@ const Dashboard = () => {
 
           <div className="flex items-center gap-3 flex-wrap">
             {/* Store Selector (admin only) */}
-            {isAdmin && stores.length > 0 && (
+            {showStoreSelector && stores.length > 0 && (
               <Select value={selectedStoreId} onValueChange={setSelectedStoreId}>
                 <SelectTrigger className="w-[180px] h-9 text-xs">
                   <Store className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
                   <SelectValue placeholder="Todas as lojas" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todas as lojas</SelectItem>
+                  {isAdmin && <SelectItem value="all">Todas as lojas</SelectItem>}
                   {stores.map((store) => (
                     <SelectItem key={store.id} value={store.id}>{store.name}</SelectItem>
                   ))}
