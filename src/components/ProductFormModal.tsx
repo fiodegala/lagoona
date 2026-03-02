@@ -29,6 +29,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import ImageUpload from './ImageUpload';
 import MultiImageUpload from './MultiImageUpload';
+import VideoUpload from './VideoUpload';
 import ProductVariationsEditor from './ProductVariationsEditor';
 
 interface StoreInfo {
@@ -613,42 +614,63 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
 
       {/* Video Section */}
       <div className="space-y-2">
-        <Label htmlFor="videoUrl">Vídeo do Produto (Galeria)</Label>
+        <Label>Vídeo do Produto (Galeria)</Label>
         <p className="text-xs text-muted-foreground mb-1">
-          Cole a URL de um vídeo (YouTube, Instagram Reels, TikTok, Vimeo ou link direto .mp4)
+          Envie um vídeo ou cole a URL (YouTube, Instagram Reels, TikTok, Vimeo ou .mp4)
         </p>
-        <Input
-          id="videoUrl"
-          value={videoUrl}
-          onChange={(e) => setVideoUrl(e.target.value)}
-          placeholder="https://www.youtube.com/watch?v=... ou Instagram/TikTok/Vimeo"
-        />
+        <Tabs defaultValue="upload" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="upload">Upload</TabsTrigger>
+            <TabsTrigger value="url">URL</TabsTrigger>
+          </TabsList>
+          <TabsContent value="upload" className="mt-3">
+            <VideoUpload
+              value={videoUrl}
+              onChange={(url) => setVideoUrl(url || '')}
+              bucket="product-images"
+              folder="videos"
+            />
+          </TabsContent>
+          <TabsContent value="url" className="mt-3">
+            <Input
+              id="videoUrl"
+              value={videoUrl}
+              onChange={(e) => setVideoUrl(e.target.value)}
+              placeholder="https://www.youtube.com/watch?v=... ou Instagram/TikTok/Vimeo"
+            />
+          </TabsContent>
+        </Tabs>
       </div>
 
       {/* Thumbnail Video Section */}
       <div className="space-y-2">
-        <Label htmlFor="thumbnailVideoUrl">Vídeo em Miniatura</Label>
+        <Label>Vídeo em Miniatura</Label>
         <p className="text-xs text-muted-foreground mb-1">
-          Vídeo curto que aparece na página do produto como preview (link direto .mp4 ou URL de vídeo). Reproduz automaticamente, sem som.
+          Vídeo curto como preview na página do produto. Reproduz automaticamente, sem som.
         </p>
-        <Input
-          id="thumbnailVideoUrl"
-          value={thumbnailVideoUrl}
-          onChange={(e) => setThumbnailVideoUrl(e.target.value)}
-          placeholder="https://exemplo.com/video-miniatura.mp4"
-        />
-        {thumbnailVideoUrl && (
-          <div className="mt-2 rounded-lg overflow-hidden border bg-muted aspect-video max-w-xs">
-            <video
-              src={thumbnailVideoUrl}
-              muted
-              autoPlay
-              loop
-              playsInline
-              className="w-full h-full object-cover"
+        <Tabs defaultValue="upload" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="upload">Upload</TabsTrigger>
+            <TabsTrigger value="url">URL</TabsTrigger>
+          </TabsList>
+          <TabsContent value="upload" className="mt-3">
+            <VideoUpload
+              value={thumbnailVideoUrl}
+              onChange={(url) => setThumbnailVideoUrl(url || '')}
+              bucket="product-images"
+              folder="thumbnail-videos"
+              maxSizeMB={20}
             />
-          </div>
-        )}
+          </TabsContent>
+          <TabsContent value="url" className="mt-3">
+            <Input
+              id="thumbnailVideoUrl"
+              value={thumbnailVideoUrl}
+              onChange={(e) => setThumbnailVideoUrl(e.target.value)}
+              placeholder="https://exemplo.com/video-miniatura.mp4"
+            />
+          </TabsContent>
+        </Tabs>
       </div>
 
       {/* Shipping Section */}
