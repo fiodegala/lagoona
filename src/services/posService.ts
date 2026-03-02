@@ -321,33 +321,29 @@ export const posService = {
       }
     }
 
-    // Update product stock
-    for (const item of saleData.items) {
-      if (item.variation_id) {
-        const { data: variation } = await supabase
-          .from('product_variations')
-          .select('stock')
-          .eq('id', item.variation_id)
-          .single();
+    // Update store_stock for the seller's store
+    const storeId = saleData.store_id;
+    if (storeId) {
+      for (const item of saleData.items) {
+        let query = supabase
+          .from('store_stock')
+          .select('id, quantity')
+          .eq('store_id', storeId)
+          .eq('product_id', item.product_id);
 
-        if (variation) {
-          await supabase
-            .from('product_variations')
-            .update({ stock: Math.max(0, variation.stock - item.quantity) })
-            .eq('id', item.variation_id);
+        if (item.variation_id) {
+          query = query.eq('variation_id', item.variation_id);
+        } else {
+          query = query.is('variation_id', null);
         }
-      } else {
-        const { data: product } = await supabase
-          .from('products')
-          .select('stock')
-          .eq('id', item.product_id)
-          .single();
 
-        if (product) {
+        const { data: stock } = await query.maybeSingle();
+
+        if (stock) {
           await supabase
-            .from('products')
-            .update({ stock: Math.max(0, product.stock - item.quantity) })
-            .eq('id', item.product_id);
+            .from('store_stock')
+            .update({ quantity: Math.max(0, stock.quantity - item.quantity) })
+            .eq('id', stock.id);
         }
       }
     }
