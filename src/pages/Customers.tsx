@@ -32,7 +32,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Search, Pencil, Trash2, UserPlus, Loader2, Phone, Mail, MapPin, History, Check, X } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2, UserPlus, Loader2, Phone, Mail, MapPin, History, Check, X, Eye } from 'lucide-react';
 import CustomerPurchaseHistory from '@/components/customers/CustomerPurchaseHistory';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -74,6 +74,7 @@ const Customers = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [formData, setFormData] = useState<CustomerFormData>(emptyFormData);
   const [isLoadingCep, setIsLoadingCep] = useState(false);
@@ -477,6 +478,17 @@ const Customers = () => {
                             <Button
                               variant="ghost"
                               size="icon"
+                              onClick={() => {
+                                setSelectedCustomer(customer);
+                                setIsDetailOpen(true);
+                              }}
+                              title="Ver detalhes"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
                               onClick={() => handleOpenHistory(customer)}
                               title="Histórico de compras"
                             >
@@ -709,6 +721,87 @@ const Customers = () => {
               customerId={selectedCustomer.id}
               customerName={selectedCustomer.name}
             />
+          )}
+        </DialogContent>
+      </Dialog>
+      {/* Detail Dialog */}
+      <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Detalhes do Cliente</DialogTitle>
+            <DialogDescription>{selectedCustomer?.name}</DialogDescription>
+          </DialogHeader>
+          {selectedCustomer && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-xs text-muted-foreground">Nome</p>
+                  <p className="font-medium">{selectedCustomer.name}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Documento</p>
+                  <p className="font-medium">{selectedCustomer.document || '-'}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">E-mail</p>
+                  <p className="font-medium">{selectedCustomer.email || '-'}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Telefone</p>
+                  <p className="font-medium">{selectedCustomer.phone || '-'}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">CEP</p>
+                  <p className="font-medium">{selectedCustomer.zip_code || '-'}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Cidade/UF</p>
+                  <p className="font-medium">
+                    {selectedCustomer.city && selectedCustomer.state
+                      ? `${selectedCustomer.city}/${selectedCustomer.state}`
+                      : selectedCustomer.city || selectedCustomer.state || '-'}
+                  </p>
+                </div>
+              </div>
+              {selectedCustomer.address && (
+                <div>
+                  <p className="text-xs text-muted-foreground">Endereço</p>
+                  <p className="font-medium">{selectedCustomer.address}</p>
+                </div>
+              )}
+              {selectedCustomer.notes && (
+                <div>
+                  <p className="text-xs text-muted-foreground">Observações</p>
+                  <p className="font-medium">{selectedCustomer.notes}</p>
+                </div>
+              )}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-xs text-muted-foreground">Status</p>
+                  <Badge variant={selectedCustomer.is_active ? 'default' : 'secondary'}>
+                    {selectedCustomer.is_active ? 'Ativo' : 'Inativo'}
+                  </Badge>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Cadastrado em</p>
+                  <p className="font-medium">
+                    {new Date(selectedCustomer.created_at).toLocaleDateString('pt-BR')}
+                  </p>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsDetailOpen(false)}>
+                  Fechar
+                </Button>
+                <Button onClick={() => {
+                  setIsDetailOpen(false);
+                  handleOpenForm(selectedCustomer);
+                }}>
+                  <Pencil className="h-4 w-4 mr-2" />
+                  Editar
+                </Button>
+              </DialogFooter>
+            </div>
           )}
         </DialogContent>
       </Dialog>
