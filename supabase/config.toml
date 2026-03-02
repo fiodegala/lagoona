@@ -14,3 +14,6 @@ verify_jwt = false
 
 [functions.abandoned-cart-notify]
 verify_jwt = false
+
+[functions.abandoned-cart]
+verify_jwt = false

@@ -53,7 +53,6 @@ const CheckoutPage = () => {
   // Save/update abandoned cart when form data or items change
   useEffect(() => {
     if (items.length === 0 || orderComplete) return;
-    // Only save if user has entered at least some data
     const hasData = formData.name || formData.email || formData.phone;
     if (!hasData && abandonedCartSaved) return;
     if (!hasData) return;
@@ -62,7 +61,6 @@ const CheckoutPage = () => {
     const saveTimeout = setTimeout(async () => {
       try {
         const cartData = {
-          session_id: sessionId,
           customer_name: formData.name || null,
           customer_email: formData.email || null,
           customer_phone: formData.phone || null,
@@ -84,32 +82,16 @@ const CheckoutPage = () => {
           })),
           subtotal: getSubtotal(),
           item_count: getItemCount(),
-          status: 'abandoned' as const,
         };
 
-        // Upsert: try update first, then insert
-        const { data: existing } = await supabase
-          .from('abandoned_carts')
-          .select('id')
-          .eq('session_id', sessionId)
-          .eq('status', 'abandoned')
-          .maybeSingle();
-
-        if (existing) {
-          await supabase
-            .from('abandoned_carts')
-            .update(cartData)
-            .eq('id', existing.id);
-        } else {
-          await supabase
-            .from('abandoned_carts')
-            .insert(cartData);
-        }
+        await supabase.functions.invoke('abandoned-cart', {
+          body: { action: 'upsert', session_id: sessionId, cart_data: cartData },
+        });
         setAbandonedCartSaved(true);
       } catch (err) {
         console.error('Error saving abandoned cart:', err);
       }
-    }, 2000); // Debounce 2s
+    }, 2000);
 
     return () => clearTimeout(saveTimeout);
   }, [formData, items, orderComplete]);
@@ -119,11 +101,9 @@ const CheckoutPage = () => {
     const sessionId = localStorage.getItem(ABANDONED_CART_SESSION_KEY);
     if (!sessionId) return;
     try {
-      await supabase
-        .from('abandoned_carts')
-        .update({ status: 'recovered', recovered_at: new Date().toISOString() })
-        .eq('session_id', sessionId)
-        .eq('status', 'abandoned');
+      await supabase.functions.invoke('abandoned-cart', {
+        body: { action: 'recover', session_id: sessionId },
+      });
       localStorage.removeItem(ABANDONED_CART_SESSION_KEY);
     } catch (err) {
       console.error('Error marking cart as recovered:', err);
