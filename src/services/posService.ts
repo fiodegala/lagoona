@@ -418,13 +418,50 @@ export const posService = {
   },
 
   async getAllActiveProducts() {
-    const { data, error } = await supabase
-      .from('products')
-      .select('*, product_variations(*), categories(name)')
-      .eq('is_active', true)
-      .order('name');
+    const [productsRes, stockRes] = await Promise.all([
+      supabase
+        .from('products')
+        .select('*, product_variations(*), categories(name)')
+        .eq('is_active', true)
+        .order('name'),
+      supabase
+        .from('store_stock')
+        .select('product_id, variation_id, quantity'),
+    ]);
 
-    if (error) throw error;
-    return data || [];
+    if (productsRes.error) throw productsRes.error;
+
+    // Build stock lookup from store_stock
+    const stockByProduct = new Map<string, number>();
+    const stockByVariation = new Map<string, number>();
+
+    for (const s of stockRes.data || []) {
+      if (s.variation_id) {
+        stockByVariation.set(s.variation_id, (stockByVariation.get(s.variation_id) || 0) + s.quantity);
+      } else {
+        stockByProduct.set(s.product_id, (stockByProduct.get(s.product_id) || 0) + s.quantity);
+      }
+    }
+
+    // Enrich products with aggregated stock
+    const products = (productsRes.data || []).map((p: any) => {
+      const variations = (p.product_variations || []).map((v: any) => ({
+        ...v,
+        stock: stockByVariation.get(v.id) || 0,
+      }));
+
+      // Product stock: if has variations, sum variation stocks; otherwise use store_stock
+      const totalStock = variations.length > 0
+        ? variations.reduce((sum: number, v: any) => sum + v.stock, 0)
+        : (stockByProduct.get(p.id) || 0);
+
+      return {
+        ...p,
+        stock: totalStock,
+        product_variations: variations,
+      };
+    });
+
+    return products;
   },
 };
