@@ -13,7 +13,7 @@ import VideoTestimonialsSettings from '@/components/settings/VideoTestimonialsSe
 import RecoveryCouponSettings from '@/components/settings/RecoveryCouponSettings';
 
 const Settings = () => {
-  const { profile } = useAuth();
+  const { profile, isAdmin } = useAuth();
 
   return (
     <AdminLayout>
@@ -25,15 +25,15 @@ const Settings = () => {
 
         <SalesGoalsSettings />
 
-        <DealsCountdownSettings />
-
-        <FeaturedProductSettings />
-
-        <VideoTestimonialsSettings />
-
-        <RecoveryCouponSettings />
-
-        <WhatsAppTemplatesSettings />
+        {isAdmin && (
+          <>
+            <DealsCountdownSettings />
+            <FeaturedProductSettings />
+            <VideoTestimonialsSettings />
+            <RecoveryCouponSettings />
+            <WhatsAppTemplatesSettings />
+          </>
+        )}
 
         <div className="grid gap-6 lg:grid-cols-2">
           <Card className="card-elevated">
