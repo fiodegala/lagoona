@@ -948,12 +948,10 @@ const Customers = () => {
                   <p className="text-xs text-muted-foreground">Documento</p>
                   <p className="font-medium">{selectedCustomer.document || '-'}</p>
                 </div>
-                {selectedCustomer.birthday && (
-                  <div>
-                    <p className="text-xs text-muted-foreground">Data de Nascimento</p>
-                    <p className="font-medium">{new Date(selectedCustomer.birthday + 'T00:00:00').toLocaleDateString('pt-BR')}</p>
-                  </div>
-                )}
+                <div>
+                  <p className="text-xs text-muted-foreground">Data de Nascimento</p>
+                  <p className="font-medium">{selectedCustomer.birthday ? new Date(selectedCustomer.birthday + 'T00:00:00').toLocaleDateString('pt-BR') : '-'}</p>
+                </div>
                 <div>
                   <p className="text-xs text-muted-foreground">E-mail</p>
                   <p className="font-medium">{selectedCustomer.email || '-'}</p>
