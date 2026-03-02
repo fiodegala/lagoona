@@ -163,7 +163,7 @@ const UsersPage = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('Sessão não encontrada');
 
-      const response = await supabase.functions.invoke('create-user', {
+      const { data: responseData, error: fnError } = await supabase.functions.invoke('create-user', {
         body: {
           email: data.email,
           password: data.password,
@@ -173,14 +173,14 @@ const UsersPage = () => {
         },
       });
 
-      if (response.error) {
-        // Try to extract the error message from the response data
-        const errorMsg = response.data?.error || response.error.message || 'Erro ao criar usuário';
+      if (fnError) {
+        // When edge function returns non-2xx, responseData contains the JSON body
+        const errorMsg = responseData?.error || fnError.message || 'Erro ao criar usuário';
         throw new Error(errorMsg);
       }
-      if (response.data?.error) throw new Error(response.data.error);
+      if (responseData?.error) throw new Error(responseData.error);
 
-      return response.data.user;
+      return responseData.user;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users-with-roles'] });
