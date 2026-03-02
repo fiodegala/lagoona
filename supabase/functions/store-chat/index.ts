@@ -1,4 +1,3 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -7,6 +6,30 @@ const corsHeaders = {
 };
 
 const STORE_URL = Deno.env.get("STORE_URL") || "https://fiodegalafdg.lovable.app";
+
+// In-memory rate limiting per IP
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMIT_WINDOW_MS = 60_000; // 1 minute
+const RATE_LIMIT_MAX = 10; // 10 requests/minute
+
+function checkRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const entry = rateLimitMap.get(ip);
+  if (!entry || now > entry.resetAt) {
+    rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    return true;
+  }
+  entry.count++;
+  return entry.count <= RATE_LIMIT_MAX;
+}
+
+// Clean up old entries periodically
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, val] of rateLimitMap) {
+    if (now > val.resetAt) rateLimitMap.delete(key);
+  }
+}, 60_000);
 
 const BASE_SYSTEM_PROMPT = `Você é a assistente virtual da Fio de Gala (FDG), uma loja de moda masculina premium localizada em Goiânia - GO. Seu nome é Clara. Você é simpática, prestativa e conhece tudo sobre a loja.
 
@@ -91,13 +114,31 @@ Camisetas, Camisas, Calças, Blazers, e outras peças de moda masculina.
 - Responda sempre em português brasileiro
 - Para dúvidas que não conseguir resolver, sugira contato pelo WhatsApp: https://wa.me/5562994165785`;
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    // Rate limiting per IP
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+    if (!checkRateLimit(ip)) {
+      return new Response(JSON.stringify({ error: "Muitas mensagens enviadas. Tente novamente em alguns segundos." }), {
+        status: 429,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { messages } = await req.json();
+
+    // Validate messages input
+    if (!Array.isArray(messages) || messages.length === 0 || messages.length > 50) {
+      return new Response(JSON.stringify({ error: "Invalid messages format" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
@@ -117,7 +158,6 @@ serve(async (req) => {
       .select("id, name, slug")
       .eq("is_active", true);
 
-    // Fetch real stock from store_stock (aggregated across all stores)
     const { data: stockData } = await supabase
       .from("store_stock")
       .select("product_id, quantity");
@@ -135,7 +175,7 @@ serve(async (req) => {
     if (products && products.length > 0) {
       for (const p of products) {
         const realStock = stockMap.get(p.id) || 0;
-        if (realStock <= 0) continue; // Skip out-of-stock products
+        if (realStock <= 0) continue;
         const cat = p.category_id ? categoryMap.get(p.category_id) || "Sem categoria" : "Sem categoria";
         const priceStr = p.promotional_price
           ? `~~R$ ${p.price.toFixed(2)}~~ por R$ ${p.promotional_price.toFixed(2)}`

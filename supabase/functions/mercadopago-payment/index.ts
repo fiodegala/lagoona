@@ -7,12 +7,41 @@ const corsHeaders = {
 
 const MP_API = 'https://api.mercadopago.com';
 
+// In-memory rate limiting per IP
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMIT_WINDOW_MS = 60_000; // 1 minute
+const RATE_LIMIT_MAX = 10; // 10 requests/minute for payment creation
+
+function checkRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const entry = rateLimitMap.get(ip);
+  if (!entry || now > entry.resetAt) {
+    rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    return true;
+  }
+  entry.count++;
+  if (entry.count > RATE_LIMIT_MAX) {
+    return false;
+  }
+  return true;
+}
+
+// Clean up old entries periodically
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, val] of rateLimitMap) {
+    if (now > val.resetAt) rateLimitMap.delete(key);
+  }
+}, 60_000);
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+
     const accessToken = Deno.env.get('MERCADOPAGO_ACCESS_TOKEN');
     if (!accessToken) {
       throw new Error('MERCADOPAGO_ACCESS_TOKEN is not configured');
@@ -22,6 +51,49 @@ Deno.serve(async (req) => {
     const { action } = body;
 
     if (action === 'create_payment') {
+      // Rate limit payment creation
+      if (!checkRateLimit(ip)) {
+        return new Response(
+          JSON.stringify({ error: 'Too many requests. Try again later.' }),
+          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Validate order exists before processing payment
+      const supabase = createClient(
+        Deno.env.get('SUPABASE_URL')!,
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+      );
+
+      if (body.order_id) {
+        const { data: order, error: orderError } = await supabase
+          .from('orders')
+          .select('id, total, status')
+          .eq('id', body.order_id)
+          .single();
+
+        if (orderError || !order) {
+          return new Response(
+            JSON.stringify({ error: 'Invalid order' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        // Validate amount matches order total (tolerance for rounding)
+        const amountDiff = Math.abs(Number(body.transaction_amount) - Number(order.total));
+        if (amountDiff > 0.01) {
+          return new Response(
+            JSON.stringify({ error: 'Amount mismatch' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+      } else {
+        return new Response(
+          JSON.stringify({ error: 'order_id is required' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
       return await createPayment(body, accessToken);
     } else if (action === 'get_payment') {
       return await getPayment(body.payment_id, accessToken);
@@ -58,10 +130,25 @@ async function createPayment(body: any, accessToken: string) {
     additional_info,
   } = body;
 
-  // Build payment body based on method
+  // Input validation
+  if (!payment_method_id || !transaction_amount || !payer?.email) {
+    return new Response(
+      JSON.stringify({ error: 'Missing required fields: payment_method_id, transaction_amount, payer.email' }),
+      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+
+  const amount = Number(transaction_amount);
+  if (isNaN(amount) || amount <= 0 || amount > 100000) {
+    return new Response(
+      JSON.stringify({ error: 'Invalid transaction amount' }),
+      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+
   const paymentBody: any = {
-    transaction_amount: Number(transaction_amount),
-    description: description || 'Compra na Loja',
+    transaction_amount: amount,
+    description: typeof description === 'string' ? description.slice(0, 200) : 'Compra na Loja',
     payment_method_id,
     payer: {
       email: payer.email,
@@ -96,10 +183,9 @@ async function createPayment(body: any, accessToken: string) {
 
   if (!response.ok) {
     console.error('MP API error:', JSON.stringify(data));
-    throw new Error(data.message || `Mercado Pago API error [${response.status}]: ${JSON.stringify(data)}`);
+    throw new Error(data.message || `Mercado Pago API error [${response.status}]`);
   }
 
-  // Build response based on payment method
   const result: any = {
     id: data.id,
     status: data.status,
@@ -124,7 +210,6 @@ async function createPayment(body: any, accessToken: string) {
     result.barcode = data.barcode?.content;
   }
 
-  // Date of expiration
   if (data.date_of_expiration) {
     result.date_of_expiration = data.date_of_expiration;
   }
@@ -136,6 +221,14 @@ async function createPayment(body: any, accessToken: string) {
 }
 
 async function getPayment(paymentId: string, accessToken: string) {
+  // Validate paymentId format
+  if (!paymentId || typeof paymentId !== 'string' || !/^\d{1,20}$/.test(paymentId)) {
+    return new Response(
+      JSON.stringify({ error: 'Invalid payment_id' }),
+      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+
   const response = await fetch(`${MP_API}/v1/payments/${paymentId}`, {
     headers: {
       'Authorization': `Bearer ${accessToken}`,
