@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.mercadopago-payment]
 verify_jwt = false
+
+[functions.store-chat]
+verify_jwt = false
