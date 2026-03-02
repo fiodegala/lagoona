@@ -207,9 +207,11 @@ const OrderDetailModal = ({ open, onOpenChange, order }: OrderDetailModalProps) 
                   {items.map((item: any, idx: number) => (
                     <div key={idx} className="flex items-center justify-between rounded-md border p-2.5 text-sm">
                       <div className="flex items-center gap-3 min-w-0">
-                        {item.image_url && (
-                          <img src={item.image_url} alt={item.name} className="h-10 w-10 rounded object-cover shrink-0" />
-                        )}
+                        <img
+                          src={item.image_url || '/placeholder.svg'}
+                          alt={item.name || 'Produto'}
+                          className="h-12 w-12 rounded-md object-cover shrink-0 border bg-muted"
+                        />
                         <div className="min-w-0">
                           <p className="font-medium truncate">{item.name || item.product_name || 'Produto'}</p>
                           {item.variation && <p className="text-xs text-muted-foreground">{item.variation}</p>}
