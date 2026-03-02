@@ -5,7 +5,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-const SYSTEM_PROMPT = `Você é a assistente virtual da Fio de Gala (FDG), uma loja de moda masculina premium localizada em Goiânia - GO. Seu nome é Gala. Você é simpática, prestativa e conhece tudo sobre a loja.
+const SYSTEM_PROMPT = `Você é a assistente virtual da Fio de Gala (FDG), uma loja de moda masculina premium localizada em Goiânia - GO. Seu nome é Clara. Você é simpática, prestativa e conhece tudo sobre a loja.
 
 ## Sobre a Fio de Gala
 - Loja de moda masculina premium para o homem contemporâneo
