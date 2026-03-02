@@ -1,5 +1,5 @@
-import { useEffect, useState, useMemo } from 'react';
-import { ChevronLeft, ChevronRight, Play } from 'lucide-react';
+import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
+import { ChevronLeft, ChevronRight, Play, Volume2, VolumeX } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -39,13 +39,92 @@ function parseVideoEmbed(url: string): { embedUrl: string; type: 'iframe' | 'vid
   }
 
   // Direct video (.mp4, .webm)
-  if (url.match(/\.(mp4|webm|ogg)(\?|$)/i)) {
+  if (url.match(/\.(mp4|webm|ogg|mov|m4v)(\?|$)/i)) {
+    return { embedUrl: url, type: 'video' };
+  }
+
+  // Supabase storage URLs (direct video files without clear extension in path)
+  if (url.includes('/storage/v1/object/public/')) {
     return { embedUrl: url, type: 'video' };
   }
 
   // Fallback: try as iframe
   return { embedUrl: url, type: 'iframe' };
 }
+
+const VideoCard = ({ url, title }: { url: string; title?: string }) => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
+  const [hasLoaded, setHasLoaded] = useState(false);
+
+  const handlePlay = useCallback(async () => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    if (isPlaying) {
+      video.pause();
+      setIsPlaying(false);
+    } else {
+      try {
+        await video.play();
+        setIsPlaying(true);
+      } catch {
+        video.muted = true;
+        setIsMuted(true);
+        await video.play();
+        setIsPlaying(true);
+      }
+    }
+  }, [isPlaying]);
+
+  const toggleMute = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    const video = videoRef.current;
+    if (!video) return;
+    video.muted = !video.muted;
+    setIsMuted(video.muted);
+  }, []);
+
+  return (
+    <div className="relative rounded-xl overflow-hidden bg-black cursor-pointer group" style={{ aspectRatio: '9/16' }} onClick={handlePlay}>
+      <video
+        ref={videoRef}
+        src={url}
+        className="absolute inset-0 w-full h-full object-cover"
+        playsInline
+        muted
+        preload="auto"
+        onLoadedData={() => setHasLoaded(true)}
+        onEnded={() => setIsPlaying(false)}
+        title={title || 'Depoimento'}
+      />
+      {/* Play overlay */}
+      {!isPlaying && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/20 transition-opacity">
+          <div className="w-14 h-14 rounded-full bg-white/90 flex items-center justify-center shadow-lg">
+            <Play className="h-6 w-6 text-black ml-1" fill="currentColor" />
+          </div>
+        </div>
+      )}
+      {/* Mute button when playing */}
+      {isPlaying && (
+        <button
+          onClick={toggleMute}
+          className="absolute bottom-3 right-3 w-8 h-8 rounded-full bg-black/50 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity"
+        >
+          {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+        </button>
+      )}
+      {/* Loading state */}
+      {!hasLoaded && (
+        <div className="absolute inset-0 flex items-center justify-center bg-muted/50">
+          <div className="w-6 h-6 border-2 border-white/50 border-t-white rounded-full animate-spin" />
+        </div>
+      )}
+    </div>
+  );
+};
 
 const VideoTestimonialsSection = () => {
   const [testimonials, setTestimonials] = useState<VideoTestimonial[]>([]);
@@ -94,8 +173,8 @@ const VideoTestimonialsSection = () => {
 
               return (
                 <div key={testimonial.id} className="flex flex-col">
-                  <div className="relative rounded-xl overflow-hidden bg-black" style={{ aspectRatio: '9/16' }}>
-                    {parsed.type === 'iframe' ? (
+                  {parsed.type === 'iframe' ? (
+                    <div className="relative rounded-xl overflow-hidden bg-black" style={{ aspectRatio: '9/16' }}>
                       <iframe
                         src={parsed.embedUrl}
                         className="absolute inset-0 w-full h-full"
@@ -104,16 +183,10 @@ const VideoTestimonialsSection = () => {
                         loading="lazy"
                         title={testimonial.title || 'Depoimento'}
                       />
-                    ) : (
-                      <video
-                        src={parsed.embedUrl}
-                        className="absolute inset-0 w-full h-full object-cover"
-                        controls
-                        playsInline
-                        preload="metadata"
-                      />
-                    )}
-                  </div>
+                    </div>
+                  ) : (
+                    <VideoCard url={parsed.embedUrl} title={testimonial.title} />
+                  )}
                   {(testimonial.customer_name || testimonial.title) && (
                     <div className="mt-2 text-center">
                       {testimonial.customer_name && (
