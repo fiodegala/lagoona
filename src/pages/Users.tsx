@@ -173,7 +173,11 @@ const UsersPage = () => {
         },
       });
 
-      if (response.error) throw new Error(response.error.message);
+      if (response.error) {
+        // Try to extract the error message from the response data
+        const errorMsg = response.data?.error || response.error.message || 'Erro ao criar usuário';
+        throw new Error(errorMsg);
+      }
       if (response.data?.error) throw new Error(response.data.error);
 
       return response.data.user;
