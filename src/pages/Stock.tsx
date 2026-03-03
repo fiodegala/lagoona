@@ -31,7 +31,8 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { Search, Package, Warehouse, AlertTriangle, Plus, Minus, Save, Download, ChevronDown, ChevronRight } from 'lucide-react';
+import { Search, Package, Warehouse, AlertTriangle, Plus, Minus, Save, Download, ChevronDown, ChevronRight, ArrowLeftRight } from 'lucide-react';
+import StockTransferModal from '@/components/StockTransferModal';
 import { useToast } from '@/hooks/use-toast';
 import { variationsService, ProductVariation, ProductAttribute } from '@/services/variations';
 
@@ -88,6 +89,7 @@ const Stock = () => {
   const [expandedProductId, setExpandedProductId] = useState<string | null>(null);
   const [expandedData, setExpandedData] = useState<ColorGroup[]>([]);
   const [isLoadingExpanded, setIsLoadingExpanded] = useState(false);
+  const [showTransferModal, setShowTransferModal] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -434,6 +436,10 @@ const Stock = () => {
             <Download className="h-4 w-4 mr-2" />
             Exportar CSV
           </Button>
+          <Button onClick={() => setShowTransferModal(true)}>
+            <ArrowLeftRight className="h-4 w-4 mr-2" />
+            Transferir Estoque
+          </Button>
         </div>
 
         {/* Stock Table */}
@@ -698,6 +704,12 @@ const Stock = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <StockTransferModal
+        open={showTransferModal}
+        onOpenChange={setShowTransferModal}
+        stores={stores}
+        onTransferComplete={loadData}
+      />
     </AdminLayout>
   );
 };
