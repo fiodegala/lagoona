@@ -18,7 +18,7 @@ const MultiImageUpload = ({
   onChange, 
   bucket, 
   folder = '',
-  maxImages = 10
+  maxImages = 20
 }: MultiImageUploadProps) => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadingCount, setUploadingCount] = useState(0);
