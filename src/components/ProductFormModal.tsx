@@ -608,7 +608,7 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
           onChange={setGalleryImages}
           bucket="product-images"
           folder="gallery"
-          maxImages={10}
+          maxImages={20}
         />
       </div>
 
