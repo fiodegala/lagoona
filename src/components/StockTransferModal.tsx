@@ -256,19 +256,14 @@ const StockTransferModal: React.FC<Props> = ({ open, onOpenChange, stores, onTra
           quantity,
           notes: notes || null,
           requested_by: user!.id,
-          status: isAdmin ? 'completed' : 'pending',
+          status: 'pending',
         } as any);
 
       if (transferError) throw transferError;
 
-      // If admin, execute immediately
-      if (isAdmin) {
-        await executeTransfer(fromStoreId, toStoreId, selectedProductId, selectedVariationId || null, quantity);
-      }
-
       toast({
-        title: isAdmin ? 'Transferência realizada com sucesso!' : 'Transferência solicitada!',
-        description: isAdmin ? 'O estoque foi atualizado.' : 'Aguardando aprovação de um administrador.',
+        title: 'Transferência solicitada!',
+        description: 'A loja de origem receberá uma notificação para aprovar a transferência.',
       });
 
       // Reset form
@@ -546,7 +541,7 @@ const StockTransferModal: React.FC<Props> = ({ open, onOpenChange, stores, onTra
                 onClick={handleSubmit}
                 disabled={isSubmitting || !fromStoreId || !toStoreId || !selectedProductId || quantity <= 0 || (variations.length > 0 && !selectedVariationId)}
               >
-                {isSubmitting ? 'Transferindo...' : isAdmin ? 'Transferir Agora' : 'Solicitar Transferência'}
+                {isSubmitting ? 'Enviando...' : 'Solicitar Transferência'}
               </Button>
             </DialogFooter>
           </TabsContent>
