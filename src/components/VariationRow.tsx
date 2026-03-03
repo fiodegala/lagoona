@@ -51,21 +51,46 @@ const VariationRow = ({ variation, stores, storeStock, onUpdate, onUpdateStoreSt
   const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
   const [localImageUrl, setLocalImageUrl] = useState(variation.image_url || '');
   const [localBarcode, setLocalBarcode] = useState(variation.barcode || '');
+  const [localPrice, setLocalPrice] = useState(String(variation.price ?? ''));
+  const [localPromoPrice, setLocalPromoPrice] = useState(String((variation as any).promotional_price ?? ''));
+  const [localWholesalePrice, setLocalWholesalePrice] = useState(String(variation.wholesale_price ?? ''));
+  const [localExclusivePrice, setLocalExclusivePrice] = useState(String(variation.exclusive_price ?? ''));
+  const [localSku, setLocalSku] = useState(variation.sku || '');
   const barcodeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const debounceRefs = useRef<Record<string, NodeJS.Timeout | null>>({});
 
-  // Sync local barcode with prop
+  // Sync local state with props (only when not focused)
   useEffect(() => {
     setLocalBarcode(variation.barcode || '');
   }, [variation.barcode]);
+  useEffect(() => { setLocalPrice(String(variation.price ?? '')); }, [variation.price]);
+  useEffect(() => { setLocalPromoPrice(String((variation as any).promotional_price ?? '')); }, [(variation as any).promotional_price]);
+  useEffect(() => { setLocalWholesalePrice(String(variation.wholesale_price ?? '')); }, [variation.wholesale_price]);
+  useEffect(() => { setLocalExclusivePrice(String(variation.exclusive_price ?? '')); }, [variation.exclusive_price]);
+  useEffect(() => { setLocalSku(variation.sku || ''); }, [variation.sku]);
 
-  // Cleanup timeout on unmount
+  // Cleanup timeouts on unmount
   useEffect(() => {
     return () => {
-      if (barcodeTimeoutRef.current) {
-        clearTimeout(barcodeTimeoutRef.current);
-      }
+      if (barcodeTimeoutRef.current) clearTimeout(barcodeTimeoutRef.current);
+      Object.values(debounceRefs.current).forEach(t => t && clearTimeout(t));
     };
   }, []);
+
+  const debouncedUpdate = (key: string, field: Parameters<typeof onUpdate>[1], value: string | number | boolean) => {
+    if (debounceRefs.current[key]) clearTimeout(debounceRefs.current[key]!);
+    debounceRefs.current[key] = setTimeout(() => {
+      onUpdate(variation.id, field, value);
+    }, 600);
+  };
+
+  const flushField = (key: string, field: Parameters<typeof onUpdate>[1], localVal: string, propVal: any) => {
+    if (debounceRefs.current[key]) clearTimeout(debounceRefs.current[key]!);
+    const parsed = parseFloat(localVal) || 0;
+    if (String(parsed) !== String(propVal ?? 0)) {
+      onUpdate(variation.id, field, parsed);
+    }
+  };
 
   const handleBarcodeChange = (value: string) => {
     setLocalBarcode(value);
@@ -199,8 +224,15 @@ const VariationRow = ({ variation, stores, storeStock, onUpdate, onUpdateStoreSt
       </TableCell>
       <TableCell>
         <Input
-          value={variation.sku || ''}
-          onChange={(e) => onUpdate(variation.id, 'sku', e.target.value)}
+          value={localSku}
+          onChange={(e) => {
+            setLocalSku(e.target.value);
+            debouncedUpdate('sku', 'sku', e.target.value);
+          }}
+          onBlur={() => {
+            if (debounceRefs.current['sku']) clearTimeout(debounceRefs.current['sku']!);
+            if (localSku !== (variation.sku || '')) onUpdate(variation.id, 'sku', localSku);
+          }}
           placeholder="SKU"
           className="h-8 w-24"
         />
@@ -212,24 +244,14 @@ const VariationRow = ({ variation, stores, storeStock, onUpdate, onUpdateStoreSt
           onKeyDown={(e) => {
             if (e.key === 'Enter') {
               e.preventDefault();
-              // Save immediately on Enter (barcode scanner finished)
-              if (barcodeTimeoutRef.current) {
-                clearTimeout(barcodeTimeoutRef.current);
-              }
-              if (localBarcode !== variation.barcode) {
-                onUpdate(variation.id, 'barcode', localBarcode);
-              }
+              if (barcodeTimeoutRef.current) clearTimeout(barcodeTimeoutRef.current);
+              if (localBarcode !== variation.barcode) onUpdate(variation.id, 'barcode', localBarcode);
               e.currentTarget.blur();
             }
           }}
           onBlur={() => {
-            // Save on blur if changed
-            if (barcodeTimeoutRef.current) {
-              clearTimeout(barcodeTimeoutRef.current);
-            }
-            if (localBarcode !== variation.barcode) {
-              onUpdate(variation.id, 'barcode', localBarcode);
-            }
+            if (barcodeTimeoutRef.current) clearTimeout(barcodeTimeoutRef.current);
+            if (localBarcode !== variation.barcode) onUpdate(variation.id, 'barcode', localBarcode);
           }}
           placeholder="Código"
           className="h-8 w-28"
@@ -239,10 +261,12 @@ const VariationRow = ({ variation, stores, storeStock, onUpdate, onUpdateStoreSt
         <Input
           type="number"
           step="0.01"
-          value={variation.price ?? ''}
-          onChange={(e) =>
-            onUpdate(variation.id, 'price', parseFloat(e.target.value) || 0)
-          }
+          value={localPrice}
+          onChange={(e) => {
+            setLocalPrice(e.target.value);
+            debouncedUpdate('price', 'price', parseFloat(e.target.value) || 0);
+          }}
+          onBlur={() => flushField('price', 'price', localPrice, variation.price)}
           placeholder="Varejo"
           className="h-8 w-24"
         />
@@ -251,10 +275,12 @@ const VariationRow = ({ variation, stores, storeStock, onUpdate, onUpdateStoreSt
         <Input
           type="number"
           step="0.01"
-          value={(variation as any).promotional_price ?? ''}
-          onChange={(e) =>
-            onUpdate(variation.id, 'promotional_price', parseFloat(e.target.value) || 0)
-          }
+          value={localPromoPrice}
+          onChange={(e) => {
+            setLocalPromoPrice(e.target.value);
+            debouncedUpdate('promo', 'promotional_price', parseFloat(e.target.value) || 0);
+          }}
+          onBlur={() => flushField('promo', 'promotional_price', localPromoPrice, (variation as any).promotional_price)}
           placeholder="Promo"
           className="h-8 w-24 border-store-deal/30"
         />
@@ -263,10 +289,12 @@ const VariationRow = ({ variation, stores, storeStock, onUpdate, onUpdateStoreSt
         <Input
           type="number"
           step="0.01"
-          value={variation.wholesale_price ?? ''}
-          onChange={(e) =>
-            onUpdate(variation.id, 'wholesale_price', parseFloat(e.target.value) || 0)
-          }
+          value={localWholesalePrice}
+          onChange={(e) => {
+            setLocalWholesalePrice(e.target.value);
+            debouncedUpdate('wholesale', 'wholesale_price', parseFloat(e.target.value) || 0);
+          }}
+          onBlur={() => flushField('wholesale', 'wholesale_price', localWholesalePrice, variation.wholesale_price)}
           placeholder="Atacado"
           className="h-8 w-24"
         />
@@ -275,10 +303,12 @@ const VariationRow = ({ variation, stores, storeStock, onUpdate, onUpdateStoreSt
         <Input
           type="number"
           step="0.01"
-          value={variation.exclusive_price ?? ''}
-          onChange={(e) =>
-            onUpdate(variation.id, 'exclusive_price', parseFloat(e.target.value) || 0)
-          }
+          value={localExclusivePrice}
+          onChange={(e) => {
+            setLocalExclusivePrice(e.target.value);
+            debouncedUpdate('exclusive', 'exclusive_price', parseFloat(e.target.value) || 0);
+          }}
+          onBlur={() => flushField('exclusive', 'exclusive_price', localExclusivePrice, variation.exclusive_price)}
           placeholder="Exclusivo"
           className="h-8 w-24"
         />
