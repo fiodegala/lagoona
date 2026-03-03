@@ -34,6 +34,7 @@ const Shipping = lazy(() => import("./pages/Shipping"));
 const Banners = lazy(() => import("./pages/Banners"));
 const Sales = lazy(() => import("./pages/Sales"));
 const LegacyImport = lazy(() => import("./pages/LegacyImport"));
+const ImportCSVProducts = lazy(() => import("./pages/ImportCSVProducts"));
 
 // Lazy-loaded Store Pages
 const HomePage = lazy(() => import("./pages/store/HomePage"));
@@ -258,6 +259,14 @@ const App = () => (
                 element={
                   <ProtectedRoute requiredRole="admin">
                     <LegacyImport />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/importar-csv"
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <ImportCSVProducts />
                   </ProtectedRoute>
                 }
               />
