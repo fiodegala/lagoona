@@ -32,6 +32,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
+import PendingTransferModal from '@/components/PendingTransferModal';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -264,6 +265,9 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
       >
         <div className="p-6 lg:p-8 h-full overflow-y-auto">{children}</div>
       </main>
+
+      {/* Forced modal for pending transfers targeting this user's store */}
+      <PendingTransferModal />
     </div>
   );
 };
