@@ -6,7 +6,6 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// Category name mapping from old system to current DB
 const CATEGORY_MAP: Record<string, string> = {
   "CALÇA JEANS SLIM": "CALÇA JEANS SLIM",
   "SAPATOS": "SAPATO",
@@ -58,7 +57,7 @@ interface OldProduct {
 interface OldVariation {
   id: string;
   product_id: string;
-  attributes: string; // JSON string
+  attributes: string;
   sku: string | null;
   barcode: string | null;
   price: number | null;
@@ -67,6 +66,18 @@ interface OldVariation {
   price_varejo: number | null;
   price_atacado: number | null;
   price_atacarejo: number | null;
+}
+
+function parseAttributes(attrStr: string): Array<{ name: string; value: string }> {
+  try {
+    if (!attrStr || attrStr === "null") return [];
+    const cleaned = attrStr.replace(/""/g, '"');
+    const parsed = JSON.parse(cleaned);
+    if (Array.isArray(parsed)) return parsed;
+    return [];
+  } catch {
+    return [];
+  }
 }
 
 Deno.serve(async (req) => {
@@ -81,69 +92,70 @@ Deno.serve(async (req) => {
 
     const { products, variations } = await req.json();
 
-    // 1. Load all categories
-    const { data: categories } = await supabase
-      .from("categories")
-      .select("id, name");
+    console.log(`Received ${products.length} products and ${variations.length} variations`);
 
+    // 1. Load all categories
+    const { data: categories } = await supabase.from("categories").select("id, name");
     const categoryByName: Record<string, string> = {};
     for (const cat of categories || []) {
       categoryByName[cat.name.toUpperCase().trim()] = cat.id;
     }
 
-    // 2. Insert products
+    // 2. Batch insert products (chunks of 20)
     let productsInserted = 0;
     let productsSkipped = 0;
     const oldToNewProductId: Record<string, string> = {};
 
-    for (const p of products as OldProduct[]) {
-      // Map category
-      let categoryId: string | null = null;
-      if (p.category && p.category !== "null") {
-        const mappedName = CATEGORY_MAP[p.category.trim()] || p.category.trim();
-        categoryId = categoryByName[mappedName.toUpperCase().trim()] || null;
-      }
+    const productChunks = chunkArray(products as OldProduct[], 20);
+    for (const chunk of productChunks) {
+      const insertRows = chunk.map((p) => {
+        let categoryId: string | null = null;
+        if (p.category && p.category !== "null") {
+          const mappedName = CATEGORY_MAP[p.category.trim()] || p.category.trim();
+          categoryId = categoryByName[mappedName.toUpperCase().trim()] || null;
+        }
+        const price = p.price_varejo || p.price || 0;
+        return {
+          name: p.name,
+          price,
+          stock: p.stock || 0,
+          min_stock: p.min_stock || 0,
+          category_id: categoryId,
+          image_url: p.image_url && p.image_url !== "" ? p.image_url : null,
+          is_active: p.active !== false,
+          barcode: p.barcode || null,
+          wholesale_price: p.price_atacado || null,
+          exclusive_price: p.price_atacarejo || null,
+          promotional_price: null as number | null,
+          weight_kg: p.weight || null,
+          width_cm: p.width || null,
+          height_cm: p.height || null,
+          depth_cm: 20,
+          metadata: p.slug ? { slug: p.slug } : {},
+        };
+      });
 
-      const price = p.price_varejo || p.price || 0;
-
-      const insertData = {
-        name: p.name,
-        price: price,
-        stock: p.stock || 0,
-        min_stock: p.min_stock || 0,
-        category_id: categoryId,
-        image_url: p.image_url && p.image_url !== "" ? p.image_url : null,
-        is_active: p.active !== false,
-        barcode: p.barcode || null,
-        wholesale_price: p.price_atacado || null,
-        exclusive_price: p.price_atacarejo || null,
-        promotional_price: null as number | null,
-        weight_kg: p.weight || null,
-        width_cm: p.width || null,
-        height_cm: p.height || null,
-        depth_cm: 20, // default from old data
-        metadata: {} as Record<string, unknown>,
-      };
-
-      if (p.slug) {
-        insertData.metadata = { slug: p.slug };
-      }
-
-      const { data: newProduct, error } = await supabase
+      const { data: inserted, error } = await supabase
         .from("products")
-        .insert(insertData)
-        .select("id")
-        .single();
+        .insert(insertRows)
+        .select("id");
 
       if (error) {
-        console.error(`Error inserting product ${p.name}:`, error.message);
-        productsSkipped++;
+        console.error(`Batch product insert error:`, error.message);
+        productsSkipped += chunk.length;
         continue;
       }
 
-      oldToNewProductId[p.id] = newProduct.id;
-      productsInserted++;
+      // Map old IDs to new IDs (maintain order)
+      for (let i = 0; i < chunk.length; i++) {
+        if (inserted[i]) {
+          oldToNewProductId[chunk[i].id] = inserted[i].id;
+          productsInserted++;
+        }
+      }
     }
+
+    console.log(`Products inserted: ${productsInserted}, skipped: ${productsSkipped}`);
 
     // 3. Group variations by product_id
     const variationsByProduct: Record<string, OldVariation[]> = {};
@@ -154,7 +166,7 @@ Deno.serve(async (req) => {
       variationsByProduct[v.product_id].push(v);
     }
 
-    // 4. Insert variations with attributes
+    // 4. Process variations per product
     let variationsInserted = 0;
     let variationsSkipped = 0;
 
@@ -165,98 +177,127 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      // Parse unique attribute names from first variation
+      // Parse unique attribute names
       const firstAttrs = parseAttributes(vars[0].attributes);
       const attrNames = firstAttrs.map((a) => a.name);
 
-      // Create product_attributes
-      const attrIdByName: Record<string, string> = {};
-      for (const attrName of attrNames) {
-        const { data: attr, error } = await supabase
-          .from("product_attributes")
-          .insert({ product_id: newProductId, name: attrName })
-          .select("id")
-          .single();
-        if (error) {
-          console.error(`Error creating attr ${attrName}:`, error.message);
-          continue;
-        }
-        attrIdByName[attrName] = attr.id;
+      if (attrNames.length === 0) {
+        variationsSkipped += vars.length;
+        continue;
       }
 
-      // Collect unique attribute values per attribute
-      const uniqueValues: Record<string, Set<string>> = {};
-      for (const attrName of attrNames) {
-        uniqueValues[attrName] = new Set();
+      // Batch insert attributes
+      const attrInsertRows = attrNames.map((name) => ({ product_id: newProductId, name }));
+      const { data: createdAttrs, error: attrErr } = await supabase
+        .from("product_attributes")
+        .insert(attrInsertRows)
+        .select("id, name");
+
+      if (attrErr || !createdAttrs) {
+        console.error(`Attr insert error for product ${newProductId}:`, attrErr?.message);
+        variationsSkipped += vars.length;
+        continue;
       }
+
+      const attrIdByName: Record<string, string> = {};
+      for (const a of createdAttrs) {
+        attrIdByName[a.name] = a.id;
+      }
+
+      // Collect unique values per attribute
+      const uniqueValues: Record<string, Set<string>> = {};
+      for (const name of attrNames) uniqueValues[name] = new Set();
       for (const v of vars) {
-        const attrs = parseAttributes(v.attributes);
-        for (const a of attrs) {
+        for (const a of parseAttributes(v.attributes)) {
           uniqueValues[a.name]?.add(a.value.trim());
         }
       }
 
-      // Create attribute values
-      const attrValueId: Record<string, string> = {}; // "attrName|value" -> id
+      // Batch insert attribute values
+      const avInsertRows: Array<{ attribute_id: string; value: string }> = [];
       for (const [attrName, values] of Object.entries(uniqueValues)) {
         const attrId = attrIdByName[attrName];
         if (!attrId) continue;
         for (const val of values) {
-          const { data: av, error } = await supabase
-            .from("product_attribute_values")
-            .insert({ attribute_id: attrId, value: val })
-            .select("id")
-            .single();
-          if (error) {
-            console.error(`Error creating attr value ${val}:`, error.message);
-            continue;
-          }
-          attrValueId[`${attrName}|${val}`] = av.id;
+          avInsertRows.push({ attribute_id: attrId, value: val });
         }
       }
 
-      // Create variations
-      let sortOrder = 0;
-      for (const v of vars) {
-        const price = v.price_varejo || v.price || null;
-        const { data: newVar, error } = await supabase
-          .from("product_variations")
-          .insert({
-            product_id: newProductId,
-            price: price,
-            stock: v.stock || 0,
-            is_active: true,
-            sku: v.sku || null,
-            barcode: v.barcode || null,
-            image_url: v.image_url && v.image_url !== "null" ? v.image_url : null,
-            wholesale_price: v.price_atacado || null,
-            exclusive_price: v.price_atacarejo || null,
-            sort_order: sortOrder++,
-          })
-          .select("id")
-          .single();
+      const { data: createdAVs, error: avErr } = await supabase
+        .from("product_attribute_values")
+        .insert(avInsertRows)
+        .select("id, attribute_id, value");
 
-        if (error) {
-          console.error(`Error creating variation:`, error.message);
-          variationsSkipped++;
+      if (avErr || !createdAVs) {
+        console.error(`Attr value insert error:`, avErr?.message);
+        variationsSkipped += vars.length;
+        continue;
+      }
+
+      // Build lookup: "attrName|value" -> attribute_value_id
+      const attrValueId: Record<string, string> = {};
+      const attrIdToName: Record<string, string> = {};
+      for (const a of createdAttrs) attrIdToName[a.id] = a.name;
+      for (const av of createdAVs) {
+        const aName = attrIdToName[av.attribute_id];
+        if (aName) attrValueId[`${aName}|${av.value}`] = av.id;
+      }
+
+      // Batch insert variations (chunks of 20)
+      const varChunks = chunkArray(vars, 20);
+      let sortOrder = 0;
+      for (const varChunk of varChunks) {
+        const varInsertRows = varChunk.map((v) => ({
+          product_id: newProductId,
+          price: v.price_varejo || v.price || null,
+          stock: v.stock || 0,
+          is_active: true,
+          sku: v.sku || null,
+          barcode: v.barcode || null,
+          image_url: v.image_url && v.image_url !== "null" ? v.image_url : null,
+          wholesale_price: v.price_atacado || null,
+          exclusive_price: v.price_atacarejo || null,
+          sort_order: sortOrder++,
+        }));
+
+        const { data: createdVars, error: varErr } = await supabase
+          .from("product_variations")
+          .insert(varInsertRows)
+          .select("id");
+
+        if (varErr || !createdVars) {
+          console.error(`Variation insert error:`, varErr?.message);
+          variationsSkipped += varChunk.length;
           continue;
         }
 
-        // Link variation values
-        const attrs = parseAttributes(v.attributes);
-        for (const a of attrs) {
-          const avId = attrValueId[`${a.name}|${a.value.trim()}`];
-          if (avId) {
-            await supabase.from("product_variation_values").insert({
-              variation_id: newVar.id,
-              attribute_value_id: avId,
-            });
+        // Batch insert variation_values
+        const vvInsertRows: Array<{ variation_id: string; attribute_value_id: string }> = [];
+        for (let i = 0; i < varChunk.length; i++) {
+          if (!createdVars[i]) continue;
+          const attrs = parseAttributes(varChunk[i].attributes);
+          for (const a of attrs) {
+            const avId = attrValueId[`${a.name}|${a.value.trim()}`];
+            if (avId) {
+              vvInsertRows.push({ variation_id: createdVars[i].id, attribute_value_id: avId });
+            }
           }
         }
 
-        variationsInserted++;
+        if (vvInsertRows.length > 0) {
+          const { error: vvErr } = await supabase
+            .from("product_variation_values")
+            .insert(vvInsertRows);
+          if (vvErr) {
+            console.error(`Variation values insert error:`, vvErr.message);
+          }
+        }
+
+        variationsInserted += createdVars.length;
       }
     }
+
+    console.log(`Variations inserted: ${variationsInserted}, skipped: ${variationsSkipped}`);
 
     return new Response(
       JSON.stringify({
@@ -277,17 +318,10 @@ Deno.serve(async (req) => {
   }
 });
 
-function parseAttributes(
-  attrStr: string
-): Array<{ name: string; value: string }> {
-  try {
-    if (!attrStr || attrStr === "null") return [];
-    // Handle CSV-escaped JSON: replace "" with "
-    const cleaned = attrStr.replace(/""/g, '"');
-    const parsed = JSON.parse(cleaned);
-    if (Array.isArray(parsed)) return parsed;
-    return [];
-  } catch {
-    return [];
+function chunkArray<T>(arr: T[], size: number): T[][] {
+  const chunks: T[][] = [];
+  for (let i = 0; i < arr.length; i += size) {
+    chunks.push(arr.slice(i, i + size));
   }
+  return chunks;
 }
