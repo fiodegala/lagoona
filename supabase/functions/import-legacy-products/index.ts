@@ -70,13 +70,25 @@ interface OldVariation {
 
 function parseAttributes(attrStr: string): Array<{ name: string; value: string }> {
   try {
-    if (!attrStr || attrStr === "null") return [];
+    if (!attrStr || attrStr === "null" || attrStr.trim() === "") return [];
+    // The CSV parser already unescapes "" to ", but just in case
     const cleaned = attrStr.replace(/""/g, '"');
     const parsed = JSON.parse(cleaned);
-    if (Array.isArray(parsed)) return parsed;
+    if (Array.isArray(parsed)) {
+      return parsed.filter((a: any) => a && a.name);
+    }
     return [];
   } catch {
-    return [];
+    // Try alternative parsing - sometimes the string has extra quotes
+    try {
+      const alt = attrStr.replace(/^"/, '').replace(/"$/, '').replace(/""/g, '"');
+      const parsed = JSON.parse(alt);
+      if (Array.isArray(parsed)) return parsed.filter((a: any) => a && a.name);
+      return [];
+    } catch {
+      console.error(`Failed to parse attributes: ${attrStr.substring(0, 100)}`);
+      return [];
+    }
   }
 }
 
@@ -101,7 +113,13 @@ Deno.serve(async (req) => {
       categoryByName[cat.name.toUpperCase().trim()] = cat.id;
     }
 
-    // 2. Batch insert products (chunks of 20)
+    // 2. Load stores for stock distribution
+    const { data: stores } = await supabase.from("stores").select("id, name, type");
+    const bernardoId = stores?.find(s => s.name.includes("Bernardo"))?.id;
+    const hyperId = stores?.find(s => s.name.includes("Hyper"))?.id;
+    console.log(`Stores: Bernardo=${bernardoId}, Hyper=${hyperId}`);
+
+    // 3. Batch insert products (chunks of 20)
     let productsInserted = 0;
     let productsSkipped = 0;
     const oldToNewProductId: Record<string, string> = {};
@@ -146,7 +164,6 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      // Map old IDs to new IDs (maintain order)
       for (let i = 0; i < chunk.length; i++) {
         if (inserted[i]) {
           oldToNewProductId[chunk[i].id] = inserted[i].id;
@@ -156,33 +173,91 @@ Deno.serve(async (req) => {
     }
 
     console.log(`Products inserted: ${productsInserted}, skipped: ${productsSkipped}`);
+    console.log(`Mapped ${Object.keys(oldToNewProductId).length} old->new product IDs`);
 
-    // 3. Group variations by product_id
+    // 4. Group variations by product_id
     const variationsByProduct: Record<string, OldVariation[]> = {};
+    let unmappedProductIds = new Set<string>();
     for (const v of variations as OldVariation[]) {
+      if (!oldToNewProductId[v.product_id]) {
+        unmappedProductIds.add(v.product_id);
+        continue;
+      }
       if (!variationsByProduct[v.product_id]) {
         variationsByProduct[v.product_id] = [];
       }
       variationsByProduct[v.product_id].push(v);
     }
+    
+    if (unmappedProductIds.size > 0) {
+      console.log(`WARNING: ${unmappedProductIds.size} unmapped product IDs in variations: ${[...unmappedProductIds].join(', ')}`);
+    }
 
-    // 4. Process variations per product
+    // 5. Process variations per product
     let variationsInserted = 0;
     let variationsSkipped = 0;
+    const stockEntries: Array<{ store_id: string; product_id: string; variation_id: string | null; quantity: number }> = [];
 
     for (const [oldProductId, vars] of Object.entries(variationsByProduct)) {
       const newProductId = oldToNewProductId[oldProductId];
       if (!newProductId) {
+        console.log(`Skipping variations for unmapped product: ${oldProductId}`);
         variationsSkipped += vars.length;
         continue;
       }
 
-      // Parse unique attribute names
-      const firstAttrs = parseAttributes(vars[0].attributes);
-      const attrNames = firstAttrs.map((a) => a.name);
+      // Parse unique attribute names from ALL variations (not just first)
+      const allAttrNames = new Set<string>();
+      for (const v of vars) {
+        for (const a of parseAttributes(v.attributes)) {
+          if (a.name) allAttrNames.add(a.name);
+        }
+      }
+      const attrNames = [...allAttrNames];
 
       if (attrNames.length === 0) {
-        variationsSkipped += vars.length;
+        // No attributes found - create variations without attribute links
+        console.log(`Product ${newProductId}: No attributes, inserting ${vars.length} variations without attributes`);
+        const varChunks = chunkArray(vars, 20);
+        let sortOrder = 0;
+        for (const varChunk of varChunks) {
+          const varInsertRows = varChunk.map((v) => ({
+            product_id: newProductId,
+            price: v.price_varejo || v.price || null,
+            stock: v.stock || 0,
+            is_active: true,
+            sku: v.sku || null,
+            barcode: v.barcode || null,
+            image_url: v.image_url && v.image_url !== "null" ? v.image_url : null,
+            wholesale_price: v.price_atacado || null,
+            exclusive_price: v.price_atacarejo || null,
+            sort_order: sortOrder++,
+          }));
+
+          const { data: createdVars, error: varErr } = await supabase
+            .from("product_variations")
+            .insert(varInsertRows)
+            .select("id");
+
+          if (varErr || !createdVars) {
+            console.error(`Variation insert error (no attrs):`, varErr?.message);
+            variationsSkipped += varChunk.length;
+            continue;
+          }
+
+          // Add stock entries
+          for (let i = 0; i < createdVars.length; i++) {
+            const stock = varChunk[i].stock || 0;
+            if (stock > 0 && bernardoId && hyperId) {
+              const half1 = Math.ceil(stock / 2);
+              const half2 = stock - half1;
+              stockEntries.push({ store_id: bernardoId, product_id: newProductId, variation_id: createdVars[i].id, quantity: half1 });
+              stockEntries.push({ store_id: hyperId, product_id: newProductId, variation_id: createdVars[i].id, quantity: half2 });
+            }
+          }
+
+          variationsInserted += createdVars.length;
+        }
         continue;
       }
 
@@ -209,7 +284,10 @@ Deno.serve(async (req) => {
       for (const name of attrNames) uniqueValues[name] = new Set();
       for (const v of vars) {
         for (const a of parseAttributes(v.attributes)) {
-          uniqueValues[a.name]?.add(a.value.trim());
+          if (uniqueValues[a.name]) {
+            // Use the value as-is (even if empty)
+            uniqueValues[a.name].add(a.value?.trim() ?? "");
+          }
         }
       }
 
@@ -219,7 +297,8 @@ Deno.serve(async (req) => {
         const attrId = attrIdByName[attrName];
         if (!attrId) continue;
         for (const val of values) {
-          avInsertRows.push({ attribute_id: attrId, value: val });
+          // If value is empty, use a placeholder
+          avInsertRows.push({ attribute_id: attrId, value: val || "(sem cor)" });
         }
       }
 
@@ -229,7 +308,7 @@ Deno.serve(async (req) => {
         .select("id, attribute_id, value");
 
       if (avErr || !createdAVs) {
-        console.error(`Attr value insert error:`, avErr?.message);
+        console.error(`Attr value insert error for product ${newProductId}:`, avErr?.message);
         variationsSkipped += vars.length;
         continue;
       }
@@ -277,10 +356,20 @@ Deno.serve(async (req) => {
           if (!createdVars[i]) continue;
           const attrs = parseAttributes(varChunk[i].attributes);
           for (const a of attrs) {
-            const avId = attrValueId[`${a.name}|${a.value.trim()}`];
+            const lookupValue = (a.value?.trim() || "") || "(sem cor)";
+            const avId = attrValueId[`${a.name}|${lookupValue}`];
             if (avId) {
               vvInsertRows.push({ variation_id: createdVars[i].id, attribute_value_id: avId });
             }
+          }
+
+          // Add stock entries
+          const stock = varChunk[i].stock || 0;
+          if (stock > 0 && bernardoId && hyperId) {
+            const half1 = Math.ceil(stock / 2);
+            const half2 = stock - half1;
+            stockEntries.push({ store_id: bernardoId, product_id: newProductId, variation_id: createdVars[i].id, quantity: half1 });
+            stockEntries.push({ store_id: hyperId, product_id: newProductId, variation_id: createdVars[i].id, quantity: half2 });
           }
         }
 
@@ -299,6 +388,41 @@ Deno.serve(async (req) => {
 
     console.log(`Variations inserted: ${variationsInserted}, skipped: ${variationsSkipped}`);
 
+    // 6. Add stock for simple products (no variations)
+    const productsWithVars = new Set(Object.values(variationsByProduct).map((_, __, ___, idx) => "").keys());
+    for (const p of products as OldProduct[]) {
+      const newPid = oldToNewProductId[p.id];
+      if (!newPid) continue;
+      // Check if this product has variations
+      if (variationsByProduct[p.id]) continue;
+      // Simple product - add stock directly
+      const stock = p.stock || 0;
+      if (stock > 0 && bernardoId && hyperId) {
+        const half1 = Math.ceil(stock / 2);
+        const half2 = stock - half1;
+        stockEntries.push({ store_id: bernardoId, product_id: newPid, variation_id: null, quantity: half1 });
+        stockEntries.push({ store_id: hyperId, product_id: newPid, variation_id: null, quantity: half2 });
+      }
+    }
+
+    // 7. Batch insert store_stock
+    let stockInserted = 0;
+    if (stockEntries.length > 0) {
+      const stockChunks = chunkArray(stockEntries, 50);
+      for (const chunk of stockChunks) {
+        const { error: stockErr } = await supabase
+          .from("store_stock")
+          .insert(chunk);
+        if (stockErr) {
+          console.error(`Stock insert error:`, stockErr.message);
+        } else {
+          stockInserted += chunk.length;
+        }
+      }
+    }
+
+    console.log(`Store stock entries inserted: ${stockInserted}`);
+
     return new Response(
       JSON.stringify({
         success: true,
@@ -306,6 +430,7 @@ Deno.serve(async (req) => {
         productsSkipped,
         variationsInserted,
         variationsSkipped,
+        stockInserted,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
