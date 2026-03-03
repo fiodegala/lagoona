@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -8,51 +9,68 @@ import { CartProvider } from "./contexts/CartContext";
 import { FavoritesProvider } from "./contexts/FavoritesContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ScrollToTop from "./components/ScrollToTop";
+import { Loader2 } from "lucide-react";
 
-// Admin Pages
-import Login from "./pages/Login";
-import Dashboard from "./pages/Dashboard";
-import Products from "./pages/Products";
-import Categories from "./pages/Categories";
-import Orders from "./pages/Orders";
-import Reports from "./pages/Reports";
-import UsersPage from "./pages/Users";
-import Settings from "./pages/Settings";
-import ApiKeys from "./pages/ApiKeys";
-import ApiDocs from "./pages/ApiDocs";
-import Reviews from "./pages/Reviews";
-import Coupons from "./pages/Coupons";
-import NotFound from "./pages/NotFound";
-import ProductDetails from "./pages/ProductDetails";
-import POSPage from "./pages/POSPage";
-import AbandonedCarts from "./pages/AbandonedCarts";
-import Customers from "./pages/Customers";
-import Stock from "./pages/Stock";
-import Shipping from "./pages/Shipping";
-import Banners from "./pages/Banners";
-import Sales from "./pages/Sales";
-import LegacyImport from "./pages/LegacyImport";
-// Store Pages
-import HomePage from "./pages/store/HomePage";
-import StorePage from "./pages/store/StorePage";
-import CategoryPage from "./pages/store/CategoryPage";
-import CategoriesPage from "./pages/store/CategoriesPage";
-import CartPage from "./pages/store/CartPage";
-import CheckoutPage from "./pages/store/CheckoutPage";
-import AboutPage from "./pages/store/AboutPage";
-import ContactPage from "./pages/store/ContactPage";
-import FaqPage from "./pages/store/FaqPage";
-import PrivacyPolicyPage from "./pages/store/PrivacyPolicyPage";
-import TermsPage from "./pages/store/TermsPage";
-import ExchangesReturnsPage from "./pages/store/ExchangesReturnsPage";
-import FavoritesPage from "./pages/store/FavoritesPage";
-import OrderTrackingPage from "./pages/store/OrderTrackingPage";
-import StoreLoginPage from "./pages/store/StoreLoginPage";
-import MyAccountPage from "./pages/store/MyAccountPage";
-import WholesalePage from "./pages/store/WholesalePage";
-import WorkWithUsPage from "./pages/store/WorkWithUsPage";
+// Lazy-loaded Admin Pages
+const Login = lazy(() => import("./pages/Login"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Products = lazy(() => import("./pages/Products"));
+const Categories = lazy(() => import("./pages/Categories"));
+const Orders = lazy(() => import("./pages/Orders"));
+const Reports = lazy(() => import("./pages/Reports"));
+const UsersPage = lazy(() => import("./pages/Users"));
+const Settings = lazy(() => import("./pages/Settings"));
+const ApiKeys = lazy(() => import("./pages/ApiKeys"));
+const ApiDocs = lazy(() => import("./pages/ApiDocs"));
+const Reviews = lazy(() => import("./pages/Reviews"));
+const Coupons = lazy(() => import("./pages/Coupons"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const ProductDetails = lazy(() => import("./pages/ProductDetails"));
+const POSPage = lazy(() => import("./pages/POSPage"));
+const AbandonedCarts = lazy(() => import("./pages/AbandonedCarts"));
+const Customers = lazy(() => import("./pages/Customers"));
+const Stock = lazy(() => import("./pages/Stock"));
+const Shipping = lazy(() => import("./pages/Shipping"));
+const Banners = lazy(() => import("./pages/Banners"));
+const Sales = lazy(() => import("./pages/Sales"));
+const LegacyImport = lazy(() => import("./pages/LegacyImport"));
 
-const queryClient = new QueryClient();
+// Lazy-loaded Store Pages
+const HomePage = lazy(() => import("./pages/store/HomePage"));
+const StorePage = lazy(() => import("./pages/store/StorePage"));
+const CategoryPage = lazy(() => import("./pages/store/CategoryPage"));
+const CategoriesPage = lazy(() => import("./pages/store/CategoriesPage"));
+const CartPage = lazy(() => import("./pages/store/CartPage"));
+const CheckoutPage = lazy(() => import("./pages/store/CheckoutPage"));
+const AboutPage = lazy(() => import("./pages/store/AboutPage"));
+const ContactPage = lazy(() => import("./pages/store/ContactPage"));
+const FaqPage = lazy(() => import("./pages/store/FaqPage"));
+const PrivacyPolicyPage = lazy(() => import("./pages/store/PrivacyPolicyPage"));
+const TermsPage = lazy(() => import("./pages/store/TermsPage"));
+const ExchangesReturnsPage = lazy(() => import("./pages/store/ExchangesReturnsPage"));
+const FavoritesPage = lazy(() => import("./pages/store/FavoritesPage"));
+const OrderTrackingPage = lazy(() => import("./pages/store/OrderTrackingPage"));
+const StoreLoginPage = lazy(() => import("./pages/store/StoreLoginPage"));
+const MyAccountPage = lazy(() => import("./pages/store/MyAccountPage"));
+const WholesalePage = lazy(() => import("./pages/store/WholesalePage"));
+const WorkWithUsPage = lazy(() => import("./pages/store/WorkWithUsPage"));
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 2, // 2 min
+      gcTime: 1000 * 60 * 5, // 5 min (previously cacheTime)
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
+
+const PageLoader = () => (
+  <div className="flex items-center justify-center min-h-screen">
+    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+  </div>
+);
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -64,6 +82,7 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <ScrollToTop />
+            <Suspense fallback={<PageLoader />}>
             <Routes>
               {/* Public Store Routes */}
               <Route path="/" element={<HomePage />} />
@@ -255,6 +274,7 @@ const App = () => (
 
               <Route path="*" element={<NotFound />} />
             </Routes>
+            </Suspense>
           </BrowserRouter>
           </TooltipProvider>
         </FavoritesProvider>
