@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import AdminLayout from '@/components/AdminLayout';
 import { Card, CardContent, CardDescription, CardTitle } from '@/components/ui/card';
@@ -50,7 +51,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
 import { productsService, Product, categoriesService, Category } from '@/services/products';
-import { variationsService } from '@/services/variations';
+
 import ProductFormModal from '@/components/ProductFormModal';
 import ProductImportModal from '@/components/ProductImportModal';
 import ProductTableRow from '@/components/ProductTableRow';
@@ -82,27 +83,29 @@ const Products = () => {
 
   const loadData = async () => {
     try {
-      const [productsData, categoriesData] = await Promise.all([
+      const [productsData, categoriesData, variationBarcodes] = await Promise.all([
         productsService.getAll(),
         categoriesService.getAll(),
+        // Single query to get ALL variation barcodes at once instead of N+1
+        supabase
+          .from('product_variations')
+          .select('product_id, barcode')
+          .not('barcode', 'is', null)
+          .neq('barcode', ''),
       ]);
       setProducts(productsData);
       setCategories(categoriesData);
       
-      // Load variation barcodes for barcode search (in parallel)
-      const variationPromises = productsData.map(async (product) => {
-        const variations = await variationsService.getVariationsByProduct(product.id);
-        const barcodes = variations
-          .map(v => v.barcode)
-          .filter((b): b is string => !!b);
-        return { productId: product.id, barcodes };
-      });
-      
-      const variationResults = await Promise.all(variationPromises);
+      // Build barcode map from single query result
       const barcodeMap: Record<string, string[]> = {};
-      for (const { productId, barcodes } of variationResults) {
-        if (barcodes.length > 0) {
-          barcodeMap[productId] = barcodes;
+      if (variationBarcodes.data) {
+        for (const row of variationBarcodes.data) {
+          if (row.barcode) {
+            if (!barcodeMap[row.product_id]) {
+              barcodeMap[row.product_id] = [];
+            }
+            barcodeMap[row.product_id].push(row.barcode);
+          }
         }
       }
       setProductVariationBarcodes(barcodeMap);
