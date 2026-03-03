@@ -31,6 +31,7 @@ import Stock from "./pages/Stock";
 import Shipping from "./pages/Shipping";
 import Banners from "./pages/Banners";
 import Sales from "./pages/Sales";
+import LegacyImport from "./pages/LegacyImport";
 // Store Pages
 import HomePage from "./pages/store/HomePage";
 import StorePage from "./pages/store/StorePage";
@@ -228,6 +229,16 @@ const App = () => (
                 element={
                   <ProtectedRoute requiredRole="manager">
                     <ApiDocs />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Legacy import route */}
+              <Route
+                path="/admin/importar-legado"
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <LegacyImport />
                   </ProtectedRoute>
                 }
               />

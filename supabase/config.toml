@@ -1,5 +1,8 @@
 project_id = "krlnrzwshjwupiklzblz"
 
+[functions.import-legacy-products]
+verify_jwt = false
+
 [functions.send-whatsapp]
 verify_jwt = false
 
