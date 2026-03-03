@@ -1417,6 +1417,80 @@ export type Database = {
         }
         Relationships: []
       }
+      stock_transfers: {
+        Row: {
+          approved_by: string | null
+          created_at: string
+          from_store_id: string
+          id: string
+          notes: string | null
+          product_id: string
+          quantity: number
+          requested_by: string
+          status: string
+          to_store_id: string
+          updated_at: string
+          variation_id: string | null
+        }
+        Insert: {
+          approved_by?: string | null
+          created_at?: string
+          from_store_id: string
+          id?: string
+          notes?: string | null
+          product_id: string
+          quantity?: number
+          requested_by: string
+          status?: string
+          to_store_id: string
+          updated_at?: string
+          variation_id?: string | null
+        }
+        Update: {
+          approved_by?: string | null
+          created_at?: string
+          from_store_id?: string
+          id?: string
+          notes?: string | null
+          product_id?: string
+          quantity?: number
+          requested_by?: string
+          status?: string
+          to_store_id?: string
+          updated_at?: string
+          variation_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_transfers_from_store_id_fkey"
+            columns: ["from_store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_transfers_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_transfers_to_store_id_fkey"
+            columns: ["to_store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_transfers_variation_id_fkey"
+            columns: ["variation_id"]
+            isOneToOne: false
+            referencedRelation: "product_variations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       store_config: {
         Row: {
           created_at: string
