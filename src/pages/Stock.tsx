@@ -33,6 +33,7 @@ import {
 import { Label } from '@/components/ui/label';
 import { Search, Package, Warehouse, AlertTriangle, Plus, Minus, Save, Download, ChevronDown, ChevronRight, ArrowLeftRight } from 'lucide-react';
 import StockTransferModal from '@/components/StockTransferModal';
+import PendingTransfersAlert from '@/components/PendingTransfersAlert';
 import { useToast } from '@/hooks/use-toast';
 import { variationsService, ProductVariation, ProductAttribute } from '@/services/variations';
 
@@ -338,6 +339,9 @@ const Stock = () => {
             Controle de estoque por loja
           </p>
         </div>
+
+        {/* Pending Transfers Notification */}
+        <PendingTransfersAlert stores={stores} onTransferProcessed={loadData} />
 
         {/* KPI Cards */}
         <div className="grid gap-4 md:grid-cols-4">
