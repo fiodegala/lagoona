@@ -233,7 +233,7 @@ const ProductDetails = () => {
                 <img
                   src={selectedImage || product.image_url}
                   alt={product.name}
-                  className="w-full aspect-square object-cover"
+                  className="w-full aspect-[4/5] object-cover"
                 />
                 {allImages.length > 1 && (
                   <>
