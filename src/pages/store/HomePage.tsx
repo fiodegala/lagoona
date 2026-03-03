@@ -223,38 +223,12 @@ const HomePage = () => {
               <h2 className="text-2xl md:text-3xl font-display font-bold italic">Lançamentos</h2>
               <div className="w-12 h-0.5 bg-store-gold mt-2" />
             </div>
-            <div className="flex items-center gap-2">
-              <div className="hidden md:flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-9 w-9"
-                  onClick={() => {
-                    const el = document.getElementById('lancamentos-carousel');
-                    if (el) el.scrollBy({ left: -280, behavior: 'smooth' });
-                  }}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-9 w-9"
-                  onClick={() => {
-                    const el = document.getElementById('lancamentos-carousel');
-                    if (el) el.scrollBy({ left: 280, behavior: 'smooth' });
-                  }}
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
-              <Button variant="outline" asChild className="gap-2 hidden sm:flex">
-                <Link to="/loja?ordenar=recentes">
-                  Ver todos
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </Button>
-            </div>
+            <Button variant="outline" asChild className="gap-2 hidden sm:flex">
+              <Link to="/loja?ordenar=recentes">
+                Ver todos
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>
           </div>
 
           {isLoading ? (
@@ -262,15 +236,39 @@ const HomePage = () => {
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
           ) : newProducts.length > 0 ? (
-            <div
-              id="lancamentos-carousel"
-              className="flex gap-4 md:gap-6 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-muted snap-x snap-mandatory -mx-4 px-4"
-            >
-              {newProducts.slice(0, 15).map((product) => (
-                <div key={product.id} className="shrink-0 w-[160px] sm:w-[200px] md:w-[220px] lg:w-[240px] snap-start">
-                  <ProductCard product={product} />
-                </div>
-              ))}
+            <div className="relative">
+              <div
+                id="lancamentos-carousel"
+                className="flex gap-4 md:gap-6 overflow-hidden -mx-4 px-4"
+              >
+                {newProducts.slice(0, 15).map((product) => (
+                  <div key={product.id} className="shrink-0 w-[160px] sm:w-[200px] md:w-[220px] lg:w-[240px]">
+                    <ProductCard product={product} />
+                  </div>
+                ))}
+              </div>
+              <Button
+                variant="outline"
+                size="icon"
+                className="absolute -left-3 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-background shadow-lg border z-10 hidden md:flex"
+                onClick={() => {
+                  const el = document.getElementById('lancamentos-carousel');
+                  if (el) el.scrollBy({ left: -560, behavior: 'smooth' });
+                }}
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                className="absolute -right-3 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-background shadow-lg border z-10 hidden md:flex"
+                onClick={() => {
+                  const el = document.getElementById('lancamentos-carousel');
+                  if (el) el.scrollBy({ left: 560, behavior: 'smooth' });
+                }}
+              >
+                <ChevronRight className="h-5 w-5" />
+              </Button>
             </div>
           ) : (
             <div className="text-center py-12 text-muted-foreground">
