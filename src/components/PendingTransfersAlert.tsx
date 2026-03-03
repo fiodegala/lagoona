@@ -54,22 +54,6 @@ const PendingTransfersAlert: React.FC<Props> = ({ stores, onTransferProcessed })
   const storeMap: Record<string, string> = {};
   stores.forEach(s => { storeMap[s.id] = s.name; });
 
-  useEffect(() => {
-    loadPendingTransfers();
-
-    // Subscribe to realtime changes
-    const channel = supabase
-      .channel('pending-transfers')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'stock_transfers' },
-        () => loadPendingTransfers()
-      )
-      .subscribe();
-
-    return () => { supabase.removeChannel(channel); };
-  }, [userStoreId]);
-
   const loadPendingTransfers = async () => {
     const { data } = await supabase
       .from('stock_transfers')
@@ -81,6 +65,11 @@ const PendingTransfersAlert: React.FC<Props> = ({ stores, onTransferProcessed })
       setPendingTransfers([]);
       return;
     }
+
+    // Fetch store names directly to avoid stale closure
+    const { data: storesData } = await supabase.from('stores').select('id, name');
+    const freshStoreMap: Record<string, string> = {};
+    (storesData || []).forEach(s => { freshStoreMap[s.id] = s.name; });
 
     // Enrich with product names
     const productIds = [...new Set(data.map(t => t.product_id))];
@@ -121,12 +110,28 @@ const PendingTransfersAlert: React.FC<Props> = ({ stores, onTransferProcessed })
     setPendingTransfers(data.map(t => ({
       ...t,
       product_name: prodMap[t.product_id] || 'Produto removido',
-      from_store_name: storeMap[t.from_store_id] || '?',
-      to_store_name: storeMap[t.to_store_id] || '?',
+      from_store_name: freshStoreMap[t.from_store_id] || '?',
+      to_store_name: freshStoreMap[t.to_store_id] || '?',
       variation_label: t.variation_id ? varLabelMap[t.variation_id] || '' : '',
       requester_name: profileMap[t.requested_by] || 'Usuário',
     })));
   };
+
+  useEffect(() => {
+    loadPendingTransfers();
+
+    const channel = supabase
+      .channel('pending-transfers')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'stock_transfers' },
+        () => loadPendingTransfers()
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [userStoreId]);
+
 
   const handleApprove = async (transfer: PendingTransfer) => {
     setIsProcessing(true);

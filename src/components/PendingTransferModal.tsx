@@ -41,40 +41,29 @@ const PendingTransferModal: React.FC = () => {
   const [transfers, setTransfers] = useState<EnrichedTransfer[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [storeMap, setStoreMap] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    loadStores();
-  }, []);
-
-  useEffect(() => {
-    if (Object.keys(storeMap).length > 0) {
-      loadPendingForMyStore();
-    }
+    loadPendingForMyStore();
 
     const channel = supabase
       .channel('transfer-modal-alerts')
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'stock_transfers' },
-        () => {
-          if (Object.keys(storeMap).length > 0) loadPendingForMyStore();
-        }
+        () => loadPendingForMyStore()
       )
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [userStoreId, storeMap]);
-
-  const loadStores = async () => {
-    const { data } = await supabase.from('stores').select('id, name');
-    const map: Record<string, string> = {};
-    (data || []).forEach(s => { map[s.id] = s.name; });
-    setStoreMap(map);
-  };
+  }, [userStoreId]);
 
   const loadPendingForMyStore = async () => {
     if (!userStoreId) return;
+
+    // Fetch stores fresh each time to avoid stale closures
+    const { data: storesData } = await supabase.from('stores').select('id, name');
+    const freshStoreMap: Record<string, string> = {};
+    (storesData || []).forEach(s => { freshStoreMap[s.id] = s.name; });
 
     const { data } = await supabase
       .from('stock_transfers')
@@ -119,8 +108,8 @@ const PendingTransferModal: React.FC = () => {
     const enriched = data.map(t => ({
       ...t,
       product_name: prodMap[t.product_id] || 'Produto removido',
-      from_store_name: storeMap[t.from_store_id] || '?',
-      to_store_name: storeMap[t.to_store_id] || '?',
+      from_store_name: freshStoreMap[t.from_store_id] || '?',
+      to_store_name: freshStoreMap[t.to_store_id] || '?',
       variation_label: t.variation_id ? varLabelMap[t.variation_id] || '' : '',
       requester_name: profileMap[t.requested_by] || 'Usuário',
     }));
