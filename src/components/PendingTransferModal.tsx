@@ -36,7 +36,7 @@ interface EnrichedTransfer extends TransferData {
 }
 
 const PendingTransferModal: React.FC = () => {
-  const { user, userStoreId } = useAuth();
+  const { user, userStoreId, isAdmin, isManager } = useAuth();
   const { toast } = useToast();
   const [transfers, setTransfers] = useState<EnrichedTransfer[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -58,19 +58,23 @@ const PendingTransferModal: React.FC = () => {
   }, [userStoreId]);
 
   const loadPendingForMyStore = async () => {
-    if (!userStoreId) return;
-
     // Fetch stores fresh each time to avoid stale closures
-    const { data: storesData } = await supabase.from('stores').select('id, name');
+    const { data: storesData } = await supabase.from('stores').select('id, name, type');
     const freshStoreMap: Record<string, string> = {};
     (storesData || []).forEach(s => { freshStoreMap[s.id] = s.name; });
 
-    const { data } = await supabase
+    // Admins/managers see all pending transfers; physical store users see only theirs
+    let query = supabase
       .from('stock_transfers')
       .select('*')
       .eq('status', 'pending')
-      .eq('from_store_id', userStoreId)
       .order('created_at', { ascending: true });
+
+    if (!isAdmin && !isManager && userStoreId) {
+      query = query.eq('from_store_id', userStoreId);
+    }
+
+    const { data } = await query;
 
     if (!data || data.length === 0) {
       setTransfers([]);
