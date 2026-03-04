@@ -241,7 +241,7 @@ const POSPage = () => {
     const saleData: CreateSaleData = {
       local_id: offlineService.generateLocalId(),
       session_id: session?.id,
-      store_id: userStoreId || undefined,
+      store_id: selectedSeller?.store_id || userStoreId || undefined,
       customer_id: selectedCustomer?.id,
       customer_name: selectedCustomer?.name,
       customer_document: selectedCustomer?.document || undefined,
@@ -315,7 +315,7 @@ const POSPage = () => {
         const saleData: CreateSaleData = {
           local_id: offlineService.generateLocalId(),
           session_id: session?.id,
-          store_id: userStoreId || undefined,
+          store_id: selectedSeller?.store_id || userStoreId || undefined,
           customer_id: selectedCustomer.id,
           customer_name: selectedCustomer.name,
           customer_document: selectedCustomer.document || undefined,

@@ -8,6 +8,7 @@ export interface Seller {
   user_id: string;
   full_name: string;
   role: string;
+  store_id?: string | null;
 }
 
 interface SellerStepProps {
@@ -50,6 +51,7 @@ const SellerStep = ({ selectedSeller, onSelect, onNext, onBack }: SellerStepProp
                 user_id: p.user_id,
                 full_name: p.full_name,
                 role: roleEntry?.role || 'seller',
+                store_id: roleEntry?.store_id || null,
               };
             });
             setSellers(sellersData);
