@@ -1026,6 +1026,88 @@ export type Database = {
           },
         ]
       }
+      product_combo_items: {
+        Row: {
+          combo_id: string
+          id: string
+          product_id: string
+          quantity: number
+          variation_id: string | null
+        }
+        Insert: {
+          combo_id: string
+          id?: string
+          product_id: string
+          quantity?: number
+          variation_id?: string | null
+        }
+        Update: {
+          combo_id?: string
+          id?: string
+          product_id?: string
+          quantity?: number
+          variation_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_combo_items_combo_id_fkey"
+            columns: ["combo_id"]
+            isOneToOne: false
+            referencedRelation: "product_combos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_combo_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_combo_items_variation_id_fkey"
+            columns: ["variation_id"]
+            isOneToOne: false
+            referencedRelation: "product_variations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_combos: {
+        Row: {
+          combo_price: number
+          created_at: string
+          description: string | null
+          free_shipping: boolean
+          id: string
+          image_url: string | null
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          combo_price: number
+          created_at?: string
+          description?: string | null
+          free_shipping?: boolean
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          combo_price?: number
+          created_at?: string
+          description?: string | null
+          free_shipping?: boolean
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       product_reviews: {
         Row: {
           comment: string | null

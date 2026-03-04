@@ -1,5 +1,6 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { couponsService, Coupon, CouponValidationResult } from '@/services/coupons';
+import { combosService, Combo } from '@/services/combos';
 
 export interface CartItem {
   id: string;
@@ -18,6 +19,12 @@ interface AppliedCoupon {
   discount: number;
 }
 
+export interface AppliedCombo {
+  combo: Combo;
+  discount: number;
+  freeShipping: boolean;
+}
+
 interface CartContextType {
   items: CartItem[];
   addItem: (item: Omit<CartItem, 'quantity'> & { quantity?: number }) => void;
@@ -31,6 +38,9 @@ interface CartContextType {
   applyCoupon: (code: string, customerEmail?: string) => Promise<CouponValidationResult>;
   removeCoupon: () => void;
   couponLoading: boolean;
+  appliedCombos: AppliedCombo[];
+  comboDiscount: number;
+  comboFreeShipping: boolean;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -56,6 +66,73 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   });
 
   const [couponLoading, setCouponLoading] = useState(false);
+  const [appliedCombos, setAppliedCombos] = useState<AppliedCombo[]>([]);
+  const [activeCombos, setActiveCombos] = useState<Combo[]>([]);
+
+  // Load active combos on mount
+  useEffect(() => {
+    combosService.listActiveWithItems()
+      .then(setActiveCombos)
+      .catch(() => {}); // silent fail
+  }, []);
+
+  // Detect combos when cart changes
+  useEffect(() => {
+    if (activeCombos.length === 0 || items.length === 0) {
+      setAppliedCombos([]);
+      return;
+    }
+
+    const detected: AppliedCombo[] = [];
+
+    for (const combo of activeCombos) {
+      if (!combo.items || combo.items.length === 0) continue;
+
+      // Check if all combo items are present in cart with sufficient quantity
+      const allMatch = combo.items.every((comboItem) => {
+        const cartItem = items.find((ci) => {
+          const productMatch = ci.productId === comboItem.product_id;
+          if (!productMatch) return false;
+          // If combo specifies a variation, it must match
+          if (comboItem.variation_id) {
+            return ci.variationId === comboItem.variation_id;
+          }
+          return true;
+        });
+        return cartItem && cartItem.quantity >= comboItem.quantity;
+      });
+
+      if (allMatch) {
+        // Calculate original price of combo items
+        let originalPrice = 0;
+        combo.items.forEach((comboItem) => {
+          const cartItem = items.find((ci) => {
+            const productMatch = ci.productId === comboItem.product_id;
+            if (!productMatch) return false;
+            if (comboItem.variation_id) return ci.variationId === comboItem.variation_id;
+            return true;
+          });
+          if (cartItem) {
+            originalPrice += cartItem.price * comboItem.quantity;
+          }
+        });
+
+        const discount = Math.max(0, originalPrice - combo.combo_price);
+        if (discount > 0 || combo.free_shipping) {
+          detected.push({
+            combo,
+            discount,
+            freeShipping: combo.free_shipping,
+          });
+        }
+      }
+    }
+
+    setAppliedCombos(detected);
+  }, [items, activeCombos]);
+
+  const comboDiscount = appliedCombos.reduce((sum, ac) => sum + ac.discount, 0);
+  const comboFreeShipping = appliedCombos.some(ac => ac.freeShipping);
 
   // Persist cart to localStorage
   useEffect(() => {
@@ -76,7 +153,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     if (appliedCoupon && items.length > 0) {
       const subtotal = items.reduce((total, item) => total + item.price * item.quantity, 0);
       
-      // Recalculate discount
       let discount = 0;
       if (appliedCoupon.coupon.discount_type === 'percentage') {
         discount = (subtotal * appliedCoupon.coupon.discount_value) / 100;
@@ -87,11 +163,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         discount = appliedCoupon.coupon.discount_value;
       }
 
-      if (discount > subtotal) {
-        discount = subtotal;
-      }
+      if (discount > subtotal) discount = subtotal;
 
-      // Check minimum order value
       if (appliedCoupon.coupon.minimum_order_value && subtotal < appliedCoupon.coupon.minimum_order_value) {
         setAppliedCoupon(null);
       } else if (discount !== appliedCoupon.discount) {
@@ -105,9 +178,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const addItem = (newItem: Omit<CartItem, 'quantity'> & { quantity?: number }) => {
     setItems(current => {
       const existingIndex = current.findIndex(item => item.id === newItem.id);
-      
       if (existingIndex >= 0) {
-        // Update quantity if item exists
         const updated = [...current];
         const newQuantity = updated[existingIndex].quantity + (newItem.quantity || 1);
         updated[existingIndex] = {
@@ -116,8 +187,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         };
         return updated;
       }
-      
-      // Add new item
       return [...current, { ...newItem, quantity: newItem.quantity || 1 }];
     });
   };
@@ -127,16 +196,10 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const updateQuantity = (id: string, quantity: number) => {
-    if (quantity < 1) {
-      removeItem(id);
-      return;
-    }
-    
+    if (quantity < 1) { removeItem(id); return; }
     setItems(current =>
       current.map(item =>
-        item.id === id
-          ? { ...item, quantity: Math.min(quantity, item.stock) }
-          : item
+        item.id === id ? { ...item, quantity: Math.min(quantity, item.stock) } : item
       )
     );
   };
@@ -146,61 +209,40 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     setAppliedCoupon(null);
   };
 
-  const getItemCount = () => {
-    return items.reduce((total, item) => total + item.quantity, 0);
-  };
+  const getItemCount = () => items.reduce((total, item) => total + item.quantity, 0);
 
-  const getSubtotal = () => {
-    return items.reduce((total, item) => total + item.price * item.quantity, 0);
-  };
+  const getSubtotal = () => items.reduce((total, item) => total + item.price * item.quantity, 0);
 
   const getTotal = () => {
     const subtotal = getSubtotal();
-    const discount = appliedCoupon?.discount || 0;
-    return Math.max(0, subtotal - discount);
+    const couponDiscountVal = appliedCoupon?.discount || 0;
+    return Math.max(0, subtotal - couponDiscountVal - comboDiscount);
   };
 
   const applyCoupon = async (code: string, customerEmail?: string): Promise<CouponValidationResult> => {
     setCouponLoading(true);
-    
     try {
       const subtotal = getSubtotal();
       const productIds = items.map(item => item.productId);
-      
       const result = await couponsService.validateCoupon(code, subtotal, customerEmail, productIds);
-
       if (result.valid && result.coupon && result.discount !== undefined) {
-        setAppliedCoupon({
-          coupon: result.coupon,
-          discount: result.discount,
-        });
+        setAppliedCoupon({ coupon: result.coupon, discount: result.discount });
       }
-
       return result;
     } finally {
       setCouponLoading(false);
     }
   };
 
-  const removeCoupon = () => {
-    setAppliedCoupon(null);
-  };
+  const removeCoupon = () => setAppliedCoupon(null);
 
   return (
     <CartContext.Provider
       value={{
-        items,
-        addItem,
-        removeItem,
-        updateQuantity,
-        clearCart,
-        getItemCount,
-        getSubtotal,
-        getTotal,
-        appliedCoupon,
-        applyCoupon,
-        removeCoupon,
-        couponLoading,
+        items, addItem, removeItem, updateQuantity, clearCart,
+        getItemCount, getSubtotal, getTotal,
+        appliedCoupon, applyCoupon, removeCoupon, couponLoading,
+        appliedCombos, comboDiscount, comboFreeShipping,
       }}
     >
       {children}
@@ -215,3 +257,4 @@ export const useCart = () => {
   }
   return context;
 };
+
