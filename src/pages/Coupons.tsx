@@ -127,6 +127,7 @@ const Coupons = () => {
       is_active: true,
       show_in_wheel: false,
       progressive_tiers: null,
+      applicable_shipping_zones: [],
     });
     setEditingCoupon(null);
   };
@@ -148,6 +149,7 @@ const Coupons = () => {
         is_active: coupon.is_active,
         show_in_wheel: coupon.show_in_wheel ?? false,
         progressive_tiers: coupon.progressive_tiers || null,
+        applicable_shipping_zones: coupon.applicable_shipping_zones || [],
       });
     } else {
       resetForm();
