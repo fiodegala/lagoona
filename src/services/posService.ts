@@ -392,27 +392,75 @@ export const posService = {
 
   // Product lookup
   async getProductByBarcode(barcode: string) {
-    const { data, error } = await supabase
+    // First try product-level barcode
+    const { data: productByBarcode, error: err1 } = await supabase
       .from('products')
       .select('*, product_variations(*)')
       .eq('barcode', barcode)
-      .eq('is_active', true)
       .maybeSingle();
 
-    if (error) throw error;
-    return data;
+    if (err1) throw err1;
+    if (productByBarcode) return productByBarcode;
+
+    // Then try variation-level barcode or SKU
+    const { data: variationMatch, error: err2 } = await supabase
+      .from('product_variations')
+      .select('product_id')
+      .or(`barcode.eq.${barcode},sku.eq.${barcode}`)
+      .limit(1)
+      .maybeSingle();
+
+    if (err2) throw err2;
+    if (variationMatch) {
+      const { data: product, error: err3 } = await supabase
+        .from('products')
+        .select('*, product_variations(*)')
+        .eq('id', variationMatch.product_id)
+        .maybeSingle();
+      if (err3) throw err3;
+      return product;
+    }
+
+    return null;
   },
 
   async searchProducts(query: string, limit = 20) {
-    const { data, error } = await supabase
+    // Search products by name or barcode
+    const { data: directMatches, error: err1 } = await supabase
       .from('products')
       .select('*, product_variations(*)')
-      .eq('is_active', true)
       .or(`name.ilike.%${query}%,barcode.ilike.%${query}%`)
       .limit(limit);
 
-    if (error) throw error;
-    return data || [];
+    if (err1) throw err1;
+
+    // Also search by variation barcode or SKU
+    const { data: variationMatches, error: err2 } = await supabase
+      .from('product_variations')
+      .select('product_id')
+      .or(`barcode.ilike.%${query}%,sku.ilike.%${query}%`)
+      .limit(limit);
+
+    if (err2) throw err2;
+
+    const directIds = new Set((directMatches || []).map((p: any) => p.id));
+    const extraIds = (variationMatches || [])
+      .map((v: any) => v.product_id)
+      .filter((id: string) => !directIds.has(id));
+
+    let extraProducts: any[] = [];
+    if (extraIds.length > 0) {
+      const uniqueIds = [...new Set(extraIds)];
+      const { data, error: err3 } = await supabase
+        .from('products')
+        .select('*, product_variations(*)')
+        .in('id', uniqueIds)
+        .limit(limit);
+      if (err3) throw err3;
+      extraProducts = data || [];
+    }
+
+    return [...(directMatches || []), ...extraProducts].slice(0, limit);
   },
 
   async getAllActiveProducts() {
