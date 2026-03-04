@@ -460,10 +460,10 @@ const POSPage = () => {
 
   if (!session) {
     return (
-      <div className="h-screen flex flex-col items-center justify-center gap-4">
-        <DollarSign className="h-16 w-16 text-muted-foreground" />
-        <h1 className="text-2xl font-bold">Caixa Fechado</h1>
-        <p className="text-muted-foreground">Abra o caixa para iniciar as vendas</p>
+      <div className="h-screen flex flex-col items-center justify-center gap-4 px-4">
+        <DollarSign className="h-12 w-12 sm:h-16 sm:w-16 text-muted-foreground" />
+        <h1 className="text-xl sm:text-2xl font-bold">Caixa Fechado</h1>
+        <p className="text-muted-foreground text-center text-sm sm:text-base">Abra o caixa para iniciar as vendas</p>
         <Button size="lg" onClick={() => setOpenSessionModal(true)}>Abrir Caixa</Button>
         <Button variant="ghost" onClick={() => navigate('/admin')}>Voltar ao Admin</Button>
         <OpenSessionModal open={openSessionModal} onOpenChange={setOpenSessionModal} onConfirm={handleOpenSession} />
@@ -475,7 +475,7 @@ const POSPage = () => {
     <POSLayout session={session} onOpenCashDrawer={() => setCashMovementModal(true)}>
       <div className="h-full flex flex-col">
         {/* Stepper */}
-        <div className="border-b bg-card px-6 py-3">
+        <div className="border-b bg-card px-3 sm:px-6 py-2 sm:py-3 overflow-x-auto">
           <div className="flex items-center justify-between max-w-2xl mx-auto">
             {STEPS.map((step, index) => {
               const isCompleted = index < stepIndex;
@@ -610,14 +610,14 @@ const POSPage = () => {
         </div>
 
         {/* Bottom bar */}
-        <div className="p-2 border-t flex gap-2 bg-card">
-          <Button variant="outline" size="sm" className="flex-1" onClick={() => setCashMovementModal(true)}>
+        <div className="p-2 border-t flex flex-wrap gap-2 bg-card">
+          <Button variant="outline" size="sm" className="flex-1 min-w-[140px]" onClick={() => setCashMovementModal(true)}>
             <ArrowUpDown className="h-4 w-4 mr-1" /> Sangria/Suprimento
           </Button>
-          <Button variant="outline" size="sm" onClick={resetWizard}>
+          <Button variant="outline" size="sm" className="flex-1 min-w-[100px]" onClick={resetWizard}>
             Nova Venda
           </Button>
-          <Button variant="destructive" size="sm" onClick={() => setCloseSessionModal(true)}>Fechar Caixa</Button>
+          <Button variant="destructive" size="sm" className="flex-1 min-w-[100px]" onClick={() => setCloseSessionModal(true)}>Fechar Caixa</Button>
         </div>
       </div>
 

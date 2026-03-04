@@ -392,7 +392,7 @@ const POSCart = ({
       </div>
       {/* Item Detail Modal */}
       <Dialog open={!!detailItem} onOpenChange={(open) => !open && setDetailItem(null)}>
-        <DialogContent className="sm:max-w-2xl">
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Package className="h-5 w-5" />
@@ -404,9 +404,9 @@ const POSCart = ({
             const pName = parts[0];
             const vLabel = parts.length > 1 ? parts.slice(1).join(' — ') : null;
             return (
-              <div className="flex gap-6">
+              <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
                 {/* Image - 4:7 aspect ratio, clickable */}
-                <div className="flex-shrink-0">
+                <div className="flex-shrink-0 flex justify-center sm:justify-start">
                   {detailItem.image_url ? (
                     <button
                       type="button"
@@ -416,13 +416,13 @@ const POSCart = ({
                       <img
                         src={detailItem.image_url}
                         alt={detailItem.name}
-                        className="w-52 rounded-lg object-cover"
+                        className="w-36 sm:w-52 rounded-lg object-cover"
                         style={{ aspectRatio: '4/7' }}
                       />
                     </button>
                   ) : (
-                    <div className="w-52 rounded-lg bg-muted flex items-center justify-center" style={{ aspectRatio: '4/7' }}>
-                      <Tag className="h-10 w-10 text-muted-foreground" />
+                    <div className="w-36 sm:w-52 rounded-lg bg-muted flex items-center justify-center" style={{ aspectRatio: '4/7' }}>
+                      <Tag className="h-8 w-8 sm:h-10 sm:w-10 text-muted-foreground" />
                     </div>
                   )}
                 </div>
@@ -430,7 +430,7 @@ const POSCart = ({
                 {/* Info */}
                 <div className="flex-1 space-y-3 min-w-0">
                   <div>
-                    <p className="text-lg font-semibold">{pName}</p>
+                    <p className="text-base sm:text-lg font-semibold">{pName}</p>
                     {vLabel && (
                       <Badge variant="outline" className="mt-1">{vLabel}</Badge>
                     )}
@@ -441,29 +441,29 @@ const POSCart = ({
                   <div className="grid grid-cols-2 gap-3 text-sm">
                     {detailItem.sku && (
                       <div className="flex items-center gap-2">
-                        <Hash className="h-4 w-4 text-muted-foreground" />
-                        <div>
+                        <Hash className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                        <div className="min-w-0">
                           <p className="text-muted-foreground text-xs">SKU</p>
-                          <p className="font-mono font-medium">{detailItem.sku}</p>
+                          <p className="font-mono font-medium truncate">{detailItem.sku}</p>
                         </div>
                       </div>
                     )}
                     <div className="flex items-center gap-2">
-                      <DollarSign className="h-4 w-4 text-muted-foreground" />
+                      <DollarSign className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                       <div>
                         <p className="text-muted-foreground text-xs">Preço unitário</p>
                         <p className="font-semibold">{formatCurrency(detailItem.unit_price)}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <BarChart3 className="h-4 w-4 text-muted-foreground" />
+                      <BarChart3 className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                       <div>
                         <p className="text-muted-foreground text-xs">Quantidade</p>
                         <p className="font-semibold">{detailItem.quantity}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Package className="h-4 w-4 text-muted-foreground" />
+                      <Package className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                       <div>
                         <p className="text-muted-foreground text-xs">Estoque disponível</p>
                         <p className="font-semibold">{detailItem.max_stock} un.</p>
@@ -483,7 +483,7 @@ const POSCart = ({
 
                   <Separator />
 
-                  <div className="flex justify-between text-lg font-bold">
+                  <div className="flex justify-between text-base sm:text-lg font-bold">
                     <span>Total do item</span>
                     <span className="text-primary">{formatCurrency(detailItem.total)}</span>
                   </div>
