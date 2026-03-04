@@ -31,6 +31,7 @@ export interface ProductResult {
     promotional_price?: number | null;
     stock: number;
     is_active: boolean;
+    label?: string;
   }>;
 }
 
