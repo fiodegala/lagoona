@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { X, Gift, Copy, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { couponsService, Coupon } from '@/services/coupons';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 const WHEEL_COLORS = [
@@ -37,6 +38,11 @@ const SpinWheel = () => {
 
     const loadCoupons = async () => {
       try {
+        // Check if wheel is enabled
+        const { data: configData } = await supabase
+          .from('store_config').select('value').eq('key', 'spin_wheel_enabled').maybeSingle();
+        if (configData && configData.value === false) return;
+
         const all = await couponsService.getAll();
         const active = all.filter(c => {
           if (!c.is_active || !c.show_in_wheel) return false;

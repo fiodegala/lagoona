@@ -15,6 +15,7 @@ import DealsCountdownSettings from '@/components/settings/DealsCountdownSettings
 import FeaturedProductSettings from '@/components/settings/FeaturedProductSettings';
 import VideoTestimonialsSettings from '@/components/settings/VideoTestimonialsSettings';
 import RecoveryCouponSettings from '@/components/settings/RecoveryCouponSettings';
+import SpinWheelSettings from '@/components/settings/SpinWheelSettings';
 
 const Settings = () => {
   const { profile, isAdmin, user } = useAuth();
@@ -212,6 +213,7 @@ const Settings = () => {
             <DealsCountdownSettings />
             <FeaturedProductSettings />
             <VideoTestimonialsSettings />
+            <SpinWheelSettings />
             <RecoveryCouponSettings />
             <WhatsAppTemplatesSettings />
           </>
