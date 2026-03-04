@@ -138,9 +138,8 @@ const Stock = () => {
       // Build stock maps: one for simple products (variation_id is null), one for variation-level
       const simpleStockMap: Record<string, Record<string, number>> = {};
       const variationStockMap: Record<string, Record<string, number>> = {}; // product_id -> store_id -> sum
-      (stockRes.data || []).forEach((s: any) => {
+      stockData.forEach((s: any) => {
         if (s.variation_id) {
-          // Variation-level stock: aggregate by product_id + store_id
           if (!variationStockMap[s.product_id]) variationStockMap[s.product_id] = {};
           variationStockMap[s.product_id][s.store_id] = (variationStockMap[s.product_id][s.store_id] || 0) + s.quantity;
         } else {
