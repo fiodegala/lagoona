@@ -43,6 +43,7 @@ interface ProductSearchProps {
 const ProductSearch = ({ onProductSelect, isOnline }: ProductSearchProps) => {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<ProductResult[]>([]);
+  const [matchedVariationMap, setMatchedVariationMap] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -51,16 +52,19 @@ const ProductSearch = ({ onProductSelect, isOnline }: ProductSearchProps) => {
   const searchProducts = useCallback(async (searchQuery: string) => {
     if (!searchQuery.trim()) {
       setResults([]);
+      setMatchedVariationMap({});
       return;
     }
 
     setIsLoading(true);
     try {
       let products: ProductResult[];
+      let varMap: Record<string, string> = {};
       
       if (isOnline) {
-        const data = await posService.searchProducts(searchQuery);
-        products = data.map((p) => ({
+        const result = await posService.searchProducts(searchQuery);
+        varMap = result.matchedVariationMap;
+        products = result.products.map((p) => ({
           id: p.id,
           name: p.name,
           description: p.description,
@@ -89,6 +93,7 @@ const ProductSearch = ({ onProductSelect, isOnline }: ProductSearchProps) => {
       }
       
       setResults(products);
+      setMatchedVariationMap(varMap);
       setShowResults(true);
     } catch (error) {
       console.error('Search error:', error);
