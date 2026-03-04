@@ -428,30 +428,18 @@ const HomePage = () => {
       {/* Instagram Feed - Elfsight Widget */}
       <section className="py-16 md:py-20 bg-store-secondary/30">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-10">
+          <div className="text-center">
             <h2 className="text-2xl md:text-3xl font-display font-bold italic">Siga-nos no Instagram</h2>
             <div className="w-12 h-0.5 bg-store-gold mt-2 mx-auto" />
             <p className="text-muted-foreground mt-3 font-light tracking-wide">@fiodegala</p>
-          </div>
-
-          {/* LightWidget Instagram Feed */}
-          <iframe
-            src="//lightwidget.com/widgets/3fc689aa9b1b53f28479985b56244fb4.html"
-            scrolling="no"
-            allowTransparency={true}
-            className="w-full border-0 overflow-hidden"
-            style={{ minHeight: '400px' }}
-            title="Feed do Instagram @fiodegala"
-            loading="lazy"
-          />
-
-          <div className="text-center mt-8">
-            <Button asChild variant="outline" className="gap-2 border-store-gold/30 text-store-gold hover:bg-store-gold/10 font-semibold tracking-wide">
-              <a href="https://instagram.com/fiodegala" target="_blank" rel="noopener noreferrer">
-                Seguir no Instagram
-                <ArrowRight className="h-4 w-4" />
-              </a>
-            </Button>
+            <div className="mt-8">
+              <Button asChild variant="outline" className="gap-2 border-store-gold/30 text-store-gold hover:bg-store-gold/10 font-semibold tracking-wide">
+                <a href="https://www.instagram.com/fiodegala/" target="_blank" rel="noopener noreferrer">
+                  Seguir no Instagram
+                  <ArrowRight className="h-4 w-4" />
+                </a>
+              </Button>
+            </div>
           </div>
         </div>
       </section>
