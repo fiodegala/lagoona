@@ -5,12 +5,22 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
   Trash2,
   Plus,
   Minus,
   Percent,
   Tag,
   X,
+  Package,
+  Hash,
+  DollarSign,
+  BarChart3,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
