@@ -390,6 +390,38 @@ export const posService = {
     return this.createSale(saleData);
   },
 
+  // Helper: enrich products with variation attribute labels
+  async _enrichWithLabels(products: any[]): Promise<any[]> {
+    const allVariationIds = products.flatMap((p: any) =>
+      (p.product_variations || []).map((v: any) => v.id)
+    );
+    if (allVariationIds.length === 0) return products;
+
+    const { data: vvData } = await supabase
+      .from('product_variation_values')
+      .select('variation_id, attribute_value_id, product_attribute_values(value, product_attributes(name))')
+      .in('variation_id', allVariationIds);
+
+    const labels = new Map<string, string>();
+    for (const vv of vvData || []) {
+      const attrValue = vv.product_attribute_values as any;
+      if (attrValue) {
+        const attrName = attrValue.product_attributes?.name || '';
+        const val = attrValue.value || '';
+        const existing = labels.get(vv.variation_id);
+        labels.set(vv.variation_id, existing ? `${existing} / ${val}` : `${attrName}: ${val}`);
+      }
+    }
+
+    return products.map((p: any) => ({
+      ...p,
+      product_variations: (p.product_variations || []).map((v: any) => ({
+        ...v,
+        label: labels.get(v.id) || v.sku || v.id.slice(0, 8),
+      })),
+    }));
+  },
+
   // Product lookup - returns product and optionally the matched variation ID
   async getProductByBarcode(barcode: string): Promise<{ product: any; matchedVariationId?: string } | null> {
     // First try product-level barcode
@@ -400,7 +432,10 @@ export const posService = {
       .maybeSingle();
 
     if (err1) throw err1;
-    if (productByBarcode) return { product: productByBarcode };
+    if (productByBarcode) {
+      const [enriched] = await this._enrichWithLabels([productByBarcode]);
+      return { product: enriched };
+    }
 
     // Then try variation-level barcode or SKU
     const { data: variationMatch, error: err2 } = await supabase
@@ -418,7 +453,10 @@ export const posService = {
         .eq('id', variationMatch.product_id)
         .maybeSingle();
       if (err3) throw err3;
-      if (product) return { product, matchedVariationId: variationMatch.id };
+      if (product) {
+        const [enriched] = await this._enrichWithLabels([product]);
+        return { product: enriched, matchedVariationId: variationMatch.id };
+      }
     }
 
     return null;
@@ -468,8 +506,11 @@ export const posService = {
       extraProducts = data || [];
     }
 
+    const allProducts = [...(directMatches || []), ...extraProducts].slice(0, limit);
+    const enriched = await this._enrichWithLabels(allProducts);
+
     return {
-      products: [...(directMatches || []), ...extraProducts].slice(0, limit),
+      products: enriched,
       matchedVariationMap,
     };
   },
