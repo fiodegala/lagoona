@@ -679,6 +679,56 @@ const Coupons = () => {
               </div>
             )}
 
+            {/* Shipping Zones Selector */}
+            {isShippingType && shippingZones.length > 0 && (
+              <div className="space-y-3 rounded-lg border p-4">
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4 text-muted-foreground" />
+                  <Label className="font-medium">Zonas de frete aplicáveis</Label>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Selecione as zonas onde este cupom será válido. Deixe vazio para aplicar em todas as zonas.
+                </p>
+                <div className="space-y-2 max-h-40 overflow-y-auto">
+                  {shippingZones.map(zone => (
+                    <div key={zone.id} className="flex items-center gap-2">
+                      <Checkbox
+                        id={`zone-${zone.id}`}
+                        checked={(formData.applicable_shipping_zones || []).includes(zone.id)}
+                        onCheckedChange={(checked) => {
+                          setFormData(prev => {
+                            const current = prev.applicable_shipping_zones || [];
+                            const updated = checked
+                              ? [...current, zone.id]
+                              : current.filter(id => id !== zone.id);
+                            return { ...prev, applicable_shipping_zones: updated };
+                          });
+                        }}
+                      />
+                      <Label htmlFor={`zone-${zone.id}`} className="text-sm cursor-pointer flex-1">
+                        {zone.name}
+                        <span className="text-xs text-muted-foreground ml-2">
+                          ({zone.zip_start} — {zone.zip_end})
+                        </span>
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+                {(formData.applicable_shipping_zones || []).length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {(formData.applicable_shipping_zones || []).map(zoneId => {
+                      const zone = shippingZones.find(z => z.id === zoneId);
+                      return zone ? (
+                        <Badge key={zoneId} variant="secondary" className="text-xs">
+                          {zone.name}
+                        </Badge>
+                      ) : null;
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Progressive Tiers Editor */}
             {isProgressive && formData.progressive_tiers && (
               <div className="space-y-3 rounded-lg border p-4">
