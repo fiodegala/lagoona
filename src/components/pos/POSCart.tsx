@@ -76,6 +76,7 @@ const POSCart = ({
   const [discountInput, setDiscountInput] = useState('');
   const [discountType, setDiscountType] = useState<'percentage' | 'fixed'>('percentage');
   const [detailItem, setDetailItem] = useState<CartItem | null>(null);
+  const [imageFullscreen, setImageFullscreen] = useState(false);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -403,24 +404,31 @@ const POSCart = ({
             const pName = parts[0];
             const vLabel = parts.length > 1 ? parts.slice(1).join(' — ') : null;
             return (
-              <div className="space-y-4">
-                {/* Image */}
-                <div className="flex justify-center">
+              <div className="flex gap-6">
+                {/* Image - 4:7 aspect ratio, clickable */}
+                <div className="flex-shrink-0">
                   {detailItem.image_url ? (
-                    <img
-                      src={detailItem.image_url}
-                      alt={detailItem.name}
-                      className="w-40 h-40 rounded-lg object-cover"
-                    />
+                    <button
+                      type="button"
+                      onClick={() => setImageFullscreen(true)}
+                      className="block rounded-lg overflow-hidden hover:opacity-90 transition-opacity focus:outline-none focus:ring-2 focus:ring-primary"
+                    >
+                      <img
+                        src={detailItem.image_url}
+                        alt={detailItem.name}
+                        className="w-52 rounded-lg object-cover"
+                        style={{ aspectRatio: '4/7' }}
+                      />
+                    </button>
                   ) : (
-                    <div className="w-40 h-40 rounded-lg bg-muted flex items-center justify-center">
+                    <div className="w-52 rounded-lg bg-muted flex items-center justify-center" style={{ aspectRatio: '4/7' }}>
                       <Tag className="h-10 w-10 text-muted-foreground" />
                     </div>
                   )}
                 </div>
 
                 {/* Info */}
-                <div className="space-y-3">
+                <div className="flex-1 space-y-3 min-w-0">
                   <div>
                     <p className="text-lg font-semibold">{pName}</p>
                     {vLabel && (
@@ -483,6 +491,19 @@ const POSCart = ({
               </div>
             );
           })()}
+        </DialogContent>
+      </Dialog>
+
+      {/* Fullscreen Image Modal */}
+      <Dialog open={imageFullscreen} onOpenChange={setImageFullscreen}>
+        <DialogContent className="sm:max-w-4xl p-2 bg-black/95 border-none">
+          {detailItem?.image_url && (
+            <img
+              src={detailItem.image_url}
+              alt={detailItem.name}
+              className="w-full h-auto max-h-[85vh] object-contain rounded"
+            />
+          )}
         </DialogContent>
       </Dialog>
     </div>
