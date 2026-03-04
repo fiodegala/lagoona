@@ -313,6 +313,7 @@ export type Database = {
           max_uses_per_customer: number | null
           maximum_discount: number | null
           minimum_order_value: number | null
+          progressive_tiers: Json | null
           show_in_wheel: boolean
           starts_at: string | null
           updated_at: string
@@ -333,6 +334,7 @@ export type Database = {
           max_uses_per_customer?: number | null
           maximum_discount?: number | null
           minimum_order_value?: number | null
+          progressive_tiers?: Json | null
           show_in_wheel?: boolean
           starts_at?: string | null
           updated_at?: string
@@ -353,6 +355,7 @@ export type Database = {
           max_uses_per_customer?: number | null
           maximum_discount?: number | null
           minimum_order_value?: number | null
+          progressive_tiers?: Json | null
           show_in_wheel?: boolean
           starts_at?: string | null
           updated_at?: string
