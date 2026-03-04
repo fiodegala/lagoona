@@ -89,7 +89,7 @@ export const reviewsService = {
   },
 
   async create(data: CreateReviewData): Promise<ProductReview> {
-    const { data: review, error } = await supabase
+    const { error } = await supabase
       .from('product_reviews')
       .insert({
         product_id: data.product_id,
@@ -98,13 +98,24 @@ export const reviewsService = {
         rating: data.rating,
         title: data.title || null,
         comment: data.comment || null,
-        is_approved: false, // Reviews need moderation
-      })
-      .select()
-      .single();
+        is_approved: false,
+      });
 
     if (error) throw error;
-    return review as ProductReview;
+    return {
+      id: '',
+      product_id: data.product_id,
+      customer_name: data.customer_name,
+      customer_email: '',
+      rating: data.rating,
+      title: data.title || null,
+      comment: data.comment || null,
+      is_verified_purchase: false,
+      is_approved: false,
+      helpful_count: 0,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    } as ProductReview;
   },
 
   async uploadMedia(reviewId: string, file: File, type: 'image' | 'video'): Promise<ReviewMedia> {
