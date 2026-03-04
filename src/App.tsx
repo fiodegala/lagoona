@@ -237,6 +237,7 @@ const App = () => (
                     <Analytics />
                   </ProtectedRoute>
                 }
+              />
               <Route
                 path="/admin/users"
                 element={
