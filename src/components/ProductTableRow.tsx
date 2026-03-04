@@ -241,15 +241,6 @@ const ProductTableRow = ({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className={`h-8 w-8 ${product.is_active ? 'text-success hover:text-success' : 'text-muted-foreground'}`}
-                    onClick={onToggleActive}
-                    title={product.is_active ? 'Desativar' : 'Ativar'}
-                  >
-                    <Power className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
                     className="h-8 w-8"
                     onClick={onEdit}
                     title="Editar"
