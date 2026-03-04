@@ -391,7 +391,7 @@ const POSCart = ({
       </div>
       {/* Item Detail Modal */}
       <Dialog open={!!detailItem} onOpenChange={(open) => !open && setDetailItem(null)}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Package className="h-5 w-5" />
