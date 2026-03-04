@@ -59,6 +59,7 @@ const DEFAULT_PROGRESSIVE: ProgressiveConfig = {
 
 const Coupons = () => {
   const [coupons, setCoupons] = useState<Coupon[]>([]);
+  const [shippingZones, setShippingZones] = useState<ShippingZone[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
