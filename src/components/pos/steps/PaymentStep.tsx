@@ -58,45 +58,46 @@ const PaymentStep = ({
   };
 
   return (
-    <div className="flex-1 flex h-full overflow-hidden">
+    <div className="flex-1 flex flex-col lg:flex-row h-full overflow-hidden">
       {/* Left - Order Summary */}
-      <div className="flex-1 flex flex-col overflow-auto p-6">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold">Resumo da Venda</h2>
-          <Button variant="outline" onClick={onBack}>
-            <ChevronLeft className="h-4 w-4 mr-2" /> Voltar
+      <div className="flex-1 flex flex-col overflow-auto p-4 sm:p-6">
+        <div className="flex items-center justify-between mb-4 sm:mb-6">
+          <h2 className="text-xl sm:text-2xl font-bold">Resumo da Venda</h2>
+          <Button variant="outline" size="sm" onClick={onBack}>
+            <ChevronLeft className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Voltar</span>
           </Button>
         </div>
 
         {/* Sale info */}
-        <div className="grid grid-cols-2 gap-4 mb-6">
-          <div className="flex items-center gap-3 p-4 rounded-lg border bg-card">
-            <ShoppingBag className="h-5 w-5 text-muted-foreground" />
-            <div>
-              <div className="text-sm text-muted-foreground">Tipo de Venda</div>
-              <div className="font-semibold">{saleTypeLabels[saleType]}</div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-6">
+          <div className="flex items-center gap-3 p-3 sm:p-4 rounded-lg border bg-card">
+            <ShoppingBag className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+            <div className="min-w-0">
+              <div className="text-xs sm:text-sm text-muted-foreground">Tipo de Venda</div>
+              <div className="font-semibold text-sm sm:text-base">{saleTypeLabels[saleType]}</div>
             </div>
           </div>
-          <div className="flex items-center gap-3 p-4 rounded-lg border bg-card">
-            <User className="h-5 w-5 text-muted-foreground" />
-            <div>
-              <div className="text-sm text-muted-foreground">Vendedor</div>
-              <div className="font-semibold">{selectedSeller?.full_name || '—'}</div>
+          <div className="flex items-center gap-3 p-3 sm:p-4 rounded-lg border bg-card">
+            <User className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+            <div className="min-w-0">
+              <div className="text-xs sm:text-sm text-muted-foreground">Vendedor</div>
+              <div className="font-semibold text-sm sm:text-base truncate">{selectedSeller?.full_name || '—'}</div>
             </div>
           </div>
         </div>
 
         {/* Sale Date Picker */}
         <div className={cn(
-          "flex items-center gap-3 p-4 rounded-lg border mb-6",
+          "flex items-center gap-3 p-3 sm:p-4 rounded-lg border mb-4 sm:mb-6",
           isBackdated ? "bg-orange-500/10 border-orange-500/30" : "bg-card"
         )}>
-          <CalendarIcon className={cn("h-5 w-5", isBackdated ? "text-orange-600" : "text-muted-foreground")} />
-          <div className="flex-1">
-            <div className="text-sm text-muted-foreground">Data da Venda</div>
+          <CalendarIcon className={cn("h-5 w-5 flex-shrink-0", isBackdated ? "text-orange-600" : "text-muted-foreground")} />
+          <div className="flex-1 min-w-0">
+            <div className="text-xs sm:text-sm text-muted-foreground">Data da Venda</div>
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="ghost" className="h-auto p-0 font-semibold hover:bg-transparent">
+                <Button variant="ghost" className="h-auto p-0 font-semibold hover:bg-transparent text-sm sm:text-base">
                   {format(saleDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
                 </Button>
               </PopoverTrigger>
@@ -113,18 +114,18 @@ const PaymentStep = ({
             </Popover>
           </div>
           {isBackdated && (
-            <span className="text-xs font-medium text-orange-600 bg-orange-500/20 px-2 py-1 rounded">
+            <span className="text-xs font-medium text-orange-600 bg-orange-500/20 px-2 py-1 rounded flex-shrink-0">
               Retroativa
             </span>
           )}
         </div>
 
         {selectedCustomer && (
-          <div className="flex items-center gap-3 p-4 rounded-lg border bg-card mb-6">
-            <User className="h-5 w-5 text-muted-foreground" />
-            <div>
-              <div className="text-sm text-muted-foreground">Cliente</div>
-              <div className="font-semibold">{selectedCustomer.name}</div>
+          <div className="flex items-center gap-3 p-3 sm:p-4 rounded-lg border bg-card mb-4 sm:mb-6">
+            <User className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+            <div className="min-w-0">
+              <div className="text-xs sm:text-sm text-muted-foreground">Cliente</div>
+              <div className="font-semibold text-sm sm:text-base truncate">{selectedCustomer.name}</div>
               {selectedCustomer.document && (
                 <div className="text-xs text-muted-foreground">{selectedCustomer.document}</div>
               )}
@@ -134,23 +135,23 @@ const PaymentStep = ({
 
         {/* Items */}
         <div className="border rounded-lg overflow-hidden">
-          <div className="bg-muted px-4 py-2 text-sm font-semibold flex">
+          <div className="bg-muted px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold flex">
             <span className="flex-1">Produto</span>
-            <span className="w-16 text-center">Qtd</span>
-            <span className="w-24 text-right">Preço Un.</span>
-            <span className="w-24 text-right">Total</span>
+            <span className="w-12 sm:w-16 text-center">Qtd</span>
+            <span className="w-20 sm:w-24 text-right hidden sm:block">Preço Un.</span>
+            <span className="w-20 sm:w-24 text-right">Total</span>
           </div>
           {cartItems.map((item) => (
-            <div key={item.id} className="px-4 py-3 border-t flex items-center text-sm">
+            <div key={item.id} className="px-3 sm:px-4 py-2 sm:py-3 border-t flex items-center text-xs sm:text-sm">
               <span className="flex-1 truncate">{item.name}</span>
-              <span className="w-16 text-center">{item.quantity}</span>
-              <span className="w-24 text-right">{formatCurrency(item.unit_price)}</span>
-              <span className="w-24 text-right font-medium">{formatCurrency(item.total)}</span>
+              <span className="w-12 sm:w-16 text-center">{item.quantity}</span>
+              <span className="w-20 sm:w-24 text-right hidden sm:block">{formatCurrency(item.unit_price)}</span>
+              <span className="w-20 sm:w-24 text-right font-medium">{formatCurrency(item.total)}</span>
             </div>
           ))}
         </div>
 
-        <Separator className="my-4" />
+        <Separator className="my-3 sm:my-4" />
 
         <div className="space-y-2 text-sm max-w-xs ml-auto">
           <div className="flex justify-between">
@@ -164,7 +165,7 @@ const PaymentStep = ({
             </div>
           )}
           <Separator />
-          <div className="flex justify-between text-xl font-bold">
+          <div className="flex justify-between text-lg sm:text-xl font-bold">
             <span>Total</span>
             <span className="text-primary">{formatCurrency(total)}</span>
           </div>
@@ -172,7 +173,7 @@ const PaymentStep = ({
       </div>
 
       {/* Right - Payment */}
-      <div className="w-96 border-l flex flex-col">
+      <div className="w-full lg:w-96 border-t lg:border-t-0 lg:border-l flex flex-col">
         <PaymentPanel
           total={total}
           onPayment={handlePaymentWithDate}

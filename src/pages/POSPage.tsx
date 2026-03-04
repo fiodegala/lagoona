@@ -610,14 +610,14 @@ const POSPage = () => {
         </div>
 
         {/* Bottom bar */}
-        <div className="p-2 border-t flex gap-2 bg-card">
-          <Button variant="outline" size="sm" className="flex-1" onClick={() => setCashMovementModal(true)}>
+        <div className="p-2 border-t flex flex-wrap gap-2 bg-card">
+          <Button variant="outline" size="sm" className="flex-1 min-w-[140px]" onClick={() => setCashMovementModal(true)}>
             <ArrowUpDown className="h-4 w-4 mr-1" /> Sangria/Suprimento
           </Button>
-          <Button variant="outline" size="sm" onClick={resetWizard}>
+          <Button variant="outline" size="sm" className="flex-1 min-w-[100px]" onClick={resetWizard}>
             Nova Venda
           </Button>
-          <Button variant="destructive" size="sm" onClick={() => setCloseSessionModal(true)}>Fechar Caixa</Button>
+          <Button variant="destructive" size="sm" className="flex-1 min-w-[100px]" onClick={() => setCloseSessionModal(true)}>Fechar Caixa</Button>
         </div>
       </div>
 
