@@ -76,6 +76,7 @@ const POSCart = ({
   const [discountInput, setDiscountInput] = useState('');
   const [discountType, setDiscountType] = useState<'percentage' | 'fixed'>('percentage');
   const [detailItem, setDetailItem] = useState<CartItem | null>(null);
+  const [imageFullscreen, setImageFullscreen] = useState(false);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
