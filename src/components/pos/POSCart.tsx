@@ -389,6 +389,102 @@ const POSCart = ({
           <span className="text-primary">{formatCurrency(total)}</span>
         </div>
       </div>
+      {/* Item Detail Modal */}
+      <Dialog open={!!detailItem} onOpenChange={(open) => !open && setDetailItem(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Package className="h-5 w-5" />
+              Detalhes do Item
+            </DialogTitle>
+          </DialogHeader>
+          {detailItem && (() => {
+            const parts = detailItem.name.split(' — ');
+            const pName = parts[0];
+            const vLabel = parts.length > 1 ? parts.slice(1).join(' — ') : null;
+            return (
+              <div className="space-y-4">
+                {/* Image */}
+                <div className="flex justify-center">
+                  {detailItem.image_url ? (
+                    <img
+                      src={detailItem.image_url}
+                      alt={detailItem.name}
+                      className="w-40 h-40 rounded-lg object-cover"
+                    />
+                  ) : (
+                    <div className="w-40 h-40 rounded-lg bg-muted flex items-center justify-center">
+                      <Tag className="h-10 w-10 text-muted-foreground" />
+                    </div>
+                  )}
+                </div>
+
+                {/* Info */}
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-lg font-semibold">{pName}</p>
+                    {vLabel && (
+                      <Badge variant="outline" className="mt-1">{vLabel}</Badge>
+                    )}
+                  </div>
+
+                  <Separator />
+
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    {detailItem.sku && (
+                      <div className="flex items-center gap-2">
+                        <Hash className="h-4 w-4 text-muted-foreground" />
+                        <div>
+                          <p className="text-muted-foreground text-xs">SKU</p>
+                          <p className="font-mono font-medium">{detailItem.sku}</p>
+                        </div>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2">
+                      <DollarSign className="h-4 w-4 text-muted-foreground" />
+                      <div>
+                        <p className="text-muted-foreground text-xs">Preço unitário</p>
+                        <p className="font-semibold">{formatCurrency(detailItem.unit_price)}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <BarChart3 className="h-4 w-4 text-muted-foreground" />
+                      <div>
+                        <p className="text-muted-foreground text-xs">Quantidade</p>
+                        <p className="font-semibold">{detailItem.quantity}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Package className="h-4 w-4 text-muted-foreground" />
+                      <div>
+                        <p className="text-muted-foreground text-xs">Estoque disponível</p>
+                        <p className="font-semibold">{detailItem.max_stock} un.</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {detailItem.discount_amount > 0 && (
+                    <>
+                      <Separator />
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Desconto aplicado</span>
+                        <span className="text-destructive font-medium">-{formatCurrency(detailItem.discount_amount)}</span>
+                      </div>
+                    </>
+                  )}
+
+                  <Separator />
+
+                  <div className="flex justify-between text-lg font-bold">
+                    <span>Total do item</span>
+                    <span className="text-primary">{formatCurrency(detailItem.total)}</span>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
