@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ChevronLeft, ShoppingCart } from 'lucide-react';
+import { ChevronLeft, ShoppingCart, X } from 'lucide-react';
 import ProductSearch, { ProductResult } from '@/components/pos/ProductSearch';
 import ProductGrid from '@/components/pos/ProductGrid';
 import POSCart, { CartItem } from '@/components/pos/POSCart';
 import VariationPickerModal from '@/components/pos/VariationPickerModal';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 
 interface ProductsStepProps {
   cartItems: CartItem[];
@@ -40,6 +42,8 @@ const ProductsStep = ({
 }: ProductsStepProps) => {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [variationPickerProduct, setVariationPickerProduct] = useState<ProductResult | null>(null);
+  const [cartOpen, setCartOpen] = useState(false);
+  const isMobile = useIsMobile();
 
   const handleProductClick = (product: ProductResult, variationId?: string) => {
     // If a specific variation was already identified (e.g. barcode scan), use it directly
@@ -61,29 +65,70 @@ const ProductsStep = ({
     onProductSelect(product, variationId);
   };
 
+  const cartContent = (
+    <POSCart
+      items={cartItems}
+      onUpdateQuantity={onUpdateQuantity}
+      onRemoveItem={onRemoveItem}
+      onApplyItemDiscount={onApplyItemDiscount}
+      generalDiscount={generalDiscount}
+      onApplyGeneralDiscount={onApplyGeneralDiscount}
+      subtotal={subtotal}
+      discountAmount={discountAmount}
+      total={total}
+    />
+  );
+
   return (
     <div className="flex-1 flex h-full overflow-hidden">
       {/* Left - Products */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="p-4 border-b flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-bold">Selecione os Produtos</h2>
-            <p className="text-sm text-muted-foreground">Busque ou selecione os produtos da venda</p>
+        <div className="p-3 sm:p-4 border-b flex items-center justify-between gap-2">
+          <div className="min-w-0">
+            <h2 className="text-base sm:text-lg font-bold truncate">Selecione os Produtos</h2>
+            <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">Busque ou selecione os produtos da venda</p>
           </div>
-          <div className="flex items-center gap-3">
-            <Button variant="outline" onClick={onBack}>
-              <ChevronLeft className="h-4 w-4 mr-2" /> Voltar
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <Button variant="outline" size={isMobile ? 'sm' : 'default'} onClick={onBack}>
+              <ChevronLeft className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Voltar</span>
             </Button>
-            <Button onClick={onNext} disabled={cartItems.length === 0}>
-              <ShoppingCart className="h-4 w-4 mr-2" />
-              Prosseguir
-              {cartItems.length > 0 && (
-                <Badge variant="secondary" className="ml-2">{cartItems.length}</Badge>
-              )}
-            </Button>
+            {isMobile ? (
+              <Sheet open={cartOpen} onOpenChange={setCartOpen}>
+                <SheetTrigger asChild>
+                  <Button size="sm" variant="outline" className="relative">
+                    <ShoppingCart className="h-4 w-4" />
+                    {cartItems.length > 0 && (
+                      <Badge variant="destructive" className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center text-xs">
+                        {cartItems.length}
+                      </Badge>
+                    )}
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="right" className="w-[85vw] sm:w-96 p-0 flex flex-col">
+                  <div className="flex-1 flex flex-col overflow-hidden">
+                    {cartContent}
+                  </div>
+                  <div className="p-3 border-t">
+                    <Button className="w-full" onClick={() => { setCartOpen(false); onNext(); }} disabled={cartItems.length === 0}>
+                      <ShoppingCart className="h-4 w-4 mr-2" />
+                      Prosseguir
+                    </Button>
+                  </div>
+                </SheetContent>
+              </Sheet>
+            ) : (
+              <Button onClick={onNext} disabled={cartItems.length === 0}>
+                <ShoppingCart className="h-4 w-4 mr-2" />
+                Prosseguir
+                {cartItems.length > 0 && (
+                  <Badge variant="secondary" className="ml-2">{cartItems.length}</Badge>
+                )}
+              </Button>
+            )}
           </div>
         </div>
-        <div className="px-4 pt-3">
+        <div className="px-3 sm:px-4 pt-3">
           <ProductSearch onProductSelect={handleProductClick} isOnline={isOnline} />
         </div>
         <ProductGrid
@@ -94,20 +139,12 @@ const ProductsStep = ({
         />
       </div>
 
-      {/* Right - Cart */}
-      <div className="w-96 flex flex-col border-l">
-        <POSCart
-          items={cartItems}
-          onUpdateQuantity={onUpdateQuantity}
-          onRemoveItem={onRemoveItem}
-          onApplyItemDiscount={onApplyItemDiscount}
-          generalDiscount={generalDiscount}
-          onApplyGeneralDiscount={onApplyGeneralDiscount}
-          subtotal={subtotal}
-          discountAmount={discountAmount}
-          total={total}
-        />
-      </div>
+      {/* Right - Cart (desktop only) */}
+      {!isMobile && (
+        <div className="w-80 lg:w-96 flex flex-col border-l">
+          {cartContent}
+        </div>
+      )}
 
       {/* Variation Picker Modal */}
       <VariationPickerModal
