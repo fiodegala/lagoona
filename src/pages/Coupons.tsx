@@ -82,10 +82,12 @@ const Coupons = () => {
     is_active: true,
     show_in_wheel: false,
     progressive_tiers: null,
+    applicable_shipping_zones: [],
   });
 
   useEffect(() => {
     loadCoupons();
+    loadShippingZones();
   }, []);
 
   const loadCoupons = async () => {
