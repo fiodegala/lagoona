@@ -416,7 +416,7 @@ export const posService = {
   },
 
   async getAllActiveProducts() {
-    const [productsRes, stockRes] = await Promise.all([
+    const [productsRes, stockRes, variationValuesRes] = await Promise.all([
       supabase
         .from('products')
         .select('*, product_variations(*), categories(name)')
@@ -425,9 +425,24 @@ export const posService = {
       supabase
         .from('store_stock')
         .select('product_id, variation_id, quantity'),
+      supabase
+        .from('product_variation_values')
+        .select('variation_id, attribute_value_id, product_attribute_values(value, product_attributes(name))'),
     ]);
 
     if (productsRes.error) throw productsRes.error;
+
+    // Build variation attribute labels lookup
+    const variationLabels = new Map<string, string>();
+    for (const vv of variationValuesRes.data || []) {
+      const attrValue = vv.product_attribute_values as any;
+      if (attrValue) {
+        const attrName = attrValue.product_attributes?.name || '';
+        const val = attrValue.value || '';
+        const existing = variationLabels.get(vv.variation_id);
+        variationLabels.set(vv.variation_id, existing ? `${existing} / ${val}` : `${attrName}: ${val}`);
+      }
+    }
 
     // Build stock lookup from store_stock
     const stockByProduct = new Map<string, number>();
@@ -446,6 +461,7 @@ export const posService = {
       const variations = (p.product_variations || []).map((v: any) => ({
         ...v,
         stock: stockByVariation.get(v.id) || 0,
+        label: variationLabels.get(v.id) || v.sku || v.id.slice(0, 8),
       }));
 
       // Product stock: if has variations, sum variation stocks; otherwise use store_stock
