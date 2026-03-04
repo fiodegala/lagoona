@@ -460,10 +460,10 @@ const POSPage = () => {
 
   if (!session) {
     return (
-      <div className="h-screen flex flex-col items-center justify-center gap-4">
-        <DollarSign className="h-16 w-16 text-muted-foreground" />
-        <h1 className="text-2xl font-bold">Caixa Fechado</h1>
-        <p className="text-muted-foreground">Abra o caixa para iniciar as vendas</p>
+      <div className="h-screen flex flex-col items-center justify-center gap-4 px-4">
+        <DollarSign className="h-12 w-12 sm:h-16 sm:w-16 text-muted-foreground" />
+        <h1 className="text-xl sm:text-2xl font-bold">Caixa Fechado</h1>
+        <p className="text-muted-foreground text-center text-sm sm:text-base">Abra o caixa para iniciar as vendas</p>
         <Button size="lg" onClick={() => setOpenSessionModal(true)}>Abrir Caixa</Button>
         <Button variant="ghost" onClick={() => navigate('/admin')}>Voltar ao Admin</Button>
         <OpenSessionModal open={openSessionModal} onOpenChange={setOpenSessionModal} onConfirm={handleOpenSession} />
@@ -475,7 +475,7 @@ const POSPage = () => {
     <POSLayout session={session} onOpenCashDrawer={() => setCashMovementModal(true)}>
       <div className="h-full flex flex-col">
         {/* Stepper */}
-        <div className="border-b bg-card px-6 py-3">
+        <div className="border-b bg-card px-3 sm:px-6 py-2 sm:py-3 overflow-x-auto">
           <div className="flex items-center justify-between max-w-2xl mx-auto">
             {STEPS.map((step, index) => {
               const isCompleted = index < stepIndex;

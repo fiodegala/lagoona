@@ -17,33 +17,33 @@ const saleTypes = [
 
 const SaleTypeStep = ({ saleType, onSelect, onNext }: SaleTypeStepProps) => {
   return (
-    <div className="flex-1 flex flex-col items-center justify-center p-8">
-      <h2 className="text-2xl font-bold mb-2">Tipo de Venda</h2>
-      <p className="text-muted-foreground mb-8">Selecione o tipo de venda para prosseguir</p>
+    <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-8">
+      <h2 className="text-xl sm:text-2xl font-bold mb-2">Tipo de Venda</h2>
+      <p className="text-sm sm:text-base text-muted-foreground mb-6 sm:mb-8 text-center">Selecione o tipo de venda para prosseguir</p>
 
-      <div className="grid grid-cols-2 gap-4 w-full max-w-lg">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 w-full max-w-lg">
         {saleTypes.map(({ value, label, icon: Icon, description }) => (
           <button
             key={value}
-            className={`flex flex-col items-center gap-3 p-6 rounded-xl border-2 transition-all hover:shadow-md ${
+            className={`flex flex-col items-center gap-2 sm:gap-3 p-4 sm:p-6 rounded-xl border-2 transition-all hover:shadow-md ${
               saleType === value
                 ? 'border-primary bg-primary/5 shadow-md'
                 : 'border-border hover:border-primary/50'
             }`}
             onClick={() => onSelect(value)}
           >
-            <div className={`p-4 rounded-full ${saleType === value ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
-              <Icon className="h-8 w-8" />
+            <div className={`p-3 sm:p-4 rounded-full ${saleType === value ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
+              <Icon className="h-6 w-6 sm:h-8 sm:w-8" />
             </div>
             <div className="text-center">
-              <div className="font-semibold text-lg">{label}</div>
-              <div className="text-xs text-muted-foreground mt-1">{description}</div>
+              <div className="font-semibold text-base sm:text-lg">{label}</div>
+              <div className="text-xs text-muted-foreground mt-1 hidden sm:block">{description}</div>
             </div>
           </button>
         ))}
       </div>
 
-      <Button size="lg" className="mt-8 px-12" onClick={onNext}>
+      <Button size="lg" className="mt-6 sm:mt-8 px-12" onClick={onNext}>
         Próximo
       </Button>
     </div>
