@@ -89,7 +89,7 @@ const POSLayout = ({ children, session, onOpenCashDrawer }: POSLayoutProps) => {
   };
 
   return (
-    <div className="h-screen flex flex-col bg-background overflow-hidden">
+    <div className="h-screen flex flex-col bg-background overflow-y-auto">
       {/* Header */}
       <header className="h-14 border-b bg-card flex items-center justify-between px-4 flex-shrink-0">
         <div className="flex items-center gap-4">
@@ -228,7 +228,7 @@ const POSLayout = ({ children, session, onOpenCashDrawer }: POSLayoutProps) => {
       )}
 
       {/* Main content */}
-      <main className="flex-1 overflow-hidden">
+      <main className="flex-1 min-h-0 overflow-y-auto">
         {children}
       </main>
     </div>
