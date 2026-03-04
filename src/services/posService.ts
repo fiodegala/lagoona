@@ -424,7 +424,7 @@ export const posService = {
     return null;
   },
 
-  async searchProducts(query: string, limit = 20) {
+  async searchProducts(query: string, limit = 20): Promise<{ products: any[]; matchedVariationMap: Record<string, string> }> {
     // Search products by name or barcode
     const { data: directMatches, error: err1 } = await supabase
       .from('products')
@@ -437,11 +437,19 @@ export const posService = {
     // Also search by variation barcode or SKU
     const { data: variationMatches, error: err2 } = await supabase
       .from('product_variations')
-      .select('product_id')
+      .select('id, product_id')
       .or(`barcode.ilike.%${query}%,sku.ilike.%${query}%`)
       .limit(limit);
 
     if (err2) throw err2;
+
+    // Build a map: product_id → matched variation_id
+    const matchedVariationMap: Record<string, string> = {};
+    for (const v of variationMatches || []) {
+      if (!matchedVariationMap[v.product_id]) {
+        matchedVariationMap[v.product_id] = v.id;
+      }
+    }
 
     const directIds = new Set((directMatches || []).map((p: any) => p.id));
     const extraIds = (variationMatches || [])
@@ -460,7 +468,10 @@ export const posService = {
       extraProducts = data || [];
     }
 
-    return [...(directMatches || []), ...extraProducts].slice(0, limit);
+    return {
+      products: [...(directMatches || []), ...extraProducts].slice(0, limit),
+      matchedVariationMap,
+    };
   },
 
   async getAllActiveProducts() {
