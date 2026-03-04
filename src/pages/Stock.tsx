@@ -99,10 +99,29 @@ const Stock = () => {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const [storesRes, productsRes, stockRes, variationsRes] = await Promise.all([
+      // Fetch all store_stock rows (may exceed 1000 default limit)
+      const fetchAllStock = async () => {
+        const allRows: any[] = [];
+        let from = 0;
+        const pageSize = 1000;
+        while (true) {
+          const { data, error } = await supabase
+            .from('store_stock')
+            .select('store_id, product_id, variation_id, quantity')
+            .range(from, from + pageSize - 1);
+          if (error) throw error;
+          if (!data || data.length === 0) break;
+          allRows.push(...data);
+          if (data.length < pageSize) break;
+          from += pageSize;
+        }
+        return allRows;
+      };
+
+      const [storesRes, productsRes, stockData, variationsRes] = await Promise.all([
         supabase.from('stores').select('id, name, slug, type').eq('is_active', true).order('name'),
         supabase.from('products').select('id, name, image_url, price, barcode, stock, min_stock, is_active, categories(name)').order('name'),
-        supabase.from('store_stock').select('store_id, product_id, variation_id, quantity'),
+        fetchAllStock(),
         supabase.from('product_variations').select('id, product_id').eq('is_active', true),
       ]);
 
