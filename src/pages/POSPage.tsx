@@ -223,6 +223,7 @@ const POSPage = () => {
       amount_received: amountReceived,
       change_amount: amountReceived ? Math.max(0, amountReceived - total) : 0,
       notes: selectedSeller ? `Vendedor: ${selectedSeller.full_name}` : undefined,
+      sale_date: saleDate,
     };
 
     try {
