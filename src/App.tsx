@@ -35,6 +35,7 @@ const Banners = lazy(() => import("./pages/Banners"));
 const Sales = lazy(() => import("./pages/Sales"));
 const LegacyImport = lazy(() => import("./pages/LegacyImport"));
 const ImportCSVProducts = lazy(() => import("./pages/ImportCSVProducts"));
+const Combos = lazy(() => import("./pages/Combos"));
 
 // Lazy-loaded Store Pages
 const HomePage = lazy(() => import("./pages/store/HomePage"));
@@ -193,6 +194,14 @@ const App = () => (
                 element={
                   <ProtectedRoute requiredRole="admin">
                     <Coupons />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/combos"
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <Combos />
                   </ProtectedRoute>
                 }
               />

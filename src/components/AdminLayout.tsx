@@ -58,6 +58,7 @@ const navItems = [
   { icon: ShoppingBasket, label: 'Carrinhos Abandonados', path: '/admin/abandoned-carts' },
   { icon: Star, label: 'Avaliações', path: '/admin/reviews', requireAdmin: true },
   { icon: Tag, label: 'Cupons', path: '/admin/coupons', requireAdmin: true },
+  { icon: Package, label: 'Combos', path: '/admin/combos', requireAdmin: true },
   { icon: Truck, label: 'Frete', path: '/admin/shipping', requireAdmin: true },
   { icon: ImageIcon, label: 'Banners', path: '/admin/banners', requireAdmin: true },
   { icon: BarChart3, label: 'Relatórios', path: '/admin/reports' },
