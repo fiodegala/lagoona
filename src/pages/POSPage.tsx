@@ -169,7 +169,7 @@ const POSPage = () => {
           variation_id: variationId,
           name: `${product.name} — ${label}`,
           sku: variation.sku || undefined,
-          image_url: product.image_url || null,
+          image_url: variation.image_url || product.image_url || null,
           unit_price: variationPrice,
           quantity: 1,
           discount_amount: 0,

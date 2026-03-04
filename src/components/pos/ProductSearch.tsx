@@ -31,6 +31,7 @@ export interface ProductResult {
     promotional_price?: number | null;
     stock: number;
     is_active: boolean;
+    image_url?: string | null;
     label?: string;
   }>;
 }
@@ -85,6 +86,7 @@ const ProductSearch = ({ onProductSelect, isOnline }: ProductSearchProps) => {
             promotional_price: v.promotional_price as number | null,
             stock: v.stock as number,
             is_active: v.is_active as boolean,
+            image_url: v.image_url as string | null,
           })),
         }));
       } else {
@@ -134,6 +136,7 @@ const ProductSearch = ({ onProductSelect, isOnline }: ProductSearchProps) => {
               promotional_price: v.promotional_price as number | null,
               stock: v.stock as number,
               is_active: v.is_active as boolean,
+              image_url: v.image_url as string | null,
             })),
           };
         }
