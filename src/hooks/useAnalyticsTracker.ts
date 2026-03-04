@@ -27,28 +27,46 @@ function getElementArea(el: HTMLElement): string {
   return 'content';
 }
 
+// Batch analytics events to reduce DB calls
+let eventQueue: Record<string, unknown>[] = [];
+let flushTimer: ReturnType<typeof setTimeout> | null = null;
+
+function queueEvent(event: Record<string, unknown>) {
+  eventQueue.push(event);
+  if (!flushTimer) {
+    flushTimer = setTimeout(flushEvents, 3000); // Flush every 3s
+  }
+}
+
+async function flushEvents() {
+  flushTimer = null;
+  if (eventQueue.length === 0) return;
+  const batch = eventQueue.splice(0);
+  try {
+    await supabase.from('site_analytics_events' as any).insert(batch as any);
+  } catch {
+    // Silently fail
+  }
+}
+
 export function useAnalyticsTracker() {
   const location = useLocation();
   const pageEntryTime = useRef<number>(Date.now());
   const currentPath = useRef<string>(location.pathname);
 
-  const trackEvent = useCallback(async (
+  const trackEvent = useCallback((
     eventType: string,
     data: Record<string, unknown> = {}
   ) => {
-    try {
-      await supabase.from('site_analytics_events' as any).insert({
-        session_id: getSessionId(),
-        event_type: eventType,
-        page_path: location.pathname,
-        page_title: document.title,
-        user_agent: navigator.userAgent,
-        screen_width: window.innerWidth,
-        ...data,
-      } as any);
-    } catch (e) {
-      // Silently fail - analytics should never break the app
-    }
+    queueEvent({
+      session_id: getSessionId(),
+      event_type: eventType,
+      page_path: location.pathname,
+      page_title: document.title,
+      user_agent: navigator.userAgent,
+      screen_width: window.innerWidth,
+      ...data,
+    });
   }, [location.pathname]);
 
   // Track page views and time on page
@@ -65,16 +83,21 @@ export function useAnalyticsTracker() {
       });
     }
 
-    // Track new page view
+    // Track new page view (deferred)
     currentPath.current = location.pathname;
     pageEntryTime.current = Date.now();
-    trackEvent('page_view');
+    
+    const idleCallback = typeof requestIdleCallback !== 'undefined' 
+      ? requestIdleCallback 
+      : (cb: () => void) => setTimeout(cb, 100);
+    
+    idleCallback(() => trackEvent('page_view'));
 
     // Track duration on unmount/leave
     return () => {
       const duration = Date.now() - pageEntryTime.current;
       if (duration > 500) {
-        // Use sendBeacon for reliability on page unload
+        flushEvents(); // Flush pending events
         const payload = JSON.stringify({
           session_id: getSessionId(),
           event_type: 'page_view_end',
@@ -91,7 +114,7 @@ export function useAnalyticsTracker() {
     };
   }, [location.pathname, trackEvent]);
 
-  // Track clicks on interactive elements
+  // Track clicks on interactive elements (debounced)
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
@@ -110,7 +133,6 @@ export function useAnalyticsTracker() {
     return () => document.removeEventListener('click', handleClick);
   }, [trackEvent]);
 
-  // Return helper for manual tracking (product views, add to cart, etc.)
   return { trackEvent };
 }
 

@@ -1,24 +1,19 @@
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, lazy, Suspense } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Loader2, ShoppingBag, Truck, RefreshCw, Shield, MessageCircle, TrendingUp, Flame, ChevronLeft, ChevronRight } from 'lucide-react';
-import atacadoVideo from '@/assets/atacado-fdg.mp4';
-import insta1 from '@/assets/insta-1.jpg';
-import insta2 from '@/assets/insta-2.jpg';
-import insta3 from '@/assets/insta-3.jpg';
-import insta4 from '@/assets/insta-4.jpg';
-import insta5 from '@/assets/insta-5.jpg';
-import insta6 from '@/assets/insta-6.jpg';
+import { ArrowRight, Loader2, ShoppingBag, Truck, RefreshCw, Shield, MessageCircle, TrendingUp, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import StoreLayout from '@/components/store/StoreLayout';
 import ProductCard from '@/components/store/ProductCard';
-import DealsCountdownSection from '@/components/store/DealsCountdownSection';
-import VideoTestimonialsSection from '@/components/store/VideoTestimonialsSection';
-import FeaturedProductSection from '@/components/store/FeaturedProductSection';
 import { productsService, Product } from '@/services/products';
 import { categoriesService, Category } from '@/services/categories';
 import { bannersService, Banner } from '@/services/banners';
 import { enrichProductsWithStock } from '@/services/stockService';
 import { supabase } from '@/integrations/supabase/client';
+
+// Lazy load below-fold sections
+const DealsCountdownSection = lazy(() => import('@/components/store/DealsCountdownSection'));
+const VideoTestimonialsSection = lazy(() => import('@/components/store/VideoTestimonialsSection'));
+const FeaturedProductSection = lazy(() => import('@/components/store/FeaturedProductSection'));
 
 const HomePage = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -213,7 +208,11 @@ const HomePage = () => {
       </section>
 
       {/* Ofertas do Dia com Countdown */}
-      {!isLoading && <DealsCountdownSection products={dealProducts} />}
+      {!isLoading && (
+        <Suspense fallback={null}>
+          <DealsCountdownSection products={dealProducts} />
+        </Suspense>
+      )}
 
       {/* Lançamentos - Carrossel */}
       <section className="py-16 md:py-20">
@@ -341,7 +340,9 @@ const HomePage = () => {
 
       {/* Produto em Destaque - Compra Rápida */}
       {!isLoading && featuredProduct && (
-        <FeaturedProductSection product={featuredProduct} />
+        <Suspense fallback={null}>
+          <FeaturedProductSection product={featuredProduct} />
+        </Suspense>
       )}
 
       {/* Banners Promocionais */}
@@ -420,7 +421,9 @@ const HomePage = () => {
       </section>
 
       {/* Depoimentos em Vídeo */}
-      <VideoTestimonialsSection />
+      <Suspense fallback={null}>
+        <VideoTestimonialsSection />
+      </Suspense>
 
       {/* Instagram Feed - Elfsight Widget */}
       <section className="py-16 md:py-20 bg-store-secondary/30">
@@ -468,12 +471,13 @@ const HomePage = () => {
             </div>
             <div className="flex-shrink-0">
               <video
-                src={atacadoVideo}
+                src="/assets/atacado-fdg.mp4"
                 controls
-                autoPlay
                 loop
                 muted
                 playsInline
+                preload="none"
+                poster="/placeholder.svg"
                 className="w-full md:w-[560px] aspect-video object-cover rounded-xl shadow-lg"
               />
             </div>

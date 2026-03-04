@@ -1,10 +1,12 @@
-import { ReactNode, useEffect, useState } from 'react';
+import { ReactNode, useEffect, useState, lazy, Suspense } from 'react';
 import StoreHeader from './StoreHeader';
 import StoreFooter from './StoreFooter';
-import AIChatWidget from './AIChatWidget';
-import SpinWheel from './SpinWheel';
 import { categoriesService, Category } from '@/services/categories';
 import { useAnalyticsTracker } from '@/hooks/useAnalyticsTracker';
+
+// Lazy load non-critical widgets
+const AIChatWidget = lazy(() => import('./AIChatWidget'));
+const SpinWheel = lazy(() => import('./SpinWheel'));
 
 interface StoreLayoutProps {
   children: ReactNode;
@@ -33,8 +35,10 @@ const StoreLayout = ({ children }: StoreLayoutProps) => {
         {children}
       </main>
       <StoreFooter />
-      <AIChatWidget />
-      <SpinWheel />
+      <Suspense fallback={null}>
+        <AIChatWidget />
+        <SpinWheel />
+      </Suspense>
     </div>
   );
 };
