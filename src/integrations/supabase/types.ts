@@ -1420,6 +1420,13 @@ export type Database = {
             referencedRelation: "product_reviews"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "review_media_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "product_reviews_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       sales_goals: {
@@ -1931,7 +1938,56 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      product_reviews_public: {
+        Row: {
+          comment: string | null
+          created_at: string | null
+          customer_name: string | null
+          helpful_count: number | null
+          id: string | null
+          is_approved: boolean | null
+          is_verified_purchase: boolean | null
+          product_id: string | null
+          rating: number | null
+          title: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string | null
+          customer_name?: string | null
+          helpful_count?: number | null
+          id?: string | null
+          is_approved?: boolean | null
+          is_verified_purchase?: boolean | null
+          product_id?: string | null
+          rating?: number | null
+          title?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string | null
+          customer_name?: string | null
+          helpful_count?: number | null
+          id?: string | null
+          is_approved?: boolean | null
+          is_verified_purchase?: boolean | null
+          product_id?: string | null
+          rating?: number | null
+          title?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_reviews_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       can_manage_goals: { Args: { _user_id: string }; Returns: boolean }

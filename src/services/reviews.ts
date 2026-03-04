@@ -37,17 +37,16 @@ export interface CreateReviewData {
 export const reviewsService = {
   async getByProduct(productId: string): Promise<ProductReview[]> {
     const { data: reviews, error } = await supabase
-      .from('product_reviews')
+      .from('product_reviews_public' as any)
       .select('*')
       .eq('product_id', productId)
-      .eq('is_approved', true)
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false }) as { data: any[] | null; error: any };
 
     if (error) throw error;
 
     // Get media for each review
     const reviewsWithMedia = await Promise.all(
-      (reviews || []).map(async (review) => {
+      (reviews || []).map(async (review: any) => {
         const { data: media } = await supabase
           .from('review_media')
           .select('*')
@@ -65,10 +64,9 @@ export const reviewsService = {
 
   async getProductStats(productId: string): Promise<{ average: number; count: number; distribution: { 1: number; 2: number; 3: number; 4: number; 5: number } }> {
     const { data: reviews, error } = await supabase
-      .from('product_reviews')
+      .from('product_reviews_public' as any)
       .select('rating')
-      .eq('product_id', productId)
-      .eq('is_approved', true);
+      .eq('product_id', productId) as { data: any[] | null; error: any };
 
     if (error) throw error;
 
@@ -77,11 +75,11 @@ export const reviewsService = {
       return { average: 0, count: 0, distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } };
     }
 
-    const sum = reviews.reduce((acc, r) => acc + r.rating, 0);
+    const sum = reviews!.reduce((acc: number, r: any) => acc + r.rating, 0);
     const average = sum / count;
 
     const distribution: { 1: number; 2: number; 3: number; 4: number; 5: number } = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-    reviews.forEach((r) => {
+    reviews!.forEach((r: any) => {
       if (r.rating >= 1 && r.rating <= 5) {
         distribution[r.rating as 1 | 2 | 3 | 4 | 5] = (distribution[r.rating as 1 | 2 | 3 | 4 | 5] || 0) + 1;
       }
