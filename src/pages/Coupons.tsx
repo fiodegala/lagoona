@@ -39,13 +39,21 @@ import { Textarea } from '@/components/ui/textarea';
 import { 
   Search, MoreHorizontal, Plus, Pencil, Trash2, 
   Loader2, Tag, Percent, DollarSign, Calendar,
-  Copy, CheckCircle, Users, ShoppingBag
+  Copy, CheckCircle, Users, Truck, TrendingUp
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { couponsService, Coupon, CreateCouponData } from '@/services/coupons';
+import { couponsService, Coupon, CreateCouponData, DiscountType, DISCOUNT_TYPE_LABELS, ProgressiveConfig, ProgressiveTier } from '@/services/coupons';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { cn } from '@/lib/utils';
+
+const DEFAULT_PROGRESSIVE: ProgressiveConfig = {
+  basis: 'quantity',
+  tiers: [
+    { min: 2, discount_type: 'percentage', discount_value: 5 },
+    { min: 3, discount_type: 'percentage', discount_value: 10 },
+    { min: 5, discount_type: 'percentage', discount_value: 15 },
+  ],
+};
 
 const Coupons = () => {
   const [coupons, setCoupons] = useState<Coupon[]>([]);
@@ -57,7 +65,6 @@ const Coupons = () => {
   const [deleteConfirm, setDeleteConfirm] = useState<Coupon | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Form state
   const [formData, setFormData] = useState<CreateCouponData>({
     code: '',
     description: '',
@@ -71,6 +78,7 @@ const Coupons = () => {
     expires_at: undefined,
     is_active: true,
     show_in_wheel: false,
+    progressive_tiers: null,
   });
 
   useEffect(() => {
@@ -104,6 +112,7 @@ const Coupons = () => {
       expires_at: undefined,
       is_active: true,
       show_in_wheel: false,
+      progressive_tiers: null,
     });
     setEditingCoupon(null);
   };
@@ -123,12 +132,27 @@ const Coupons = () => {
         starts_at: coupon.starts_at ? coupon.starts_at.split('T')[0] : undefined,
         expires_at: coupon.expires_at ? coupon.expires_at.split('T')[0] : undefined,
         is_active: coupon.is_active,
-        show_in_wheel: (coupon as any).show_in_wheel ?? false,
+        show_in_wheel: coupon.show_in_wheel ?? false,
+        progressive_tiers: coupon.progressive_tiers || null,
       });
     } else {
       resetForm();
     }
     setIsModalOpen(true);
+  };
+
+  const handleDiscountTypeChange = (type: DiscountType) => {
+    const updates: Partial<CreateCouponData> = { discount_type: type };
+    if (type === 'free_shipping') {
+      updates.discount_value = 0;
+      updates.progressive_tiers = null;
+    } else if (type === 'progressive') {
+      updates.discount_value = 0;
+      updates.progressive_tiers = formData.progressive_tiers || DEFAULT_PROGRESSIVE;
+    } else {
+      updates.progressive_tiers = null;
+    }
+    setFormData(prev => ({ ...prev, ...updates }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -139,14 +163,31 @@ const Coupons = () => {
       return;
     }
 
-    if (formData.discount_value <= 0) {
+    const isShippingType = ['free_shipping', 'shipping_fixed', 'shipping_percentage'].includes(formData.discount_type);
+    const isProgressive = formData.discount_type === 'progressive';
+
+    if (!isShippingType && !isProgressive && formData.discount_value <= 0) {
       toast.error('Valor do desconto deve ser maior que zero');
       return;
     }
 
-    if (formData.discount_type === 'percentage' && formData.discount_value > 100) {
+    if ((formData.discount_type === 'percentage' || formData.discount_type === 'shipping_percentage') && formData.discount_value > 100) {
       toast.error('Desconto percentual não pode ser maior que 100%');
       return;
+    }
+
+    if (isProgressive && formData.progressive_tiers) {
+      const tiers = formData.progressive_tiers.tiers;
+      if (tiers.length < 2) {
+        toast.error('Desconto progressivo precisa de pelo menos 2 faixas');
+        return;
+      }
+      for (const tier of tiers) {
+        if (tier.min <= 0 || tier.discount_value <= 0) {
+          toast.error('Todas as faixas devem ter valores maiores que zero');
+          return;
+        }
+      }
     }
 
     setIsSubmitting(true);
@@ -239,10 +280,37 @@ const Coupons = () => {
   });
 
   const formatDiscount = (coupon: Coupon) => {
-    if (coupon.discount_type === 'percentage') {
-      return `${coupon.discount_value}%`;
+    switch (coupon.discount_type) {
+      case 'percentage':
+        return `${coupon.discount_value}%`;
+      case 'fixed':
+        return `R$ ${coupon.discount_value.toFixed(2)}`;
+      case 'free_shipping':
+        return 'Frete Grátis';
+      case 'shipping_fixed':
+        return `R$ ${coupon.discount_value.toFixed(2)} no frete`;
+      case 'shipping_percentage':
+        return `${coupon.discount_value}% no frete`;
+      case 'progressive':
+        return 'Progressivo';
+      default:
+        return `${coupon.discount_value}`;
     }
-    return `R$ ${coupon.discount_value.toFixed(2)}`;
+  };
+
+  const getDiscountIcon = (type: DiscountType) => {
+    switch (type) {
+      case 'percentage':
+      case 'shipping_percentage':
+        return <Percent className="h-4 w-4 text-primary" />;
+      case 'free_shipping':
+      case 'shipping_fixed':
+        return <Truck className="h-4 w-4 text-primary" />;
+      case 'progressive':
+        return <TrendingUp className="h-4 w-4 text-primary" />;
+      default:
+        return <DollarSign className="h-4 w-4 text-primary" />;
+    }
   };
 
   const getCouponStatus = (coupon: Coupon) => {
@@ -260,6 +328,44 @@ const Coupons = () => {
     }
     return { label: 'Ativo', variant: 'default' as const };
   };
+
+  // Progressive tiers helpers
+  const updateTier = (index: number, field: keyof ProgressiveTier, value: any) => {
+    if (!formData.progressive_tiers) return;
+    const newTiers = [...formData.progressive_tiers.tiers];
+    newTiers[index] = { ...newTiers[index], [field]: value };
+    setFormData(prev => ({
+      ...prev,
+      progressive_tiers: { ...prev.progressive_tiers!, tiers: newTiers },
+    }));
+  };
+
+  const addTier = () => {
+    if (!formData.progressive_tiers) return;
+    const tiers = formData.progressive_tiers.tiers;
+    const lastMin = tiers.length > 0 ? tiers[tiers.length - 1].min + 1 : 1;
+    const lastDiscount = tiers.length > 0 ? tiers[tiers.length - 1].discount_value + 5 : 5;
+    setFormData(prev => ({
+      ...prev,
+      progressive_tiers: {
+        ...prev.progressive_tiers!,
+        tiers: [...tiers, { min: lastMin, discount_type: 'percentage', discount_value: lastDiscount }],
+      },
+    }));
+  };
+
+  const removeTier = (index: number) => {
+    if (!formData.progressive_tiers) return;
+    const newTiers = formData.progressive_tiers.tiers.filter((_, i) => i !== index);
+    setFormData(prev => ({
+      ...prev,
+      progressive_tiers: { ...prev.progressive_tiers!, tiers: newTiers },
+    }));
+  };
+
+  const isShippingType = ['free_shipping', 'shipping_fixed', 'shipping_percentage'].includes(formData.discount_type);
+  const isProgressive = formData.discount_type === 'progressive';
+  const needsDiscountValue = !['free_shipping', 'progressive'].includes(formData.discount_type);
 
   // Stats
   const activeCoupons = coupons.filter(c => c.is_active).length;
@@ -286,9 +392,7 @@ const Coupons = () => {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Total
-              </CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">Total</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{coupons.length}</div>
@@ -296,9 +400,7 @@ const Coupons = () => {
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Ativos
-              </CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">Ativos</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-success">{activeCoupons}</div>
@@ -306,9 +408,7 @@ const Coupons = () => {
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Total de Usos
-              </CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">Total de Usos</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{totalUses}</div>
@@ -316,9 +416,7 @@ const Coupons = () => {
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Inativos
-              </CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">Inativos</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-muted-foreground">
@@ -372,7 +470,7 @@ const Coupons = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Código</TableHead>
-                    <TableHead>Desconto</TableHead>
+                    <TableHead>Tipo / Desconto</TableHead>
                     <TableHead>Usos</TableHead>
                     <TableHead>Validade</TableHead>
                     <TableHead>Status</TableHead>
@@ -406,11 +504,7 @@ const Coupons = () => {
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-1">
-                            {coupon.discount_type === 'percentage' ? (
-                              <Percent className="h-4 w-4 text-primary" />
-                            ) : (
-                              <DollarSign className="h-4 w-4 text-primary" />
-                            )}
+                            {getDiscountIcon(coupon.discount_type)}
                             <span className="font-medium">{formatDiscount(coupon)}</span>
                           </div>
                           {coupon.minimum_order_value > 0 && (
@@ -454,17 +548,8 @@ const Coupons = () => {
                                 Editar
                               </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => handleToggleActive(coupon)}>
-                                {coupon.is_active ? (
-                                  <>
-                                    <CheckCircle className="h-4 w-4 mr-2" />
-                                    Desativar
-                                  </>
-                                ) : (
-                                  <>
-                                    <CheckCircle className="h-4 w-4 mr-2" />
-                                    Ativar
-                                  </>
-                                )}
+                                <CheckCircle className="h-4 w-4 mr-2" />
+                                {coupon.is_active ? 'Desativar' : 'Ativar'}
                               </DropdownMenuItem>
                               <DropdownMenuItem 
                                 className="text-destructive focus:text-destructive"
@@ -488,7 +573,7 @@ const Coupons = () => {
 
       {/* Create/Edit Modal */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingCoupon ? 'Editar Cupom' : 'Novo Cupom'}</DialogTitle>
             <DialogDescription>
@@ -497,6 +582,7 @@ const Coupons = () => {
           </DialogHeader>
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Code */}
             <div className="space-y-2">
               <Label htmlFor="code">Código *</Label>
               <div className="flex gap-2">
@@ -514,6 +600,7 @@ const Coupons = () => {
               </div>
             </div>
 
+            {/* Description */}
             <div className="space-y-2">
               <Label htmlFor="description">Descrição</Label>
               <Textarea
@@ -525,36 +612,143 @@ const Coupons = () => {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            {/* Discount Type */}
+            <div className="space-y-2">
+              <Label>Tipo de desconto</Label>
+              <Select 
+                value={formData.discount_type} 
+                onValueChange={(v) => handleDiscountTypeChange(v as DiscountType)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="percentage">
+                    <span className="flex items-center gap-2"><Percent className="h-3.5 w-3.5" /> Porcentagem (%)</span>
+                  </SelectItem>
+                  <SelectItem value="fixed">
+                    <span className="flex items-center gap-2"><DollarSign className="h-3.5 w-3.5" /> Valor fixo (R$)</span>
+                  </SelectItem>
+                  <SelectItem value="free_shipping">
+                    <span className="flex items-center gap-2"><Truck className="h-3.5 w-3.5" /> Frete Grátis</span>
+                  </SelectItem>
+                  <SelectItem value="shipping_fixed">
+                    <span className="flex items-center gap-2"><Truck className="h-3.5 w-3.5" /> Desconto fixo no frete (R$)</span>
+                  </SelectItem>
+                  <SelectItem value="shipping_percentage">
+                    <span className="flex items-center gap-2"><Truck className="h-3.5 w-3.5" /> Desconto % no frete</span>
+                  </SelectItem>
+                  <SelectItem value="progressive">
+                    <span className="flex items-center gap-2"><TrendingUp className="h-3.5 w-3.5" /> Desconto Progressivo</span>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Discount Value (hidden for free_shipping and progressive) */}
+            {needsDiscountValue && (
               <div className="space-y-2">
-                <Label htmlFor="discount_type">Tipo de desconto</Label>
-                <Select 
-                  value={formData.discount_type} 
-                  onValueChange={(v: 'percentage' | 'fixed') => setFormData(prev => ({ ...prev, discount_type: v }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="percentage">Porcentagem (%)</SelectItem>
-                    <SelectItem value="fixed">Valor fixo (R$)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="discount_value">Valor do desconto *</Label>
+                <Label htmlFor="discount_value">
+                  {isShippingType ? 'Valor do desconto no frete *' : 'Valor do desconto *'}
+                </Label>
                 <Input
                   id="discount_value"
                   type="number"
                   min="0"
-                  step={formData.discount_type === 'percentage' ? '1' : '0.01'}
+                  step={['percentage', 'shipping_percentage'].includes(formData.discount_type) ? '1' : '0.01'}
                   value={formData.discount_value}
                   onChange={(e) => setFormData(prev => ({ ...prev, discount_value: parseFloat(e.target.value) || 0 }))}
                   required
                 />
               </div>
-            </div>
+            )}
 
+            {/* Progressive Tiers Editor */}
+            {isProgressive && formData.progressive_tiers && (
+              <div className="space-y-3 rounded-lg border p-4">
+                <div className="flex items-center justify-between">
+                  <Label className="font-medium">Faixas de Desconto</Label>
+                  <Select
+                    value={formData.progressive_tiers.basis}
+                    onValueChange={(v) => setFormData(prev => ({
+                      ...prev,
+                      progressive_tiers: { ...prev.progressive_tiers!, basis: v as 'quantity' | 'order_value' },
+                    }))}
+                  >
+                    <SelectTrigger className="w-48">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="quantity">Por quantidade de itens</SelectItem>
+                      <SelectItem value="order_value">Por valor do pedido</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  {formData.progressive_tiers.tiers.map((tier, index) => (
+                    <div key={index} className="flex items-center gap-2">
+                      <div className="flex-1">
+                        <Input
+                          type="number"
+                          min="1"
+                          step={formData.progressive_tiers!.basis === 'order_value' ? '0.01' : '1'}
+                          value={tier.min}
+                          onChange={(e) => updateTier(index, 'min', parseFloat(e.target.value) || 0)}
+                          placeholder={formData.progressive_tiers!.basis === 'quantity' ? 'Qtd mín' : 'Valor mín'}
+                        />
+                      </div>
+                      <span className="text-muted-foreground text-xs whitespace-nowrap">
+                        {formData.progressive_tiers!.basis === 'quantity' ? 'itens →' : 'R$ →'}
+                      </span>
+                      <div className="w-20">
+                        <Input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={tier.discount_value}
+                          onChange={(e) => updateTier(index, 'discount_value', parseFloat(e.target.value) || 0)}
+                        />
+                      </div>
+                      <Select
+                        value={tier.discount_type}
+                        onValueChange={(v) => updateTier(index, 'discount_type', v)}
+                      >
+                        <SelectTrigger className="w-20">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="percentage">%</SelectItem>
+                          <SelectItem value="fixed">R$</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 shrink-0"
+                        onClick={() => removeTier(index)}
+                        disabled={formData.progressive_tiers!.tiers.length <= 2}
+                      >
+                        <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+
+                <Button type="button" variant="outline" size="sm" onClick={addTier} className="w-full">
+                  <Plus className="h-3.5 w-3.5 mr-1" /> Adicionar faixa
+                </Button>
+
+                <p className="text-xs text-muted-foreground">
+                  {formData.progressive_tiers.basis === 'quantity'
+                    ? 'O desconto será aplicado com base na quantidade total de itens no carrinho.'
+                    : 'O desconto será aplicado com base no valor total do pedido.'}
+                </p>
+              </div>
+            )}
+
+            {/* Min order & Max discount */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="minimum_order_value">Valor mínimo do pedido</Label>
@@ -568,20 +762,23 @@ const Coupons = () => {
                   onChange={(e) => setFormData(prev => ({ ...prev, minimum_order_value: parseFloat(e.target.value) || 0 }))}
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="maximum_discount">Desconto máximo (R$)</Label>
-                <Input
-                  id="maximum_discount"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  placeholder="Sem limite"
-                  value={formData.maximum_discount || ''}
-                  onChange={(e) => setFormData(prev => ({ ...prev, maximum_discount: parseFloat(e.target.value) || undefined }))}
-                />
-              </div>
+              {!isShippingType && (
+                <div className="space-y-2">
+                  <Label htmlFor="maximum_discount">Desconto máximo (R$)</Label>
+                  <Input
+                    id="maximum_discount"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder="Sem limite"
+                    value={formData.maximum_discount || ''}
+                    onChange={(e) => setFormData(prev => ({ ...prev, maximum_discount: parseFloat(e.target.value) || undefined }))}
+                  />
+                </div>
+              )}
             </div>
 
+            {/* Usage limits */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="max_uses">Limite de usos total</Label>
@@ -606,6 +803,7 @@ const Coupons = () => {
               </div>
             </div>
 
+            {/* Dates */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="starts_at">Data de início</Label>
@@ -627,6 +825,7 @@ const Coupons = () => {
               </div>
             </div>
 
+            {/* Toggles */}
             <div className="flex items-center justify-between rounded-lg border p-3">
               <div>
                 <Label htmlFor="is_active" className="font-medium">Cupom ativo</Label>
