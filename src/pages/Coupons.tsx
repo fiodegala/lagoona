@@ -103,6 +103,15 @@ const Coupons = () => {
     }
   };
 
+  const loadShippingZones = async () => {
+    try {
+      const zones = await shippingService.getAll();
+      setShippingZones(zones);
+    } catch (error) {
+      console.error('Error loading shipping zones:', error);
+    }
+  };
+
   const resetForm = () => {
     setFormData({
       code: '',
