@@ -5,10 +5,11 @@ import { ChevronLeft, ShoppingCart } from 'lucide-react';
 import ProductSearch, { ProductResult } from '@/components/pos/ProductSearch';
 import ProductGrid from '@/components/pos/ProductGrid';
 import POSCart, { CartItem } from '@/components/pos/POSCart';
+import VariationPickerModal from '@/components/pos/VariationPickerModal';
 
 interface ProductsStepProps {
   cartItems: CartItem[];
-  onProductSelect: (product: ProductResult) => void;
+  onProductSelect: (product: ProductResult, variationId?: string) => void;
   onUpdateQuantity: (itemId: string, quantity: number) => void;
   onRemoveItem: (itemId: string) => void;
   onApplyItemDiscount: (itemId: string, discountType: 'percentage' | 'fixed' | undefined, discountValue: number) => void;
@@ -38,6 +39,24 @@ const ProductsStep = ({
   onBack,
 }: ProductsStepProps) => {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
+  const [variationPickerProduct, setVariationPickerProduct] = useState<ProductResult | null>(null);
+
+  const handleProductClick = (product: ProductResult) => {
+    const activeVariations = product.variations.filter((v) => v.is_active && v.stock > 0);
+    if (activeVariations.length > 1) {
+      setVariationPickerProduct(product);
+    } else if (activeVariations.length === 1) {
+      // Only one active variation with stock — select it directly
+      onProductSelect(product, activeVariations[0].id);
+    } else {
+      // No variations — add product directly
+      onProductSelect(product);
+    }
+  };
+
+  const handleVariationSelect = (product: ProductResult, variationId: string) => {
+    onProductSelect(product, variationId);
+  };
 
   return (
     <div className="flex-1 flex h-full overflow-hidden">
@@ -62,12 +81,12 @@ const ProductsStep = ({
           </div>
         </div>
         <div className="px-4 pt-3">
-          <ProductSearch onProductSelect={onProductSelect} isOnline={isOnline} />
+          <ProductSearch onProductSelect={handleProductClick} isOnline={isOnline} />
         </div>
         <ProductGrid
           selectedCategoryId={selectedCategoryId}
           onCategoryChange={setSelectedCategoryId}
-          onProductSelect={onProductSelect}
+          onProductSelect={handleProductClick}
           isOnline={isOnline}
         />
       </div>
@@ -86,6 +105,14 @@ const ProductsStep = ({
           total={total}
         />
       </div>
+
+      {/* Variation Picker Modal */}
+      <VariationPickerModal
+        open={!!variationPickerProduct}
+        onOpenChange={(open) => !open && setVariationPickerProduct(null)}
+        product={variationPickerProduct}
+        onSelectVariation={handleVariationSelect}
+      />
     </div>
   );
 };
