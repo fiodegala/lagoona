@@ -27,6 +27,7 @@ interface POSDatabase extends DBSchema {
         promotional_price: number | null;
         stock: number;
         is_active: boolean;
+        label: string;
       }>;
       updated_at: string;
     };
@@ -126,6 +127,7 @@ export const offlineService = {
           promotional_price: v.promotional_price as number | null,
           stock: v.stock as number,
           is_active: v.is_active as boolean,
+          label: (v.label as string) || (v.sku as string) || (v.id as string).slice(0, 8),
         })),
         updated_at: product.updated_at,
       });
