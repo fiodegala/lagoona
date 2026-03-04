@@ -134,33 +134,78 @@ const POSPage = () => {
     }
   }, [saleType]);
 
-  const handleProductSelect = useCallback((product: ProductResult) => {
-    const unitPrice = resolvePrice(product);
-    const existingItem = cartItems.find((item) => item.product_id === product.id && !item.variation_id);
+  const handleProductSelect = useCallback((product: ProductResult, variationId?: string) => {
+    if (variationId) {
+      const variation = product.variations.find((v) => v.id === variationId);
+      if (!variation) return;
 
-    if (existingItem) {
-      setCartItems((items) =>
-        items.map((item) =>
-          item.id === existingItem.id
-            ? { ...item, quantity: Math.min(item.quantity + 1, item.max_stock), total: item.unit_price * (item.quantity + 1) - item.discount_amount }
-            : item
-        )
-      );
+      const variationPrice = (() => {
+        switch (saleType) {
+          case 'atacado':
+            return variation.wholesale_price ?? variation.price ?? product.wholesale_price ?? product.price;
+          case 'exclusivo':
+            return variation.exclusive_price ?? variation.price ?? product.exclusive_price ?? product.price;
+          case 'troca':
+            return 0;
+          default:
+            return variation.promotional_price ?? variation.price ?? product.promotional_price ?? product.price;
+        }
+      })();
+
+      const existingItem = cartItems.find((item) => item.product_id === product.id && item.variation_id === variationId);
+      if (existingItem) {
+        setCartItems((items) =>
+          items.map((item) =>
+            item.id === existingItem.id
+              ? { ...item, quantity: Math.min(item.quantity + 1, item.max_stock), total: item.unit_price * (item.quantity + 1) - item.discount_amount }
+              : item
+          )
+        );
+      } else {
+        const label = variation.label || variation.sku || variationId.slice(0, 8);
+        const newItem: CartItem = {
+          id: crypto.randomUUID(),
+          product_id: product.id,
+          variation_id: variationId,
+          name: `${product.name} — ${label}`,
+          sku: variation.sku || undefined,
+          image_url: product.image_url || null,
+          unit_price: variationPrice,
+          quantity: 1,
+          discount_amount: 0,
+          total: variationPrice,
+          max_stock: variation.stock,
+        };
+        setCartItems((items) => [...items, newItem]);
+      }
     } else {
-      const newItem: CartItem = {
-        id: crypto.randomUUID(),
-        product_id: product.id,
-        name: product.name,
-        image_url: product.image_url || null,
-        unit_price: unitPrice,
-        quantity: 1,
-        discount_amount: 0,
-        total: unitPrice,
-        max_stock: product.stock,
-      };
-      setCartItems((items) => [...items, newItem]);
+      const unitPrice = resolvePrice(product);
+      const existingItem = cartItems.find((item) => item.product_id === product.id && !item.variation_id);
+
+      if (existingItem) {
+        setCartItems((items) =>
+          items.map((item) =>
+            item.id === existingItem.id
+              ? { ...item, quantity: Math.min(item.quantity + 1, item.max_stock), total: item.unit_price * (item.quantity + 1) - item.discount_amount }
+              : item
+          )
+        );
+      } else {
+        const newItem: CartItem = {
+          id: crypto.randomUUID(),
+          product_id: product.id,
+          name: product.name,
+          image_url: product.image_url || null,
+          unit_price: unitPrice,
+          quantity: 1,
+          discount_amount: 0,
+          total: unitPrice,
+          max_stock: product.stock,
+        };
+        setCartItems((items) => [...items, newItem]);
+      }
     }
-  }, [cartItems, resolvePrice]);
+  }, [cartItems, resolvePrice, saleType]);
 
   const handleUpdateQuantity = (itemId: string, quantity: number) => {
     if (quantity < 1) return;
