@@ -390,8 +390,8 @@ export const posService = {
     return this.createSale(saleData);
   },
 
-  // Product lookup
-  async getProductByBarcode(barcode: string) {
+  // Product lookup - returns product and optionally the matched variation ID
+  async getProductByBarcode(barcode: string): Promise<{ product: any; matchedVariationId?: string } | null> {
     // First try product-level barcode
     const { data: productByBarcode, error: err1 } = await supabase
       .from('products')
@@ -400,12 +400,12 @@ export const posService = {
       .maybeSingle();
 
     if (err1) throw err1;
-    if (productByBarcode) return productByBarcode;
+    if (productByBarcode) return { product: productByBarcode };
 
     // Then try variation-level barcode or SKU
     const { data: variationMatch, error: err2 } = await supabase
       .from('product_variations')
-      .select('product_id')
+      .select('id, product_id')
       .or(`barcode.eq.${barcode},sku.eq.${barcode}`)
       .limit(1)
       .maybeSingle();
@@ -418,7 +418,7 @@ export const posService = {
         .eq('id', variationMatch.product_id)
         .maybeSingle();
       if (err3) throw err3;
-      return product;
+      if (product) return { product, matchedVariationId: variationMatch.id };
     }
 
     return null;

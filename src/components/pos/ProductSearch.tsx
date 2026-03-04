@@ -101,10 +101,13 @@ const ProductSearch = ({ onProductSelect, isOnline }: ProductSearchProps) => {
     setIsLoading(true);
     try {
       let product: ProductResult | undefined;
+      let matchedVariationId: string | undefined;
       
       if (isOnline) {
-        const data = await posService.getProductByBarcode(result.code);
-        if (data) {
+        const match = await posService.getProductByBarcode(result.code);
+        if (match) {
+          const data = match.product;
+          matchedVariationId = match.matchedVariationId;
           product = {
             id: data.id,
             name: data.name,
@@ -134,7 +137,7 @@ const ProductSearch = ({ onProductSelect, isOnline }: ProductSearchProps) => {
       }
       
       if (product) {
-        onProductSelect(product);
+        onProductSelect(product, matchedVariationId);
         setQuery('');
         setShowResults(false);
         toast({
