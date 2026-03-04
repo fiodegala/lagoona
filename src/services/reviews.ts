@@ -37,10 +37,9 @@ export interface CreateReviewData {
 export const reviewsService = {
   async getByProduct(productId: string): Promise<ProductReview[]> {
     const { data: reviews, error } = await supabase
-      .from('product_reviews')
+      .from('product_reviews_public' as any)
       .select('*')
       .eq('product_id', productId)
-      .eq('is_approved', true)
       .order('created_at', { ascending: false });
 
     if (error) throw error;
@@ -65,10 +64,9 @@ export const reviewsService = {
 
   async getProductStats(productId: string): Promise<{ average: number; count: number; distribution: { 1: number; 2: number; 3: number; 4: number; 5: number } }> {
     const { data: reviews, error } = await supabase
-      .from('product_reviews')
+      .from('product_reviews_public' as any)
       .select('rating')
-      .eq('product_id', productId)
-      .eq('is_approved', true);
+      .eq('product_id', productId);
 
     if (error) throw error;
 
