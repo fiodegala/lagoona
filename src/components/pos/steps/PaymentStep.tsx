@@ -1,11 +1,17 @@
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { ChevronLeft, User, ShoppingBag } from 'lucide-react';
+import { ChevronLeft, User, ShoppingBag, CalendarIcon } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import PaymentPanel from '@/components/pos/PaymentPanel';
 import { CartItem } from '@/components/pos/POSCart';
 import { Seller } from './SellerStep';
 import { Customer } from '@/components/pos/CustomerSelector';
 import { SaleType } from '@/components/pos/ProductSearch';
+import { cn } from '@/lib/utils';
 
 interface PaymentStepProps {
   cartItems: CartItem[];
@@ -16,7 +22,7 @@ interface PaymentStepProps {
   selectedSeller: Seller | null;
   selectedCustomer: Customer | null;
   isProcessing: boolean;
-  onPayment: (method: 'cash' | 'card' | 'pix' | 'mixed', amountReceived?: number, paymentDetails?: Record<string, number>) => void;
+  onPayment: (method: 'cash' | 'card' | 'pix' | 'mixed', amountReceived?: number, paymentDetails?: Record<string, number>, saleDate?: string) => void;
   onBack: () => void;
 }
 
@@ -42,6 +48,15 @@ const PaymentStep = ({
   onPayment,
   onBack,
 }: PaymentStepProps) => {
+  const today = new Date();
+  const [saleDate, setSaleDate] = useState<Date>(today);
+  const isBackdated = saleDate.toDateString() !== today.toDateString();
+
+  const handlePaymentWithDate = (method: 'cash' | 'card' | 'pix' | 'mixed', amountReceived?: number, paymentDetails?: Record<string, unknown>) => {
+    const saleDateISO = isBackdated ? saleDate.toISOString() : undefined;
+    onPayment(method, amountReceived, paymentDetails as Record<string, number>, saleDateISO);
+  };
+
   return (
     <div className="flex-1 flex h-full overflow-hidden">
       {/* Left - Order Summary */}
@@ -69,6 +84,39 @@ const PaymentStep = ({
               <div className="font-semibold">{selectedSeller?.full_name || '—'}</div>
             </div>
           </div>
+        </div>
+
+        {/* Sale Date Picker */}
+        <div className={cn(
+          "flex items-center gap-3 p-4 rounded-lg border mb-6",
+          isBackdated ? "bg-orange-500/10 border-orange-500/30" : "bg-card"
+        )}>
+          <CalendarIcon className={cn("h-5 w-5", isBackdated ? "text-orange-600" : "text-muted-foreground")} />
+          <div className="flex-1">
+            <div className="text-sm text-muted-foreground">Data da Venda</div>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="ghost" className="h-auto p-0 font-semibold hover:bg-transparent">
+                  {format(saleDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0 bg-popover" align="start">
+                <Calendar
+                  mode="single"
+                  selected={saleDate}
+                  onSelect={(date) => date && setSaleDate(date)}
+                  disabled={(date) => date > today}
+                  locale={ptBR}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+          {isBackdated && (
+            <span className="text-xs font-medium text-orange-600 bg-orange-500/20 px-2 py-1 rounded">
+              Retroativa
+            </span>
+          )}
         </div>
 
         {selectedCustomer && (
@@ -127,7 +175,7 @@ const PaymentStep = ({
       <div className="w-96 border-l flex flex-col">
         <PaymentPanel
           total={total}
-          onPayment={onPayment}
+          onPayment={handlePaymentWithDate}
           isProcessing={isProcessing}
           disabled={cartItems.length === 0}
         />
