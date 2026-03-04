@@ -189,7 +189,7 @@ const POSPage = () => {
     );
   };
 
-  const handlePayment = async (method: 'cash' | 'card' | 'pix' | 'mixed', amountReceived?: number, paymentDetails?: Record<string, number>) => {
+  const handlePayment = async (method: 'cash' | 'card' | 'pix' | 'mixed', amountReceived?: number, paymentDetails?: Record<string, number>, saleDate?: string) => {
     if (cartItems.length === 0) return;
     setIsProcessing(true);
 
