@@ -37,6 +37,12 @@ const SpinWheel = () => {
 
     const loadCoupons = async () => {
       try {
+        // Check if wheel is enabled
+        const { data: configData } = await import('@/integrations/supabase/client').then(m =>
+          m.supabase.from('store_config').select('value').eq('key', 'spin_wheel_enabled').maybeSingle()
+        );
+        if (configData && configData.value === false) return;
+
         const all = await couponsService.getAll();
         const active = all.filter(c => {
           if (!c.is_active || !c.show_in_wheel) return false;
