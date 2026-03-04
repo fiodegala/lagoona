@@ -41,15 +41,18 @@ const ProductsStep = ({
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [variationPickerProduct, setVariationPickerProduct] = useState<ProductResult | null>(null);
 
-  const handleProductClick = (product: ProductResult) => {
+  const handleProductClick = (product: ProductResult, variationId?: string) => {
+    // If a specific variation was already identified (e.g. barcode scan), use it directly
+    if (variationId) {
+      onProductSelect(product, variationId);
+      return;
+    }
     const activeVariations = product.variations.filter((v) => v.is_active && v.stock > 0);
     if (activeVariations.length > 1) {
       setVariationPickerProduct(product);
     } else if (activeVariations.length === 1) {
-      // Only one active variation with stock — select it directly
       onProductSelect(product, activeVariations[0].id);
     } else {
-      // No variations — add product directly
       onProductSelect(product);
     }
   };
