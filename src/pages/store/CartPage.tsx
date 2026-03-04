@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Trash2, Plus, Minus, ShoppingBag, ArrowRight, Package, Tag, X, Loader2, CheckCircle } from 'lucide-react';
+import { Trash2, Plus, Minus, ShoppingBag, ArrowRight, Package, Tag, X, Loader2, CheckCircle, Sparkles, Truck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
 import StoreLayout from '@/components/store/StoreLayout';
 import { useCart } from '@/contexts/CartContext';
 import { toast } from 'sonner';
@@ -21,6 +22,9 @@ const CartPage = () => {
     applyCoupon,
     removeCoupon,
     couponLoading,
+    appliedCombos,
+    comboDiscount,
+    comboFreeShipping,
   } = useCart();
   
   const [couponCode, setCouponCode] = useState('');
@@ -239,15 +243,35 @@ const CartPage = () => {
                 </div>
 
                 {appliedCoupon && (
-                  <div className="flex justify-between text-sm text-success">
+                  <div className="flex justify-between text-sm text-green-600">
                     <span>Desconto ({appliedCoupon.coupon.code})</span>
                     <span>-{formatPrice(appliedCoupon.discount)}</span>
+                  </div>
+                )}
+
+                {appliedCombos.length > 0 && (
+                  <div className="space-y-1">
+                    {appliedCombos.map((ac) => (
+                      <div key={ac.combo.id} className="flex justify-between text-sm text-green-600">
+                        <span className="flex items-center gap-1">
+                          <Sparkles className="h-3 w-3" />
+                          Combo: {ac.combo.name}
+                        </span>
+                        <span>-{formatPrice(ac.discount)}</span>
+                      </div>
+                    ))}
                   </div>
                 )}
                 
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Frete</span>
-                  <span className="text-muted-foreground">Calcular no checkout</span>
+                  {comboFreeShipping ? (
+                    <Badge variant="default" className="gap-1 text-xs">
+                      <Truck className="h-3 w-3" /> Grátis (Combo)
+                    </Badge>
+                  ) : (
+                    <span className="text-muted-foreground">Calcular no checkout</span>
+                  )}
                 </div>
 
                 <Separator />
