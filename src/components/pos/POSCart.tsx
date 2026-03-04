@@ -105,16 +105,38 @@ const POSCart = ({
           </div>
         ) : (
           <div className="p-2">
-            {items.map((item) => (
+            {items.map((item) => {
+              const nameParts = item.name.split(' — ');
+              const productName = nameParts[0];
+              const variationLabel = nameParts.length > 1 ? nameParts.slice(1).join(' — ') : null;
+
+              return (
               <div
                 key={item.id}
                 className="p-3 rounded-lg hover:bg-accent/50 transition-colors"
               >
                 <div className="flex items-start gap-2">
+                  {/* Variation/Product image */}
+                  {item.image_url ? (
+                    <img
+                      src={item.image_url}
+                      alt={item.name}
+                      className="w-10 h-10 rounded object-cover flex-shrink-0"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded bg-muted flex items-center justify-center flex-shrink-0">
+                      <Tag className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                  )}
                   <div className="flex-1 min-w-0">
                     <div className="font-medium text-sm truncate">
-                      {item.name}
+                      {productName}
                     </div>
+                    {variationLabel && (
+                      <Badge variant="outline" className="text-xs mt-0.5">
+                        {variationLabel}
+                      </Badge>
+                    )}
                     {item.sku && (
                       <div className="text-xs text-muted-foreground font-mono">
                         {item.sku}
