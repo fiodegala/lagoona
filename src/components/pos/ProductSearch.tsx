@@ -87,6 +87,7 @@ const ProductSearch = ({ onProductSelect, isOnline }: ProductSearchProps) => {
             stock: v.stock as number,
             is_active: v.is_active as boolean,
             image_url: v.image_url as string | null,
+            label: v.label as string | undefined,
           })),
         }));
       } else {
@@ -137,6 +138,7 @@ const ProductSearch = ({ onProductSelect, isOnline }: ProductSearchProps) => {
               stock: v.stock as number,
               is_active: v.is_active as boolean,
               image_url: v.image_url as string | null,
+              label: v.label as string | undefined,
             })),
           };
         }
