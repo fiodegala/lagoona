@@ -428,7 +428,7 @@ const POSCart = ({
                 </div>
 
                 {/* Info */}
-                <div className="space-y-3">
+                <div className="flex-1 space-y-3 min-w-0">
                   <div>
                     <p className="text-lg font-semibold">{pName}</p>
                     {vLabel && (
@@ -491,6 +491,19 @@ const POSCart = ({
               </div>
             );
           })()}
+        </DialogContent>
+      </Dialog>
+
+      {/* Fullscreen Image Modal */}
+      <Dialog open={imageFullscreen} onOpenChange={setImageFullscreen}>
+        <DialogContent className="sm:max-w-4xl p-2 bg-black/95 border-none">
+          {detailItem?.image_url && (
+            <img
+              src={detailItem.image_url}
+              alt={detailItem.name}
+              className="w-full h-auto max-h-[85vh] object-contain rounded"
+            />
+          )}
         </DialogContent>
       </Dialog>
     </div>
