@@ -13,6 +13,7 @@ import {
   LogOut,
   Users,
   BarChart3,
+  BrainCircuit,
   Menu,
   X,
   Star,
