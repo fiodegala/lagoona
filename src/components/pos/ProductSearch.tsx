@@ -181,7 +181,8 @@ const ProductSearch = ({ onProductSelect, isOnline }: ProductSearchProps) => {
   }, [query, searchProducts]);
 
   const handleProductClick = (product: ProductResult) => {
-    onProductSelect(product);
+    const matchedVariationId = matchedVariationMap[product.id];
+    onProductSelect(product, matchedVariationId);
     setQuery('');
     setShowResults(false);
     inputRef.current?.focus();
