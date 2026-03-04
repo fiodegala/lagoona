@@ -19,7 +19,8 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import { Package, Pencil, Trash2, Eye, Power, ChevronDown, ChevronRight, Layers } from 'lucide-react';
+import { Package, Pencil, Trash2, Eye, ChevronDown, ChevronRight, Layers } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
 import { Product } from '@/services/products';
 import { variationsService, ProductVariation } from '@/services/variations';
 import { supabase } from '@/integrations/supabase/client';
