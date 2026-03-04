@@ -1505,6 +1505,65 @@ export type Database = {
         }
         Relationships: []
       }
+      site_analytics_events: {
+        Row: {
+          created_at: string
+          duration_ms: number | null
+          element_area: string | null
+          element_id: string | null
+          element_text: string | null
+          event_type: string
+          id: string
+          metadata: Json | null
+          page_path: string
+          page_title: string | null
+          product_id: string | null
+          screen_width: number | null
+          session_id: string
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string
+          duration_ms?: number | null
+          element_area?: string | null
+          element_id?: string | null
+          element_text?: string | null
+          event_type: string
+          id?: string
+          metadata?: Json | null
+          page_path: string
+          page_title?: string | null
+          product_id?: string | null
+          screen_width?: number | null
+          session_id: string
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string
+          duration_ms?: number | null
+          element_area?: string | null
+          element_id?: string | null
+          element_text?: string | null
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          page_path?: string
+          page_title?: string | null
+          product_id?: string | null
+          screen_width?: number | null
+          session_id?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_analytics_events_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stock_transfers: {
         Row: {
           approved_by: string | null

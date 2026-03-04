@@ -4,6 +4,7 @@ import StoreFooter from './StoreFooter';
 import AIChatWidget from './AIChatWidget';
 import SpinWheel from './SpinWheel';
 import { categoriesService, Category } from '@/services/categories';
+import { useAnalyticsTracker } from '@/hooks/useAnalyticsTracker';
 
 interface StoreLayoutProps {
   children: ReactNode;
@@ -11,6 +12,7 @@ interface StoreLayoutProps {
 
 const StoreLayout = ({ children }: StoreLayoutProps) => {
   const [categories, setCategories] = useState<Category[]>([]);
+  useAnalyticsTracker();
 
   useEffect(() => {
     const loadCategories = async () => {
