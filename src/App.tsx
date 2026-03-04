@@ -231,6 +231,13 @@ const App = () => (
                 }
               />
               <Route
+                path="/admin/analytics"
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <Analytics />
+                  </ProtectedRoute>
+                }
+              <Route
                 path="/admin/users"
                 element={
                   <ProtectedRoute requiredRole="admin">
