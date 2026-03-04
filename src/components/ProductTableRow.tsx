@@ -213,13 +213,17 @@ const ProductTableRow = ({
             </Badge>
           </TableCell>
           <TableCell>
-            {product.is_active ? (
-              <Badge className="bg-success/10 text-success hover:bg-success/20">
-                Ativo
-              </Badge>
-            ) : (
-              <Badge variant="secondary">Inativo</Badge>
-            )}
+            <div className="flex items-center gap-2">
+              <Switch
+                checked={product.is_active}
+                onCheckedChange={() => onToggleActive()}
+                disabled={!canManageProducts}
+                aria-label={product.is_active ? 'Desativar produto no site' : 'Ativar produto no site'}
+              />
+              <span className={`text-xs ${product.is_active ? 'text-success' : 'text-muted-foreground'}`}>
+                {product.is_active ? 'Visível' : 'Oculto'}
+              </span>
+            </div>
           </TableCell>
           <TableCell className="text-right">
             <div className="flex items-center justify-end gap-1">
