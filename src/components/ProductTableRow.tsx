@@ -19,7 +19,8 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import { Package, Pencil, Trash2, Eye, Power, ChevronDown, ChevronRight, Layers } from 'lucide-react';
+import { Package, Pencil, Trash2, Eye, ChevronDown, ChevronRight, Layers } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
 import { Product } from '@/services/products';
 import { variationsService, ProductVariation } from '@/services/variations';
 import { supabase } from '@/integrations/supabase/client';
@@ -212,13 +213,17 @@ const ProductTableRow = ({
             </Badge>
           </TableCell>
           <TableCell>
-            {product.is_active ? (
-              <Badge className="bg-success/10 text-success hover:bg-success/20">
-                Ativo
-              </Badge>
-            ) : (
-              <Badge variant="secondary">Inativo</Badge>
-            )}
+            <div className="flex items-center gap-2">
+              <Switch
+                checked={product.is_active}
+                onCheckedChange={() => onToggleActive()}
+                disabled={!canManageProducts}
+                aria-label={product.is_active ? 'Desativar produto no site' : 'Ativar produto no site'}
+              />
+              <span className={`text-xs ${product.is_active ? 'text-success' : 'text-muted-foreground'}`}>
+                {product.is_active ? 'Visível' : 'Oculto'}
+              </span>
+            </div>
           </TableCell>
           <TableCell className="text-right">
             <div className="flex items-center justify-end gap-1">
@@ -233,15 +238,6 @@ const ProductTableRow = ({
               </Button>
               {canManageProducts && (
                 <>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className={`h-8 w-8 ${product.is_active ? 'text-success hover:text-success' : 'text-muted-foreground'}`}
-                    onClick={onToggleActive}
-                    title={product.is_active ? 'Desativar' : 'Ativar'}
-                  >
-                    <Power className="h-4 w-4" />
-                  </Button>
                   <Button
                     variant="ghost"
                     size="icon"
