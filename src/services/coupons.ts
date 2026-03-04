@@ -29,6 +29,7 @@ export interface Coupon {
   is_active: boolean;
   applicable_categories: string[];
   applicable_products: string[];
+  applicable_shipping_zones: string[];
   show_in_wheel: boolean;
   progressive_tiers: ProgressiveConfig | null;
   created_at: string;
@@ -58,6 +59,7 @@ export interface CreateCouponData {
   is_active?: boolean;
   applicable_categories?: string[];
   applicable_products?: string[];
+  applicable_shipping_zones?: string[];
   show_in_wheel?: boolean;
   progressive_tiers?: ProgressiveConfig | null;
 }
@@ -176,7 +178,8 @@ export const couponsService = {
     productIds?: string[],
     categoryIds?: string[],
     itemCount?: number,
-    shippingCost?: number
+    shippingCost?: number,
+    shippingZoneId?: string
   ): Promise<CouponValidationResult> {
     try {
       const coupon = await this.getByCode(code);
@@ -236,6 +239,14 @@ export const couponsService = {
         );
         if (!hasApplicableProduct) {
           return { valid: false, error: 'Cupom não aplicável aos produtos do carrinho' };
+        }
+      }
+
+      // Check applicable shipping zones for shipping-type coupons
+      const isShippingCoupon = ['free_shipping', 'shipping_fixed', 'shipping_percentage'].includes(coupon.discount_type);
+      if (isShippingCoupon && coupon.applicable_shipping_zones && coupon.applicable_shipping_zones.length > 0) {
+        if (!shippingZoneId || !coupon.applicable_shipping_zones.includes(shippingZoneId)) {
+          return { valid: false, error: 'Cupom não aplicável para esta região de entrega' };
         }
       }
 

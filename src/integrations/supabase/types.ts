@@ -301,6 +301,7 @@ export type Database = {
         Row: {
           applicable_categories: string[] | null
           applicable_products: string[] | null
+          applicable_shipping_zones: string[] | null
           code: string
           created_at: string
           description: string | null
@@ -322,6 +323,7 @@ export type Database = {
         Insert: {
           applicable_categories?: string[] | null
           applicable_products?: string[] | null
+          applicable_shipping_zones?: string[] | null
           code: string
           created_at?: string
           description?: string | null
@@ -343,6 +345,7 @@ export type Database = {
         Update: {
           applicable_categories?: string[] | null
           applicable_products?: string[] | null
+          applicable_shipping_zones?: string[] | null
           code?: string
           created_at?: string
           description?: string | null

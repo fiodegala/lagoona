@@ -1,0 +1,1 @@
+ALTER TABLE public.coupons ADD COLUMN IF NOT EXISTS applicable_shipping_zones uuid[] DEFAULT '{}'::uuid[];
