@@ -36,13 +36,15 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 import { 
   Search, MoreHorizontal, Plus, Pencil, Trash2, 
   Loader2, Tag, Percent, DollarSign, Calendar,
-  Copy, CheckCircle, Users, Truck, TrendingUp
+  Copy, CheckCircle, Users, Truck, TrendingUp, MapPin
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { couponsService, Coupon, CreateCouponData, DiscountType, DISCOUNT_TYPE_LABELS, ProgressiveConfig, ProgressiveTier } from '@/services/coupons';
+import { shippingService, ShippingZone } from '@/services/shipping';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
