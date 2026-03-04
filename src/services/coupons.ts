@@ -1,10 +1,23 @@
 import { supabase } from '@/integrations/supabase/client';
 
+export type DiscountType = 'percentage' | 'fixed' | 'free_shipping' | 'shipping_fixed' | 'shipping_percentage' | 'progressive';
+
+export interface ProgressiveTier {
+  min: number; // min quantity or min order value
+  discount_type: 'percentage' | 'fixed';
+  discount_value: number;
+}
+
+export interface ProgressiveConfig {
+  basis: 'quantity' | 'order_value'; // by item count or order total
+  tiers: ProgressiveTier[];
+}
+
 export interface Coupon {
   id: string;
   code: string;
   description: string | null;
-  discount_type: 'percentage' | 'fixed';
+  discount_type: DiscountType;
   discount_value: number;
   minimum_order_value: number;
   maximum_discount: number | null;
@@ -17,6 +30,7 @@ export interface Coupon {
   applicable_categories: string[];
   applicable_products: string[];
   show_in_wheel: boolean;
+  progressive_tiers: ProgressiveConfig | null;
   created_at: string;
   updated_at: string;
 }
@@ -33,7 +47,7 @@ export interface CouponUsage {
 export interface CreateCouponData {
   code: string;
   description?: string;
-  discount_type: 'percentage' | 'fixed';
+  discount_type: DiscountType;
   discount_value: number;
   minimum_order_value?: number;
   maximum_discount?: number;
@@ -45,6 +59,7 @@ export interface CreateCouponData {
   applicable_categories?: string[];
   applicable_products?: string[];
   show_in_wheel?: boolean;
+  progressive_tiers?: ProgressiveConfig | null;
 }
 
 export interface CouponValidationResult {
@@ -52,7 +67,17 @@ export interface CouponValidationResult {
   coupon?: Coupon;
   error?: string;
   discount?: number;
+  shipping_discount?: number; // separate field for shipping discounts
 }
+
+export const DISCOUNT_TYPE_LABELS: Record<DiscountType, string> = {
+  percentage: 'Porcentagem (%)',
+  fixed: 'Valor fixo (R$)',
+  free_shipping: 'Frete Grátis',
+  shipping_fixed: 'Desconto fixo no frete (R$)',
+  shipping_percentage: 'Desconto % no frete',
+  progressive: 'Desconto Progressivo',
+};
 
 export const couponsService = {
   async getAll(): Promise<Coupon[]> {
@@ -62,7 +87,10 @@ export const couponsService = {
       .order('created_at', { ascending: false });
 
     if (error) throw error;
-    return (data || []) as Coupon[];
+    return (data || []).map(d => ({
+      ...d,
+      progressive_tiers: d.progressive_tiers as unknown as ProgressiveConfig | null,
+    })) as Coupon[];
   },
 
   async getById(id: string): Promise<Coupon | null> {
@@ -73,7 +101,7 @@ export const couponsService = {
       .single();
 
     if (error) throw error;
-    return data as Coupon;
+    return { ...data, progressive_tiers: data.progressive_tiers as unknown as ProgressiveConfig | null } as Coupon;
   },
 
   async getByCode(code: string): Promise<Coupon | null> {
@@ -84,7 +112,8 @@ export const couponsService = {
       .single();
 
     if (error && error.code !== 'PGRST116') throw error;
-    return data as Coupon | null;
+    if (!data) return null;
+    return { ...data, progressive_tiers: data.progressive_tiers as unknown as ProgressiveConfig | null } as Coupon;
   },
 
   async create(input: CreateCouponData): Promise<Coupon> {
@@ -93,18 +122,22 @@ export const couponsService = {
       .insert({
         ...input,
         code: input.code.toUpperCase().trim(),
+        progressive_tiers: input.progressive_tiers as any,
       })
       .select()
       .single();
 
     if (error) throw error;
-    return data as Coupon;
+    return data as unknown as Coupon;
   },
 
   async update(id: string, input: Partial<CreateCouponData>): Promise<Coupon> {
     const updateData: any = { ...input };
     if (input.code) {
       updateData.code = input.code.toUpperCase().trim();
+    }
+    if (input.progressive_tiers !== undefined) {
+      updateData.progressive_tiers = input.progressive_tiers as any;
     }
 
     const { data, error } = await supabase
@@ -115,7 +148,7 @@ export const couponsService = {
       .single();
 
     if (error) throw error;
-    return data as Coupon;
+    return data as unknown as Coupon;
   },
 
   async delete(id: string): Promise<void> {
@@ -141,7 +174,9 @@ export const couponsService = {
     orderTotal: number, 
     customerEmail?: string,
     productIds?: string[],
-    categoryIds?: string[]
+    categoryIds?: string[],
+    itemCount?: number,
+    shippingCost?: number
   ): Promise<CouponValidationResult> {
     try {
       const coupon = await this.getByCode(code);
@@ -154,7 +189,6 @@ export const couponsService = {
         return { valid: false, error: 'Cupom inativo' };
       }
 
-      // Check dates
       const now = new Date();
       if (coupon.starts_at && new Date(coupon.starts_at) > now) {
         return { valid: false, error: 'Cupom ainda não está ativo' };
@@ -164,12 +198,10 @@ export const couponsService = {
         return { valid: false, error: 'Cupom expirado' };
       }
 
-      // Check usage limits
       if (coupon.max_uses && coupon.uses_count >= coupon.max_uses) {
         return { valid: false, error: 'Cupom esgotado' };
       }
 
-      // Check per-customer usage
       if (customerEmail && coupon.max_uses_per_customer) {
         const { count } = await supabase
           .from('coupon_usage')
@@ -182,7 +214,6 @@ export const couponsService = {
         }
       }
 
-      // Check minimum order value
       if (coupon.minimum_order_value && orderTotal < coupon.minimum_order_value) {
         return { 
           valid: false, 
@@ -190,7 +221,6 @@ export const couponsService = {
         };
       }
 
-      // Check applicable categories
       if (coupon.applicable_categories && coupon.applicable_categories.length > 0 && categoryIds) {
         const hasApplicableCategory = categoryIds.some(
           catId => coupon.applicable_categories.includes(catId)
@@ -200,7 +230,6 @@ export const couponsService = {
         }
       }
 
-      // Check applicable products
       if (coupon.applicable_products && coupon.applicable_products.length > 0 && productIds) {
         const hasApplicableProduct = productIds.some(
           prodId => coupon.applicable_products.includes(prodId)
@@ -210,15 +239,56 @@ export const couponsService = {
         }
       }
 
-      // Calculate discount
+      // Calculate discount based on type
       let discount = 0;
-      if (coupon.discount_type === 'percentage') {
-        discount = (orderTotal * coupon.discount_value) / 100;
-        if (coupon.maximum_discount && discount > coupon.maximum_discount) {
-          discount = coupon.maximum_discount;
+      let shipping_discount = 0;
+
+      switch (coupon.discount_type) {
+        case 'percentage':
+          discount = (orderTotal * coupon.discount_value) / 100;
+          if (coupon.maximum_discount && discount > coupon.maximum_discount) {
+            discount = coupon.maximum_discount;
+          }
+          break;
+
+        case 'fixed':
+          discount = coupon.discount_value;
+          break;
+
+        case 'free_shipping':
+          shipping_discount = shippingCost || 0;
+          break;
+
+        case 'shipping_fixed':
+          shipping_discount = Math.min(coupon.discount_value, shippingCost || 0);
+          break;
+
+        case 'shipping_percentage':
+          shipping_discount = ((shippingCost || 0) * coupon.discount_value) / 100;
+          break;
+
+        case 'progressive': {
+          if (coupon.progressive_tiers) {
+            const config = coupon.progressive_tiers;
+            const checkValue = config.basis === 'quantity' ? (itemCount || 0) : orderTotal;
+            
+            // Sort tiers descending to find the best matching tier
+            const sortedTiers = [...config.tiers].sort((a, b) => b.min - a.min);
+            const matchedTier = sortedTiers.find(t => checkValue >= t.min);
+
+            if (matchedTier) {
+              if (matchedTier.discount_type === 'percentage') {
+                discount = (orderTotal * matchedTier.discount_value) / 100;
+              } else {
+                discount = matchedTier.discount_value;
+              }
+              if (coupon.maximum_discount && discount > coupon.maximum_discount) {
+                discount = coupon.maximum_discount;
+              }
+            }
+          }
+          break;
         }
-      } else {
-        discount = coupon.discount_value;
       }
 
       // Don't let discount exceed order total
@@ -226,7 +296,7 @@ export const couponsService = {
         discount = orderTotal;
       }
 
-      return { valid: true, coupon, discount };
+      return { valid: true, coupon, discount, shipping_discount };
     } catch (error) {
       console.error('Error validating coupon:', error);
       return { valid: false, error: 'Erro ao validar cupom' };
@@ -239,7 +309,6 @@ export const couponsService = {
     discountApplied: number,
     orderId?: string
   ): Promise<void> {
-    // Record usage
     const { error: usageError } = await supabase
       .from('coupon_usage')
       .insert({
@@ -251,7 +320,6 @@ export const couponsService = {
 
     if (usageError) throw usageError;
 
-    // Get current uses_count and increment
     const { data: coupon } = await supabase
       .from('coupons')
       .select('uses_count')
