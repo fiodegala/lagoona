@@ -187,21 +187,21 @@ const ProductImageGallery = ({
           alt={`${productName} - Imagem ${currentIndex + 1}`}
           decoding="async"
           className={cn(
-            "w-full h-full object-cover transition-opacity duration-200",
+            "w-full h-full object-contain transition-opacity duration-200",
             isZoomed ? "opacity-0" : "opacity-100"
           )}
         />
-        <div
-          className={cn(
-            "absolute inset-0 transition-opacity duration-200",
-            isZoomed ? "opacity-100" : "opacity-0 pointer-events-none"
-          )}
-          style={{
-            backgroundImage: `url(${fullImageUrl(currentItem.url)})`,
-            backgroundSize: '200%',
-            backgroundPosition: `${zoomPosition.x}% ${zoomPosition.y}%`,
-          }}
-        />
+        {isZoomed && (
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage: `url(${fullImageUrl(currentItem.url)})`,
+              backgroundSize: '250%',
+              backgroundPosition: `${zoomPosition.x}% ${zoomPosition.y}%`,
+              backgroundRepeat: 'no-repeat',
+            }}
+          />
+        )}
       </>
     );
   };
