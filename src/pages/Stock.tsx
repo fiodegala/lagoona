@@ -132,12 +132,12 @@ const Stock = () => {
 
       // Build set of products that have variations + map of variation barcodes/SKUs per product
       const productsWithVariations = new Set<string>();
-      const variationCodesMap: Record<string, string[]> = {};
+      const variationCodesMap: Record<string, { variation_id: string; code: string }[]> = {};
       (variationsRes.data || []).forEach((v: any) => {
         productsWithVariations.add(v.product_id);
         if (!variationCodesMap[v.product_id]) variationCodesMap[v.product_id] = [];
-        if (v.barcode) variationCodesMap[v.product_id].push(v.barcode.toLowerCase());
-        if (v.sku) variationCodesMap[v.product_id].push(v.sku.toLowerCase());
+        if (v.barcode) variationCodesMap[v.product_id].push({ variation_id: v.id, code: v.barcode.toLowerCase() });
+        if (v.sku) variationCodesMap[v.product_id].push({ variation_id: v.id, code: v.sku.toLowerCase() });
       });
 
       // Build stock maps: one for simple products (variation_id is null), one for variation-level
@@ -195,7 +195,7 @@ const Stock = () => {
       const matchesSearch = !search || 
         p.name.toLowerCase().includes(s) ||
         p.barcode?.toLowerCase().includes(s) ||
-        p.variation_codes.some(code => code.includes(s));
+        p.variation_codes.some(vc => vc.code.includes(s));
 
       const matchesStatus = filterStatus === 'all' ||
         (filterStatus === 'in-stock' && p.total > 0) ||
