@@ -20,7 +20,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { DollarSign, ArrowUpDown, Check } from 'lucide-react';
+import { DollarSign, ArrowUpDown, Check, FileText, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type WizardStep = 'sale-type' | 'seller' | 'customer' | 'products' | 'payment';
