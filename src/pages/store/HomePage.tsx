@@ -533,7 +533,7 @@ const HomePage = () => {
             </div>
             <div className="flex-shrink-0">
               <video
-                src="/assets/atacado-fdg.mp4"
+                src={wholesaleVideoUrl}
                 controls
                 loop
                 muted
