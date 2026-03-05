@@ -36,7 +36,7 @@ const UpsellSection = ({ currentProduct, currentPrice, currentVariation, categor
   const [discountPercent, setDiscountPercent] = useState(5);
   const [selectedItems, setSelectedItems] = useState<Map<string, SelectedUpsellItem>>(new Map());
   const [isLoading, setIsLoading] = useState(true);
-  const { addItem } = useCart();
+  const { addItem, items } = useCart();
 
   // Variation picker state
   const [pickerProduct, setPickerProduct] = useState<Product | null>(null);
