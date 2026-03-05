@@ -870,6 +870,7 @@ const Dashboard = () => {
             ))
           ) : (
             <>
+              {(isSiteStoreSelected || isViewingAllStores) && (
               <Card className="card-elevated">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
@@ -888,7 +889,9 @@ const Dashboard = () => {
                   </div>
                 </CardContent>
               </Card>
+              )}
 
+              {(isSiteStoreSelected || isViewingAllStores) && (
               <Card className="card-elevated">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
@@ -905,6 +908,7 @@ const Dashboard = () => {
                   </div>
                 </CardContent>
               </Card>
+              )}
 
               <Card className="card-elevated">
                 <CardContent className="p-6">
@@ -943,7 +947,8 @@ const Dashboard = () => {
           )}
         </div>
 
-        {/* Comparison Chart - PDV vs Online */}
+        {/* Comparison Chart - PDV vs Online - Only when viewing all stores */}
+        {isViewingAllStores && (
         <Card className="card-elevated">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -1021,8 +1026,10 @@ const Dashboard = () => {
             )}
           </CardContent>
         </Card>
+        )}
 
-        {/* Charts Row */}
+        {/* Charts Row - Site data */}
+        {(isSiteStoreSelected || isViewingAllStores) && (
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Sales Chart */}
           <Card className="card-elevated lg:col-span-2">
@@ -1123,6 +1130,7 @@ const Dashboard = () => {
             </CardContent>
           </Card>
         </div>
+        )}
 
         {/* POS Sales Section - Hidden when viewing Site store */}
         {!isSiteStoreSelected && (
@@ -1484,12 +1492,15 @@ const Dashboard = () => {
         </div>
         )}
 
-        {/* Sales by Region Map */}
-        <BrazilSalesMap salesByState={salesByState} isLoading={isLoading} />
+        {/* Sales by Region Map - Site only */}
+        {(isSiteStoreSelected || isViewingAllStores) && (
+          <BrazilSalesMap salesByState={salesByState} isLoading={isLoading} />
+        )}
 
         {/* Bottom Row */}
-        <div className="grid gap-6 lg:grid-cols-2">
-          {/* Recent Orders */}
+        <div className={cn("grid gap-6", (isSiteStoreSelected || isViewingAllStores) ? "lg:grid-cols-2" : "lg:grid-cols-1")}>
+          {/* Recent Orders - Site only */}
+          {(isSiteStoreSelected || isViewingAllStores) && (
           <Card className="card-elevated">
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
@@ -1544,9 +1555,10 @@ const Dashboard = () => {
               )}
             </CardContent>
           </Card>
+          )}
 
-          {/* WhatsApp Metrics */}
-          <WhatsAppMetrics />
+          {/* WhatsApp Metrics - Site only */}
+          {(isSiteStoreSelected || isViewingAllStores) && <WhatsAppMetrics />}
 
           {/* Quick Actions */}
           <Card className="card-elevated">
