@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { cn } from '@/lib/utils';
 import AdminLayout from '@/components/AdminLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
