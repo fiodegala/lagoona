@@ -57,7 +57,7 @@ interface StockProduct {
   stores: Record<string, number>;
   total: number;
   has_variations: boolean;
-  variation_codes: string[];
+  variation_codes: { variation_id: string; code: string }[];
 }
 
 interface VariationDetail {
