@@ -1483,6 +1483,94 @@ export type Database = {
         }
         Relationships: []
       }
+      quotes: {
+        Row: {
+          converted_sale_id: string | null
+          created_at: string
+          customer_document: string | null
+          customer_id: string | null
+          customer_name: string | null
+          discount_amount: number | null
+          discount_type: string | null
+          discount_value: number | null
+          expires_at: string | null
+          id: string
+          items: Json
+          local_id: string
+          notes: string | null
+          status: string
+          store_id: string | null
+          subtotal: number
+          total: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          converted_sale_id?: string | null
+          created_at?: string
+          customer_document?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          discount_amount?: number | null
+          discount_type?: string | null
+          discount_value?: number | null
+          expires_at?: string | null
+          id?: string
+          items?: Json
+          local_id: string
+          notes?: string | null
+          status?: string
+          store_id?: string | null
+          subtotal: number
+          total: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          converted_sale_id?: string | null
+          created_at?: string
+          customer_document?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          discount_amount?: number | null
+          discount_type?: string | null
+          discount_value?: number | null
+          expires_at?: string | null
+          id?: string
+          items?: Json
+          local_id?: string
+          notes?: string | null
+          status?: string
+          store_id?: string | null
+          subtotal?: number
+          total?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quotes_converted_sale_id_fkey"
+            columns: ["converted_sale_id"]
+            isOneToOne: false
+            referencedRelation: "pos_sales"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotes_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotes_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       review_media: {
         Row: {
           created_at: string

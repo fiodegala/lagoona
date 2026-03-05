@@ -20,10 +20,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { DollarSign, ArrowUpDown, Check } from 'lucide-react';
+import { DollarSign, ArrowUpDown, Check, FileText, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type WizardStep = 'sale-type' | 'seller' | 'customer' | 'products' | 'payment';
+const isQuoteType = (t: SaleType) => t === 'orcamento';
 
 const STEPS: { key: WizardStep; label: string }[] = [
   { key: 'sale-type', label: 'Tipo' },
@@ -66,6 +67,7 @@ const POSPage = () => {
   } | null>(null);
 
   const isExchangeMode = saleType === 'troca';
+  const isQuoteMode = isQuoteType(saleType);
 
   useEffect(() => {
     const unsubscribe = offlineService.onOnlineStatusChange(setIsOnline);
@@ -129,6 +131,8 @@ const POSPage = () => {
         return product.exclusive_price ?? product.price;
       case 'troca':
         return 0;
+      case 'orcamento':
+        return product.promotional_price ?? product.price;
       default:
         return product.promotional_price ?? product.price;
     }
@@ -237,6 +241,52 @@ const POSPage = () => {
   const handlePayment = async (method: 'cash' | 'card' | 'pix' | 'mixed', amountReceived?: number, paymentDetails?: Record<string, number>, saleDate?: string) => {
     if (cartItems.length === 0) return;
     setIsProcessing(true);
+
+    // If it's a quote, save to quotes table instead
+    if (isQuoteType(saleType)) {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('Usuário não autenticado');
+
+        const quoteData = {
+          local_id: offlineService.generateLocalId(),
+          user_id: user.id,
+          store_id: selectedSeller?.store_id || userStoreId || null,
+          customer_id: selectedCustomer?.id || null,
+          customer_name: selectedCustomer?.name || null,
+          customer_document: selectedCustomer?.document || null,
+          items: cartItems.map((item) => ({
+            product_id: item.product_id,
+            variation_id: item.variation_id,
+            name: item.name,
+            sku: item.sku,
+            image_url: item.image_url || null,
+            quantity: item.quantity,
+            unit_price: item.unit_price,
+            discount_amount: item.discount_amount,
+            total: item.total,
+          })) as unknown as Record<string, unknown>[],
+          subtotal,
+          discount_type: generalDiscount.value > 0 ? generalDiscount.type : null,
+          discount_value: generalDiscount.value,
+          discount_amount: totalDiscount,
+          total,
+          notes: selectedSeller ? `Vendedor: ${selectedSeller.full_name}` : null,
+          status: 'pending',
+        };
+
+        await supabase.from('quotes').insert(quoteData as never);
+
+        toast({ title: 'Orçamento gerado!', description: `Total: R$ ${total.toFixed(2)}${selectedCustomer ? ` • Cliente: ${selectedCustomer.name}` : ''}` });
+        resetWizard();
+      } catch (error) {
+        console.error('Error creating quote:', error);
+        toast({ title: 'Erro ao gerar orçamento', variant: 'destructive' });
+      } finally {
+        setIsProcessing(false);
+      }
+      return;
+    }
 
     const saleData: CreateSaleData = {
       local_id: offlineService.generateLocalId(),
@@ -512,7 +562,7 @@ const POSPage = () => {
                     {isCompleted ? <Check className="h-4 w-4" /> : index + 1}
                   </div>
                   <span className={cn('text-sm font-medium hidden sm:block', isCurrent ? 'text-primary' : isCompleted ? 'text-foreground' : 'text-muted-foreground')}>
-                    {step.label}
+                    {step.key === 'payment' && isQuoteMode ? 'Orçamento' : step.label}
                   </span>
                   {index < STEPS.length - 1 && <div className={cn('w-8 h-0.5 mx-2', isCompleted ? 'bg-primary' : 'bg-muted-foreground/20')} />}
                 </div>
@@ -593,7 +643,27 @@ const POSPage = () => {
             </div>
           )}
 
-          {currentStep === 'payment' && (
+          {currentStep === 'payment' && isQuoteMode && (
+            <div className="flex-1 flex flex-col items-center justify-center p-8 gap-6">
+              <FileText className="h-16 w-16 text-muted-foreground" />
+              <div className="text-center">
+                <h2 className="text-2xl font-bold mb-2">Confirmar Orçamento</h2>
+                <p className="text-muted-foreground mb-1">{cartItems.length} item(ns) • {selectedCustomer?.name || 'Sem cliente'}</p>
+                <p className="text-3xl font-bold text-primary mt-4">
+                  {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(total)}
+                </p>
+              </div>
+              <div className="flex gap-3">
+                <Button variant="outline" onClick={() => setCurrentStep('products')}>Voltar</Button>
+                <Button size="lg" disabled={isProcessing || cartItems.length === 0} onClick={() => handlePayment('pix')}>
+                  {isProcessing ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <FileText className="h-4 w-4 mr-2" />}
+                  Gerar Orçamento
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {currentStep === 'payment' && !isQuoteMode && (
             <PaymentStep
               cartItems={cartItems}
               subtotal={subtotal}

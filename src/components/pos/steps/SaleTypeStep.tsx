@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { ShoppingBag, Package, Star, RefreshCw } from 'lucide-react';
+import { ShoppingBag, Package, Star, RefreshCw, FileText } from 'lucide-react';
 import { SaleType } from '@/components/pos/ProductSearch';
 
 interface SaleTypeStepProps {
@@ -13,6 +13,7 @@ const saleTypes = [
   { value: 'atacado' as SaleType, label: 'Atacado', icon: Package, description: 'Preço especial para compras em quantidade' },
   { value: 'exclusivo' as SaleType, label: 'Exclusivo', icon: Star, description: 'Preço exclusivo para clientes selecionados' },
   { value: 'troca' as SaleType, label: 'Troca', icon: RefreshCw, description: 'Troca de produtos com devolução e saída' },
+  { value: 'orcamento' as SaleType, label: 'Orçamento', icon: FileText, description: 'Gera orçamento sem registrar venda' },
 ];
 
 const SaleTypeStep = ({ saleType, onSelect, onNext }: SaleTypeStepProps) => {

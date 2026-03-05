@@ -29,6 +29,7 @@ import {
   ShoppingBasket,
   History,
   Sparkles,
+  FileText,
 } from 'lucide-react';
 import logoLagoona from '@/assets/logo-lagoona-white.png';
 import { Button } from '@/components/ui/button';
@@ -59,6 +60,7 @@ const navItems = [
   { icon: ShoppingCart, label: 'Pedidos', path: '/admin/orders' },
   { icon: Receipt, label: 'Vendas', path: '/admin/sales' },
   { icon: ShoppingBasket, label: 'Carrinhos Abandonados', path: '/admin/abandoned-carts' },
+  { icon: FileText, label: 'Orçamentos', path: '/admin/orcamentos' },
   { icon: Star, label: 'Avaliações', path: '/admin/reviews', requireAdmin: true },
   { icon: Tag, label: 'Cupons', path: '/admin/coupons', requireAdmin: true },
   { icon: Package, label: 'Combos', path: '/admin/combos', requireAdmin: true },
