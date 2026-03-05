@@ -199,10 +199,15 @@ const UpsellSection = ({ currentProduct, currentPrice, currentVariation, categor
 
   const handleBuyTogether = () => {
     const discountMultiplier = 1 - discountPercent / 100;
+    const currentVarLabel = currentVariation?.attribute_values?.map(av => av.value).join(' / ');
     addItem({
-      id: currentProduct.id, productId: currentProduct.id, name: currentProduct.name,
-      price: currentPrice * discountMultiplier, imageUrl: currentProduct.image_url || undefined,
-      stock: currentProduct.stock, quantity: 1,
+      id: currentVariation?.id || currentProduct.id,
+      productId: currentProduct.id,
+      name: currentVarLabel ? `${currentProduct.name} - ${currentVarLabel}` : currentProduct.name,
+      price: currentPrice * discountMultiplier,
+      imageUrl: currentVariation?.image_url || currentProduct.image_url || undefined,
+      stock: currentVariation?.stock ?? currentProduct.stock,
+      quantity: 1,
     });
     selectedProducts.forEach(({ product, variation, price }) => {
       const variationLabel = variation?.attribute_values?.map(av => av.value).join(' / ');
