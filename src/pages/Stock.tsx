@@ -57,6 +57,7 @@ interface StockProduct {
   stores: Record<string, number>;
   total: number;
   has_variations: boolean;
+  variation_codes: string[];
 }
 
 interface VariationDetail {
@@ -122,17 +123,21 @@ const Stock = () => {
         supabase.from('stores').select('id, name, slug, type').eq('is_active', true).order('name'),
         supabase.from('products').select('id, name, image_url, price, barcode, stock, min_stock, is_active, categories(name)').order('name'),
         fetchAllStock(),
-        supabase.from('product_variations').select('id, product_id').eq('is_active', true),
+        supabase.from('product_variations').select('id, product_id, barcode, sku').eq('is_active', true),
       ]);
 
       const storesList = storesRes.data || [];
       const physicalStores = storesList.filter(s => s.type === 'physical');
       setStores(storesList);
 
-      // Build set of products that have variations
+      // Build set of products that have variations + map of variation barcodes/SKUs per product
       const productsWithVariations = new Set<string>();
+      const variationCodesMap: Record<string, string[]> = {};
       (variationsRes.data || []).forEach((v: any) => {
         productsWithVariations.add(v.product_id);
+        if (!variationCodesMap[v.product_id]) variationCodesMap[v.product_id] = [];
+        if (v.barcode) variationCodesMap[v.product_id].push(v.barcode.toLowerCase());
+        if (v.sku) variationCodesMap[v.product_id].push(v.sku.toLowerCase());
       });
 
       // Build stock maps: one for simple products (variation_id is null), one for variation-level
@@ -172,6 +177,7 @@ const Stock = () => {
           stores: storeQuantities,
           total,
           has_variations: hasVariations,
+          variation_codes: variationCodesMap[p.id] || [],
         };
       });
 
@@ -185,9 +191,11 @@ const Stock = () => {
 
   const filteredProducts = useMemo(() => {
     return products.filter(p => {
+      const s = search.toLowerCase();
       const matchesSearch = !search || 
-        p.name.toLowerCase().includes(search.toLowerCase()) ||
-        p.barcode?.toLowerCase().includes(search.toLowerCase());
+        p.name.toLowerCase().includes(s) ||
+        p.barcode?.toLowerCase().includes(s) ||
+        p.variation_codes.some(code => code.includes(s));
 
       const matchesStatus = filterStatus === 'all' ||
         (filterStatus === 'in-stock' && p.total > 0) ||
@@ -436,7 +444,7 @@ const Stock = () => {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Buscar por nome ou código de barras..."
+              placeholder="Buscar por nome, código de barras ou SKU..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-10"
