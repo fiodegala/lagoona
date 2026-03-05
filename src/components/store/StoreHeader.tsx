@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingCart, Search, Menu, User, Heart, Sun, Moon } from 'lucide-react';
+import { Search, Menu, User, Heart, Sun, Moon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Input } from '@/components/ui/input';
-import { useCart } from '@/contexts/CartContext';
 import { useFavorites } from '@/contexts/FavoritesContext';
 import { Category } from '@/services/categories';
+import CartDrawer from '@/components/store/CartDrawer';
 import logoLagoona from '@/assets/logo-lagoona.png';
 import logoLagoonaDark from '@/assets/logo-lagoona-dark.png';
 
@@ -21,9 +21,7 @@ const StoreHeader = ({ categories }: StoreHeaderProps) => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [isDark, setIsDark] = useState(false);
   const navigate = useNavigate();
-  const { getItemCount } = useCart();
   const { favorites } = useFavorites();
-  const itemCount = getItemCount();
   const favoritesCount = favorites.length;
 
   const handleSearch = (e: React.FormEvent) => {
@@ -130,17 +128,8 @@ const StoreHeader = ({ categories }: StoreHeaderProps) => {
               </Link>
             </Button>
 
-            {/* Cart */}
-            <Button variant="ghost" size="icon" asChild className="relative text-foreground/70 hover:text-foreground">
-              <Link to="/carrinho">
-                <ShoppingCart className="h-5 w-5" />
-                {itemCount > 0 && (
-                  <Badge className="absolute -top-1 -right-1 h-5 min-w-5 flex items-center justify-center p-0 text-xs bg-store-gold text-store-dark">
-                    {itemCount > 99 ? '99+' : itemCount}
-                  </Badge>
-                )}
-              </Link>
-            </Button>
+            {/* Cart Drawer */}
+            <CartDrawer />
 
             {/* Mobile menu */}
             <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
