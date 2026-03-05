@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Separator } from '@/components/ui/separator';
 import QuoteEditModal from '@/components/QuoteEditModal';
 
-import { Search, FileText, Eye, Trash2, Loader2, Clock, User, CreditCard, Package, Printer, Share2, Pencil } from 'lucide-react';
+import { Search, FileText, Eye, Trash2, Loader2, Clock, User, CreditCard, Package, Printer, Share2, Pencil, History } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -134,6 +134,7 @@ const Quotes = () => {
   const [search, setSearch] = useState('');
   const [selectedQuote, setSelectedQuote] = useState<Quote | null>(null);
   const [editQuote, setEditQuote] = useState<Quote | null>(null);
+  const [quoteHistory, setQuoteHistory] = useState<any[]>([]);
 
   const fetchQuotes = async () => {
     setLoading(true);
@@ -152,6 +153,20 @@ const Quotes = () => {
   };
 
   useEffect(() => { fetchQuotes(); }, []);
+
+  // Fetch history when a quote is selected
+  useEffect(() => {
+    if (!selectedQuote) { setQuoteHistory([]); return; }
+    const fetchHistory = async () => {
+      const { data } = await supabase
+        .from('quote_history' as any)
+        .select('*')
+        .eq('quote_id', selectedQuote.id)
+        .order('created_at', { ascending: false });
+      setQuoteHistory((data as any[]) || []);
+    };
+    fetchHistory();
+  }, [selectedQuote]);
 
   const handleDelete = async (id: string) => {
     const { error } = await supabase.from('quotes').delete().eq('id', id);
@@ -436,6 +451,51 @@ const Quotes = () => {
                     <div>
                       <h4 className="text-sm font-semibold mb-1">Observações</h4>
                       <p className="text-sm text-muted-foreground">{selectedQuote.notes}</p>
+                    </div>
+                  </>
+                )}
+
+                {/* Histórico de Alterações */}
+                {quoteHistory.length > 0 && (
+                  <>
+                    <Separator />
+                    <div>
+                      <h4 className="text-sm font-semibold mb-2 flex items-center gap-1.5">
+                        <History className="h-3.5 w-3.5 text-muted-foreground" />
+                        Histórico de Alterações
+                      </h4>
+                      <div className="space-y-2">
+                        {quoteHistory.map((entry: any) => (
+                          <div key={entry.id} className="rounded-md border p-2.5 text-xs space-y-1">
+                            <div className="flex items-center justify-between">
+                              <span className="font-medium">{entry.user_name || 'Usuário'}</span>
+                              <span className="text-muted-foreground">
+                                {format(new Date(entry.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                              </span>
+                            </div>
+                            {entry.changes && Object.keys(entry.changes).length > 0 && (
+                              <div className="text-muted-foreground space-y-0.5">
+                                {Object.entries(entry.changes).map(([key, val]: [string, any]) => {
+                                  const labels: Record<string, string> = {
+                                    customer_name: 'Cliente',
+                                    notes: 'Observações',
+                                    payment_method: 'Pagamento',
+                                    total: 'Total',
+                                  };
+                                  const label = labels[key] || key;
+                                  if (key === 'total') {
+                                    return <p key={key}>{label}: {formatCurrency(val.from)} → {formatCurrency(val.to)}</p>;
+                                  }
+                                  return <p key={key}>{label} alterado</p>;
+                                })}
+                              </div>
+                            )}
+                            {(!entry.changes || Object.keys(entry.changes).length === 0) && (
+                              <p className="text-muted-foreground">Edição realizada</p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </>
                 )}

@@ -1483,6 +1483,44 @@ export type Database = {
         }
         Relationships: []
       }
+      quote_history: {
+        Row: {
+          action: string
+          changes: Json | null
+          created_at: string
+          id: string
+          quote_id: string
+          user_id: string
+          user_name: string | null
+        }
+        Insert: {
+          action?: string
+          changes?: Json | null
+          created_at?: string
+          id?: string
+          quote_id: string
+          user_id: string
+          user_name?: string | null
+        }
+        Update: {
+          action?: string
+          changes?: Json | null
+          created_at?: string
+          id?: string
+          quote_id?: string
+          user_id?: string
+          user_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_history_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       quotes: {
         Row: {
           converted_sale_id: string | null
