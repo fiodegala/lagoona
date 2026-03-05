@@ -13,6 +13,7 @@ import { Trash2, Plus, Minus, Save, Loader2, User, Package, CreditCard, StickyNo
 import { supabase } from '@/integrations/supabase/client';
 import { posService } from '@/services/posService';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 
 interface QuoteItem {
@@ -80,6 +81,7 @@ const paymentMethods = [
 
 const QuoteEditModal = ({ quote, open, onOpenChange, onSaved }: QuoteEditModalProps) => {
   const { toast } = useToast();
+  const { user, profile } = useAuth();
   const [saving, setSaving] = useState(false);
 
   const [customerName, setCustomerName] = useState('');
@@ -364,6 +366,21 @@ const QuoteEditModal = ({ quote, open, onOpenChange, onSaved }: QuoteEditModalPr
         .eq('id', quote.id);
 
       if (error) throw error;
+
+      // Log history entry
+      const changes: Record<string, unknown> = {};
+      if (customerName.trim() !== (quote.customer_name || '')) changes.customer_name = { from: quote.customer_name, to: customerName.trim() };
+      if (notes.trim() !== (quote.notes || '')) changes.notes = { from: quote.notes, to: notes.trim() };
+      if (paymentMethod !== (quote.payment_method || '')) changes.payment_method = { from: quote.payment_method, to: paymentMethod };
+      if (Math.abs(total - quote.total) > 0.01) changes.total = { from: quote.total, to: total };
+
+      await supabase.from('quote_history' as any).insert({
+        quote_id: quote.id,
+        user_id: user?.id,
+        user_name: profile?.full_name || user?.email || 'Usuário',
+        action: 'edit',
+        changes,
+      } as any);
 
       toast({ title: 'Orçamento atualizado!' });
       onSaved();
