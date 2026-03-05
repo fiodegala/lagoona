@@ -1492,10 +1492,8 @@ const Dashboard = () => {
         </div>
         )}
 
-        {/* Sales by Region Map - Site only */}
-        {(isSiteStoreSelected || isViewingAllStores) && (
-          <BrazilSalesMap salesByState={salesByState} isLoading={isLoading} />
-        )}
+        {/* Sales by Region Map - All stores */}
+        <BrazilSalesMap salesByState={salesByState} isLoading={isLoading} />
 
         {/* Bottom Row */}
         <div className={cn("grid gap-6", (isSiteStoreSelected || isViewingAllStores) ? "lg:grid-cols-2" : "lg:grid-cols-1")}>
