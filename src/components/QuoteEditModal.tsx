@@ -193,19 +193,54 @@ const QuoteEditModal = ({ quote, open, onOpenChange, onSaved }: QuoteEditModalPr
     };
   };
 
-  const handleProductSelected = (product: SearchResult) => {
+  const handleProductSelected = async (product: SearchResult) => {
     const matchedVarId = matchedVariationMap[product.id];
-    const activeVariations = product.variations.filter(v => v.is_active);
 
     // If matched a specific variation via barcode/SKU, add directly
     if (matchedVarId) {
       addItemFromProduct(product, matchedVarId);
     }
-    // If product has variations, show picker
-    else if (activeVariations.length > 0) {
-      setVariationPickerProduct(product);
+    // If product has variations, fetch ALL variations and show picker
+    else if (product.variations.length > 0) {
       setShowResults(false);
       setSearchQuery('');
+      setLoadingVariations(true);
+      try {
+        // Fetch full product with all variations
+        const { data: fullProduct } = await supabase
+          .from('products')
+          .select('*, product_variations(*)')
+          .eq('id', product.id)
+          .single();
+
+        if (fullProduct) {
+          // Enrich with labels using posService
+          const [enriched] = await posService._enrichWithLabels([fullProduct]);
+          const enrichedProduct: SearchResult = {
+            id: enriched.id,
+            name: enriched.name,
+            price: enriched.price,
+            image_url: enriched.image_url,
+            barcode: enriched.barcode,
+            stock: enriched.stock,
+            variations: (enriched.product_variations || []).map((v: any) => ({
+              id: v.id,
+              sku: v.sku,
+              price: v.price,
+              stock: v.stock,
+              is_active: v.is_active,
+              image_url: v.image_url,
+              label: v.label,
+            })),
+          };
+          setVariationPickerProduct(enrichedProduct);
+        }
+      } catch (error) {
+        console.error('Error fetching variations:', error);
+        toast({ title: 'Erro ao carregar variações', variant: 'destructive' });
+      } finally {
+        setLoadingVariations(false);
+      }
     }
     // No variations, add directly
     else {
