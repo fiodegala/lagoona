@@ -1996,6 +1996,30 @@ export type Database = {
           },
         ]
       }
+      user_menu_permissions: {
+        Row: {
+          allowed_menus: string[]
+          created_at: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          allowed_menus?: string[]
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          allowed_menus?: string[]
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
