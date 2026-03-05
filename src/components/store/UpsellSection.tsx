@@ -118,9 +118,11 @@ const UpsellSection = ({ currentProduct, currentPrice, categoryId }: UpsellSecti
           const price = getPrice(product);
           return (
             <div key={product.id}>
-              <div className="flex items-center justify-center py-0.5">
-                <Plus className="h-3 w-3 text-muted-foreground" />
-              </div>
+            <div className="flex items-center gap-2 py-0.5">
+              <div className="flex-1 h-px bg-border" />
+              <Plus className="h-3 w-3 text-muted-foreground shrink-0" />
+              <div className="flex-1 h-px bg-border" />
+            </div>
               <button
                 onClick={() => toggleSelect(product.id)}
                 className={`w-full flex items-center gap-3 p-1.5 rounded-lg transition-all text-left ${
