@@ -215,7 +215,7 @@ const ContactPage = () => {
                       <Instagram className="h-5 w-5 text-store-accent" />
                     </a>
                     <a
-                      href="#"
+                      href="https://www.tiktok.com/@fiodegala"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="w-12 h-12 bg-store-secondary rounded-lg flex items-center justify-center hover:bg-store-primary/20 transition-colors"
