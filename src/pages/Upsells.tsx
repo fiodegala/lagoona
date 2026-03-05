@@ -9,7 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Trash2, Loader2, Pencil, ArrowUpDown } from 'lucide-react';
+import { Plus, Trash2, Loader2, Pencil, ArrowUpDown, Check } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { productsService, Product } from '@/services/products';
 import { toast } from 'sonner';
@@ -37,7 +38,7 @@ const Upsells = () => {
 
   // Form state
   const [formProductId, setFormProductId] = useState('');
-  const [formUpsellProductId, setFormUpsellProductId] = useState('');
+  const [formUpsellProductIds, setFormUpsellProductIds] = useState<string[]>([]);
   const [formDiscount, setFormDiscount] = useState('5');
   const [formSortOrder, setFormSortOrder] = useState('0');
   const [formIsActive, setFormIsActive] = useState(true);
@@ -71,7 +72,7 @@ const Upsells = () => {
   const openCreate = () => {
     setEditingRule(null);
     setFormProductId('');
-    setFormUpsellProductId('');
+    setFormUpsellProductIds([]);
     setFormDiscount('5');
     setFormSortOrder('0');
     setFormIsActive(true);
@@ -81,7 +82,7 @@ const Upsells = () => {
   const openEdit = (rule: UpsellRule) => {
     setEditingRule(rule);
     setFormProductId(rule.product_id);
-    setFormUpsellProductId(rule.upsell_product_id);
+    setFormUpsellProductIds([rule.upsell_product_id]);
     setFormDiscount(String(rule.discount_percent));
     setFormSortOrder(String(rule.sort_order));
     setFormIsActive(rule.is_active);
@@ -89,32 +90,38 @@ const Upsells = () => {
   };
 
   const handleSave = async () => {
-    if (!formProductId || !formUpsellProductId) {
-      return toast.error('Selecione os dois produtos');
+    if (!formProductId || formUpsellProductIds.length === 0) {
+      return toast.error('Selecione o produto principal e pelo menos um produto sugerido');
     }
-    if (formProductId === formUpsellProductId) {
+    if (formUpsellProductIds.includes(formProductId)) {
       return toast.error('O produto não pode ser upsell dele mesmo');
     }
 
     setSaving(true);
     try {
-      const payload = {
-        product_id: formProductId,
-        upsell_product_id: formUpsellProductId,
-        discount_percent: parseFloat(formDiscount) || 5,
-        sort_order: parseInt(formSortOrder) || 0,
-        is_active: formIsActive,
-        updated_at: new Date().toISOString(),
-      };
-
       if (editingRule) {
+        const payload = {
+          product_id: formProductId,
+          upsell_product_id: formUpsellProductIds[0],
+          discount_percent: parseFloat(formDiscount) || 5,
+          sort_order: parseInt(formSortOrder) || 0,
+          is_active: formIsActive,
+          updated_at: new Date().toISOString(),
+        };
         const { error } = await supabase.from('product_upsells').update(payload).eq('id', editingRule.id);
         if (error) throw error;
         toast.success('Upsell atualizado');
       } else {
-        const { error } = await supabase.from('product_upsells').insert(payload);
+        const rows = formUpsellProductIds.map((uid, idx) => ({
+          product_id: formProductId,
+          upsell_product_id: uid,
+          discount_percent: parseFloat(formDiscount) || 5,
+          sort_order: (parseInt(formSortOrder) || 0) + idx,
+          is_active: formIsActive,
+        }));
+        const { error } = await supabase.from('product_upsells').insert(rows);
         if (error) throw error;
-        toast.success('Upsell criado');
+        toast.success(`${rows.length} upsell(s) criado(s)`);
       }
       setModalOpen(false);
       loadData();
@@ -292,17 +299,54 @@ const Upsells = () => {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Produto Sugerido (Upsell)</Label>
-              <Select value={formUpsellProductId} onValueChange={setFormUpsellProductId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o produto sugerido" />
-                </SelectTrigger>
-                <SelectContent>
-                  {products.filter(p => p.is_active && p.id !== formProductId).map(p => (
-                    <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label>Produto(s) Sugerido(s) {!editingRule && '(selecione um ou mais)'}</Label>
+              {editingRule ? (
+                <Select value={formUpsellProductIds[0] || ''} onValueChange={v => setFormUpsellProductIds([v])}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o produto sugerido" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {products.filter(p => p.is_active && p.id !== formProductId).map(p => (
+                      <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <div className="space-y-2">
+                  <div className="border rounded-md max-h-48 overflow-y-auto">
+                    {products.filter(p => p.is_active && p.id !== formProductId).map(p => {
+                      const isChecked = formUpsellProductIds.includes(p.id);
+                      return (
+                        <button
+                          key={p.id}
+                          type="button"
+                          onClick={() => {
+                            setFormUpsellProductIds(prev =>
+                              isChecked ? prev.filter(id => id !== p.id) : [...prev, p.id]
+                            );
+                          }}
+                          className={cn(
+                            'w-full flex items-center gap-2 px-3 py-2 text-left text-sm hover:bg-muted/50 transition-colors',
+                            isChecked && 'bg-primary/5'
+                          )}
+                        >
+                          <div className={cn(
+                            'w-4 h-4 rounded border flex items-center justify-center shrink-0',
+                            isChecked ? 'bg-primary border-primary' : 'border-muted-foreground/30'
+                          )}>
+                            {isChecked && <Check className="h-3 w-3 text-primary-foreground" />}
+                          </div>
+                          {p.image_url && <img src={p.image_url} alt="" className="w-6 h-6 rounded object-cover shrink-0" />}
+                          <span className="line-clamp-1">{p.name}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {formUpsellProductIds.length > 0 && (
+                    <p className="text-xs text-muted-foreground">{formUpsellProductIds.length} produto(s) selecionado(s)</p>
+                  )}
+                </div>
+              )}
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
