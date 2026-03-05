@@ -221,7 +221,8 @@ const Combos = () => {
   const handleSave = async () => {
     if (!name.trim()) return toast.error('Informe o nome do combo');
     if (!comboPrice || Number(comboPrice) <= 0) return toast.error('Informe o preço do combo');
-    if (formItems.length < 2) return toast.error('Adicione pelo menos 2 produtos ao combo');
+    const totalQty = formItems.reduce((sum, i) => sum + i.quantity, 0);
+    if (totalQty < 2) return toast.error('O combo precisa ter pelo menos 2 unidades no total');
     if (formItems.some(i => !i.product_id)) return toast.error('Selecione todos os produtos');
 
     try {
