@@ -301,7 +301,16 @@ const UpsellSection = ({ currentProduct, currentPrice, categoryId }: UpsellSecti
                     )}
                   </div>
                 </button>
-                <span className="text-xs font-bold text-store-accent shrink-0">{formatPrice(price)}</span>
+                <div className="text-right shrink-0">
+                  {isSelected && effectiveDiscount > 0 ? (
+                    <>
+                      <p className="text-[10px] text-muted-foreground line-through">{formatPrice(price)}</p>
+                      <p className="text-xs font-bold text-green-600">{formatPrice(price * (1 - effectiveDiscount / 100))}</p>
+                    </>
+                  ) : (
+                    <span className="text-xs font-bold text-store-accent">{formatPrice(price)}</span>
+                  )}
+                </div>
               </div>
             </div>
           );
