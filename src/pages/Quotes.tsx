@@ -458,5 +458,3 @@ const Quotes = () => {
 };
 
 export default Quotes;
-
-export default Quotes;
