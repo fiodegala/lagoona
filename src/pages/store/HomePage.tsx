@@ -1,4 +1,4 @@
-import { useEffect, useState, lazy, Suspense } from 'react';
+import { useEffect, useState, lazy, Suspense, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Loader2, ShoppingBag, Truck, RefreshCw, Shield, MessageCircle, TrendingUp, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,7 @@ import { categoriesService, Category } from '@/services/categories';
 import { bannersService, Banner } from '@/services/banners';
 import { enrichProductsWithStock } from '@/services/stockService';
 import { supabase } from '@/integrations/supabase/client';
+import { heroImageUrl, thumbnailUrl } from '@/lib/imageUtils';
 
 // Lazy load below-fold sections
 const DealsCountdownSection = lazy(() => import('@/components/store/DealsCountdownSection'));
@@ -65,12 +66,12 @@ const HomePage = () => {
     return () => clearInterval(interval);
   }, [heroBanners.length]);
 
-  const newProducts = [...products].sort((a, b) =>
+  const newProducts = useMemo(() => [...products].sort((a, b) =>
     new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-  );
+  ), [products]);
 
   // Produtos com preço promocional (ofertas)
-  const dealProducts = products.filter(p => (p as any).promotional_price && (p as any).promotional_price < p.price);
+  const dealProducts = useMemo(() => products.filter(p => (p as any).promotional_price && (p as any).promotional_price < p.price), [products]);
 
   const categoryIcons = ['👕', '👖', '👟', '👜', '💍', '🎮', '📱', '🏠'];
 
@@ -92,7 +93,7 @@ const HomePage = () => {
               >
                 <div
                   className="absolute inset-0 bg-cover bg-center"
-                  style={{ backgroundImage: `url('${banner.image_url}')` }}
+                  style={{ backgroundImage: `url('${heroImageUrl(banner.image_url)}')` }}
                 />
                 <div className="absolute inset-0 bg-store-dark/60" />
                 <div className="relative h-full flex items-center">
@@ -312,8 +313,8 @@ const HomePage = () => {
                   className="group relative overflow-hidden rounded-xl bg-background hover:shadow-lg transition-all hover:-translate-y-1 aspect-[4/5]"
                 >
                   <div className="absolute inset-0 bg-muted flex items-center justify-center overflow-hidden">
-                    {category.image_url ? (
-                      <img src={category.image_url} alt={category.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                  {category.image_url ? (
+                      <img src={thumbnailUrl(category.image_url)} alt={category.name} loading="lazy" decoding="async" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                     ) : (
                       <span className="text-5xl">{categoryIcons[index % categoryIcons.length]}</span>
                     )}
@@ -357,10 +358,11 @@ const HomePage = () => {
                   className="group relative overflow-hidden rounded-xl aspect-[2/1] block"
                 >
                   <img
-                    src={banner.image_url}
+                    src={heroImageUrl(banner.image_url)}
                     alt={banner.title || 'Promoção'}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     loading="lazy"
+                    decoding="async"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                   {(banner.title || banner.subtitle) && (
