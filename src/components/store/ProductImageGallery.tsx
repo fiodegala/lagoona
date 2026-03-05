@@ -181,27 +181,12 @@ const ProductImageGallery = ({
     }
 
     return (
-      <>
-        <img
-          src={mediumImageUrl(currentItem.url)}
-          alt={`${productName} - Imagem ${currentIndex + 1}`}
-          decoding="async"
-          className={cn(
-            "w-full h-full object-cover transition-opacity duration-200",
-            isZoomed ? "opacity-0" : "opacity-100"
-          )}
-        />
-        {isZoomed && (
-          <div
-            className="absolute inset-0"
-            style={{
-              backgroundImage: `url(${fullImageUrl(currentItem.url)})`,
-              backgroundSize: '250%',
-              backgroundPosition: `${zoomPosition.x}% ${zoomPosition.y}%`,
-            }}
-          />
-        )}
-      </>
+      <img
+        src={mediumImageUrl(currentItem.url)}
+        alt={`${productName} - Imagem ${currentIndex + 1}`}
+        decoding="async"
+        className="w-full h-full object-cover"
+      />
     );
   };
 
@@ -246,26 +231,10 @@ const ProductImageGallery = ({
       <div className="relative group">
         <div
           ref={imageContainerRef}
-          className={cn(
-            "aspect-[4/5] rounded-xl overflow-hidden bg-muted border relative",
-            !isCurrentVideo && "cursor-zoom-in"
-          )}
-          onMouseMove={!isCurrentVideo ? handleMouseMove : undefined}
-          onMouseEnter={!isCurrentVideo ? () => setIsZoomed(true) : undefined}
-          onMouseLeave={!isCurrentVideo ? () => setIsZoomed(false) : undefined}
+          className="aspect-[4/5] rounded-xl overflow-hidden bg-muted border relative cursor-pointer"
           onClick={!isCurrentVideo ? () => setIsLightboxOpen(true) : undefined}
         >
           {renderMainContent()}
-
-          {/* Zoom indicator (images only) */}
-          {!isCurrentVideo && (
-            <div className={cn(
-              "absolute bottom-4 right-4 bg-background/80 backdrop-blur-sm rounded-full p-2 transition-opacity",
-              "opacity-0 group-hover:opacity-100"
-            )}>
-              <ZoomIn className="h-5 w-5 text-foreground" />
-            </div>
-          )}
         </div>
 
         {/* Navigation Arrows */}
