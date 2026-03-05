@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -22,7 +22,9 @@ const RelatedProducts = ({
 }: RelatedProductsProps) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [scrollPosition, setScrollPosition] = useState(0);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const loadRelatedProducts = async () => {
@@ -30,20 +32,17 @@ const RelatedProducts = ({
         setIsLoading(true);
         const allProducts = await productsService.getAll();
         
-        // Filter products: same category, active, exclude current
         let related = allProducts.filter(p => 
           p.id !== currentProductId && 
           p.is_active
         );
 
-        // Prioritize same category
         if (categoryId) {
           const sameCategory = related.filter(p => p.category_id === categoryId);
           const otherProducts = related.filter(p => p.category_id !== categoryId);
           related = [...sameCategory, ...otherProducts];
         }
 
-        // Limit results
         const enriched = await enrichProductsWithStock(related.slice(0, limit));
         setProducts(enriched);
       } catch (error) {
@@ -56,28 +55,34 @@ const RelatedProducts = ({
     loadRelatedProducts();
   }, [currentProductId, categoryId, limit]);
 
+  const updateScrollButtons = useCallback(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 0);
+    setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 10);
+  }, []);
+
+  useEffect(() => {
+    updateScrollButtons();
+    window.addEventListener('resize', updateScrollButtons);
+    return () => window.removeEventListener('resize', updateScrollButtons);
+  }, [products, updateScrollButtons]);
+
+  const scrollContainer = (direction: 'left' | 'right') => {
+    const el = containerRef.current;
+    if (!el) return;
+    const scrollAmount = 280;
+    const newPosition = direction === 'left' 
+      ? Math.max(0, el.scrollLeft - scrollAmount)
+      : el.scrollLeft + scrollAmount;
+    el.scrollTo({ left: newPosition, behavior: 'smooth' });
+    setTimeout(updateScrollButtons, 350);
+  };
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: 'BRL',
     }).format(price);
-  };
-
-  const scrollContainer = (direction: 'left' | 'right') => {
-    const container = document.getElementById('related-products-container');
-    if (!container) return;
-
-    const scrollAmount = 280; // Card width + gap
-    const newPosition = direction === 'left' 
-      ? Math.max(0, scrollPosition - scrollAmount)
-      : scrollPosition + scrollAmount;
-    
-    container.scrollTo({ left: newPosition, behavior: 'smooth' });
-    setScrollPosition(newPosition);
-  };
-
-  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    setScrollPosition(e.currentTarget.scrollLeft);
   };
 
   if (isLoading) {
@@ -97,12 +102,6 @@ const RelatedProducts = ({
     return null;
   }
 
-  const canScrollLeft = scrollPosition > 0;
-  const container = document.getElementById('related-products-container');
-  const canScrollRight = container 
-    ? scrollPosition < container.scrollWidth - container.clientWidth - 10
-    : false;
-
   return (
     <div className="py-12">
       <div className="flex items-center justify-between mb-6">
@@ -113,9 +112,9 @@ const RelatedProducts = ({
 
       <div className="relative">
         <div 
-          id="related-products-container"
+          ref={containerRef}
           className="flex gap-4 overflow-hidden pb-4"
-          onScroll={handleScroll}
+          onScroll={updateScrollButtons}
         >
           {products.map((product) => {
             const hasDiscount = (product as any).promotional_price != null && (product as any).promotional_price < product.price;
