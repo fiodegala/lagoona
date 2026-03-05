@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -21,7 +21,16 @@ const RelatedProducts = ({
 }: RelatedProductsProps) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [scrollPosition, setScrollPosition] = useState(0);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const updateScrollButtons = useCallback(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 0);
+    setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 10);
+  }, []);
 
   useEffect(() => {
     const loadRelatedProducts = async () => {
@@ -62,21 +71,24 @@ const RelatedProducts = ({
     }).format(price);
   };
 
-  const scrollContainer = (direction: 'left' | 'right') => {
-    const container = document.getElementById('related-products-container');
-    if (!container) return;
+  useEffect(() => {
+    updateScrollButtons();
+    const el = containerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(updateScrollButtons);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [products, updateScrollButtons]);
 
-    const scrollAmount = 280; // Card width + gap
-    const newPosition = direction === 'left' 
-      ? Math.max(0, scrollPosition - scrollAmount)
-      : scrollPosition + scrollAmount;
-    
-    container.scrollTo({ left: newPosition, behavior: 'smooth' });
-    setScrollPosition(newPosition);
+  const scrollContainer = (direction: 'left' | 'right') => {
+    const el = containerRef.current;
+    if (!el) return;
+    const scrollAmount = 280;
+    el.scrollBy({ left: direction === 'left' ? -scrollAmount : scrollAmount, behavior: 'smooth' });
   };
 
-  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    setScrollPosition(e.currentTarget.scrollLeft);
+  const handleScroll = () => {
+    updateScrollButtons();
   };
 
   if (isLoading) {
@@ -96,11 +108,6 @@ const RelatedProducts = ({
     return null;
   }
 
-  const canScrollLeft = scrollPosition > 0;
-  const container = document.getElementById('related-products-container');
-  const canScrollRight = container 
-    ? scrollPosition < container.scrollWidth - container.clientWidth - 10
-    : false;
 
   return (
     <div className="py-12">
@@ -135,7 +142,7 @@ const RelatedProducts = ({
         )}
 
         <div 
-          id="related-products-container"
+          ref={containerRef}
           className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-none"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
           onScroll={handleScroll}
