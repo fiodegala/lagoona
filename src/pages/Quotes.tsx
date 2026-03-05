@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 
-import { Search, FileText, Eye, Trash2, Loader2, Clock, User, CreditCard, Package } from 'lucide-react';
+import { Search, FileText, Eye, Trash2, Loader2, Clock, User, CreditCard, Package, Printer } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
