@@ -29,6 +29,7 @@ import {
   ShoppingBasket,
   History,
   Sparkles,
+  FileText,
 } from 'lucide-react';
 import logoLagoona from '@/assets/logo-lagoona-white.png';
 import { Button } from '@/components/ui/button';
