@@ -123,7 +123,7 @@ const CartDrawer = () => {
                   <span>{formatPrice(subtotal)}</span>
                 </div>
                 {totalDiscount > 0 && (
-                  <div className="flex justify-between text-green-600">
+                  <div className="flex justify-between text-success">
                     <span>Descontos</span>
                     <span>-{formatPrice(totalDiscount)}</span>
                   </div>
