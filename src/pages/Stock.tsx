@@ -129,10 +129,14 @@ const Stock = () => {
       const physicalStores = storesList.filter(s => s.type === 'physical');
       setStores(storesList);
 
-      // Build set of products that have variations
+      // Build set of products that have variations + map of variation barcodes/SKUs per product
       const productsWithVariations = new Set<string>();
+      const variationCodesMap: Record<string, string[]> = {};
       (variationsRes.data || []).forEach((v: any) => {
         productsWithVariations.add(v.product_id);
+        if (!variationCodesMap[v.product_id]) variationCodesMap[v.product_id] = [];
+        if (v.barcode) variationCodesMap[v.product_id].push(v.barcode.toLowerCase());
+        if (v.sku) variationCodesMap[v.product_id].push(v.sku.toLowerCase());
       });
 
       // Build stock maps: one for simple products (variation_id is null), one for variation-level
