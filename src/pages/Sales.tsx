@@ -409,10 +409,22 @@ const Sales = () => {
       <Dialog open={!!detailSale} onOpenChange={o => !o && setDetailSale(null)}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader className="flex flex-row items-center justify-between">
-            <DialogTitle>Detalhes da Venda</DialogTitle>
-            <Button variant="outline" size="sm" className="gap-1.5" onClick={handlePrint}>
-              <Printer className="h-4 w-4" /> Imprimir
-            </Button>
+            <div className="flex items-center gap-2">
+              <DialogTitle>Detalhes da Venda</DialogTitle>
+              {detailSale && (detailSale as any).status === 'cancelled' && (
+                <Badge variant="destructive">Cancelada</Badge>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              {canCancel && detailSale && (detailSale as any).status !== 'cancelled' && (
+                <Button variant="destructive" size="sm" className="gap-1.5" onClick={() => setCancelSale(detailSale)}>
+                  <Ban className="h-4 w-4" /> Cancelar
+                </Button>
+              )}
+              <Button variant="outline" size="sm" className="gap-1.5" onClick={handlePrint}>
+                <Printer className="h-4 w-4" /> Imprimir
+              </Button>
+            </div>
           </DialogHeader>
           {detailSale && (
             <div className="flex-1 overflow-y-auto pr-2 space-y-4" style={{ maxHeight: 'calc(90vh - 100px)' }}>
