@@ -330,16 +330,18 @@ const StoreHeader = ({ categories }: StoreHeaderProps) => {
         <div className="border-t bg-background">
           <div className="container mx-auto px-4 py-3">
             <form onSubmit={handleSearch} className="max-w-xl mx-auto">
-              <div className="relative">
+              <div className="relative" ref={suggestionsRef}>
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="search"
                   placeholder="O que você procura?"
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) => handleSearchInput(e.target.value)}
+                  onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
                   className="pl-10"
                   autoFocus
                 />
+                <SuggestionsList />
               </div>
             </form>
           </div>
