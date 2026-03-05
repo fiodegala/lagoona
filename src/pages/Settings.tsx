@@ -218,7 +218,6 @@ const Settings = () => {
             <RecoveryCouponSettings />
             <WholesaleVideoSettings />
             <WhatsAppTemplatesSettings />
-            <WhatsAppTemplatesSettings />
           </>
         )}
 

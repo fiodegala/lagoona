@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import { Video, Loader2, Check } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -11,6 +12,7 @@ const CONFIG_KEY = 'wholesale_video';
 
 const WholesaleVideoSettings = () => {
   const [videoUrl, setVideoUrl] = useState('/assets/atacado-fdg.mp4');
+  const [autoplay, setAutoplay] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -23,8 +25,9 @@ const WholesaleVideoSettings = () => {
           .eq('key', CONFIG_KEY)
           .maybeSingle();
         if (data?.value) {
-          const val = data.value as { url?: string };
+          const val = data.value as { url?: string; autoplay?: boolean };
           if (val.url) setVideoUrl(val.url);
+          if (typeof val.autoplay === 'boolean') setAutoplay(val.autoplay);
         }
       } catch (err) {
         console.error('Error loading wholesale video config:', err);
@@ -38,7 +41,7 @@ const WholesaleVideoSettings = () => {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      const value = { url: videoUrl };
+      const value = { url: videoUrl, autoplay };
       const { data: existing } = await supabase
         .from('store_config')
         .select('id')
@@ -106,11 +109,23 @@ const WholesaleVideoSettings = () => {
           </p>
         </div>
 
+        <div className="flex items-center justify-between rounded-lg border p-3">
+          <div className="space-y-0.5">
+            <Label>Autoplay (reprodução automática)</Label>
+            <p className="text-xs text-muted-foreground">
+              O vídeo será reproduzido automaticamente ao carregar a página
+            </p>
+          </div>
+          <Switch checked={autoplay} onCheckedChange={setAutoplay} />
+        </div>
+
         {videoUrl && (
           <video
             src={videoUrl}
             controls
             muted
+            autoPlay={autoplay}
+            loop={autoplay}
             className="w-full max-w-md aspect-video rounded-lg border object-cover"
           />
         )}
