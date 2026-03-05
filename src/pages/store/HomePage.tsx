@@ -26,6 +26,7 @@ const HomePage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [featuredProduct, setFeaturedProduct] = useState<Product | null>(null);
   const [wholesaleVideoUrl, setWholesaleVideoUrl] = useState('/assets/atacado-fdg.mp4');
+  const [wholesaleAutoplay, setWholesaleAutoplay] = useState(true);
 
   useEffect(() => {
     const loadData = async () => {
@@ -55,8 +56,9 @@ const HomePage = () => {
         }
 
         // Set wholesale video from config
-        const wvUrl = (wholesaleConfig.data?.value as { url?: string })?.url;
-        if (wvUrl) setWholesaleVideoUrl(wvUrl);
+        const wvConfig = wholesaleConfig.data?.value as { url?: string; autoplay?: boolean } | undefined;
+        if (wvConfig?.url) setWholesaleVideoUrl(wvConfig.url);
+        if (typeof wvConfig?.autoplay === 'boolean') setWholesaleAutoplay(wvConfig.autoplay);
       } catch (error) {
         console.error('Error loading data:', error);
       } finally {
@@ -537,6 +539,7 @@ const HomePage = () => {
                 controls
                 loop
                 muted
+                autoPlay={wholesaleAutoplay}
                 playsInline
                 preload="none"
                 poster="/placeholder.svg"
