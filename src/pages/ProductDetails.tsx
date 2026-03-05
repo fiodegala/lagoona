@@ -441,6 +441,13 @@ const ProductDetails = () => {
               </div>
             </div>
 
+            {/* Upsell - Buy Together */}
+            <UpsellSection
+              currentProduct={product}
+              currentPrice={currentPrice}
+              categoryId={product.category_id}
+            />
+
             {/* Action Buttons */}
             <div className="flex gap-3">
               <Button
@@ -588,12 +595,6 @@ const ProductDetails = () => {
           </Tabs>
         </div>
 
-        {/* Upsell - Buy Together */}
-        <UpsellSection
-          currentProduct={product}
-          currentPrice={currentPrice}
-          categoryId={product.category_id}
-        />
 
         {/* Related Products */}
         <RelatedProducts 
