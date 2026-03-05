@@ -239,11 +239,17 @@ const Quotes = () => {
       {/* Detail Modal */}
       <Dialog open={!!selectedQuote} onOpenChange={open => !open && setSelectedQuote(null)}>
         <DialogContent className="max-w-lg max-h-[90vh] flex flex-col overflow-hidden">
-          <DialogHeader>
+          <DialogHeader className="flex flex-row items-center justify-between gap-2">
             <DialogTitle className="flex items-center gap-2">
               <FileText className="h-5 w-5 shrink-0" />
               Orçamento #{selectedQuote?.id.slice(0, 8).toUpperCase()}
             </DialogTitle>
+            {selectedQuote && (
+              <Button variant="outline" size="sm" onClick={() => handlePrintQuote(selectedQuote)} className="shrink-0">
+                <Printer className="h-4 w-4 mr-1" />
+                Imprimir
+              </Button>
+            )}
           </DialogHeader>
           {selectedQuote && (
             <div className="flex-1 min-h-0 overflow-y-auto pr-1">
