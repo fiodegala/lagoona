@@ -181,27 +181,12 @@ const ProductImageGallery = ({
     }
 
     return (
-      <>
-        <img
-          src={mediumImageUrl(currentItem.url)}
-          alt={`${productName} - Imagem ${currentIndex + 1}`}
-          decoding="async"
-          className={cn(
-            "w-full h-full object-cover transition-opacity duration-200",
-            isZoomed ? "opacity-0" : "opacity-100"
-          )}
-        />
-        {isZoomed && (
-          <div
-            className="absolute inset-0"
-            style={{
-              backgroundImage: `url(${fullImageUrl(currentItem.url)})`,
-              backgroundSize: '250%',
-              backgroundPosition: `${zoomPosition.x}% ${zoomPosition.y}%`,
-            }}
-          />
-        )}
-      </>
+      <img
+        src={mediumImageUrl(currentItem.url)}
+        alt={`${productName} - Imagem ${currentIndex + 1}`}
+        decoding="async"
+        className="w-full h-full object-cover"
+      />
     );
   };
 
