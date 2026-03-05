@@ -263,6 +263,8 @@ const ProductImageGallery = ({
           onMouseEnter={!isCurrentVideo ? () => setIsZoomed(true) : undefined}
           onMouseLeave={!isCurrentVideo ? () => setIsZoomed(false) : undefined}
           onClick={!isCurrentVideo ? () => setIsLightboxOpen(true) : undefined}
+          onTouchStart={mainSwipe.onTouchStart}
+          onTouchEnd={(e) => { mainSwipe.onTouchEnd(e); setIsZoomed(false); }}
         >
           {renderMainContent()}
 
