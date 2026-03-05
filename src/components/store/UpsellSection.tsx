@@ -376,11 +376,18 @@ const UpsellSection = ({ currentProduct, currentPrice, categoryId }: UpsellSecti
                       <div className="flex flex-wrap gap-2">
                         {attr.values.map(val => {
                           const isSelected = pickerSelectedValues[attr.name] === val;
-                          // Check if any variation has this value with stock
-                          const hasStock = pickerVariations.some(v =>
-                            v.attribute_values?.some(av => av.attribute_name === attr.name && av.value === val) &&
-                            ((pickerStockMap[v.id] ?? v.stock) > 0)
-                          );
+                          // Check stock considering other selected attributes
+                          const hasStock = pickerVariations.some(v => {
+                            const hasThisValue = v.attribute_values?.some(av => av.attribute_name === attr.name && av.value === val);
+                            if (!hasThisValue) return false;
+                            // Check if this variation is compatible with other selected attributes
+                            const compatibleWithOtherSelections = Object.entries(pickerSelectedValues).every(([selName, selVal]) => {
+                              if (selName === attr.name || !selVal) return true;
+                              return v.attribute_values?.some(av => av.attribute_name === selName && av.value === selVal);
+                            });
+                            if (!compatibleWithOtherSelections) return false;
+                            return (pickerStockMap[v.id] ?? v.stock) > 0;
+                          });
                           return (
                             <Button
                               key={val}
@@ -389,9 +396,9 @@ const UpsellSection = ({ currentProduct, currentPrice, categoryId }: UpsellSecti
                               disabled={!hasStock}
                               onClick={() => handlePickerValueSelect(attr.name, val)}
                               className={cn(
-                                'min-w-[50px] text-xs',
+                                'min-w-[50px] text-xs relative',
                                 isSelected && 'bg-store-primary text-store-accent hover:bg-store-primary/90',
-                                !hasStock && 'opacity-40'
+                                !hasStock && 'opacity-50 line-through'
                               )}
                             >
                               {val}
