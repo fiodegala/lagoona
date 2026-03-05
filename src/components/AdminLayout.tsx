@@ -58,7 +58,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
       .slice(0, 2);
   };
 
-  const NavItem = ({ icon: Icon, label, path, key: menuKey, requireAdmin }: typeof navItems[0]) => {
+  const NavItem = ({ icon: Icon, label, path, menuKey, requireAdmin }: typeof navItems[0]) => {
     if (requireAdmin && !isAdmin) return null;
     if (!hasMenuAccess(menuKey)) return null;
     
@@ -128,7 +128,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
       {/* Navigation */}
       <div className="flex-1 overflow-y-auto py-4 px-2 space-y-1">
         {navItems.map((item) => (
-          <NavItem key={item.key} {...item} />
+          <NavItem key={item.menuKey} {...item} />
         ))}
 
         <Separator className="my-4 bg-sidebar-border" />
@@ -141,7 +141,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
         
         <div className="space-y-1 mt-2">
           {settingsItems.map((item) => (
-            <NavItem key={item.key} {...item} />
+            <NavItem key={item.menuKey} {...item} />
           ))}
         </div>
       </div>
