@@ -105,43 +105,58 @@ const HomePage = () => {
           </div>
         ) : heroBanners.length > 0 ? (
           <>
-            {heroBanners.map((banner, index) => (
-              <div
-                key={banner.id}
-                className="absolute inset-0 transition-opacity duration-700"
-                style={{ opacity: index === currentHeroBanner ? 1 : 0 }}
-              >
-                <div
-                  className="absolute inset-0 bg-cover bg-center"
-                  style={{ backgroundImage: `url('${banner.image_url}')` }}
-                />
-                <div className="absolute inset-0 bg-store-dark/60" />
-                <div className="relative h-full flex items-center">
-                  <div className="container mx-auto px-4">
-                    <div className="max-w-2xl">
-                      {banner.title && (
-                        <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold text-white mb-6 leading-tight italic">
-                          {banner.title}
-                        </h1>
-                      )}
-                      {banner.subtitle && (
-                        <p className="text-lg md:text-xl text-white/70 mb-8 max-w-lg font-light tracking-wide">
-                          {banner.subtitle}
-                        </p>
-                      )}
-                      {banner.link_url && (
-                        <Button asChild size="lg" className="gap-2 bg-store-gold text-store-dark hover:bg-store-gold/90 font-semibold text-base px-8 tracking-wide">
-                          <Link to={banner.link_url}>
+            {heroBanners.map((banner, index) => {
+              const bannerContent = (
+                <>
+                  <div
+                    className="absolute inset-0 bg-cover bg-center"
+                    style={{ backgroundImage: `url('${banner.image_url}')` }}
+                  />
+                  <div className="absolute inset-0 bg-store-dark/60" />
+                  <div className="relative h-full flex items-center">
+                    <div className="container mx-auto px-4">
+                      <div className="max-w-2xl">
+                        {banner.title && (
+                          <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold text-white mb-6 leading-tight italic">
+                            {banner.title}
+                          </h1>
+                        )}
+                        {banner.subtitle && (
+                          <p className="text-lg md:text-xl text-white/70 mb-8 max-w-lg font-light tracking-wide">
+                            {banner.subtitle}
+                          </p>
+                        )}
+                        {banner.link_url && (
+                          <span className="inline-flex items-center gap-2 bg-store-gold text-store-dark hover:bg-store-gold/90 font-semibold text-base px-8 py-3 rounded-md tracking-wide">
                             Comprar agora
                             <ArrowRight className="h-5 w-5" />
-                          </Link>
-                        </Button>
-                      )}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
+                </>
+              );
+
+              return banner.link_url ? (
+                <Link
+                  key={banner.id}
+                  to={banner.link_url}
+                  className="absolute inset-0 transition-opacity duration-700 block"
+                  style={{ opacity: index === currentHeroBanner ? 1 : 0, pointerEvents: index === currentHeroBanner ? 'auto' : 'none' }}
+                >
+                  {bannerContent}
+                </Link>
+              ) : (
+                <div
+                  key={banner.id}
+                  className="absolute inset-0 transition-opacity duration-700"
+                  style={{ opacity: index === currentHeroBanner ? 1 : 0 }}
+                >
+                  {bannerContent}
                 </div>
-              </div>
-            ))}
+              );
+            })}
             {heroBanners.length > 1 && (
               <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-3 z-10">
                 <Button
