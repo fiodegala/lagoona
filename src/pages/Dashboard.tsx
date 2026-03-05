@@ -83,6 +83,7 @@ interface RawOrder {
   total: number;
   customer_name: string | null;
   customer_email: string;
+  payment_method: string | null;
   created_at: string;
   shipping_address: { state?: string; city?: string } | null;
   items: { name?: string; qty?: number; quantity?: number; price?: number; is_promotional?: boolean; original_price?: number }[];
@@ -183,7 +184,7 @@ const Dashboard = () => {
       const storeFilter = activeStoreFilter;
 
       // Orders: filter by store
-      let ordersQuery = supabase.from('orders').select('id, status, total, customer_name, customer_email, created_at, shipping_address, items');
+      let ordersQuery = supabase.from('orders').select('id, status, total, customer_name, customer_email, payment_method, created_at, shipping_address, items');
       if (isSiteStoreSelected) {
         ordersQuery = ordersQuery.eq('store_id', SITE_STORE_ID);
       } else if (storeFilter && canAccessSiteStore) {
