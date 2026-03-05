@@ -27,9 +27,9 @@ const StoreFooter = () => {
                 <Phone className="h-4 w-4" />
                 (62) 99416-5785
               </a>
-              <a href="mailto:contato@fiodegala.com.br" className="flex items-center gap-2 hover:text-store-gold transition-colors">
+              <a href="mailto:fiodegalafdg@gmail.com" className="flex items-center gap-2 hover:text-store-gold transition-colors">
                 <Mail className="h-4 w-4" />
-                contato@fiodegala.com.br
+                fiodegalafdg@gmail.com
               </a>
             </div>
             <div className="flex gap-3 pt-2">
