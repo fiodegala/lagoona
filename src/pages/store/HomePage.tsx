@@ -110,10 +110,20 @@ const HomePage = () => {
 
   const categoryIcons = ['👕', '👖', '👟', '👜', '💍', '🎮', '📱', '🏠'];
 
+  const heroSwipe = useSwipe({
+    onSwipeLeft: useCallback(() => setCurrentHeroBanner(prev => (prev + 1) % heroBanners.length), [heroBanners.length]),
+    onSwipeRight: useCallback(() => setCurrentHeroBanner(prev => (prev - 1 + heroBanners.length) % heroBanners.length), [heroBanners.length]),
+  });
+
+  const midSwipe = useSwipe({
+    onSwipeLeft: useCallback(() => setCurrentMidBanner(prev => (prev + 1) % midBanners.length), [midBanners.length]),
+    onSwipeRight: useCallback(() => setCurrentMidBanner(prev => (prev - 1 + midBanners.length) % midBanners.length), [midBanners.length]),
+  });
+
   return (
     <StoreLayout>
       {/* Hero Section */}
-      <section className="relative h-[500px] md:h-[600px] lg:h-[700px] overflow-hidden">
+      <section className="relative h-[500px] md:h-[600px] lg:h-[700px] overflow-hidden" {...heroSwipe}>
         {isLoading ? (
           <div className="absolute inset-0 bg-store-dark flex items-center justify-center">
             <Loader2 className="h-10 w-10 animate-spin text-store-gold" />
