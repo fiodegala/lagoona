@@ -143,6 +143,8 @@ const ProductDetails = () => {
       productId: product.id,
       name: variationLabel ? `${product.name} - ${variationLabel}` : product.name,
       price: currentPrice,
+      originalPrice: hasRealDiscount ? basePrice : undefined,
+      isPromotional: hasRealDiscount || undefined,
       imageUrl: selectedImage || product.image_url || undefined,
       stock: currentStock,
       quantity,
