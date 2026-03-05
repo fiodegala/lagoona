@@ -114,6 +114,7 @@ const App = () => (
               <Route path="/atacado" element={<WholesalePage />} />
               <Route path="/combos" element={<CombosPage />} />
               <Route path="/trabalhe-conosco" element={<WorkWithUsPage />} />
+              <Route path="/orcamento/:id" element={<QuoteViewPage />} />
 
               {/* Admin Routes */}
               <Route path="/login" element={<Login />} />
