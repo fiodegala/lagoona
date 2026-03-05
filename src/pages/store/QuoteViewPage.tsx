@@ -229,9 +229,9 @@ const QuoteViewPage = () => {
               {quote.notes && (
                 <>
                   <Separator className="my-6" />
-                  <div className="p-4 rounded-xl bg-amber-50 border border-amber-200/50">
-                    <p className="text-sm font-semibold text-amber-800 mb-1">Observações</p>
-                    <p className="text-sm text-amber-700">{quote.notes}</p>
+                  <div className="p-4 rounded-xl bg-muted/50 border">
+                    <p className="text-sm font-semibold mb-1">Observações</p>
+                    <p className="text-sm text-muted-foreground">{quote.notes}</p>
                   </div>
                 </>
               )}
