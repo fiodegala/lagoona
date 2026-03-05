@@ -38,25 +38,25 @@ const ContactPage = () => {
     {
       icon: Mail,
       title: 'E-mail',
-      content: 'contato@fiodegala.com.br',
-      link: 'mailto:contato@fiodegala.com.br',
+      content: 'fiodegalafdg@gmail.com',
+      link: 'mailto:fiodegalafdg@gmail.com',
     },
     {
       icon: Phone,
       title: 'WhatsApp',
-      content: '(11) 99999-9999',
-      link: 'https://wa.me/5511999999999',
+      content: '(62) 99416-5785',
+      link: 'https://wa.me/5562994165785',
     },
     {
       icon: MapPin,
       title: 'Endereço',
-      content: 'São Paulo, SP - Brasil',
+      content: 'Av. Bernardo Sayão, nº 1202, Setor Centro Oeste - Goiânia - Goiás, CEP: 74550-020',
       link: null,
     },
     {
       icon: Clock,
       title: 'Horário de Atendimento',
-      content: 'Seg - Sex: 9h às 18h',
+      content: 'Atendimento 24 horas, 7 dias por semana',
       link: null,
     },
   ];
@@ -223,7 +223,7 @@ const ContactPage = () => {
                       <Facebook className="h-5 w-5 text-store-accent" />
                     </a>
                     <a
-                      href="https://wa.me/5511999999999"
+                      href="https://wa.me/5562994165785"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="w-12 h-12 bg-store-secondary rounded-lg flex items-center justify-center hover:bg-store-primary/20 transition-colors"
