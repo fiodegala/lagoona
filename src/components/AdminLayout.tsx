@@ -66,7 +66,7 @@ const navItems = [
   { icon: Truck, label: 'Frete', path: '/admin/shipping', requireAdmin: true },
   { icon: ImageIcon, label: 'Banners', path: '/admin/banners', requireAdmin: true },
   { icon: BarChart3, label: 'Relatórios', path: '/admin/reports' },
-  { icon: BrainCircuit, label: 'Assistente IA', path: '/admin/assistente' },
+  { icon: Sparkles, label: 'Assistente IA', path: '/admin/assistente' },
   { icon: BrainCircuit, label: 'Analytics IA', path: '/admin/analytics', requireAdmin: true },
   { icon: Users, label: 'Usuários', path: '/admin/users', requireAdmin: true },
   { icon: History, label: 'Histórico', path: '/admin/audit-logs', requireAdmin: true },
