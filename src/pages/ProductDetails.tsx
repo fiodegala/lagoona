@@ -443,13 +443,15 @@ const ProductDetails = () => {
               </div>
             </div>
 
-            {/* Upsell - Buy Together */}
-            <UpsellSection
-              currentProduct={product}
-              currentPrice={currentPrice}
-              currentVariation={selectedVariation}
-              categoryId={product.category_id}
-            />
+            {/* Upsell - Buy Together (only show when variation is selected, or product has no variations) */}
+            {(!productHasVariations || selectedVariation) && (
+              <UpsellSection
+                currentProduct={product}
+                currentPrice={currentPrice}
+                currentVariation={selectedVariation}
+                categoryId={product.category_id}
+              />
+            )}
 
             {/* Action Buttons */}
             <div className="flex gap-3">
