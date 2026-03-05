@@ -66,22 +66,22 @@ const UpsellSection = ({ currentProduct, currentPrice, categoryId }: UpsellSecti
           const productMap = new Map(all.map(p => [p.id, p]));
           const configured = upsellRules
             .map(r => productMap.get(r.upsell_product_id))
-            .filter((p): p is Product => !!p && p.is_active && p.stock > 0);
+            .filter((p): p is Product => !!p && p.is_active);
 
           const enriched = await enrichProductsWithStock(configured.slice(0, 3));
-          setSuggestions(enriched);
+          setSuggestions(enriched.filter(p => p.stock > 0));
         } else {
           // Fallback: auto-suggest from same category
           setDiscountPercent(5);
           const all = await productsService.getAll();
-          let candidates = all.filter(p => p.id !== currentProduct.id && p.is_active && p.stock > 0);
+          let candidates = all.filter(p => p.id !== currentProduct.id && p.is_active);
           if (categoryId) {
             const same = candidates.filter(p => p.category_id === categoryId);
             const other = candidates.filter(p => p.category_id !== categoryId);
             candidates = [...same, ...other];
           }
-          const enriched = await enrichProductsWithStock(candidates.slice(0, 2));
-          setSuggestions(enriched);
+          const enriched = await enrichProductsWithStock(candidates.slice(0, 4));
+          setSuggestions(enriched.filter(p => p.stock > 0).slice(0, 2));
         }
       } catch (err) {
         console.error('Error loading upsell:', err);
@@ -197,24 +197,26 @@ const UpsellSection = ({ currentProduct, currentPrice, categoryId }: UpsellSecti
   };
 
   const handleBuyTogether = () => {
+    const discountMultiplier = 1 - discountPercent / 100;
     addItem({
       id: currentProduct.id, productId: currentProduct.id, name: currentProduct.name,
-      price: currentPrice, imageUrl: currentProduct.image_url || undefined,
+      price: currentPrice * discountMultiplier, imageUrl: currentProduct.image_url || undefined,
       stock: currentProduct.stock, quantity: 1,
     });
     selectedProducts.forEach(({ product, variation, price }) => {
       const variationLabel = variation?.attribute_values?.map(av => av.value).join(' / ');
+      const discountedPrice = price * discountMultiplier;
       addItem({
         id: variation?.id || product.id,
         productId: product.id,
         name: variationLabel ? `${product.name} - ${variationLabel}` : product.name,
-        price,
+        price: discountedPrice,
         imageUrl: variation?.image_url || product.image_url || undefined,
         stock: variation?.stock ?? product.stock,
         quantity: 1,
       });
     });
-    toast.success(`${selectedProducts.length + 1} produtos adicionados ao carrinho!`, {
+    toast.success(`${selectedProducts.length + 1} produtos adicionados ao carrinho com ${discountPercent}% de desconto!`, {
       action: { label: 'Ver carrinho', onClick: () => window.location.href = '/carrinho' },
     });
   };
