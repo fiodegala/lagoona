@@ -27,6 +27,7 @@ interface Quote {
   notes: string | null;
   created_at: string;
   expires_at: string | null;
+  payment_method: string | null;
 }
 
 const formatCurrency = (v: number) =>
