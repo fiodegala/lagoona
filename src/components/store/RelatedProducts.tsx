@@ -109,35 +109,37 @@ const RelatedProducts = ({
           Produtos Relacionados
         </h2>
         
-        {products.length > 4 && (
-          <div className="hidden md:flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-9 w-9"
-              onClick={() => scrollContainer('left')}
-              disabled={!canScrollLeft}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-9 w-9"
-              onClick={() => scrollContainer('right')}
-              disabled={!canScrollRight}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-        )}
       </div>
 
-      <div 
-        id="related-products-container"
-        className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-muted snap-x snap-mandatory"
-        onScroll={handleScroll}
-      >
+      <div className="relative group/carousel">
+        {canScrollLeft && (
+          <Button
+            variant="outline"
+            size="icon"
+            className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 z-10 h-9 w-9 rounded-full bg-background/90 backdrop-blur-sm shadow-md opacity-0 group-hover/carousel:opacity-100 transition-opacity hidden md:flex"
+            onClick={() => scrollContainer('left')}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+        )}
+
+        {canScrollRight && (
+          <Button
+            variant="outline"
+            size="icon"
+            className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 z-10 h-9 w-9 rounded-full bg-background/90 backdrop-blur-sm shadow-md opacity-0 group-hover/carousel:opacity-100 transition-opacity hidden md:flex"
+            onClick={() => scrollContainer('right')}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        )}
+
+        <div 
+          id="related-products-container"
+          className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-none"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          onScroll={handleScroll}
+        >
         {products.map((product) => {
           const hasDiscount = (product as any).promotional_price != null && (product as any).promotional_price < product.price;
           const discountPercent = hasDiscount
@@ -204,6 +206,7 @@ const RelatedProducts = ({
             </Link>
           );
         })}
+        </div>
       </div>
     </div>
   );
