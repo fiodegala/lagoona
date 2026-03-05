@@ -297,7 +297,7 @@ const HomePage = () => {
                 <div className="w-12 h-0.5 bg-store-gold mt-2" />
               </div>
               <Button variant="outline" asChild className="gap-2 hidden sm:flex">
-                <Link to="/loja">
+                <Link to="/categorias">
                   Ver todas
                   <ArrowRight className="h-4 w-4" />
                 </Link>
@@ -328,7 +328,7 @@ const HomePage = () => {
 
             <div className="mt-6 text-center sm:hidden">
               <Button variant="outline" asChild className="gap-2">
-                <Link to="/loja">
+                <Link to="/categorias">
                   Ver todas as categorias
                   <ArrowRight className="h-4 w-4" />
                 </Link>
