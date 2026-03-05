@@ -30,7 +30,7 @@ interface UpsellRule {
   sort_order: number;
 }
 
-const UpsellSection = ({ currentProduct, currentPrice, categoryId }: UpsellSectionProps) => {
+const UpsellSection = ({ currentProduct, currentPrice, currentVariation, categoryId }: UpsellSectionProps) => {
   const [suggestions, setSuggestions] = useState<Product[]>([]);
   const [discountPercent, setDiscountPercent] = useState(5);
   const [selectedItems, setSelectedItems] = useState<Map<string, SelectedUpsellItem>>(new Map());
