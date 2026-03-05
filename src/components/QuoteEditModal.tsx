@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,9 +6,11 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { Trash2, Plus, Minus, Save, Loader2, User, Package, CreditCard, StickyNote } from 'lucide-react';
+import { Trash2, Plus, Minus, Save, Loader2, User, Package, CreditCard, StickyNote, Search, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { posService } from '@/services/posService';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 interface QuoteItem {
   product_id?: string;
@@ -45,6 +47,24 @@ interface QuoteEditModalProps {
   onSaved: () => void;
 }
 
+interface SearchResult {
+  id: string;
+  name: string;
+  price: number;
+  image_url: string | null;
+  barcode: string | null;
+  stock: number;
+  variations: Array<{
+    id: string;
+    sku: string | null;
+    price: number | null;
+    stock: number;
+    is_active: boolean;
+    image_url?: string | null;
+    label?: string;
+  }>;
+}
+
 const formatCurrency = (v: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
 
@@ -66,6 +86,14 @@ const QuoteEditModal = ({ quote, open, onOpenChange, onSaved }: QuoteEditModalPr
   const [notes, setNotes] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<string>('');
 
+  // Product search state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [matchedVariationMap, setMatchedVariationMap] = useState<Record<string, string>>({});
+  const [isSearching, setIsSearching] = useState(false);
+  const [showResults, setShowResults] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     if (quote && open) {
       setCustomerName(quote.customer_name || '');
@@ -74,8 +102,109 @@ const QuoteEditModal = ({ quote, open, onOpenChange, onSaved }: QuoteEditModalPr
       setItems((quote.items || []).map(item => ({ ...item })));
       setNotes(quote.notes || '');
       setPaymentMethod(quote.payment_method || '');
+      setSearchQuery('');
+      setSearchResults([]);
+      setShowResults(false);
     }
   }, [quote, open]);
+
+  // Debounced product search
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      setMatchedVariationMap({});
+      return;
+    }
+    const timeout = setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        const result = await posService.searchProducts(searchQuery);
+        setMatchedVariationMap(result.matchedVariationMap);
+        setSearchResults(
+          result.products.map((p) => ({
+            id: p.id,
+            name: p.name,
+            price: p.price,
+            image_url: p.image_url,
+            barcode: p.barcode,
+            stock: p.stock,
+            variations: (p.product_variations || []).map((v: Record<string, unknown>) => ({
+              id: v.id as string,
+              sku: v.sku as string | null,
+              price: v.price as number | null,
+              stock: v.stock as number,
+              is_active: v.is_active as boolean,
+              image_url: v.image_url as string | null,
+              label: v.label as string | undefined,
+            })),
+          }))
+        );
+        setShowResults(true);
+      } catch (error) {
+        console.error('Search error:', error);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 300);
+    return () => clearTimeout(timeout);
+  }, [searchQuery]);
+
+  const getDisplayInfo = (product: SearchResult) => {
+    const matchedVarId = matchedVariationMap[product.id];
+    if (matchedVarId) {
+      const variation = product.variations.find(v => v.id === matchedVarId);
+      if (variation) {
+        return {
+          image: variation.image_url || product.image_url,
+          price: variation.price ?? product.price,
+          stock: variation.stock,
+          label: variation.label ? `${product.name} — ${variation.label}` : product.name,
+          sku: variation.sku,
+          variationId: variation.id,
+        };
+      }
+    }
+    return {
+      image: product.image_url,
+      price: product.price,
+      stock: product.stock,
+      label: product.name,
+      sku: null,
+      variationId: undefined as string | undefined,
+    };
+  };
+
+  const addProductToItems = (product: SearchResult) => {
+    const display = getDisplayInfo(product);
+
+    // Check if item already exists
+    const existingIdx = items.findIndex(
+      i => i.product_id === product.id && i.variation_id === display.variationId
+    );
+
+    if (existingIdx >= 0) {
+      updateItemQty(existingIdx, 1);
+      toast({ title: 'Quantidade atualizada', description: display.label });
+    } else {
+      const newItem: QuoteItem = {
+        product_id: product.id,
+        variation_id: display.variationId,
+        name: display.label,
+        sku: display.sku || undefined,
+        image_url: display.image || undefined,
+        quantity: 1,
+        unit_price: display.price,
+        discount_amount: 0,
+        total: display.price,
+      };
+      setItems(prev => [...prev, newItem]);
+      toast({ title: 'Produto adicionado', description: display.label });
+    }
+
+    setSearchQuery('');
+    setShowResults(false);
+    searchInputRef.current?.focus();
+  };
 
   const updateItemQty = (idx: number, delta: number) => {
     setItems(prev => prev.map((item, i) => {
@@ -209,6 +338,86 @@ const QuoteEditModal = ({ quote, open, onOpenChange, onSaved }: QuoteEditModalPr
               <Package className="h-3.5 w-3.5 text-muted-foreground" />
               Itens ({items.length})
             </h4>
+
+            {/* Product Search */}
+            <div className="relative mb-3">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  ref={searchInputRef}
+                  type="text"
+                  placeholder="Buscar produto por nome, SKU ou código de barras..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onFocus={() => searchQuery && setShowResults(true)}
+                  className="pl-10 pr-10"
+                />
+                {searchQuery && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
+                    onClick={() => {
+                      setSearchQuery('');
+                      setSearchResults([]);
+                      searchInputRef.current?.focus();
+                    }}
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </Button>
+                )}
+              </div>
+
+              {showResults && (searchQuery || searchResults.length > 0) && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-popover border rounded-lg shadow-lg z-50 max-h-60 overflow-auto">
+                  {isSearching ? (
+                    <div className="p-3 flex items-center justify-center gap-2 text-muted-foreground text-sm">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Buscando...
+                    </div>
+                  ) : searchResults.length > 0 ? (
+                    <div className="py-1">
+                      {searchResults.map((product) => {
+                        const display = getDisplayInfo(product);
+                        return (
+                          <button
+                            key={`${product.id}-${display.variationId || ''}`}
+                            className={cn(
+                              'w-full px-3 py-2 flex items-center gap-3 hover:bg-accent text-left',
+                              display.stock <= 0 && 'opacity-50'
+                            )}
+                            onClick={() => addProductToItems(product)}
+                          >
+                            {display.image ? (
+                              <img src={display.image} alt={display.label} className="h-10 w-10 object-cover rounded border bg-muted" />
+                            ) : (
+                              <div className="h-10 w-10 bg-muted rounded flex items-center justify-center text-muted-foreground text-[10px]">Sem foto</div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium truncate">{display.label}</p>
+                              {display.sku && <p className="text-xs text-muted-foreground font-mono">{display.sku}</p>}
+                            </div>
+                            <div className="text-right shrink-0">
+                              <p className="text-sm font-semibold text-primary">{formatCurrency(display.price)}</p>
+                              <p className={cn('text-xs', display.stock <= 0 ? 'text-destructive' : 'text-muted-foreground')}>
+                                {display.stock <= 0 ? 'Sem estoque' : `${display.stock} disp.`}
+                              </p>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : searchQuery ? (
+                    <div className="p-3 text-center text-muted-foreground text-sm">Nenhum produto encontrado</div>
+                  ) : null}
+                </div>
+              )}
+
+              {showResults && (
+                <div className="fixed inset-0 z-40" onClick={() => setShowResults(false)} />
+              )}
+            </div>
+
             <div className="space-y-3">
               {items.map((item, idx) => (
                 <div key={idx} className="flex items-center gap-3 rounded-lg border p-3 bg-background">
