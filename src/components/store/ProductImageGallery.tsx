@@ -231,7 +231,7 @@ const ProductImageGallery = ({
       <div className="relative group">
         <div
           ref={imageContainerRef}
-          className="aspect-square rounded-xl overflow-hidden bg-muted border relative cursor-pointer"
+          className="aspect-[4/5] rounded-xl overflow-hidden bg-muted border relative cursor-pointer"
           onClick={!isCurrentVideo ? () => setIsLightboxOpen(true) : undefined}
         >
           {renderMainContent()}
