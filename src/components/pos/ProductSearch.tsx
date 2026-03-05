@@ -200,6 +200,29 @@ const ProductSearch = ({ onProductSelect, isOnline }: ProductSearchProps) => {
     }).format(value);
   };
 
+  const getDisplayInfo = (product: ProductResult) => {
+    const matchedVarId = matchedVariationMap[product.id];
+    if (matchedVarId) {
+      const variation = product.variations.find(v => v.id === matchedVarId);
+      if (variation) {
+        return {
+          image: variation.image_url || product.image_url,
+          price: variation.price ?? product.price,
+          stock: variation.stock,
+          label: variation.label ? `${product.name} — ${variation.label}` : product.name,
+          sku: variation.sku,
+        };
+      }
+    }
+    return {
+      image: product.image_url,
+      price: product.price,
+      stock: product.stock,
+      label: product.name,
+      sku: null,
+    };
+  };
+
   return (
     <div className="relative">
       <div className="relative flex gap-2">
