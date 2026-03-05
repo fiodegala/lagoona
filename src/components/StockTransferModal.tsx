@@ -233,6 +233,17 @@ const StockTransferModal: React.FC<Props> = ({ open, onOpenChange, stores, onTra
     return products.filter(p => p.name.toLowerCase().includes(q)).slice(0, 20);
   }, [products, productSearch]);
 
+  const filteredVariations = useMemo(() => {
+    if (!variationSearch) return variations;
+    const q = variationSearch.toLowerCase();
+    return variations.filter((v: any) => {
+      const label = v.label?.toLowerCase() || '';
+      const sku = v.sku?.toLowerCase() || '';
+      const barcode = v.barcode?.toLowerCase() || '';
+      return label.includes(q) || sku.includes(q) || barcode.includes(q);
+    });
+  }, [variations, variationSearch]);
+
   const handleSubmit = async () => {
     if (!fromStoreId || !toStoreId || !selectedProductId || quantity <= 0) {
       toast({ title: 'Preencha todos os campos obrigatórios', variant: 'destructive' });
