@@ -583,6 +583,56 @@ const UsersPage = () => {
                 </Select>
               </div>
 
+              {/* Menu Permissions */}
+              {formData.role !== 'admin' && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label>Acesso ao Menu</Label>
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setFormData({ ...formData, allowed_menus: allMenuItems.map(i => i.menuKey) })}
+                      >
+                        Marcar todos
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setFormData({ ...formData, allowed_menus: [] })}
+                      >
+                        Desmarcar
+                      </Button>
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Selecione quais páginas este usuário poderá acessar. Se nenhuma for selecionada, o acesso padrão da role será aplicado.
+                  </p>
+                  <ScrollArea className="h-[200px] rounded-md border p-3">
+                    <div className="grid gap-2">
+                      {allMenuItems.map((item) => (
+                        <label key={item.menuKey} className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 rounded px-2 py-1">
+                          <Checkbox
+                            checked={formData.allowed_menus.includes(item.menuKey)}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setFormData({ ...formData, allowed_menus: [...formData.allowed_menus, item.menuKey] });
+                              } else {
+                                setFormData({ ...formData, allowed_menus: formData.allowed_menus.filter(k => k !== item.menuKey) });
+                              }
+                            }}
+                          />
+                          <item.icon className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm">{item.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                </div>
+              )}
+
               {/* Permissions Preview */}
               <div className="p-4 bg-muted/50 rounded-lg space-y-2">
                 <div className="text-sm font-medium mb-2">Permissões de {roleLabels[formData.role]}:</div>
@@ -590,38 +640,15 @@ const UsersPage = () => {
                   {formData.role === 'admin' && (
                     <>
                       <div className="flex items-center gap-2 text-primary">✓ Controle total do sistema</div>
-                      <div className="flex items-center gap-2 text-primary">✓ Criar e gerenciar usuários</div>
-                      <div className="flex items-center gap-2 text-primary">✓ Editar produtos e categorias</div>
-                      <div className="flex items-center gap-2 text-primary">✓ Definir metas de vendas</div>
-                      <div className="flex items-center gap-2 text-primary">✓ Acesso ao PDV</div>
+                      <div className="flex items-center gap-2 text-primary">✓ Acesso a todos os menus</div>
                     </>
                   )}
-                  {formData.role === 'manager' && (
-                    <>
-                      <div className="flex items-center gap-2 text-primary">✓ Editar produtos e categorias</div>
-                      <div className="flex items-center gap-2 text-primary">✓ Definir metas de vendas</div>
-                      <div className="flex items-center gap-2 text-primary">✓ Gerenciar pedidos</div>
-                      <div className="flex items-center gap-2 text-primary">✓ Acesso ao PDV</div>
-                      <div className="flex items-center gap-2 text-muted-foreground">✗ Criar usuários</div>
-                    </>
-                  )}
-                  {formData.role === 'support' && (
-                    <>
-                      <div className="flex items-center gap-2 text-primary">✓ Visualizar pedidos</div>
-                      <div className="flex items-center gap-2 text-primary">✓ Gerenciar clientes</div>
-                      <div className="flex items-center gap-2 text-primary">✓ Acesso ao PDV</div>
-                      <div className="flex items-center gap-2 text-muted-foreground">✗ Editar produtos</div>
-                      <div className="flex items-center gap-2 text-muted-foreground">✗ Definir metas</div>
-                    </>
-                  )}
-                  {formData.role === 'seller' && (
-                    <>
-                      <div className="flex items-center gap-2 text-primary">✓ Acesso ao PDV</div>
-                      <div className="flex items-center gap-2 text-primary">✓ Realizar vendas</div>
-                      <div className="flex items-center gap-2 text-muted-foreground">✗ Criar usuários</div>
-                      <div className="flex items-center gap-2 text-muted-foreground">✗ Editar produtos</div>
-                      <div className="flex items-center gap-2 text-muted-foreground">✗ Definir metas</div>
-                    </>
+                  {formData.role !== 'admin' && (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      {formData.allowed_menus.length > 0
+                        ? `${formData.allowed_menus.length} menu(s) selecionado(s)`
+                        : 'Acesso padrão da role (todos os menus permitidos)'}
+                    </div>
                   )}
                 </div>
               </div>
