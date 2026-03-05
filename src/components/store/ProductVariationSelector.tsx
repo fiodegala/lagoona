@@ -32,7 +32,9 @@ const ProductVariationSelector = ({ productId, onVariationSelect, onHasVariation
             .not('variation_id', 'is', null),
         ]);
         setAttributes(attrs);
-        setVariations(vars.filter(v => v.is_active));
+        const activeVars = vars.filter(v => v.is_active);
+        setVariations(activeVars);
+        onHasVariations?.(activeVars.length > 0);
 
         // Build stock map: variation_id -> total quantity across stores
         const map: Record<string, number> = {};
