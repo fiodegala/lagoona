@@ -185,7 +185,7 @@ const ProductImageGallery = ({
         src={mediumImageUrl(currentItem.url)}
         alt={`${productName} - Imagem ${currentIndex + 1}`}
         decoding="async"
-        className="w-full h-full object-contain"
+        className="w-full h-full object-cover"
       />
     );
   };
