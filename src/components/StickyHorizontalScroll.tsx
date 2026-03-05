@@ -3,55 +3,100 @@ import { useRef, useEffect, useState, useCallback } from 'react';
 interface StickyHorizontalScrollProps {
   children: React.ReactNode;
   className?: string;
+  /** The scrollable ancestor to observe for sticky positioning. If not provided, uses the component's own wrapper. */
+  scrollContainerRef?: React.RefObject<HTMLElement>;
 }
 
+/**
+ * Renders a fixed-position horizontal scrollbar at the bottom of the viewport
+ * that syncs with the horizontal scroll of its children.
+ * This avoids the problem of sticky not working inside nested overflow containers.
+ */
 const StickyHorizontalScroll = ({ children, className = '' }: StickyHorizontalScrollProps) => {
-  const wrapperRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const fakeBarRef = useRef<HTMLDivElement>(null);
   const fakeInnerRef = useRef<HTMLDivElement>(null);
   const [contentWidth, setContentWidth] = useState(0);
   const [containerWidth, setContainerWidth] = useState(0);
+  const [barStyle, setBarStyle] = useState<React.CSSProperties>({ display: 'none' });
   const syncing = useRef(false);
-  const uid = useRef(`shsc-${Math.random().toString(36).slice(2, 8)}`);
+  const rafId = useRef(0);
 
   const syncSizes = useCallback(() => {
     const content = contentRef.current;
-    const wrapper = wrapperRef.current;
-    if (!content || !wrapper) return;
-
-    // Measure actual scrollable width
-    const innerW = content.scrollWidth;
-    const wrapperW = wrapper.clientWidth;
-
-    setContentWidth(innerW);
-    setContainerWidth(wrapperW);
-
+    if (!content) return;
+    setContentWidth(content.scrollWidth);
+    setContainerWidth(content.clientWidth);
     if (fakeInnerRef.current) {
-      fakeInnerRef.current.style.width = `${innerW}px`;
+      fakeInnerRef.current.style.width = `${content.scrollWidth}px`;
     }
   }, []);
 
-  useEffect(() => {
-    // Small delay to ensure DOM is painted
-    const timer = setTimeout(syncSizes, 100);
-    const obs = new ResizeObserver(syncSizes);
-    if (wrapperRef.current) obs.observe(wrapperRef.current);
-    if (contentRef.current) obs.observe(contentRef.current);
-    const mutObs = new MutationObserver(() => setTimeout(syncSizes, 50));
-    if (contentRef.current) {
-      mutObs.observe(contentRef.current, { childList: true, subtree: true });
-    }
-    window.addEventListener('resize', syncSizes);
-    return () => {
-      clearTimeout(timer);
-      obs.disconnect();
-      mutObs.disconnect();
-      window.removeEventListener('resize', syncSizes);
-    };
-  }, [syncSizes]);
+  // Position the fake scrollbar fixed at the bottom of the viewport,
+  // aligned horizontally with the content container
+  const updateBarPosition = useCallback(() => {
+    const content = contentRef.current;
+    if (!content) return;
 
-  const hasOverflow = contentWidth > containerWidth + 1;
+    const rect = content.getBoundingClientRect();
+    const viewportH = window.innerHeight;
+
+    // Only show if the content is visible and overflows horizontally
+    const isVisible = rect.top < viewportH && rect.bottom > 0;
+    const hasOverflow = content.scrollWidth > content.clientWidth + 1;
+
+    if (!isVisible || !hasOverflow) {
+      setBarStyle({ display: 'none' });
+      return;
+    }
+
+    // If the natural bottom scrollbar position is already visible, don't show fixed bar
+    const naturalBarY = rect.bottom;
+    if (naturalBarY <= viewportH) {
+      setBarStyle({ display: 'none' });
+      return;
+    }
+
+    setBarStyle({
+      position: 'fixed',
+      bottom: 0,
+      left: rect.left,
+      width: rect.width,
+      height: 14,
+      zIndex: 9999,
+      background: 'hsl(var(--background) / 0.9)',
+      backdropFilter: 'blur(4px)',
+      borderTop: '1px solid hsl(var(--border))',
+      display: 'block',
+    });
+  }, []);
+
+  useEffect(() => {
+    syncSizes();
+    updateBarPosition();
+
+    const obs = new ResizeObserver(() => {
+      syncSizes();
+      updateBarPosition();
+    });
+    if (contentRef.current) obs.observe(contentRef.current);
+
+    // Listen to ALL scroll events (any ancestor) and resize
+    const onScrollOrResize = () => {
+      cancelAnimationFrame(rafId.current);
+      rafId.current = requestAnimationFrame(updateBarPosition);
+    };
+
+    window.addEventListener('scroll', onScrollOrResize, true); // capture phase catches all scrolls
+    window.addEventListener('resize', onScrollOrResize);
+
+    return () => {
+      obs.disconnect();
+      window.removeEventListener('scroll', onScrollOrResize, true);
+      window.removeEventListener('resize', onScrollOrResize);
+      cancelAnimationFrame(rafId.current);
+    };
+  }, [syncSizes, updateBarPosition]);
 
   const handleContentScroll = () => {
     if (syncing.current) return;
@@ -72,45 +117,31 @@ const StickyHorizontalScroll = ({ children, className = '' }: StickyHorizontalSc
   };
 
   return (
-    <div ref={wrapperRef} className="relative">
-      {/* Hide native horizontal scrollbar via scoped style */}
+    <>
+      {/* Hide native horizontal scrollbar */}
       <style>{`
-        #${uid.current}::-webkit-scrollbar:horizontal {
-          height: 0px;
-          display: none;
-        }
-        #${uid.current} {
-          scrollbar-width: none;
-        }
+        .shsc-content::-webkit-scrollbar:horizontal { height: 0; display: none; }
+        .shsc-content { scrollbar-width: none; }
       `}</style>
 
-      {/* Scrollable content - native h-scrollbar hidden */}
       <div
-        id={uid.current}
         ref={contentRef}
-        onScroll={handleContentScroll}
-        className={`overflow-x-auto ${className}`}
+        onScroll={(e) => { handleContentScroll(); updateBarPosition(); }}
+        className={`shsc-content overflow-x-auto ${className}`}
       >
         {children}
       </div>
 
-      {/* Sticky fake horizontal scrollbar */}
-      {hasOverflow && (
-        <div
-          ref={fakeBarRef}
-          onScroll={handleFakeScroll}
-          className="sticky bottom-0 z-20 overflow-x-auto scrollbar-always-visible"
-          style={{
-            height: 14,
-            background: 'hsl(var(--background) / 0.85)',
-            backdropFilter: 'blur(4px)',
-            borderTop: '1px solid hsl(var(--border))',
-          }}
-        >
-          <div ref={fakeInnerRef} style={{ height: 1, width: contentWidth }} />
-        </div>
-      )}
-    </div>
+      {/* Fixed fake horizontal scrollbar - rendered via portal-like fixed positioning */}
+      <div
+        ref={fakeBarRef}
+        onScroll={handleFakeScroll}
+        className="overflow-x-auto scrollbar-always-visible"
+        style={barStyle}
+      >
+        <div ref={fakeInnerRef} style={{ height: 1, width: contentWidth }} />
+      </div>
+    </>
   );
 };
 
