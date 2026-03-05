@@ -298,17 +298,54 @@ const Upsells = () => {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Produto Sugerido (Upsell)</Label>
-              <Select value={formUpsellProductId} onValueChange={setFormUpsellProductId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o produto sugerido" />
-                </SelectTrigger>
-                <SelectContent>
-                  {products.filter(p => p.is_active && p.id !== formProductId).map(p => (
-                    <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label>Produto(s) Sugerido(s) {!editingRule && '(selecione um ou mais)'}</Label>
+              {editingRule ? (
+                <Select value={formUpsellProductIds[0] || ''} onValueChange={v => setFormUpsellProductIds([v])}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o produto sugerido" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {products.filter(p => p.is_active && p.id !== formProductId).map(p => (
+                      <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <div className="space-y-2">
+                  <div className="border rounded-md max-h-48 overflow-y-auto">
+                    {products.filter(p => p.is_active && p.id !== formProductId).map(p => {
+                      const isChecked = formUpsellProductIds.includes(p.id);
+                      return (
+                        <button
+                          key={p.id}
+                          type="button"
+                          onClick={() => {
+                            setFormUpsellProductIds(prev =>
+                              isChecked ? prev.filter(id => id !== p.id) : [...prev, p.id]
+                            );
+                          }}
+                          className={cn(
+                            'w-full flex items-center gap-2 px-3 py-2 text-left text-sm hover:bg-muted/50 transition-colors',
+                            isChecked && 'bg-primary/5'
+                          )}
+                        >
+                          <div className={cn(
+                            'w-4 h-4 rounded border flex items-center justify-center shrink-0',
+                            isChecked ? 'bg-primary border-primary' : 'border-muted-foreground/30'
+                          )}>
+                            {isChecked && <Check className="h-3 w-3 text-primary-foreground" />}
+                          </div>
+                          {p.image_url && <img src={p.image_url} alt="" className="w-6 h-6 rounded object-cover shrink-0" />}
+                          <span className="line-clamp-1">{p.name}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {formUpsellProductIds.length > 0 && (
+                    <p className="text-xs text-muted-foreground">{formUpsellProductIds.length} produto(s) selecionado(s)</p>
+                  )}
+                </div>
+              )}
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
