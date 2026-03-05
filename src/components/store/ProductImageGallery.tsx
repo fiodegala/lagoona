@@ -187,7 +187,7 @@ const ProductImageGallery = ({
           alt={`${productName} - Imagem ${currentIndex + 1}`}
           decoding="async"
           className={cn(
-            "w-full h-full object-contain transition-opacity duration-200",
+            "w-full h-full object-cover transition-opacity duration-200",
             isZoomed ? "opacity-0" : "opacity-100"
           )}
         />
@@ -198,7 +198,6 @@ const ProductImageGallery = ({
               backgroundImage: `url(${fullImageUrl(currentItem.url)})`,
               backgroundSize: '250%',
               backgroundPosition: `${zoomPosition.x}% ${zoomPosition.y}%`,
-              backgroundRepeat: 'no-repeat',
             }}
           />
         )}
