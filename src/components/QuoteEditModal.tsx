@@ -544,26 +544,28 @@ const QuoteEditModal = ({ quote, open, onOpenChange, onSaved }: QuoteEditModalPr
 
             <div className="space-y-3">
               {items.map((item, idx) => (
-                <div key={idx} className="flex items-center gap-3 rounded-lg border p-3 bg-background">
-                  <img src={item.image_url || '/placeholder.svg'} alt={item.name} className="h-12 w-12 rounded-md object-cover shrink-0 border bg-muted" />
-                  <div className="flex-1 min-w-0 space-y-1.5">
-                    <p className="text-sm font-medium truncate">{item.name}</p>
-                    {item.sku && <p className="text-xs text-muted-foreground">SKU: {item.sku}</p>}
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <div className="flex items-center gap-1">
-                        <Label className="text-xs text-muted-foreground">Preço:</Label>
-                        <Input type="number" step="0.01" min="0" value={item.unit_price} onChange={e => updateItemPrice(idx, parseFloat(e.target.value) || 0)} className="h-7 w-24 text-xs" />
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => updateItemQty(idx, -1)}><Minus className="h-3 w-3" /></Button>
-                        <span className="w-8 text-center text-sm font-medium">{item.quantity}</span>
-                        <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => updateItemQty(idx, 1)}><Plus className="h-3 w-3" /></Button>
-                      </div>
+                <div key={idx} className="rounded-lg border p-3 bg-background space-y-2">
+                  <div className="flex items-start gap-3">
+                    <img src={item.image_url || '/placeholder.svg'} alt={item.name} className="h-12 w-12 rounded-md object-cover shrink-0 border bg-muted" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{item.name}</p>
+                      {item.sku && <p className="text-xs text-muted-foreground truncate">SKU: {item.sku}</p>}
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="text-sm font-bold">{formatCurrency(item.quantity * item.unit_price)}</p>
                     </div>
                   </div>
-                  <div className="text-right shrink-0 space-y-1">
-                    <p className="text-sm font-bold">{formatCurrency(item.quantity * item.unit_price)}</p>
-                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => removeItem(idx)}><Trash2 className="h-3.5 w-3.5" /></Button>
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1">
+                      <Label className="text-xs text-muted-foreground shrink-0">Preço:</Label>
+                      <Input type="number" step="0.01" min="0" value={item.unit_price} onChange={e => updateItemPrice(idx, parseFloat(e.target.value) || 0)} className="h-7 w-20 text-xs" />
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => updateItemQty(idx, -1)}><Minus className="h-3 w-3" /></Button>
+                      <span className="w-8 text-center text-sm font-medium">{item.quantity}</span>
+                      <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => updateItemQty(idx, 1)}><Plus className="h-3 w-3" /></Button>
+                    </div>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive shrink-0" onClick={() => removeItem(idx)}><Trash2 className="h-3.5 w-3.5" /></Button>
                   </div>
                 </div>
               ))}
