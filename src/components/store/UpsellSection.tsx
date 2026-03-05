@@ -66,10 +66,10 @@ const UpsellSection = ({ currentProduct, currentPrice, categoryId }: UpsellSecti
           const productMap = new Map(all.map(p => [p.id, p]));
           const configured = upsellRules
             .map(r => productMap.get(r.upsell_product_id))
-            .filter((p): p is Product => !!p && p.is_active && p.stock > 0);
+            .filter((p): p is Product => !!p && p.is_active);
 
           const enriched = await enrichProductsWithStock(configured.slice(0, 3));
-          setSuggestions(enriched);
+          setSuggestions(enriched.filter(p => p.stock > 0));
         } else {
           // Fallback: auto-suggest from same category
           setDiscountPercent(5);
