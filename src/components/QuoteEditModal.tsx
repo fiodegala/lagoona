@@ -1,11 +1,14 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Trash2, Plus, Minus, Save, Loader2, User, Package, CreditCard, StickyNote, Search, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { posService } from '@/services/posService';
@@ -85,6 +88,8 @@ const QuoteEditModal = ({ quote, open, onOpenChange, onSaved }: QuoteEditModalPr
   const [items, setItems] = useState<QuoteItem[]>([]);
   const [notes, setNotes] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<string>('');
+  const [cardType, setCardType] = useState<'credit' | 'debit'>('credit');
+  const [installments, setInstallments] = useState('1');
 
   // Product search state
   const [searchQuery, setSearchQuery] = useState('');
@@ -94,6 +99,9 @@ const QuoteEditModal = ({ quote, open, onOpenChange, onSaved }: QuoteEditModalPr
   const [showResults, setShowResults] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
+  // Variation picker state
+  const [variationPickerProduct, setVariationPickerProduct] = useState<SearchResult | null>(null);
+
   useEffect(() => {
     if (quote && open) {
       setCustomerName(quote.customer_name || '');
@@ -102,9 +110,19 @@ const QuoteEditModal = ({ quote, open, onOpenChange, onSaved }: QuoteEditModalPr
       setItems((quote.items || []).map(item => ({ ...item })));
       setNotes(quote.notes || '');
       setPaymentMethod(quote.payment_method || '');
+      // Restore card details from payment_details
+      const details = quote.payment_details;
+      if (details) {
+        setCardType((details.cardType as 'credit' | 'debit') || 'credit');
+        setInstallments(String(details.installments || '1'));
+      } else {
+        setCardType('credit');
+        setInstallments('1');
+      }
       setSearchQuery('');
       setSearchResults([]);
       setShowResults(false);
+      setVariationPickerProduct(null);
     }
   }, [quote, open]);
 
@@ -174,35 +192,69 @@ const QuoteEditModal = ({ quote, open, onOpenChange, onSaved }: QuoteEditModalPr
     };
   };
 
-  const addProductToItems = (product: SearchResult) => {
-    const display = getDisplayInfo(product);
+  const handleProductSelected = (product: SearchResult) => {
+    const matchedVarId = matchedVariationMap[product.id];
+    const activeVariations = product.variations.filter(v => v.is_active);
+
+    // If matched a specific variation via barcode/SKU, add directly
+    if (matchedVarId) {
+      addItemFromProduct(product, matchedVarId);
+    }
+    // If product has variations, show picker
+    else if (activeVariations.length > 0) {
+      setVariationPickerProduct(product);
+      setShowResults(false);
+      setSearchQuery('');
+    }
+    // No variations, add directly
+    else {
+      addItemFromProduct(product);
+    }
+  };
+
+  const addItemFromProduct = (product: SearchResult, variationId?: string) => {
+    let name = product.name;
+    let price = product.price;
+    let sku: string | undefined;
+    let image = product.image_url || undefined;
+
+    if (variationId) {
+      const variation = product.variations.find(v => v.id === variationId);
+      if (variation) {
+        name = variation.label ? `${product.name} — ${variation.label}` : product.name;
+        price = variation.price ?? product.price;
+        sku = variation.sku || undefined;
+        image = variation.image_url || product.image_url || undefined;
+      }
+    }
 
     // Check if item already exists
     const existingIdx = items.findIndex(
-      i => i.product_id === product.id && i.variation_id === display.variationId
+      i => i.product_id === product.id && i.variation_id === variationId
     );
 
     if (existingIdx >= 0) {
       updateItemQty(existingIdx, 1);
-      toast({ title: 'Quantidade atualizada', description: display.label });
+      toast({ title: 'Quantidade atualizada', description: name });
     } else {
       const newItem: QuoteItem = {
         product_id: product.id,
-        variation_id: display.variationId,
-        name: display.label,
-        sku: display.sku || undefined,
-        image_url: display.image || undefined,
+        variation_id: variationId,
+        name,
+        sku,
+        image_url: image,
         quantity: 1,
-        unit_price: display.price,
+        unit_price: price,
         discount_amount: 0,
-        total: display.price,
+        total: price,
       };
       setItems(prev => [...prev, newItem]);
-      toast({ title: 'Produto adicionado', description: display.label });
+      toast({ title: 'Produto adicionado', description: name });
     }
 
     setSearchQuery('');
     setShowResults(false);
+    setVariationPickerProduct(null);
     searchInputRef.current?.focus();
   };
 
@@ -249,6 +301,16 @@ const QuoteEditModal = ({ quote, open, onOpenChange, onSaved }: QuoteEditModalPr
         total: item.quantity * item.unit_price - (item.discount_amount || 0),
       }));
 
+      // Build payment_details for card
+      let paymentDetails: Record<string, unknown> | null = null;
+      if (paymentMethod === 'card') {
+        paymentDetails = {
+          cardType,
+          installments: cardType === 'credit' ? parseInt(installments) : 1,
+          installmentValue: cardType === 'credit' ? total / parseInt(installments) : total,
+        };
+      }
+
       const { error } = await supabase
         .from('quotes')
         .update({
@@ -261,6 +323,7 @@ const QuoteEditModal = ({ quote, open, onOpenChange, onSaved }: QuoteEditModalPr
           total,
           notes: notes.trim() || null,
           payment_method: paymentMethod || null,
+          payment_details: paymentDetails || {},
         } as never)
         .eq('id', quote.id);
 
@@ -299,33 +362,15 @@ const QuoteEditModal = ({ quote, open, onOpenChange, onSaved }: QuoteEditModalPr
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <Label htmlFor="edit-name">Nome</Label>
-                <Input
-                  id="edit-name"
-                  value={customerName}
-                  onChange={e => setCustomerName(e.target.value)}
-                  placeholder="Nome do cliente"
-                  maxLength={200}
-                />
+                <Input id="edit-name" value={customerName} onChange={e => setCustomerName(e.target.value)} placeholder="Nome do cliente" maxLength={200} />
               </div>
               <div>
                 <Label htmlFor="edit-doc">CPF/CNPJ</Label>
-                <Input
-                  id="edit-doc"
-                  value={customerDocument}
-                  onChange={e => setCustomerDocument(e.target.value)}
-                  placeholder="Documento"
-                  maxLength={20}
-                />
+                <Input id="edit-doc" value={customerDocument} onChange={e => setCustomerDocument(e.target.value)} placeholder="Documento" maxLength={20} />
               </div>
               <div className="sm:col-span-2">
                 <Label htmlFor="edit-phone">Telefone</Label>
-                <Input
-                  id="edit-phone"
-                  value={customerPhone}
-                  onChange={e => setCustomerPhone(e.target.value)}
-                  placeholder="(00) 00000-0000"
-                  maxLength={20}
-                />
+                <Input id="edit-phone" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} placeholder="(00) 00000-0000" maxLength={20} />
               </div>
             </div>
           </div>
@@ -353,16 +398,7 @@ const QuoteEditModal = ({ quote, open, onOpenChange, onSaved }: QuoteEditModalPr
                   className="pl-10 pr-10"
                 />
                 {searchQuery && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
-                    onClick={() => {
-                      setSearchQuery('');
-                      setSearchResults([]);
-                      searchInputRef.current?.focus();
-                    }}
-                  >
+                  <Button variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7" onClick={() => { setSearchQuery(''); setSearchResults([]); searchInputRef.current?.focus(); }}>
                     <X className="h-3.5 w-3.5" />
                   </Button>
                 )}
@@ -372,8 +408,7 @@ const QuoteEditModal = ({ quote, open, onOpenChange, onSaved }: QuoteEditModalPr
                 <div className="absolute top-full left-0 right-0 mt-1 bg-popover border rounded-lg shadow-lg z-50 max-h-60 overflow-auto">
                   {isSearching ? (
                     <div className="p-3 flex items-center justify-center gap-2 text-muted-foreground text-sm">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Buscando...
+                      <Loader2 className="h-4 w-4 animate-spin" /> Buscando...
                     </div>
                   ) : searchResults.length > 0 ? (
                     <div className="py-1">
@@ -382,11 +417,8 @@ const QuoteEditModal = ({ quote, open, onOpenChange, onSaved }: QuoteEditModalPr
                         return (
                           <button
                             key={`${product.id}-${display.variationId || ''}`}
-                            className={cn(
-                              'w-full px-3 py-2 flex items-center gap-3 hover:bg-accent text-left',
-                              display.stock <= 0 && 'opacity-50'
-                            )}
-                            onClick={() => addProductToItems(product)}
+                            className={cn('w-full px-3 py-2 flex items-center gap-3 hover:bg-accent text-left', display.stock <= 0 && !product.variations.length && 'opacity-50')}
+                            onClick={() => handleProductSelected(product)}
                           >
                             {display.image ? (
                               <img src={display.image} alt={display.label} className="h-10 w-10 object-cover rounded border bg-muted" />
@@ -400,7 +432,7 @@ const QuoteEditModal = ({ quote, open, onOpenChange, onSaved }: QuoteEditModalPr
                             <div className="text-right shrink-0">
                               <p className="text-sm font-semibold text-primary">{formatCurrency(display.price)}</p>
                               <p className={cn('text-xs', display.stock <= 0 ? 'text-destructive' : 'text-muted-foreground')}>
-                                {display.stock <= 0 ? 'Sem estoque' : `${display.stock} disp.`}
+                                {product.variations.length > 0 && !display.variationId ? `${product.variations.filter(v => v.is_active).length} variações` : display.stock <= 0 ? 'Sem estoque' : `${display.stock} disp.`}
                               </p>
                             </div>
                           </button>
@@ -413,55 +445,84 @@ const QuoteEditModal = ({ quote, open, onOpenChange, onSaved }: QuoteEditModalPr
                 </div>
               )}
 
-              {showResults && (
-                <div className="fixed inset-0 z-40" onClick={() => setShowResults(false)} />
-              )}
+              {showResults && <div className="fixed inset-0 z-40" onClick={() => setShowResults(false)} />}
             </div>
+
+            {/* Variation Picker Inline */}
+            {variationPickerProduct && (
+              <div className="mb-3 border rounded-lg p-3 bg-muted/50 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    {variationPickerProduct.image_url && (
+                      <img src={variationPickerProduct.image_url} alt={variationPickerProduct.name} className="w-8 h-8 rounded object-cover" />
+                    )}
+                    <span className="text-sm font-semibold truncate">{variationPickerProduct.name}</span>
+                  </div>
+                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setVariationPickerProduct(null)}>
+                    <X className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">Selecione a variação:</p>
+                <ScrollArea className="max-h-48">
+                  <div className="space-y-1.5">
+                    {variationPickerProduct.variations.filter(v => v.is_active).map((variation) => {
+                      const hasStock = variation.stock > 0;
+                      const price = variation.price ?? variationPickerProduct.price;
+                      return (
+                        <button
+                          key={variation.id}
+                          className={cn(
+                            'w-full flex items-center justify-between p-2.5 rounded-md border transition-all text-left text-sm',
+                            hasStock ? 'hover:border-primary/50 hover:bg-accent cursor-pointer' : 'opacity-50 cursor-not-allowed'
+                          )}
+                          onClick={() => hasStock && addItemFromProduct(variationPickerProduct, variation.id)}
+                          disabled={!hasStock}
+                        >
+                          <div className="flex-1 min-w-0">
+                            <span className="font-medium">{variation.label || variation.sku || variation.id.slice(0, 8)}</span>
+                            {variation.sku && variation.label && (
+                              <span className="text-xs text-muted-foreground ml-2">SKU: {variation.sku}</span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 ml-2">
+                            <Badge
+                              variant={hasStock ? (variation.stock <= 3 ? 'secondary' : 'outline') : 'destructive'}
+                              className={cn('text-xs', variation.stock <= 3 && hasStock && 'bg-orange-500/20 text-orange-700 border-orange-500/30')}
+                            >
+                              {hasStock ? `${variation.stock} un.` : 'Sem estoque'}
+                            </Badge>
+                            <span className="font-semibold text-primary whitespace-nowrap">{formatCurrency(price)}</span>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </ScrollArea>
+              </div>
+            )}
 
             <div className="space-y-3">
               {items.map((item, idx) => (
                 <div key={idx} className="flex items-center gap-3 rounded-lg border p-3 bg-background">
-                  <img
-                    src={item.image_url || '/placeholder.svg'}
-                    alt={item.name}
-                    className="h-12 w-12 rounded-md object-cover shrink-0 border bg-muted"
-                  />
+                  <img src={item.image_url || '/placeholder.svg'} alt={item.name} className="h-12 w-12 rounded-md object-cover shrink-0 border bg-muted" />
                   <div className="flex-1 min-w-0 space-y-1.5">
                     <p className="text-sm font-medium truncate">{item.name}</p>
                     {item.sku && <p className="text-xs text-muted-foreground">SKU: {item.sku}</p>}
                     <div className="flex items-center gap-2 flex-wrap">
                       <div className="flex items-center gap-1">
                         <Label className="text-xs text-muted-foreground">Preço:</Label>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          value={item.unit_price}
-                          onChange={e => updateItemPrice(idx, parseFloat(e.target.value) || 0)}
-                          className="h-7 w-24 text-xs"
-                        />
+                        <Input type="number" step="0.01" min="0" value={item.unit_price} onChange={e => updateItemPrice(idx, parseFloat(e.target.value) || 0)} className="h-7 w-24 text-xs" />
                       </div>
                       <div className="flex items-center gap-1">
-                        <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => updateItemQty(idx, -1)}>
-                          <Minus className="h-3 w-3" />
-                        </Button>
+                        <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => updateItemQty(idx, -1)}><Minus className="h-3 w-3" /></Button>
                         <span className="w-8 text-center text-sm font-medium">{item.quantity}</span>
-                        <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => updateItemQty(idx, 1)}>
-                          <Plus className="h-3 w-3" />
-                        </Button>
+                        <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => updateItemQty(idx, 1)}><Plus className="h-3 w-3" /></Button>
                       </div>
                     </div>
                   </div>
                   <div className="text-right shrink-0 space-y-1">
                     <p className="text-sm font-bold">{formatCurrency(item.quantity * item.unit_price)}</p>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 text-destructive"
-                      onClick={() => removeItem(idx)}
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => removeItem(idx)}><Trash2 className="h-3.5 w-3.5" /></Button>
                   </div>
                 </div>
               ))}
@@ -497,7 +558,7 @@ const QuoteEditModal = ({ quote, open, onOpenChange, onSaved }: QuoteEditModalPr
               <CreditCard className="h-3.5 w-3.5 text-muted-foreground" />
               Forma de Pagamento
             </h4>
-            <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+            <Select value={paymentMethod} onValueChange={(v) => { setPaymentMethod(v); if (v !== 'card') { setCardType('credit'); setInstallments('1'); } }}>
               <SelectTrigger className="w-full sm:w-48">
                 <SelectValue placeholder="Selecione..." />
               </SelectTrigger>
@@ -507,6 +568,59 @@ const QuoteEditModal = ({ quote, open, onOpenChange, onSaved }: QuoteEditModalPr
                 ))}
               </SelectContent>
             </Select>
+
+            {/* Card details */}
+            {paymentMethod === 'card' && (
+              <div className="mt-3 space-y-3 pl-1">
+                <div className="space-y-2">
+                  <Label className="text-xs">Tipo de Cartão</Label>
+                  <RadioGroup
+                    value={cardType}
+                    onValueChange={(v) => { setCardType(v as 'credit' | 'debit'); if (v === 'debit') setInstallments('1'); }}
+                    className="flex gap-4"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="credit" id="q-credit" />
+                      <Label htmlFor="q-credit" className="cursor-pointer font-normal text-sm">Crédito</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="debit" id="q-debit" />
+                      <Label htmlFor="q-debit" className="cursor-pointer font-normal text-sm">Débito</Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+
+                {cardType === 'credit' && (
+                  <div className="space-y-2">
+                    <Label className="text-xs">Parcelas</Label>
+                    <Select value={installments} onValueChange={setInstallments}>
+                      <SelectTrigger className="w-full sm:w-64">
+                        <SelectValue placeholder="Selecione as parcelas" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Array.from({ length: 6 }, (_, i) => i + 1).map((num) => {
+                          const value = total / num;
+                          return (
+                            <SelectItem key={num} value={num.toString()}>
+                              {num}x de {formatCurrency(value)}{num === 1 && ' (à vista)'}
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
+                    {parseInt(installments) > 1 && (
+                      <p className="text-xs text-muted-foreground">
+                        {installments}x de <span className="font-semibold text-primary">{formatCurrency(total / parseInt(installments))}</span>
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {cardType === 'debit' && (
+                  <p className="text-xs text-muted-foreground">Débito à vista — {formatCurrency(total)}</p>
+                )}
+              </div>
+            )}
           </div>
 
           <Separator />
@@ -517,20 +631,12 @@ const QuoteEditModal = ({ quote, open, onOpenChange, onSaved }: QuoteEditModalPr
               <StickyNote className="h-3.5 w-3.5 text-muted-foreground" />
               Observações
             </h4>
-            <Textarea
-              value={notes}
-              onChange={e => setNotes(e.target.value)}
-              placeholder="Observações do orçamento..."
-              rows={3}
-              maxLength={1000}
-            />
+            <Textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Observações do orçamento..." rows={3} maxLength={1000} />
           </div>
         </div>
 
         <DialogFooter className="gap-2 pt-4 border-t">
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
-            Cancelar
-          </Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>Cancelar</Button>
           <Button onClick={handleSave} disabled={saving}>
             {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
             Salvar Alterações
