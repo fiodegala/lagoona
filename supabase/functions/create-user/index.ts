@@ -45,7 +45,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { email, password, fullName, role, store_id } = await req.json();
+    const { email, password, fullName, role, store_id, allowed_menus } = await req.json();
 
     if (!email || !password || !fullName || !role) {
       return new Response(JSON.stringify({ error: "Campos obrigatórios faltando" }), {
@@ -92,6 +92,20 @@ Deno.serve(async (req) => {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // Save menu permissions if provided
+    if (allowed_menus && Array.isArray(allowed_menus) && allowed_menus.length > 0) {
+      const { error: menuError } = await adminClient
+        .from("user_menu_permissions")
+        .insert({
+          user_id: newUser.user.id,
+          allowed_menus,
+        });
+
+      if (menuError) {
+        console.error("Error saving menu permissions:", menuError);
+      }
     }
 
     return new Response(JSON.stringify({ user: newUser.user }), {

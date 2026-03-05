@@ -2,35 +2,15 @@ import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import {
-  LayoutDashboard,
-  Package, Upload,
-  FolderTree,
-  ShoppingCart,
-  Key,
-  Settings,
   ChevronLeft,
   ChevronRight,
   LogOut,
-  Users,
-  BarChart3,
-  BrainCircuit,
   Menu,
   X,
-  Star,
-  Tag,
-  Monitor,
-  Target,
   ExternalLink,
-  Receipt,
-  UserPlus,
-  Warehouse,
-  Truck,
-  Image as ImageIcon,
-  ShoppingBasket,
-  History,
-  Sparkles,
-  FileText,
+  Settings,
 } from 'lucide-react';
+import { navItems, settingsItems } from '@/config/menuItems';
 import logoLagoona from '@/assets/logo-lagoona-white.png';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -50,43 +30,19 @@ interface AdminLayoutProps {
   children: React.ReactNode;
 }
 
-const navItems = [
-  { icon: LayoutDashboard, label: 'Dashboard', path: '/admin' },
-  { icon: Monitor, label: 'PDV', path: '/admin/pos' },
-  { icon: Package, label: 'Produtos', path: '/admin/products', requireAdmin: true },
-  { icon: FolderTree, label: 'Categorias', path: '/admin/categories', requireAdmin: true },
-  { icon: Warehouse, label: 'Estoque', path: '/admin/stock' },
-  { icon: UserPlus, label: 'Clientes', path: '/admin/customers' },
-  { icon: ShoppingCart, label: 'Pedidos', path: '/admin/orders' },
-  { icon: Receipt, label: 'Vendas', path: '/admin/sales' },
-  { icon: ShoppingBasket, label: 'Carrinhos Abandonados', path: '/admin/abandoned-carts' },
-  { icon: FileText, label: 'Orçamentos', path: '/admin/orcamentos' },
-  { icon: Star, label: 'Avaliações', path: '/admin/reviews', requireAdmin: true },
-  { icon: Tag, label: 'Cupons', path: '/admin/coupons', requireAdmin: true },
-  { icon: Package, label: 'Combos', path: '/admin/combos', requireAdmin: true },
-  { icon: Target, label: 'Compre Junto', path: '/admin/upsells', requireAdmin: true },
-  { icon: Truck, label: 'Frete', path: '/admin/shipping', requireAdmin: true },
-  { icon: ImageIcon, label: 'Banners', path: '/admin/banners', requireAdmin: true },
-  { icon: BarChart3, label: 'Relatórios', path: '/admin/reports' },
-  { icon: Sparkles, label: 'Assistente IA', path: '/admin/assistente' },
-  { icon: BrainCircuit, label: 'Analytics IA', path: '/admin/analytics', requireAdmin: true },
-  { icon: Users, label: 'Usuários', path: '/admin/users', requireAdmin: true },
-  { icon: History, label: 'Histórico', path: '/admin/audit-logs', requireAdmin: true },
-  { icon: Upload, label: 'Importar CSV', path: '/admin/importar-csv', requireAdmin: true },
-  { icon: Upload, label: 'Importar Legado', path: '/admin/importar-legado', requireAdmin: true },
-];
-
-const settingsItems = [
-  { icon: Target, label: 'Metas de Vendas', path: '/admin/settings' },
-  { icon: Settings, label: 'Configurações', path: '/admin/settings' },
-];
-
 const AdminLayout = ({ children }: AdminLayoutProps) => {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { profile, roles, signOut, isAdmin, userStore } = useAuth();
+  const { profile, roles, signOut, isAdmin, userStore, allowedMenus } = useAuth();
+
+  // Filter menu items: admins see everything, others see only allowed menus
+  const hasMenuAccess = (key: string) => {
+    if (isAdmin) return true;
+    if (allowedMenus.length === 0) return true; // no restrictions set = show all role-based defaults
+    return allowedMenus.includes(key);
+  };
 
   const handleSignOut = async () => {
     await signOut();
@@ -102,8 +58,9 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
       .slice(0, 2);
   };
 
-  const NavItem = ({ icon: Icon, label, path, requireAdmin }: typeof navItems[0]) => {
+  const NavItem = ({ icon: Icon, label, path, menuKey, requireAdmin }: typeof navItems[0]) => {
     if (requireAdmin && !isAdmin) return null;
+    if (!hasMenuAccess(menuKey)) return null;
     
     const isActive = location.pathname === path;
     
@@ -171,7 +128,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
       {/* Navigation */}
       <div className="flex-1 overflow-y-auto py-4 px-2 space-y-1">
         {navItems.map((item) => (
-          <NavItem key={item.path} {...item} />
+          <NavItem key={item.menuKey} {...item} />
         ))}
 
         <Separator className="my-4 bg-sidebar-border" />
@@ -184,7 +141,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
         
         <div className="space-y-1 mt-2">
           {settingsItems.map((item) => (
-            <NavItem key={item.path} {...item} />
+            <NavItem key={item.menuKey} {...item} />
           ))}
         </div>
       </div>

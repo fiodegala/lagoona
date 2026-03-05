@@ -23,6 +23,7 @@ interface AuthContextType {
   session: Session | null;
   profile: Profile | null;
   roles: AppRole[];
+  allowedMenus: string[];
   userStore: UserStore | null;
   userStoreId: string | null;
   accessibleStoreIds: string[];
@@ -57,6 +58,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [roles, setRoles] = useState<AppRole[]>([]);
   const [userStore, setUserStore] = useState<UserStore | null>(null);
   const [accessibleStoreIds, setAccessibleStoreIds] = useState<string[]>([]);
+  const [allowedMenus, setAllowedMenus] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchUserData = async (userId: string) => {
@@ -70,6 +72,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (profileData) {
         setProfile(profileData as Profile);
+      }
+
+      // Fetch menu permissions
+      const { data: menuPerms } = await supabase
+        .from('user_menu_permissions')
+        .select('allowed_menus')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (menuPerms?.allowed_menus) {
+        setAllowedMenus(menuPerms.allowed_menus as string[]);
+      } else {
+        setAllowedMenus([]);
       }
 
       // Fetch roles with store_id
@@ -129,6 +144,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setProfile(null);
           setRoles([]);
           setUserStore(null);
+          setAllowedMenus([]);
         }
         setIsLoading(false);
       }
@@ -170,9 +186,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(null);
     setSession(null);
     setProfile(null);
-          setRoles([]);
-          setUserStore(null);
-          setAccessibleStoreIds([]);
+    setRoles([]);
+    setUserStore(null);
+    setAccessibleStoreIds([]);
+    setAllowedMenus([]);
   };
 
   const hasRole = (role: AppRole) => roles.includes(role);
@@ -192,6 +209,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         session,
         profile,
         roles,
+        allowedMenus,
         userStore,
         userStoreId,
         accessibleStoreIds,

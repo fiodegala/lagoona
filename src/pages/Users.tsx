@@ -8,6 +8,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { allMenuItems } from '@/config/menuItems';
 import {
   Table,
   TableBody,
@@ -96,6 +99,7 @@ const UsersPage = () => {
     fullName: '',
     role: 'seller' as AppRole,
     store_id: '' as string,
+    allowed_menus: [] as string[],
   });
 
   // Fetch stores
@@ -170,11 +174,11 @@ const UsersPage = () => {
           fullName: data.fullName,
           role: data.role,
           store_id: data.store_id || null,
+          allowed_menus: data.allowed_menus,
         },
       });
 
       if (fnError) {
-        // Try to parse error from response body or fnError context
         let errorMsg = 'Erro ao criar usuário';
         try {
           if (responseData?.error) {
@@ -209,13 +213,20 @@ const UsersPage = () => {
   });
 
   const updateRoleMutation = useMutation({
-    mutationFn: async ({ userId, role, store_id }: { userId: string; role: AppRole; store_id: string | null }) => {
+    mutationFn: async ({ userId, role, store_id, allowed_menus }: { userId: string; role: AppRole; store_id: string | null; allowed_menus: string[] }) => {
       const { error } = await supabase
         .from('user_roles')
         .update({ role, store_id } as never)
         .eq('user_id', userId);
 
       if (error) throw error;
+
+      // Upsert menu permissions
+      const { error: menuError } = await supabase
+        .from('user_menu_permissions')
+        .upsert({ user_id: userId, allowed_menus, updated_at: new Date().toISOString() } as never, { onConflict: 'user_id' });
+
+      if (menuError) throw menuError;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users-with-roles'] });
@@ -251,15 +262,22 @@ const UsersPage = () => {
     return <Navigate to="/" replace />;
   }
 
-  const handleOpenForm = (userRole?: UserWithRole) => {
+  const handleOpenForm = async (userRole?: UserWithRole) => {
     if (userRole) {
       setSelectedUser(userRole);
+      // Fetch existing menu permissions
+      const { data: menuPerms } = await supabase
+        .from('user_menu_permissions')
+        .select('allowed_menus')
+        .eq('user_id', userRole.user_id)
+        .maybeSingle();
       setFormData({
         email: '',
         password: '',
         fullName: userRole.profile?.full_name || '',
         role: userRole.role,
         store_id: userRole.store_id || '',
+        allowed_menus: (menuPerms?.allowed_menus as string[]) || [],
       });
     } else {
       setSelectedUser(null);
@@ -269,6 +287,7 @@ const UsersPage = () => {
         fullName: '',
         role: 'seller',
         store_id: '',
+        allowed_menus: [],
       });
     }
     setIsFormOpen(true);
@@ -283,6 +302,7 @@ const UsersPage = () => {
       fullName: '',
       role: 'seller',
       store_id: '',
+      allowed_menus: [],
     });
   };
 
@@ -290,7 +310,7 @@ const UsersPage = () => {
     e.preventDefault();
     
     if (selectedUser) {
-      updateRoleMutation.mutate({ userId: selectedUser.user_id, role: formData.role, store_id: formData.store_id || null });
+      updateRoleMutation.mutate({ userId: selectedUser.user_id, role: formData.role, store_id: formData.store_id || null, allowed_menus: formData.allowed_menus });
     } else {
       if (!formData.email || !formData.password || !formData.fullName) {
         toast({ title: 'Preencha todos os campos', variant: 'destructive' });
@@ -563,6 +583,56 @@ const UsersPage = () => {
                 </Select>
               </div>
 
+              {/* Menu Permissions */}
+              {formData.role !== 'admin' && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label>Acesso ao Menu</Label>
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setFormData({ ...formData, allowed_menus: allMenuItems.map(i => i.menuKey) })}
+                      >
+                        Marcar todos
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setFormData({ ...formData, allowed_menus: [] })}
+                      >
+                        Desmarcar
+                      </Button>
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Selecione quais páginas este usuário poderá acessar. Se nenhuma for selecionada, o acesso padrão da role será aplicado.
+                  </p>
+                  <ScrollArea className="h-[200px] rounded-md border p-3">
+                    <div className="grid gap-2">
+                      {allMenuItems.map((item) => (
+                        <label key={item.menuKey} className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 rounded px-2 py-1">
+                          <Checkbox
+                            checked={formData.allowed_menus.includes(item.menuKey)}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setFormData({ ...formData, allowed_menus: [...formData.allowed_menus, item.menuKey] });
+                              } else {
+                                setFormData({ ...formData, allowed_menus: formData.allowed_menus.filter(k => k !== item.menuKey) });
+                              }
+                            }}
+                          />
+                          <item.icon className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm">{item.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                </div>
+              )}
+
               {/* Permissions Preview */}
               <div className="p-4 bg-muted/50 rounded-lg space-y-2">
                 <div className="text-sm font-medium mb-2">Permissões de {roleLabels[formData.role]}:</div>
@@ -570,38 +640,15 @@ const UsersPage = () => {
                   {formData.role === 'admin' && (
                     <>
                       <div className="flex items-center gap-2 text-primary">✓ Controle total do sistema</div>
-                      <div className="flex items-center gap-2 text-primary">✓ Criar e gerenciar usuários</div>
-                      <div className="flex items-center gap-2 text-primary">✓ Editar produtos e categorias</div>
-                      <div className="flex items-center gap-2 text-primary">✓ Definir metas de vendas</div>
-                      <div className="flex items-center gap-2 text-primary">✓ Acesso ao PDV</div>
+                      <div className="flex items-center gap-2 text-primary">✓ Acesso a todos os menus</div>
                     </>
                   )}
-                  {formData.role === 'manager' && (
-                    <>
-                      <div className="flex items-center gap-2 text-primary">✓ Editar produtos e categorias</div>
-                      <div className="flex items-center gap-2 text-primary">✓ Definir metas de vendas</div>
-                      <div className="flex items-center gap-2 text-primary">✓ Gerenciar pedidos</div>
-                      <div className="flex items-center gap-2 text-primary">✓ Acesso ao PDV</div>
-                      <div className="flex items-center gap-2 text-muted-foreground">✗ Criar usuários</div>
-                    </>
-                  )}
-                  {formData.role === 'support' && (
-                    <>
-                      <div className="flex items-center gap-2 text-primary">✓ Visualizar pedidos</div>
-                      <div className="flex items-center gap-2 text-primary">✓ Gerenciar clientes</div>
-                      <div className="flex items-center gap-2 text-primary">✓ Acesso ao PDV</div>
-                      <div className="flex items-center gap-2 text-muted-foreground">✗ Editar produtos</div>
-                      <div className="flex items-center gap-2 text-muted-foreground">✗ Definir metas</div>
-                    </>
-                  )}
-                  {formData.role === 'seller' && (
-                    <>
-                      <div className="flex items-center gap-2 text-primary">✓ Acesso ao PDV</div>
-                      <div className="flex items-center gap-2 text-primary">✓ Realizar vendas</div>
-                      <div className="flex items-center gap-2 text-muted-foreground">✗ Criar usuários</div>
-                      <div className="flex items-center gap-2 text-muted-foreground">✗ Editar produtos</div>
-                      <div className="flex items-center gap-2 text-muted-foreground">✗ Definir metas</div>
-                    </>
+                  {formData.role !== 'admin' && (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      {formData.allowed_menus.length > 0
+                        ? `${formData.allowed_menus.length} menu(s) selecionado(s)`
+                        : 'Acesso padrão da role (todos os menus permitidos)'}
+                    </div>
                   )}
                 </div>
               </div>
