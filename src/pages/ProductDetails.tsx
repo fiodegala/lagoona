@@ -34,7 +34,7 @@ const ProductDetails = () => {
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isWishlisted, setIsWishlisted] = useState(false);
-  const [showVideoPopup, setShowVideoPopup] = useState(false);
+  
   const { addItem } = useCart();
 
   useEffect(() => {
