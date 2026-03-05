@@ -313,6 +313,8 @@ const POSPage = () => {
         image_url: item.image_url || null,
         quantity: item.quantity,
         unit_price: item.unit_price,
+        original_price: item.original_price,
+        is_promotional: item.is_promotional || false,
         discount_type: item.discount_type,
         discount_value: item.discount_value,
         discount_amount: item.discount_amount,
