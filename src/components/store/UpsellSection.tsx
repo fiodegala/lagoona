@@ -200,16 +200,22 @@ const UpsellSection = ({ currentProduct, currentPrice, currentVariation, categor
 
   const handleBuyTogether = useCallback(() => {
     const discountMultiplier = 1 - discountPercent / 100;
-    const currentVarLabel = currentVariation?.attribute_values?.map(av => av.value).join(' / ');
-    addItem({
-      id: currentVariation?.id || currentProduct.id,
-      productId: currentProduct.id,
-      name: currentVarLabel ? `${currentProduct.name} - ${currentVarLabel}` : currentProduct.name,
-      price: currentPrice * discountMultiplier,
-      imageUrl: currentVariation?.image_url || currentProduct.image_url || undefined,
-      stock: currentVariation?.stock ?? currentProduct.stock,
-      quantity: 1,
-    });
+    const mainItemId = currentVariation?.id || currentProduct.id;
+    const mainAlreadyInCart = items.some(item => item.id === mainItemId);
+
+    if (!mainAlreadyInCart) {
+      const currentVarLabel = currentVariation?.attribute_values?.map(av => av.value).join(' / ');
+      addItem({
+        id: mainItemId,
+        productId: currentProduct.id,
+        name: currentVarLabel ? `${currentProduct.name} - ${currentVarLabel}` : currentProduct.name,
+        price: currentPrice * discountMultiplier,
+        imageUrl: currentVariation?.image_url || currentProduct.image_url || undefined,
+        stock: currentVariation?.stock ?? currentProduct.stock,
+        quantity: 1,
+      });
+    }
+
     selectedProducts.forEach(({ product, variation, price }) => {
       const variationLabel = variation?.attribute_values?.map(av => av.value).join(' / ');
       const discountedPrice = price * discountMultiplier;
@@ -223,10 +229,12 @@ const UpsellSection = ({ currentProduct, currentPrice, currentVariation, categor
         quantity: 1,
       });
     });
-    toast.success(`${selectedProducts.length + 1} produtos adicionados ao carrinho com ${discountPercent}% de desconto!`, {
+
+    const addedCount = mainAlreadyInCart ? selectedProducts.length : selectedProducts.length + 1;
+    toast.success(`${addedCount} produto${addedCount > 1 ? 's' : ''} adicionado${addedCount > 1 ? 's' : ''} ao carrinho com ${discountPercent}% de desconto!`, {
       action: { label: 'Ver carrinho', onClick: () => window.location.href = '/carrinho' },
     });
-  }, [discountPercent, currentVariation, currentProduct, currentPrice, selectedProducts, addItem]);
+  }, [discountPercent, currentVariation, currentProduct, currentPrice, selectedProducts, addItem, items]);
 
   // Notify parent about selection changes
   const buyTogetherRef = useRef(handleBuyTogether);
