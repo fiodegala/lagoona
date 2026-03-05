@@ -185,7 +185,7 @@ const ProductImageGallery = ({
         src={mediumImageUrl(currentItem.url)}
         alt={`${productName} - Imagem ${currentIndex + 1}`}
         decoding="async"
-        className="w-full h-full object-cover"
+        className="w-full h-full object-contain"
       />
     );
   };
@@ -231,7 +231,7 @@ const ProductImageGallery = ({
       <div className="relative group">
         <div
           ref={imageContainerRef}
-          className="aspect-[4/5] rounded-xl overflow-hidden bg-muted border relative cursor-pointer"
+          className="aspect-square rounded-xl overflow-hidden bg-muted border relative cursor-pointer"
           onClick={!isCurrentVideo ? () => setIsLightboxOpen(true) : undefined}
         >
           {renderMainContent()}
