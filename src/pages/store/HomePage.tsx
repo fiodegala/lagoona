@@ -142,8 +142,8 @@ const HomePage = () => {
                 <Link
                   key={banner.id}
                   to={banner.link_url}
-                  className="absolute inset-0 transition-opacity duration-700 block"
-                  style={{ opacity: index === currentHeroBanner ? 1 : 0, pointerEvents: index === currentHeroBanner ? 'auto' : 'none' }}
+                  className="absolute inset-0 transition-opacity duration-700 block cursor-pointer"
+                  style={{ opacity: index === currentHeroBanner ? 1 : 0, pointerEvents: index === currentHeroBanner ? 'auto' : 'none', zIndex: index === currentHeroBanner ? 1 : 0 }}
                 >
                   {bannerContent}
                 </Link>
@@ -151,7 +151,7 @@ const HomePage = () => {
                 <div
                   key={banner.id}
                   className="absolute inset-0 transition-opacity duration-700"
-                  style={{ opacity: index === currentHeroBanner ? 1 : 0 }}
+                  style={{ opacity: index === currentHeroBanner ? 1 : 0, zIndex: index === currentHeroBanner ? 1 : 0 }}
                 >
                   {bannerContent}
                 </div>
