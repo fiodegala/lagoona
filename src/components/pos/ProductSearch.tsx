@@ -268,20 +268,22 @@ const ProductSearch = ({ onProductSelect, isOnline }: ProductSearchProps) => {
             </div>
           ) : results.length > 0 ? (
             <div className="py-1">
-              {results.map((product) => (
+              {results.map((product) => {
+                const display = getDisplayInfo(product);
+                return (
                 <button
                   key={product.id}
                   className={cn(
                     'w-full px-4 py-3 flex items-center gap-4 hover:bg-accent text-left',
-                    product.stock <= 0 && 'opacity-50'
+                    display.stock <= 0 && 'opacity-50'
                   )}
                   onClick={() => handleProductClick(product)}
-                  disabled={product.stock <= 0}
+                  disabled={display.stock <= 0}
                 >
-                  {product.image_url ? (
+                  {display.image ? (
                     <img
-                      src={product.image_url}
-                      alt={product.name}
+                      src={display.image}
+                      alt={display.label}
                       className="h-12 w-12 object-cover rounded"
                     />
                   ) : (
@@ -290,10 +292,10 @@ const ProductSearch = ({ onProductSelect, isOnline }: ProductSearchProps) => {
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
-                    <div className="font-medium truncate">{product.name}</div>
+                    <div className="font-medium truncate">{display.label}</div>
                     <div className="text-sm text-muted-foreground flex items-center gap-2">
-                      {product.barcode && (
-                        <span className="font-mono">{product.barcode}</span>
+                      {(display.sku || product.barcode) && (
+                        <span className="font-mono">{display.sku || product.barcode}</span>
                       )}
                       {product.category_name && (
                         <span>• {product.category_name}</span>
@@ -302,21 +304,22 @@ const ProductSearch = ({ onProductSelect, isOnline }: ProductSearchProps) => {
                   </div>
                   <div className="text-right">
                     <div className="font-semibold text-primary">
-                      {formatCurrency(product.price)}
+                      {formatCurrency(display.price)}
                     </div>
                     <div className={cn(
                       'text-sm',
-                      product.stock <= 0 
+                      display.stock <= 0 
                         ? 'text-destructive' 
-                        : product.stock <= 5 
+                        : display.stock <= 5 
                           ? 'text-orange-500' 
                           : 'text-muted-foreground'
                     )}>
-                      {product.stock <= 0 ? 'Sem estoque' : `${product.stock} em estoque`}
+                      {display.stock <= 0 ? 'Sem estoque' : `${display.stock} em estoque`}
                     </div>
                   </div>
                 </button>
-              ))}
+                );
+              })}
             </div>
           ) : query ? (
             <div className="p-4 text-center text-muted-foreground">
