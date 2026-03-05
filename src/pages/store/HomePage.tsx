@@ -15,6 +15,20 @@ const DealsCountdownSection = lazy(() => import('@/components/store/DealsCountdo
 const VideoTestimonialsSection = lazy(() => import('@/components/store/VideoTestimonialsSection'));
 const FeaturedProductSection = lazy(() => import('@/components/store/FeaturedProductSection'));
 
+// Normalize banner link_url: strip origin for internal links so React Router works
+const normalizeBannerUrl = (url: string | null): string | null => {
+  if (!url) return null;
+  try {
+    const parsed = new URL(url, window.location.origin);
+    if (parsed.origin === window.location.origin) {
+      return parsed.pathname + parsed.search + parsed.hash;
+    }
+  } catch {
+    // already a relative path
+  }
+  return url;
+};
+
 const HomePage = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -141,7 +155,7 @@ const HomePage = () => {
               return banner.link_url ? (
                 <Link
                   key={banner.id}
-                  to={banner.link_url}
+                  to={normalizeBannerUrl(banner.link_url) || '/loja'}
                   className="absolute inset-0 transition-opacity duration-700 block cursor-pointer"
                   style={{ opacity: index === currentHeroBanner ? 1 : 0, pointerEvents: index === currentHeroBanner ? 'auto' : 'none', zIndex: index === currentHeroBanner ? 1 : 0 }}
                 >
@@ -331,7 +345,7 @@ const HomePage = () => {
               {midBanners.map((banner, index) => (
                 <Link
                   key={banner.id}
-                  to={banner.link_url || '/loja'}
+                  to={normalizeBannerUrl(banner.link_url) || '/loja'}
                   className="absolute inset-0 transition-opacity duration-700"
                   style={{ opacity: index === currentMidBanner ? 1 : 0, pointerEvents: index === currentMidBanner ? 'auto' : 'none' }}
                 >
@@ -436,7 +450,7 @@ const HomePage = () => {
               {promoBanners.map((banner) => (
                 <Link
                   key={banner.id}
-                  to={banner.link_url || '/loja'}
+                  to={normalizeBannerUrl(banner.link_url) || '/loja'}
                   className="group relative overflow-hidden rounded-xl aspect-[2/1] block"
                 >
                   <img
