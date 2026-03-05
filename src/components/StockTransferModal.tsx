@@ -299,7 +299,7 @@ const StockTransferModal: React.FC<Props> = ({ open, onOpenChange, stores, onTra
     variationId: string | null,
     qty: number
   ) => {
-    // Decrease from source
+    // Decrease from source — ALWAYS, even for online destinations
     const sourceQuery = supabase
       .from('store_stock')
       .select('id, quantity')
@@ -309,11 +309,22 @@ const StockTransferModal: React.FC<Props> = ({ open, onOpenChange, stores, onTra
     else sourceQuery.is('variation_id', null);
 
     const { data: source } = await sourceQuery.maybeSingle();
-    if (source) {
-      await supabase
-        .from('store_stock')
-        .update({ quantity: Math.max(0, source.quantity - qty), updated_at: new Date().toISOString() } as any)
-        .eq('id', source.id);
+
+    if (!source) {
+      throw new Error('Registro de estoque não encontrado na loja de origem. Verifique se o produto possui estoque cadastrado.');
+    }
+
+    if (source.quantity < qty) {
+      throw new Error(`Estoque insuficiente na origem. Disponível: ${source.quantity}, solicitado: ${qty}`);
+    }
+
+    const { error: updateError } = await supabase
+      .from('store_stock')
+      .update({ quantity: source.quantity - qty, updated_at: new Date().toISOString() } as any)
+      .eq('id', source.id);
+
+    if (updateError) {
+      throw new Error('Falha ao atualizar estoque da origem: ' + updateError.message);
     }
 
     // Check if destination is an online/website store (aggregated stock)
