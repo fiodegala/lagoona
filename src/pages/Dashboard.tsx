@@ -600,6 +600,70 @@ const Dashboard = () => {
     { name: 'Cancelados', value: stats.cancelledOrders, color: 'hsl(var(--destructive))' },
   ].filter(d => d.value > 0) : [];
 
+  // Promotional sales stats
+  const promotionalStats = useMemo(() => {
+    const promoItems: { name: string; qty: number; totalValue: number; paymentMethod: string; source: 'pdv' | 'site' }[] = [];
+
+    filteredPOSSales.forEach(sale => {
+      (sale.items || []).forEach((item: any) => {
+        if (item.is_promotional) {
+          promoItems.push({
+            name: item.name || 'Produto',
+            qty: item.quantity || item.qty || 1,
+            totalValue: item.total || (item.unit_price || 0) * (item.quantity || item.qty || 1),
+            paymentMethod: sale.payment_method,
+            source: 'pdv',
+          });
+        }
+      });
+    });
+
+    filteredOrders.forEach(order => {
+      if (order.status === 'cancelled') return;
+      (order.items || []).forEach((item: any) => {
+        if (item.is_promotional) {
+          promoItems.push({
+            name: item.name || 'Produto',
+            qty: item.quantity || item.qty || 1,
+            totalValue: (item.price || 0) * (item.quantity || item.qty || 1),
+            paymentMethod: order.payment_method || 'online',
+            source: 'site',
+          });
+        }
+      });
+    });
+
+    const byProduct: Record<string, { qty: number; total: number }> = {};
+    promoItems.forEach(item => {
+      if (!byProduct[item.name]) byProduct[item.name] = { qty: 0, total: 0 };
+      byProduct[item.name].qty += item.qty;
+      byProduct[item.name].total += item.totalValue;
+    });
+
+    const PAYMENT_LABELS: Record<string, string> = {
+      cash: 'Dinheiro', card: 'Cartão', pix: 'PIX', mixed: 'Misto', online: 'Online',
+      credit_card: 'Cartão', debit_card: 'Cartão', boleto: 'Boleto',
+    };
+    const byPayment: Record<string, { count: number; total: number }> = {};
+    promoItems.forEach(item => {
+      const label = PAYMENT_LABELS[item.paymentMethod] || item.paymentMethod;
+      if (!byPayment[label]) byPayment[label] = { count: 0, total: 0 };
+      byPayment[label].count += item.qty;
+      byPayment[label].total += item.totalValue;
+    });
+
+    return {
+      totalQty: promoItems.reduce((s, i) => s + i.qty, 0),
+      totalValue: promoItems.reduce((s, i) => s + i.totalValue, 0),
+      products: Object.entries(byProduct)
+        .map(([name, data]) => ({ name, ...data }))
+        .sort((a, b) => b.total - a.total),
+      payments: Object.entries(byPayment)
+        .map(([method, data]) => ({ method, ...data }))
+        .sort((a, b) => b.total - a.total),
+    };
+  }, [filteredPOSSales, filteredOrders]);
+
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
   };
