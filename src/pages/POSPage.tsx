@@ -562,7 +562,8 @@ const POSPage = () => {
                     {isCompleted ? <Check className="h-4 w-4" /> : index + 1}
                   </div>
                   <span className={cn('text-sm font-medium hidden sm:block', isCurrent ? 'text-primary' : isCompleted ? 'text-foreground' : 'text-muted-foreground')}>
-                    {step.label}
+                    {step.key === 'payment' && isQuoteMode ? 'Orçamento' : step.label}
+                  </span>
                   </span>
                   {index < STEPS.length - 1 && <div className={cn('w-8 h-0.5 mx-2', isCompleted ? 'bg-primary' : 'bg-muted-foreground/20')} />}
                 </div>
