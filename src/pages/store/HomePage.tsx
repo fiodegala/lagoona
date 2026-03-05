@@ -69,6 +69,15 @@ const HomePage = () => {
     return () => clearInterval(interval);
   }, [heroBanners.length]);
 
+  // Auto-rotate mid banners
+  useEffect(() => {
+    if (midBanners.length <= 1) return;
+    const interval = setInterval(() => {
+      setCurrentMidBanner(prev => (prev + 1) % midBanners.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [midBanners.length]);
+
   const newProducts = [...products].sort((a, b) =>
     new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
   );
