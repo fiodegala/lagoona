@@ -444,8 +444,19 @@ const Quotes = () => {
           )}
         </DialogContent>
       </Dialog>
+      <QuoteEditModal
+        quote={editQuote as any}
+        open={!!editQuote}
+        onOpenChange={open => !open && setEditQuote(null)}
+        onSaved={() => {
+          fetchQuotes();
+          setEditQuote(null);
+        }}
+      />
     </AdminLayout>
   );
 };
+
+export default Quotes;
 
 export default Quotes;
