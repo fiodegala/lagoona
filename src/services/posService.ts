@@ -390,36 +390,67 @@ export const posService = {
     return this.createSale(saleData);
   },
 
-  // Helper: enrich products with variation attribute labels
+  // Helper: enrich products with variation attribute labels and store_stock
   async _enrichWithLabels(products: any[]): Promise<any[]> {
     const allVariationIds = products.flatMap((p: any) =>
       (p.product_variations || []).map((v: any) => v.id)
     );
-    if (allVariationIds.length === 0) return products;
+    const allProductIds = products.map((p: any) => p.id);
+    if (allVariationIds.length === 0 && allProductIds.length === 0) return products;
 
-    const { data: vvData } = await supabase
-      .from('product_variation_values')
-      .select('variation_id, attribute_value_id, product_attribute_values(value, product_attributes(name))')
-      .in('variation_id', allVariationIds);
+    // Fetch labels and store_stock in parallel
+    const [vvRes, stockRes] = await Promise.all([
+      allVariationIds.length > 0
+        ? supabase
+            .from('product_variation_values')
+            .select('variation_id, attribute_value_id, product_attribute_values(value, product_attributes(name))')
+            .in('variation_id', allVariationIds)
+        : Promise.resolve({ data: [] }),
+      supabase
+        .from('store_stock')
+        .select('product_id, variation_id, quantity')
+        .in('product_id', allProductIds),
+    ]);
 
     const labels = new Map<string, string>();
-    for (const vv of vvData || []) {
-      const attrValue = vv.product_attribute_values as any;
+    for (const vv of vvRes.data || []) {
+      const attrValue = (vv as any).product_attribute_values as any;
       if (attrValue) {
         const attrName = attrValue.product_attributes?.name || '';
         const val = attrValue.value || '';
-        const existing = labels.get(vv.variation_id);
-        labels.set(vv.variation_id, existing ? `${existing} / ${val}` : `${attrName}: ${val}`);
+        const existing = labels.get((vv as any).variation_id);
+        labels.set((vv as any).variation_id, existing ? `${existing} / ${val}` : `${attrName}: ${val}`);
       }
     }
 
-    return products.map((p: any) => ({
-      ...p,
-      product_variations: (p.product_variations || []).map((v: any) => ({
+    // Build stock maps from store_stock
+    const stockByVariation = new Map<string, number>();
+    const stockByProduct = new Map<string, number>();
+    for (const s of (stockRes.data || []) as any[]) {
+      if (s.variation_id) {
+        stockByVariation.set(s.variation_id, (stockByVariation.get(s.variation_id) || 0) + s.quantity);
+      } else {
+        stockByProduct.set(s.product_id, (stockByProduct.get(s.product_id) || 0) + s.quantity);
+      }
+    }
+
+    return products.map((p: any) => {
+      const variations = (p.product_variations || []).map((v: any) => ({
         ...v,
+        stock: stockByVariation.get(v.id) ?? v.stock ?? 0,
         label: labels.get(v.id) || v.sku || v.id.slice(0, 8),
-      })),
-    }));
+      }));
+
+      const totalStock = variations.length > 0
+        ? variations.reduce((sum: number, v: any) => sum + v.stock, 0)
+        : (stockByProduct.get(p.id) ?? p.stock ?? 0);
+
+      return {
+        ...p,
+        stock: totalStock,
+        product_variations: variations,
+      };
+    });
   },
 
   // Product lookup - returns product and optionally the matched variation ID
