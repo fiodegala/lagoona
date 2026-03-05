@@ -323,8 +323,9 @@ const Sales = () => {
                 <TableBody>
                   {filteredSales.map(sale => {
                     const items = saleItems(sale.items);
+                    const isCancelled = (sale as any).status === 'cancelled';
                     return (
-                      <TableRow key={sale.id}>
+                      <TableRow key={sale.id} className={isCancelled ? 'opacity-60' : ''}>
                         <TableCell className="font-mono text-xs">{sale.id.slice(0, 8)}...</TableCell>
                         <TableCell>
                           <div>
@@ -333,6 +334,13 @@ const Sales = () => {
                               <p className="text-xs text-muted-foreground">{sale.customer_document}</p>
                             )}
                           </div>
+                        </TableCell>
+                        <TableCell>
+                          {isCancelled ? (
+                            <Badge variant="destructive" className="text-xs">Cancelada</Badge>
+                          ) : (
+                            <Badge variant="default" className="text-xs bg-green-600">Concluída</Badge>
+                          )}
                         </TableCell>
                         <TableCell>
                           <Badge variant="secondary" className="text-xs">
@@ -347,7 +355,9 @@ const Sales = () => {
                             <span className="text-muted-foreground">—</span>
                           )}
                         </TableCell>
-                        <TableCell className="font-medium">R$ {Number(sale.total).toFixed(2)}</TableCell>
+                        <TableCell className={`font-medium ${isCancelled ? 'line-through text-muted-foreground' : ''}`}>
+                          R$ {Number(sale.total).toFixed(2)}
+                        </TableCell>
                         <TableCell>
                           <Badge variant="outline" className="text-xs">
                             {paymentMethodLabels[sale.payment_method] || sale.payment_method}
@@ -360,10 +370,18 @@ const Sales = () => {
                           {format(new Date(sale.created_at), "dd/MM/yy HH:mm", { locale: ptBR })}
                         </TableCell>
                         <TableCell>
-                          <Button variant="outline" size="sm" onClick={() => openSaleDetail(sale)}>
-                            <Eye className="h-3 w-3 mr-1" />
-                            Detalhes
-                          </Button>
+                          <div className="flex items-center gap-1">
+                            <Button variant="outline" size="sm" onClick={() => openSaleDetail(sale)}>
+                              <Eye className="h-3 w-3 mr-1" />
+                              Detalhes
+                            </Button>
+                            {canCancel && !isCancelled && (
+                              <Button variant="destructive" size="sm" onClick={() => setCancelSale(sale)}>
+                                <Ban className="h-3 w-3 mr-1" />
+                                Cancelar
+                              </Button>
+                            )}
+                          </div>
                         </TableCell>
                       </TableRow>
                     );
