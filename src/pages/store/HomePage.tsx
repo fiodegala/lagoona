@@ -1,4 +1,4 @@
-import { useEffect, useState, lazy, Suspense, useCallback } from 'react';
+import { useEffect, useState, lazy, Suspense, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Loader2, ShoppingBag, Truck, RefreshCw, Shield, MessageCircle, TrendingUp, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -109,6 +109,8 @@ const HomePage = () => {
   const dealProducts = products.filter(p => (p as any).promotional_price && (p as any).promotional_price < p.price);
 
   const categoryIcons = ['👕', '👖', '👟', '👜', '💍', '🎮', '📱', '🏠'];
+
+  const lancamentosStartX = useRef(0);
 
   const heroSwipe = useSwipe({
     onSwipeLeft: useCallback(() => setCurrentHeroBanner(prev => (prev + 1) % heroBanners.length), [heroBanners.length]),
@@ -299,7 +301,16 @@ const HomePage = () => {
             <div className="relative">
               <div
                 id="lancamentos-carousel"
-                className="flex gap-4 md:gap-6 overflow-hidden -mx-4 px-4"
+                className="flex gap-4 md:gap-6 overflow-x-auto scrollbar-none -mx-4 px-4 touch-pan-y"
+                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                onTouchStart={(e) => { lancamentosStartX.current = e.touches[0].clientX; }}
+                onTouchEnd={(e) => {
+                  const delta = e.changedTouches[0].clientX - lancamentosStartX.current;
+                  if (Math.abs(delta) > 50) {
+                    const el = document.getElementById('lancamentos-carousel');
+                    if (el) el.scrollBy({ left: delta < 0 ? 300 : -300, behavior: 'smooth' });
+                  }
+                }}
               >
                 {newProducts.slice(0, 15).map((product) => (
                   <div key={product.id} className="shrink-0 w-[160px] sm:w-[200px] md:w-[220px] lg:w-[240px]">
