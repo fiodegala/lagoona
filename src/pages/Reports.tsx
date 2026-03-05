@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   BarChart3, TrendingUp, Users, ShoppingCart, Package,
   Calendar, CalendarRange, DollarSign, ArrowUpRight, ArrowDownRight,
-  Download, FileSpreadsheet, FileText
+  Download, FileSpreadsheet, FileText, Tag
 } from 'lucide-react';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
