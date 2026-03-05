@@ -122,7 +122,7 @@ const Stock = () => {
         supabase.from('stores').select('id, name, slug, type').eq('is_active', true).order('name'),
         supabase.from('products').select('id, name, image_url, price, barcode, stock, min_stock, is_active, categories(name)').order('name'),
         fetchAllStock(),
-        supabase.from('product_variations').select('id, product_id').eq('is_active', true),
+        supabase.from('product_variations').select('id, product_id, barcode, sku').eq('is_active', true),
       ]);
 
       const storesList = storesRes.data || [];
