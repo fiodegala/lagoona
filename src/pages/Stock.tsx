@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { cn } from '@/lib/utils';
 import AdminLayout from '@/components/AdminLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -57,7 +58,7 @@ interface StockProduct {
   stores: Record<string, number>;
   total: number;
   has_variations: boolean;
-  variation_codes: string[];
+  variation_codes: { variation_id: string; code: string }[];
 }
 
 interface VariationDetail {
@@ -132,12 +133,12 @@ const Stock = () => {
 
       // Build set of products that have variations + map of variation barcodes/SKUs per product
       const productsWithVariations = new Set<string>();
-      const variationCodesMap: Record<string, string[]> = {};
+      const variationCodesMap: Record<string, { variation_id: string; code: string }[]> = {};
       (variationsRes.data || []).forEach((v: any) => {
         productsWithVariations.add(v.product_id);
         if (!variationCodesMap[v.product_id]) variationCodesMap[v.product_id] = [];
-        if (v.barcode) variationCodesMap[v.product_id].push(v.barcode.toLowerCase());
-        if (v.sku) variationCodesMap[v.product_id].push(v.sku.toLowerCase());
+        if (v.barcode) variationCodesMap[v.product_id].push({ variation_id: v.id, code: v.barcode.toLowerCase() });
+        if (v.sku) variationCodesMap[v.product_id].push({ variation_id: v.id, code: v.sku.toLowerCase() });
       });
 
       // Build stock maps: one for simple products (variation_id is null), one for variation-level
@@ -189,13 +190,26 @@ const Stock = () => {
     }
   };
 
+  // Compute which variation IDs match the current search
+  const matchedVariationIds = useMemo(() => {
+    if (!search || search.length < 2) return new Set<string>();
+    const s = search.toLowerCase();
+    const ids = new Set<string>();
+    products.forEach(p => {
+      p.variation_codes.forEach(vc => {
+        if (vc.code.includes(s)) ids.add(vc.variation_id);
+      });
+    });
+    return ids;
+  }, [products, search]);
+
   const filteredProducts = useMemo(() => {
     return products.filter(p => {
       const s = search.toLowerCase();
       const matchesSearch = !search || 
         p.name.toLowerCase().includes(s) ||
         p.barcode?.toLowerCase().includes(s) ||
-        p.variation_codes.some(code => code.includes(s));
+        p.variation_codes.some(vc => vc.code.includes(s));
 
       const matchesStatus = filterStatus === 'all' ||
         (filterStatus === 'in-stock' && p.total > 0) ||
@@ -206,6 +220,17 @@ const Stock = () => {
       return matchesSearch && matchesStatus;
     });
   }, [products, search, filterStatus]);
+
+  // Auto-expand product when search matches a variation code
+  useEffect(() => {
+    if (matchedVariationIds.size === 0) return;
+    const productToExpand = filteredProducts.find(p =>
+      p.has_variations && p.variation_codes.some(vc => matchedVariationIds.has(vc.variation_id))
+    );
+    if (productToExpand && expandedProductId !== productToExpand.id) {
+      toggleExpand(productToExpand);
+    }
+  }, [matchedVariationIds, filteredProducts]);
 
   const physicalStores = stores.filter(s => s.type === 'physical');
 
@@ -629,7 +654,7 @@ const Stock = () => {
                                               .map(av => av.value)
                                               .join(' / ') || '—';
                                             return (
-                                              <TableRow key={vd.variation.id} className="hover:bg-muted/30">
+                                              <TableRow key={vd.variation.id} className={cn("hover:bg-muted/30", matchedVariationIds.has(vd.variation.id) && "bg-primary/10 ring-1 ring-primary/30")}>
                                                 <TableCell className="py-1.5 text-sm font-medium">{label}</TableCell>
                                                 {physicalStores.map(store => (
                                                   <TableCell key={store.id} className="py-1.5 text-center">
