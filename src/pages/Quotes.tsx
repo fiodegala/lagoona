@@ -9,8 +9,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
+import QuoteEditModal from '@/components/QuoteEditModal';
 
-import { Search, FileText, Eye, Trash2, Loader2, Clock, User, CreditCard, Package, Printer, Share2 } from 'lucide-react';
+import { Search, FileText, Eye, Trash2, Loader2, Clock, User, CreditCard, Package, Printer, Share2, Pencil } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -132,6 +133,7 @@ const Quotes = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [selectedQuote, setSelectedQuote] = useState<Quote | null>(null);
+  const [editQuote, setEditQuote] = useState<Quote | null>(null);
 
   const fetchQuotes = async () => {
     setLoading(true);
@@ -223,6 +225,9 @@ const Quotes = () => {
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-1">
                               <Button variant="ghost" size="icon" onClick={() => setSelectedQuote(q)}><Eye className="h-4 w-4" /></Button>
+                              {q.status === 'pending' && (
+                                <Button variant="ghost" size="icon" onClick={() => setEditQuote(q)}><Pencil className="h-4 w-4" /></Button>
+                              )}
                               <Button variant="ghost" size="icon" onClick={() => handleDelete(q.id)} className="text-destructive"><Trash2 className="h-4 w-4" /></Button>
                             </div>
                           </TableCell>
@@ -247,6 +252,15 @@ const Quotes = () => {
             </DialogTitle>
             {selectedQuote && (
               <div className="flex gap-2">
+                {selectedQuote.status === 'pending' && (
+                  <Button variant="outline" size="sm" onClick={() => {
+                    setEditQuote(selectedQuote);
+                    setSelectedQuote(null);
+                  }} className="shrink-0">
+                    <Pencil className="h-4 w-4 mr-1" />
+                    Editar
+                  </Button>
+                )}
                 <Button variant="outline" size="sm" onClick={() => {
                   const publishedUrl = 'https://fiodegalafdg.lovable.app';
                   const url = `${publishedUrl}/orcamento/${selectedQuote.id}`;
@@ -430,6 +444,15 @@ const Quotes = () => {
           )}
         </DialogContent>
       </Dialog>
+      <QuoteEditModal
+        quote={editQuote as any}
+        open={!!editQuote}
+        onOpenChange={open => !open && setEditQuote(null)}
+        onSaved={() => {
+          fetchQuotes();
+          setEditQuote(null);
+        }}
+      />
     </AdminLayout>
   );
 };
