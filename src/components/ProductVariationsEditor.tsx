@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import StickyHorizontalScroll from '@/components/StickyHorizontalScroll';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -546,7 +547,7 @@ const ProductVariationsEditor = ({ productId, basePrice }: ProductVariationsEdit
               Nenhuma variação criada. Adicione atributos e clique em "Gerar Combinações".
             </p>
           ) : (
-            <div className="max-h-[60vh] overflow-y-auto overflow-x-auto scrollbar-always-visible sticky-hscroll pb-1">
+            <StickyHorizontalScroll>
               <DndContext
                 sensors={sensors}
                 collisionDetection={closestCenter}
@@ -590,7 +591,7 @@ const ProductVariationsEditor = ({ productId, basePrice }: ProductVariationsEdit
                   </TableBody>
                 </Table>
               </DndContext>
-            </div>
+            </StickyHorizontalScroll>
           )}
         </CardContent>
       </Card>
