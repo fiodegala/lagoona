@@ -254,6 +254,7 @@ const App = () => (
                     <AuditLogs />
                   </ProtectedRoute>
                 }
+              />
               <Route
                 path="/admin/settings"
                 element={
