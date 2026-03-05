@@ -149,10 +149,7 @@ const ProductCard = memo(forwardRef<HTMLAnchorElement, ProductCardProps>(({ prod
               decoding="async"
               width={400}
               height={500}
-              className={cn(
-                "w-full h-full object-cover transition-transform duration-500",
-                isHovered && "scale-110"
-              )}
+              className="w-full h-full object-cover"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-store-secondary to-store-secondary/50">
