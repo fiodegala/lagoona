@@ -92,6 +92,7 @@ const Stock = () => {
   const [expandedProductId, setExpandedProductId] = useState<string | null>(null);
   const [expandedData, setExpandedData] = useState<ColorGroup[]>([]);
   const [isLoadingExpanded, setIsLoadingExpanded] = useState(false);
+  const [variationSearch, setVariationSearch] = useState('');
   const [showTransferModal, setShowTransferModal] = useState(false);
 
   useEffect(() => {
