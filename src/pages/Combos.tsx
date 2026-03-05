@@ -24,7 +24,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Plus, Trash2, Edit, Package, Truck, Loader2, X } from 'lucide-react';
+import { Plus, Trash2, Edit, Package, Truck, Loader2, X, ImageIcon } from 'lucide-react';
+import ImageUpload from '@/components/ImageUpload';
 import { toast } from 'sonner';
 import { combosService, Combo } from '@/services/combos';
 import { supabase } from '@/integrations/supabase/client';
@@ -61,6 +62,7 @@ const Combos = () => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [comboPrice, setComboPrice] = useState('');
+  const [comboImageUrl, setComboImageUrl] = useState<string | undefined>(undefined);
   const [freeShipping, setFreeShipping] = useState(false);
   const [isActive, setIsActive] = useState(true);
   const [formItems, setFormItems] = useState<ComboFormItem[]>([]);
@@ -153,6 +155,7 @@ const Combos = () => {
     setName('');
     setDescription('');
     setComboPrice('');
+    setComboImageUrl(undefined);
     setFreeShipping(false);
     setIsActive(true);
     setFormItems([]);
@@ -170,6 +173,7 @@ const Combos = () => {
     setName(combo.name);
     setDescription(combo.description || '');
     setComboPrice(String(combo.combo_price));
+    setComboImageUrl(combo.image_url || undefined);
     setFreeShipping(combo.free_shipping);
     setIsActive(combo.is_active);
 
@@ -232,6 +236,7 @@ const Combos = () => {
         description: description.trim() || undefined,
         combo_price: Number(comboPrice),
         free_shipping: freeShipping,
+        image_url: comboImageUrl || undefined,
         is_active: isActive,
         items: formItems.map(i => ({
           product_id: i.product_id,
@@ -412,6 +417,16 @@ const Combos = () => {
                   onChange={e => setDescription(e.target.value)}
                   placeholder="Descrição opcional do combo"
                   rows={2}
+                />
+              </div>
+
+              <div className="col-span-2">
+                <Label>Imagem do Combo</Label>
+                <ImageUpload
+                  value={comboImageUrl}
+                  onChange={setComboImageUrl}
+                  bucket="product-images"
+                  folder="combos"
                 />
               </div>
 
