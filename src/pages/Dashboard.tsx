@@ -85,6 +85,7 @@ interface RawOrder {
   customer_email: string;
   created_at: string;
   shipping_address: { state?: string; city?: string } | null;
+  items: { name?: string; qty?: number; quantity?: number; price?: number; is_promotional?: boolean; original_price?: number }[];
 }
 
 interface RawPOSSale {
