@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight, ZoomIn, X, Package, Play } from 'lucide-reac
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
+import { useSwipe } from '@/hooks/useSwipe';
 
 interface MediaItem {
   type: 'image' | 'video';
@@ -126,6 +127,15 @@ const ProductImageGallery = ({
     else if (e.key === 'Escape') setIsLightboxOpen(false);
   }, [handlePrevious, handleNext]);
 
+  const mainSwipe = useSwipe({
+    onSwipeLeft: handleNext,
+    onSwipeRight: handlePrevious,
+  });
+
+  const lightboxSwipe = useSwipe({
+    onSwipeLeft: handleNext,
+    onSwipeRight: handlePrevious,
+  });
   // Sync with external selectedImage changes
   if (selectedImage && currentItem?.type === 'image' && currentItem.url !== selectedImage) {
     const newIndex = mediaItems.findIndex(m => m.type === 'image' && m.url === selectedImage);
@@ -253,6 +263,8 @@ const ProductImageGallery = ({
           onMouseEnter={!isCurrentVideo ? () => setIsZoomed(true) : undefined}
           onMouseLeave={!isCurrentVideo ? () => setIsZoomed(false) : undefined}
           onClick={!isCurrentVideo ? () => setIsLightboxOpen(true) : undefined}
+          onTouchStart={mainSwipe.onTouchStart}
+          onTouchEnd={(e) => { mainSwipe.onTouchEnd(e); setIsZoomed(false); }}
         >
           {renderMainContent()}
 
@@ -345,7 +357,11 @@ const ProductImageGallery = ({
       {/* Lightbox Dialog */}
       <Dialog open={isLightboxOpen} onOpenChange={setIsLightboxOpen}>
         <DialogContent className="max-w-[95vw] max-h-[95vh] p-0 bg-black/95 border-none">
-          <div className="relative w-full h-[90vh] flex items-center justify-center">
+          <div
+            className="relative w-full h-[90vh] flex items-center justify-center"
+            onTouchStart={lightboxSwipe.onTouchStart}
+            onTouchEnd={lightboxSwipe.onTouchEnd}
+          >
             <Button
               variant="ghost"
               size="icon"
