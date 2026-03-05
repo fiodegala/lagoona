@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Mail, Phone, MapPin, Clock, Send, MessageCircle, Instagram, Facebook } from 'lucide-react';
+import { Mail, Phone, MapPin, Clock, Send, MessageCircle, Instagram } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -207,7 +207,7 @@ const ContactPage = () => {
                   </h3>
                   <div className="flex gap-3">
                     <a
-                      href="https://instagram.com"
+                      href="https://www.instagram.com/fiodegalafdg/"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="w-12 h-12 bg-store-secondary rounded-lg flex items-center justify-center hover:bg-store-primary/20 transition-colors"
@@ -215,12 +215,12 @@ const ContactPage = () => {
                       <Instagram className="h-5 w-5 text-store-accent" />
                     </a>
                     <a
-                      href="https://facebook.com"
+                      href="#"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="w-12 h-12 bg-store-secondary rounded-lg flex items-center justify-center hover:bg-store-primary/20 transition-colors"
                     >
-                      <Facebook className="h-5 w-5 text-store-accent" />
+                      <svg className="h-5 w-5 text-store-accent" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.27 6.27 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.34-6.34V8.75a8.18 8.18 0 0 0 4.76 1.52V6.84a4.84 4.84 0 0 1-1-.15z"/></svg>
                     </a>
                     <a
                       href="https://wa.me/5562994165785"
