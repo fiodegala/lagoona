@@ -14,6 +14,7 @@ import { cn } from '@/lib/utils';
 interface UpsellSectionProps {
   currentProduct: Product;
   currentPrice: number;
+  currentVariation?: ProductVariation | null;
   categoryId?: string | null;
 }
 
