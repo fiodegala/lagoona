@@ -1,13 +1,15 @@
-import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { Plus, ShoppingCart, Loader2, Check } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { Plus, ShoppingCart, Check, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { productsService, Product } from '@/services/products';
+import { variationsService, ProductVariation } from '@/services/variations';
 import { enrichProductsWithStock } from '@/services/stockService';
+import { supabase } from '@/integrations/supabase/client';
 import { useCart } from '@/contexts/CartContext';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
 interface UpsellSectionProps {
   currentProduct: Product;
@@ -15,11 +17,25 @@ interface UpsellSectionProps {
   categoryId?: string | null;
 }
 
+interface SelectedUpsellItem {
+  product: Product;
+  variation?: ProductVariation;
+  price: number;
+}
+
 const UpsellSection = ({ currentProduct, currentPrice, categoryId }: UpsellSectionProps) => {
   const [suggestions, setSuggestions] = useState<Product[]>([]);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [selectedItems, setSelectedItems] = useState<Map<string, SelectedUpsellItem>>(new Map());
   const [isLoading, setIsLoading] = useState(true);
   const { addItem } = useCart();
+
+  // Variation picker state
+  const [pickerProduct, setPickerProduct] = useState<Product | null>(null);
+  const [pickerVariations, setPickerVariations] = useState<ProductVariation[]>([]);
+  const [pickerAttributes, setPickerAttributes] = useState<{ name: string; values: string[] }[]>([]);
+  const [pickerSelectedValues, setPickerSelectedValues] = useState<Record<string, string>>({});
+  const [pickerStockMap, setPickerStockMap] = useState<Record<string, number>>({});
+  const [pickerLoading, setPickerLoading] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -34,7 +50,6 @@ const UpsellSection = ({ currentProduct, currentPrice, categoryId }: UpsellSecti
         }
         const enriched = await enrichProductsWithStock(candidates.slice(0, 2));
         setSuggestions(enriched);
-        if (enriched.length > 0) setSelectedIds(new Set([enriched[0].id]));
       } catch (err) {
         console.error('Error loading upsell:', err);
       } finally {
@@ -44,15 +59,6 @@ const UpsellSection = ({ currentProduct, currentPrice, categoryId }: UpsellSecti
     load();
   }, [currentProduct.id, categoryId]);
 
-  const toggleSelect = (id: string) => {
-    setSelectedIds(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  };
-
   const formatPrice = (price: number) =>
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(price);
 
@@ -61,10 +67,101 @@ const UpsellSection = ({ currentProduct, currentPrice, categoryId }: UpsellSecti
     return promo && promo < p.price ? promo : p.price;
   };
 
-  const selectedProducts = suggestions.filter(p => selectedIds.has(p.id));
-  const bundleTotal = currentPrice + selectedProducts.reduce((sum, p) => sum + getPrice(p), 0);
+  const selectedProducts = Array.from(selectedItems.values());
+  const bundleTotal = currentPrice + selectedProducts.reduce((sum, item) => sum + item.price, 0);
   const discountPercent = selectedProducts.length > 0 ? 5 : 0;
   const bundleDiscounted = bundleTotal * (1 - discountPercent / 100);
+
+  // Open variation picker for a product
+  const openPicker = async (product: Product) => {
+    setPickerProduct(product);
+    setPickerLoading(true);
+    setPickerSelectedValues({});
+    try {
+      const [attrs, vars, stockRes] = await Promise.all([
+        variationsService.getAttributesByProduct(product.id),
+        variationsService.getVariationsByProduct(product.id),
+        supabase
+          .from('store_stock')
+          .select('variation_id, quantity')
+          .eq('product_id', product.id)
+          .not('variation_id', 'is', null),
+      ]);
+
+      const activeVars = vars.filter(v => v.is_active);
+
+      if (activeVars.length === 0) {
+        // No variations — select product directly
+        toggleProduct(product);
+        setPickerProduct(null);
+        return;
+      }
+
+      const map: Record<string, number> = {};
+      (stockRes.data || []).forEach((row: any) => {
+        if (row.variation_id) {
+          map[row.variation_id] = (map[row.variation_id] || 0) + row.quantity;
+        }
+      });
+
+      setPickerVariations(activeVars);
+      setPickerStockMap(map);
+
+      // Build attribute groups
+      const attrGroups = attrs
+        .filter(a => a.values && a.values.length > 0)
+        .map(a => ({
+          name: a.name,
+          values: a.values!.map(v => v.value),
+        }));
+      setPickerAttributes(attrGroups);
+    } catch (err) {
+      console.error('Error loading variations:', err);
+      toast.error('Erro ao carregar variações');
+      setPickerProduct(null);
+    } finally {
+      setPickerLoading(false);
+    }
+  };
+
+  const toggleProduct = (product: Product, variation?: ProductVariation) => {
+    setSelectedItems(prev => {
+      const next = new Map(prev);
+      const key = product.id;
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        const price = variation?.price ?? getPrice(product);
+        next.set(key, { product, variation, price });
+      }
+      return next;
+    });
+  };
+
+  const handlePickerValueSelect = (attrName: string, value: string) => {
+    setPickerSelectedValues(prev => ({
+      ...prev,
+      [attrName]: prev[attrName] === value ? '' : value,
+    }));
+  };
+
+  const pickerMatchedVariation = pickerVariations.find(v =>
+    v.attribute_values?.every(av => pickerSelectedValues[av.attribute_name] === av.value)
+  );
+
+  const confirmVariation = () => {
+    if (!pickerProduct || !pickerMatchedVariation) return;
+    const realStock = pickerStockMap[pickerMatchedVariation.id] || 0;
+    const enrichedVar = { ...pickerMatchedVariation, stock: realStock };
+    const price = enrichedVar.price ?? getPrice(pickerProduct);
+
+    setSelectedItems(prev => {
+      const next = new Map(prev);
+      next.set(pickerProduct.id, { product: pickerProduct, variation: enrichedVar, price });
+      return next;
+    });
+    setPickerProduct(null);
+  };
 
   const handleBuyTogether = () => {
     addItem({
@@ -72,10 +169,16 @@ const UpsellSection = ({ currentProduct, currentPrice, categoryId }: UpsellSecti
       price: currentPrice, imageUrl: currentProduct.image_url || undefined,
       stock: currentProduct.stock, quantity: 1,
     });
-    selectedProducts.forEach(p => {
+    selectedProducts.forEach(({ product, variation, price }) => {
+      const variationLabel = variation?.attribute_values?.map(av => av.value).join(' / ');
       addItem({
-        id: p.id, productId: p.id, name: p.name, price: getPrice(p),
-        imageUrl: p.image_url || undefined, stock: p.stock, quantity: 1,
+        id: variation?.id || product.id,
+        productId: product.id,
+        name: variationLabel ? `${product.name} - ${variationLabel}` : product.name,
+        price,
+        imageUrl: variation?.image_url || product.image_url || undefined,
+        stock: variation?.stock ?? product.stock,
+        quantity: 1,
       });
     });
     toast.success(`${selectedProducts.length + 1} produtos adicionados ao carrinho!`, {
@@ -114,44 +217,57 @@ const UpsellSection = ({ currentProduct, currentPrice, categoryId }: UpsellSecti
 
         {/* Suggestion rows */}
         {suggestions.map((product) => {
-          const isSelected = selectedIds.has(product.id);
-          const price = getPrice(product);
+          const isSelected = selectedItems.has(product.id);
+          const selectedItem = selectedItems.get(product.id);
+          const price = selectedItem?.price ?? getPrice(product);
+          const variationLabel = selectedItem?.variation?.attribute_values?.map(av => av.value).join(' / ');
+
           return (
             <div key={product.id}>
-            <div className="flex items-center gap-2 py-0.5">
-              <div className="flex-1 h-px bg-border" />
-              <Plus className="h-3 w-3 text-muted-foreground shrink-0" />
-              <div className="flex-1 h-px bg-border" />
-            </div>
+              <div className="flex items-center gap-2 py-0.5">
+                <div className="flex-1 h-px bg-border" />
+                <Plus className="h-3 w-3 text-muted-foreground shrink-0" />
+                <div className="flex-1 h-px bg-border" />
+              </div>
               <div className={`w-full flex items-center gap-3 p-1.5 rounded-lg transition-all ${
-                  isSelected ? 'bg-store-primary/5 ring-1 ring-store-primary' : 'hover:bg-muted/50'
-                }`}>
-                {/* Checkbox */}
+                isSelected ? 'bg-store-primary/5 ring-1 ring-store-primary' : 'hover:bg-muted/50'
+              }`}>
+                {/* Checkbox toggle */}
                 <button
-                  onClick={() => toggleSelect(product.id)}
+                  onClick={() => {
+                    if (isSelected) {
+                      setSelectedItems(prev => { const n = new Map(prev); n.delete(product.id); return n; });
+                    } else {
+                      openPicker(product);
+                    }
+                  }}
                   className={`shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
                     isSelected ? 'bg-store-primary border-store-primary' : 'bg-background border-muted-foreground/30'
                   }`}
                 >
                   {isSelected && <Check className="h-3 w-3 text-white" />}
                 </button>
-                {/* Clickable product info → navigates to product page */}
-                <Link
-                  to={`/produto/${product.id}`}
-                  className="flex items-center gap-3 min-w-0 flex-1"
+                {/* Product info — click opens picker */}
+                <button
+                  onClick={() => openPicker(product)}
+                  className="flex items-center gap-3 min-w-0 flex-1 text-left"
                 >
                   <div className="shrink-0 w-10 h-10 rounded-lg overflow-hidden border bg-muted">
-                    {product.image_url ? (
-                      <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
+                    {(selectedItem?.variation?.image_url || product.image_url) ? (
+                      <img src={selectedItem?.variation?.image_url || product.image_url!} alt={product.name} className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-xs">📦</div>
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="text-xs font-medium line-clamp-1 hover:text-store-primary transition-colors">{product.name}</p>
-                    <p className="text-[10px] text-muted-foreground">Ver detalhes</p>
+                    {variationLabel ? (
+                      <p className="text-[10px] text-store-primary font-medium">{variationLabel}</p>
+                    ) : (
+                      <p className="text-[10px] text-muted-foreground">Selecionar variação</p>
+                    )}
                   </div>
-                </Link>
+                </button>
                 <span className="text-xs font-bold text-store-accent shrink-0">{formatPrice(price)}</span>
               </div>
             </div>
@@ -176,6 +292,99 @@ const UpsellSection = ({ currentProduct, currentPrice, categoryId }: UpsellSecti
           </div>
         )}
       </div>
+
+      {/* Variation Picker Dialog */}
+      <Dialog open={!!pickerProduct} onOpenChange={(open) => !open && setPickerProduct(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-base">Selecione a variação</DialogTitle>
+          </DialogHeader>
+          {pickerProduct && (
+            <div className="space-y-4">
+              {/* Product preview */}
+              <div className="flex items-center gap-3">
+                <div className="shrink-0 w-14 h-14 rounded-lg overflow-hidden border bg-muted">
+                  {pickerProduct.image_url ? (
+                    <img src={pickerProduct.image_url} alt={pickerProduct.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">📦</div>
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium line-clamp-2">{pickerProduct.name}</p>
+                  <p className="text-sm font-bold text-store-accent">{formatPrice(getPrice(pickerProduct))}</p>
+                </div>
+              </div>
+
+              {pickerLoading ? (
+                <div className="flex items-center justify-center py-6">
+                  <div className="h-5 w-5 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
+                </div>
+              ) : (
+                <>
+                  {/* Attribute selectors */}
+                  {pickerAttributes.map(attr => (
+                    <div key={attr.name} className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium">{attr.name}:</span>
+                        {pickerSelectedValues[attr.name] && (
+                          <span className="text-xs text-muted-foreground">{pickerSelectedValues[attr.name]}</span>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {attr.values.map(val => {
+                          const isSelected = pickerSelectedValues[attr.name] === val;
+                          // Check if any variation has this value with stock
+                          const hasStock = pickerVariations.some(v =>
+                            v.attribute_values?.some(av => av.attribute_name === attr.name && av.value === val) &&
+                            (pickerStockMap[v.id] || 0) > 0
+                          );
+                          return (
+                            <Button
+                              key={val}
+                              variant={isSelected ? 'default' : 'outline'}
+                              size="sm"
+                              disabled={!hasStock}
+                              onClick={() => handlePickerValueSelect(attr.name, val)}
+                              className={cn(
+                                'min-w-[50px] text-xs',
+                                isSelected && 'bg-store-primary text-store-accent hover:bg-store-primary/90',
+                                !hasStock && 'opacity-40'
+                              )}
+                            >
+                              {val}
+                            </Button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* Matched variation info */}
+                  {pickerMatchedVariation && (
+                    <div className="text-xs text-muted-foreground bg-muted/50 rounded-lg p-2">
+                      Estoque: {pickerStockMap[pickerMatchedVariation.id] || 0} un.
+                      {pickerMatchedVariation.price && (
+                        <> · Preço: {formatPrice(pickerMatchedVariation.price)}</>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Confirm button */}
+                  <Button
+                    onClick={confirmVariation}
+                    disabled={!pickerMatchedVariation}
+                    className="w-full gap-2 bg-store-primary text-store-accent hover:bg-store-primary/90"
+                  >
+                    <Check className="h-4 w-4" />
+                    Confirmar variação
+                  </Button>
+                </>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
