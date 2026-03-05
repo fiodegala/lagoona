@@ -139,7 +139,7 @@ const DealsCountdownSection = ({ products, hideProducts = false }: DealsCountdow
         {!hideProducts && (
           <div className="mt-8 text-center">
             <Button asChild variant="outline" className="gap-2 border-store-deal/30 text-store-deal hover:bg-store-deal/10 font-semibold">
-              <Link to="/loja?ordenar=ofertas">
+              <Link to="/loja?ofertas=true">
                 Ver todas as ofertas
                 <ArrowRight className="h-4 w-4" />
               </Link>
