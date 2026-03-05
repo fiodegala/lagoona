@@ -20,6 +20,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { format, startOfDay, endOfDay, startOfWeek, startOfMonth, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
+import { auditService } from '@/services/auditService';
 
 const paymentMethodLabels: Record<string, string> = {
   cash: 'Dinheiro',
@@ -142,6 +143,16 @@ const Sales = () => {
         .eq('id', cancelSale.id);
       if (error) throw error;
       toast.success('Venda cancelada com sucesso');
+      auditService.log({
+        action: 'cancel',
+        entity_type: 'pos_sale',
+        entity_id: cancelSale.id,
+        details: {
+          total: cancelSale.total,
+          customer: cancelSale.customer_name || 'Consumidor Final',
+          reason: cancelReason || undefined,
+        },
+      });
       queryClient.invalidateQueries({ queryKey: ['pos-sales'] });
       setCancelSale(null);
       setCancelReason('');
