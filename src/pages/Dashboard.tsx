@@ -83,8 +83,10 @@ interface RawOrder {
   total: number;
   customer_name: string | null;
   customer_email: string;
+  payment_method: string | null;
   created_at: string;
   shipping_address: { state?: string; city?: string } | null;
+  items: { name?: string; qty?: number; quantity?: number; price?: number; is_promotional?: boolean; original_price?: number }[];
 }
 
 interface RawPOSSale {
@@ -95,6 +97,7 @@ interface RawPOSSale {
   payment_method: string;
   payment_details: Record<string, unknown> | null;
   discount_amount: number | null;
+  items: { name?: string; qty?: number; quantity?: number; unit_price?: number; price?: number; is_promotional?: boolean; original_price?: number; total?: number }[];
   created_at: string;
 }
 
@@ -181,7 +184,7 @@ const Dashboard = () => {
       const storeFilter = activeStoreFilter;
 
       // Orders: filter by store
-      let ordersQuery = supabase.from('orders').select('id, status, total, customer_name, customer_email, created_at, shipping_address');
+      let ordersQuery = supabase.from('orders').select('id, status, total, customer_name, customer_email, payment_method, created_at, shipping_address, items');
       if (isSiteStoreSelected) {
         ordersQuery = ordersQuery.eq('store_id', SITE_STORE_ID);
       } else if (storeFilter && canAccessSiteStore) {
@@ -224,6 +227,7 @@ const Dashboard = () => {
       setRawOrders((ordersRes.data || []).map(order => ({
         ...order,
         shipping_address: order.shipping_address as { state?: string; city?: string } | null,
+        items: (order.items as any[] || []),
       })));
       setReviews(reviewsRes.data || []);
       setCoupons(couponsRes.data || []);
@@ -238,6 +242,7 @@ const Dashboard = () => {
         payment_method: sale.payment_method,
         payment_details: sale.payment_details as Record<string, unknown> | null,
         discount_amount: sale.discount_amount ? Number(sale.discount_amount) : null,
+        items: (sale.items as any[] || []),
         created_at: sale.created_at,
       })));
 
@@ -595,6 +600,70 @@ const Dashboard = () => {
     { name: 'Concluídos', value: stats.completedOrders, color: 'hsl(var(--success))' },
     { name: 'Cancelados', value: stats.cancelledOrders, color: 'hsl(var(--destructive))' },
   ].filter(d => d.value > 0) : [];
+
+  // Promotional sales stats
+  const promotionalStats = useMemo(() => {
+    const promoItems: { name: string; qty: number; totalValue: number; paymentMethod: string; source: 'pdv' | 'site' }[] = [];
+
+    filteredPOSSales.forEach(sale => {
+      (sale.items || []).forEach((item: any) => {
+        if (item.is_promotional) {
+          promoItems.push({
+            name: item.name || 'Produto',
+            qty: item.quantity || item.qty || 1,
+            totalValue: item.total || (item.unit_price || 0) * (item.quantity || item.qty || 1),
+            paymentMethod: sale.payment_method,
+            source: 'pdv',
+          });
+        }
+      });
+    });
+
+    filteredOrders.forEach(order => {
+      if (order.status === 'cancelled') return;
+      (order.items || []).forEach((item: any) => {
+        if (item.is_promotional) {
+          promoItems.push({
+            name: item.name || 'Produto',
+            qty: item.quantity || item.qty || 1,
+            totalValue: (item.price || 0) * (item.quantity || item.qty || 1),
+            paymentMethod: order.payment_method || 'online',
+            source: 'site',
+          });
+        }
+      });
+    });
+
+    const byProduct: Record<string, { qty: number; total: number }> = {};
+    promoItems.forEach(item => {
+      if (!byProduct[item.name]) byProduct[item.name] = { qty: 0, total: 0 };
+      byProduct[item.name].qty += item.qty;
+      byProduct[item.name].total += item.totalValue;
+    });
+
+    const PAYMENT_LABELS: Record<string, string> = {
+      cash: 'Dinheiro', card: 'Cartão', pix: 'PIX', mixed: 'Misto', online: 'Online',
+      credit_card: 'Cartão', debit_card: 'Cartão', boleto: 'Boleto',
+    };
+    const byPayment: Record<string, { count: number; total: number }> = {};
+    promoItems.forEach(item => {
+      const label = PAYMENT_LABELS[item.paymentMethod] || item.paymentMethod;
+      if (!byPayment[label]) byPayment[label] = { count: 0, total: 0 };
+      byPayment[label].count += item.qty;
+      byPayment[label].total += item.totalValue;
+    });
+
+    return {
+      totalQty: promoItems.reduce((s, i) => s + i.qty, 0),
+      totalValue: promoItems.reduce((s, i) => s + i.totalValue, 0),
+      products: Object.entries(byProduct)
+        .map(([name, data]) => ({ name, ...data }))
+        .sort((a, b) => b.total - a.total),
+      payments: Object.entries(byPayment)
+        .map(([method, data]) => ({ method, ...data }))
+        .sort((a, b) => b.total - a.total),
+    };
+  }, [filteredPOSSales, filteredOrders]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
@@ -1490,6 +1559,77 @@ const Dashboard = () => {
             </CardContent>
           </Card>
         </div>
+        )}
+
+        {/* Promotional Sales Section */}
+        {promotionalStats.totalQty > 0 && (
+          <Card className="card-elevated border-l-4 border-l-warning">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Tag className="h-5 w-5 text-warning" />
+                Vendas Promocionais
+              </CardTitle>
+              <CardDescription>
+                Produtos vendidos com preço promocional — {getPeriodLabel(periodFilter)}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-6 lg:grid-cols-3">
+                {/* Summary KPIs */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-3 bg-warning/5 rounded-lg border border-warning/20">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Itens vendidos</p>
+                      <p className="text-2xl font-bold">{promotionalStats.totalQty}</p>
+                    </div>
+                    <Package className="h-8 w-8 text-warning/60" />
+                  </div>
+                  <div className="flex items-center justify-between p-3 bg-success/5 rounded-lg border border-success/20">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Valor total</p>
+                      <p className="text-2xl font-bold">{formatCurrency(promotionalStats.totalValue)}</p>
+                    </div>
+                    <DollarSign className="h-8 w-8 text-success/60" />
+                  </div>
+                </div>
+
+                {/* Products breakdown */}
+                <div className="space-y-2">
+                  <h4 className="text-sm font-medium text-muted-foreground mb-3">Produtos</h4>
+                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                    {promotionalStats.products.slice(0, 10).map((p, i) => (
+                      <div key={i} className="flex items-center justify-between text-sm py-1.5 border-b last:border-0">
+                        <div className="flex-1 min-w-0">
+                          <p className="truncate font-medium">{p.name}</p>
+                          <p className="text-xs text-muted-foreground">{p.qty} un.</p>
+                        </div>
+                        <span className="font-semibold ml-2 shrink-0">{formatCurrency(p.total)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Payment methods breakdown */}
+                <div className="space-y-2">
+                  <h4 className="text-sm font-medium text-muted-foreground mb-3">Formas de Pagamento</h4>
+                  <div className="space-y-2">
+                    {promotionalStats.payments.map((pm, i) => (
+                      <div key={i} className="flex items-center justify-between text-sm py-1.5 border-b last:border-0">
+                        <div className="flex items-center gap-2">
+                          <CreditCard className="h-4 w-4 text-muted-foreground" />
+                          <span>{pm.method}</span>
+                        </div>
+                        <div className="text-right">
+                          <span className="font-semibold">{formatCurrency(pm.total)}</span>
+                          <span className="text-xs text-muted-foreground ml-1">({pm.count}x)</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         )}
 
         {/* Sales by Region Map - All stores */}

@@ -9,6 +9,8 @@ export interface CartItem {
   name: string;
   variationLabel?: string;
   price: number;
+  originalPrice?: number;
+  isPromotional?: boolean;
   quantity: number;
   imageUrl?: string;
   stock: number;

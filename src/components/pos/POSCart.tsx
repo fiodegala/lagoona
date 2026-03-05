@@ -38,6 +38,8 @@ export interface CartItem {
   sku?: string;
   image_url?: string | null;
   unit_price: number;
+  original_price?: number;
+  is_promotional?: boolean;
   quantity: number;
   discount_type?: 'percentage' | 'fixed';
   discount_value?: number;

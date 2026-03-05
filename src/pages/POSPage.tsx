@@ -143,6 +143,7 @@ const POSPage = () => {
       const variation = product.variations.find((v) => v.id === variationId);
       if (!variation) return;
 
+      const basePrice = variation.price ?? product.price;
       const variationPrice = (() => {
         switch (saleType) {
           case 'atacado':
@@ -155,6 +156,8 @@ const POSPage = () => {
             return variation.promotional_price ?? variation.price ?? product.promotional_price ?? product.price;
         }
       })();
+
+      const isPromotional = saleType === 'varejo' && variationPrice < basePrice && (variation.promotional_price != null || product.promotional_price != null);
 
       const existingItem = cartItems.find((item) => item.product_id === product.id && item.variation_id === variationId);
       if (existingItem) {
@@ -175,6 +178,8 @@ const POSPage = () => {
           sku: variation.sku || undefined,
           image_url: variation.image_url || product.image_url || null,
           unit_price: variationPrice,
+          original_price: isPromotional ? basePrice : undefined,
+          is_promotional: isPromotional || undefined,
           quantity: 1,
           discount_amount: 0,
           total: variationPrice,
@@ -184,6 +189,7 @@ const POSPage = () => {
       }
     } else {
       const unitPrice = resolvePrice(product);
+      const isPromotional = saleType === 'varejo' && product.promotional_price != null && product.promotional_price < product.price;
       const existingItem = cartItems.find((item) => item.product_id === product.id && !item.variation_id);
 
       if (existingItem) {
@@ -201,6 +207,8 @@ const POSPage = () => {
           name: product.name,
           image_url: product.image_url || null,
           unit_price: unitPrice,
+          original_price: isPromotional ? product.price : undefined,
+          is_promotional: isPromotional || undefined,
           quantity: 1,
           discount_amount: 0,
           total: unitPrice,
@@ -305,6 +313,8 @@ const POSPage = () => {
         image_url: item.image_url || null,
         quantity: item.quantity,
         unit_price: item.unit_price,
+        original_price: item.original_price,
+        is_promotional: item.is_promotional || false,
         discount_type: item.discount_type,
         discount_value: item.discount_value,
         discount_amount: item.discount_amount,

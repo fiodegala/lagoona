@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   BarChart3, TrendingUp, Users, ShoppingCart, Package,
   Calendar, CalendarRange, DollarSign, ArrowUpRight, ArrowDownRight,
-  Download, FileSpreadsheet, FileText
+  Download, FileSpreadsheet, FileText, Tag
 } from 'lucide-react';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -316,6 +316,59 @@ const Reports = () => {
     });
     return [...map.values()].sort((a, b) => b.revenue - a.revenue).slice(0, 10);
   }, [filteredOrders]);
+
+  // === Promotional Sales ===
+  const promotionalStats = useMemo(() => {
+    const promoItems: { name: string; qty: number; totalValue: number; paymentMethod: string }[] = [];
+
+    filteredPOS.forEach(sale => {
+      (sale.items || []).forEach((item: any) => {
+        if (item.is_promotional) {
+          promoItems.push({
+            name: item.name || 'Produto',
+            qty: item.quantity || item.qty || 1,
+            totalValue: item.total || (item.unit_price || 0) * (item.quantity || item.qty || 1),
+            paymentMethod: sale.payment_method,
+          });
+        }
+      });
+    });
+
+    filteredOrders.filter(o => o.status !== 'cancelled').forEach(order => {
+      (order.items || []).forEach((item: any) => {
+        if (item.is_promotional) {
+          promoItems.push({
+            name: item.name || 'Produto',
+            qty: item.quantity || item.qty || 1,
+            totalValue: (item.price || 0) * (item.quantity || item.qty || 1),
+            paymentMethod: order.payment_method || 'online',
+          });
+        }
+      });
+    });
+
+    const byProduct: Record<string, { qty: number; total: number }> = {};
+    promoItems.forEach(item => {
+      if (!byProduct[item.name]) byProduct[item.name] = { qty: 0, total: 0 };
+      byProduct[item.name].qty += item.qty;
+      byProduct[item.name].total += item.totalValue;
+    });
+
+    const byPayment: Record<string, { count: number; total: number }> = {};
+    promoItems.forEach(item => {
+      const label = PAYMENT_LABELS[item.paymentMethod] || item.paymentMethod;
+      if (!byPayment[label]) byPayment[label] = { count: 0, total: 0 };
+      byPayment[label].count += item.qty;
+      byPayment[label].total += item.totalValue;
+    });
+
+    return {
+      totalQty: promoItems.reduce((s, i) => s + i.qty, 0),
+      totalValue: promoItems.reduce((s, i) => s + i.totalValue, 0),
+      products: Object.entries(byProduct).map(([name, d]) => ({ name, ...d })).sort((a, b) => b.total - a.total),
+      payments: Object.entries(byPayment).map(([method, d]) => ({ method, ...d })).sort((a, b) => b.total - a.total),
+    };
+  }, [filteredPOS, filteredOrders]);
 
   const exportToCSV = () => {
     const BOM = '\uFEFF';
@@ -641,6 +694,7 @@ const Reports = () => {
           <TabsList>
             <TabsTrigger value="products">Produtos</TabsTrigger>
             <TabsTrigger value="customers">Clientes</TabsTrigger>
+            <TabsTrigger value="promotional">Promoções</TabsTrigger>
             <TabsTrigger value="analysis">Análise</TabsTrigger>
           </TabsList>
 
@@ -763,6 +817,96 @@ const Reports = () => {
                       ))
                     )}
                   </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* Analysis */}
+          {/* Promotional Sales */}
+          <TabsContent value="promotional" className="space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              {/* Summary */}
+              <Card className="card-elevated">
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Tag className="h-5 w-5 text-warning" />
+                    Resumo Promocional
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between p-3 bg-warning/5 rounded-lg border border-warning/20">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Itens vendidos</p>
+                      <p className="text-2xl font-bold">{promotionalStats.totalQty}</p>
+                    </div>
+                    <Package className="h-8 w-8 text-warning/60" />
+                  </div>
+                  <div className="flex items-center justify-between p-3 bg-primary/5 rounded-lg border border-primary/20">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Valor total</p>
+                      <p className="text-2xl font-bold">{formatCurrency(promotionalStats.totalValue)}</p>
+                    </div>
+                    <DollarSign className="h-8 w-8 text-primary/60" />
+                  </div>
+                  {promotionalStats.totalQty === 0 && (
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                      Nenhuma venda promocional no período
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Products */}
+              <Card className="card-elevated">
+                <CardHeader>
+                  <CardTitle className="text-lg">Produtos em Promoção</CardTitle>
+                  <CardDescription>Ranking por faturamento</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {promotionalStats.products.length > 0 ? (
+                    <div className="space-y-3 max-h-80 overflow-y-auto">
+                      {promotionalStats.products.map((p, i) => (
+                        <div key={i} className="flex items-center justify-between text-sm py-2 border-b last:border-0">
+                          <div className="flex items-center gap-2 flex-1 min-w-0">
+                            <span className="font-bold text-muted-foreground w-5">{i + 1}</span>
+                            <div className="min-w-0">
+                              <p className="truncate font-medium">{p.name}</p>
+                              <p className="text-xs text-muted-foreground">{p.qty} un. vendidas</p>
+                            </div>
+                          </div>
+                          <span className="font-semibold ml-2 shrink-0">{formatCurrency(p.total)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground text-center py-8">Sem dados</p>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Payment Methods */}
+              <Card className="card-elevated">
+                <CardHeader>
+                  <CardTitle className="text-lg">Formas de Pagamento</CardTitle>
+                  <CardDescription>Vendas promocionais por método</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {promotionalStats.payments.length > 0 ? (
+                    <div className="space-y-3">
+                      {promotionalStats.payments.map((pm, i) => (
+                        <div key={i} className="flex items-center justify-between text-sm py-2 border-b last:border-0">
+                          <span>{pm.method}</span>
+                          <div className="text-right">
+                            <span className="font-semibold">{formatCurrency(pm.total)}</span>
+                            <span className="text-xs text-muted-foreground ml-1">({pm.count} itens)</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground text-center py-8">Sem dados</p>
+                  )}
                 </CardContent>
               </Card>
             </div>

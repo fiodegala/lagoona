@@ -139,6 +139,8 @@ const CheckoutPage = () => {
         name: item.name,
         variation_label: item.variationLabel || null,
         price: item.price,
+        original_price: item.originalPrice,
+        is_promotional: item.isPromotional || false,
         quantity: item.quantity,
         image_url: item.imageUrl || null,
       }));
