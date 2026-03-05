@@ -74,14 +74,14 @@ const UpsellSection = ({ currentProduct, currentPrice, categoryId }: UpsellSecti
           // Fallback: auto-suggest from same category
           setDiscountPercent(5);
           const all = await productsService.getAll();
-          let candidates = all.filter(p => p.id !== currentProduct.id && p.is_active && p.stock > 0);
+          let candidates = all.filter(p => p.id !== currentProduct.id && p.is_active);
           if (categoryId) {
             const same = candidates.filter(p => p.category_id === categoryId);
             const other = candidates.filter(p => p.category_id !== categoryId);
             candidates = [...same, ...other];
           }
-          const enriched = await enrichProductsWithStock(candidates.slice(0, 2));
-          setSuggestions(enriched);
+          const enriched = await enrichProductsWithStock(candidates.slice(0, 4));
+          setSuggestions(enriched.filter(p => p.stock > 0).slice(0, 2));
         }
       } catch (err) {
         console.error('Error loading upsell:', err);
