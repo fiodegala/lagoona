@@ -143,6 +143,7 @@ const POSPage = () => {
       const variation = product.variations.find((v) => v.id === variationId);
       if (!variation) return;
 
+      const basePrice = variation.price ?? product.price;
       const variationPrice = (() => {
         switch (saleType) {
           case 'atacado':
@@ -155,6 +156,8 @@ const POSPage = () => {
             return variation.promotional_price ?? variation.price ?? product.promotional_price ?? product.price;
         }
       })();
+
+      const isPromotional = saleType === 'varejo' && variationPrice < basePrice && (variation.promotional_price != null || product.promotional_price != null);
 
       const existingItem = cartItems.find((item) => item.product_id === product.id && item.variation_id === variationId);
       if (existingItem) {
@@ -175,6 +178,8 @@ const POSPage = () => {
           sku: variation.sku || undefined,
           image_url: variation.image_url || product.image_url || null,
           unit_price: variationPrice,
+          original_price: isPromotional ? basePrice : undefined,
+          is_promotional: isPromotional || undefined,
           quantity: 1,
           discount_amount: 0,
           total: variationPrice,
