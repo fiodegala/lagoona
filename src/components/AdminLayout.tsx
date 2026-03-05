@@ -67,6 +67,8 @@ const navItems = [
   { icon: BrainCircuit, label: 'Analytics IA', path: '/admin/analytics', requireAdmin: true },
   { icon: Users, label: 'Usuários', path: '/admin/users', requireAdmin: true },
   { icon: History, label: 'Histórico', path: '/admin/audit-logs', requireAdmin: true },
+  { icon: Upload, label: 'Importar CSV', path: '/admin/importar-csv', requireAdmin: true },
+  { icon: Upload, label: 'Importar Legado', path: '/admin/legacy-import', requireAdmin: true },
 ];
 
 const settingsItems = [
