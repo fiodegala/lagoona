@@ -402,6 +402,7 @@ const ProductDetails = () => {
             <ProductVariationSelector
               productId={product.id}
               onVariationSelect={handleVariationSelect}
+              onHasVariations={setProductHasVariations}
             />
 
             {/* Size Guide */}
