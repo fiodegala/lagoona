@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight, ZoomIn, X, Package, Play } from 'lucide-reac
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
+import { mediumImageUrl, fullImageUrl, thumbnailUrl } from '@/lib/imageUtils';
 
 interface MediaItem {
   type: 'image' | 'video';
@@ -182,8 +183,9 @@ const ProductImageGallery = ({
     return (
       <>
         <img
-          src={currentItem.url}
+          src={mediumImageUrl(currentItem.url)}
           alt={`${productName} - Imagem ${currentIndex + 1}`}
+          decoding="async"
           className={cn(
             "w-full h-full object-cover transition-opacity duration-200",
             isZoomed ? "opacity-0" : "opacity-100"
@@ -195,7 +197,7 @@ const ProductImageGallery = ({
             isZoomed ? "opacity-100" : "opacity-0 pointer-events-none"
           )}
           style={{
-            backgroundImage: `url(${currentItem.url})`,
+            backgroundImage: `url(${fullImageUrl(currentItem.url)})`,
             backgroundSize: '200%',
             backgroundPosition: `${zoomPosition.x}% ${zoomPosition.y}%`,
           }}
@@ -232,7 +234,7 @@ const ProductImageGallery = ({
 
     return (
       <img
-        src={currentItem.url}
+        src={fullImageUrl(currentItem.url)}
         alt={`${productName} - Imagem ${currentIndex + 1}`}
         className="max-w-full max-h-full object-contain"
       />
@@ -332,9 +334,11 @@ const ProductImageGallery = ({
                 </div>
               ) : (
                 <img
-                  src={item.url}
+                  src={thumbnailUrl(item.url)}
                   alt={`${productName} - Miniatura ${index + 1}`}
                   className="w-full h-full object-cover"
+                  loading="lazy"
+                  decoding="async"
                 />
               )}
             </button>
