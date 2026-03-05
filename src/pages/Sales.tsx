@@ -310,6 +310,7 @@ const Sales = () => {
                   <TableRow>
                     <TableHead>Venda</TableHead>
                     <TableHead>Cliente</TableHead>
+                    <TableHead>Status</TableHead>
                     <TableHead>Itens</TableHead>
                     <TableHead>Subtotal</TableHead>
                     <TableHead>Desconto</TableHead>
