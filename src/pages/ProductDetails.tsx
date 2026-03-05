@@ -588,6 +588,13 @@ const ProductDetails = () => {
           </Tabs>
         </div>
 
+        {/* Upsell - Buy Together */}
+        <UpsellSection
+          currentProduct={product}
+          currentPrice={currentPrice}
+          categoryId={product.category_id}
+        />
+
         {/* Related Products */}
         <RelatedProducts 
           currentProductId={product.id} 
