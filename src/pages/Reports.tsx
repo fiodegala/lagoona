@@ -694,6 +694,7 @@ const Reports = () => {
           <TabsList>
             <TabsTrigger value="products">Produtos</TabsTrigger>
             <TabsTrigger value="customers">Clientes</TabsTrigger>
+            <TabsTrigger value="promotional">Promoções</TabsTrigger>
             <TabsTrigger value="analysis">Análise</TabsTrigger>
           </TabsList>
 
