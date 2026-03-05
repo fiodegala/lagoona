@@ -154,6 +154,20 @@ const Quotes = () => {
 
   useEffect(() => { fetchQuotes(); }, []);
 
+  // Fetch history when a quote is selected
+  useEffect(() => {
+    if (!selectedQuote) { setQuoteHistory([]); return; }
+    const fetchHistory = async () => {
+      const { data } = await supabase
+        .from('quote_history' as any)
+        .select('*')
+        .eq('quote_id', selectedQuote.id)
+        .order('created_at', { ascending: false });
+      setQuoteHistory((data as any[]) || []);
+    };
+    fetchHistory();
+  }, [selectedQuote]);
+
   const handleDelete = async (id: string) => {
     const { error } = await supabase.from('quotes').delete().eq('id', id);
     if (error) {
