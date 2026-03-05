@@ -430,6 +430,8 @@ const StockTransferModal: React.FC<Props> = ({ open, onOpenChange, stores, onTra
         return <Badge className="bg-green-600"><Check className="h-3 w-3 mr-1" />Concluída</Badge>;
       case 'rejected':
         return <Badge variant="destructive"><X className="h-3 w-3 mr-1" />Rejeitada</Badge>;
+      case 'reversed':
+        return <Badge variant="outline" className="border-amber-500 text-amber-600"><Undo2 className="h-3 w-3 mr-1" />Revertida</Badge>;
       default:
         return <Badge variant="secondary"><Clock className="h-3 w-3 mr-1" />Pendente</Badge>;
     }
