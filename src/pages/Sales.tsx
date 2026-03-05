@@ -29,6 +29,9 @@ const paymentMethodLabels: Record<string, string> = {
 };
 
 const Sales = () => {
+  const { isAdmin, isManager, user } = useAuth();
+  const queryClient = useQueryClient();
+  const canCancel = isAdmin || isManager;
   const [search, setSearch] = useState('');
   const [periodFilter, setPeriodFilter] = useState('today');
   const [customStart, setCustomStart] = useState('');
@@ -36,7 +39,9 @@ const Sales = () => {
   const [detailSale, setDetailSale] = useState<any>(null);
   const [detailCustomer, setDetailCustomer] = useState<any>(null);
   const [isLoadingCustomer, setIsLoadingCustomer] = useState(false);
-  
+  const [cancelSale, setCancelSale] = useState<any>(null);
+  const [cancelReason, setCancelReason] = useState('');
+  const [isCancelling, setIsCancelling] = useState(false);
 
   // Fetch full customer data when opening detail
   const openSaleDetail = async (sale: any) => {
