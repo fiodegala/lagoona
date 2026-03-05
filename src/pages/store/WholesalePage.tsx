@@ -61,13 +61,7 @@ const WholesalePage = () => {
   return (
     <StoreLayout>
       {/* Hero Section */}
-      <section className="relative min-h-[420px] flex items-center justify-center overflow-hidden">
-        <img
-          src={atacadoBg}
-          alt="Atacado Fio de Gala"
-          className="absolute inset-0 w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-[hsl(var(--store-dark)/0.75)]" />
+      <section className="relative min-h-[420px] flex items-center justify-center overflow-hidden bg-store-dark">
         <div className="relative z-10 text-center px-4 py-20 max-w-3xl mx-auto">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 font-[Clash_Display,sans-serif]">
             Seja um Parceiro Fio de Gala
@@ -86,7 +80,7 @@ const WholesalePage = () => {
             <Button
               size="lg"
               variant="outline"
-              className="border-white text-white hover:bg-white/10 font-semibold px-8"
+              className="border-store-gold text-store-gold hover:bg-store-gold hover:text-store-dark font-semibold px-8"
               onClick={() => window.open('https://wa.me/5562994165785', '_blank')}
             >
               <MessageCircle className="mr-2 h-5 w-5" />
