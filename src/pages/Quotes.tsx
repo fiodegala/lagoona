@@ -39,6 +39,13 @@ const statusMap: Record<string, { label: string; variant: 'default' | 'secondary
   cancelled: { label: 'Cancelado', variant: 'outline' },
 };
 
+const paymentMethodLabels: Record<string, string> = {
+  cash: 'Dinheiro',
+  card: 'Cartão',
+  pix: 'PIX',
+  mixed: 'Misto',
+};
+
 const Quotes = () => {
   const { toast } = useToast();
   const [quotes, setQuotes] = useState<Quote[]>([]);
