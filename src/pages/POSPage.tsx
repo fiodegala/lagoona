@@ -263,6 +263,7 @@ const POSPage = () => {
           customer_id: selectedCustomer?.id || null,
           customer_name: selectedCustomer?.name || null,
           customer_document: selectedCustomer?.document || null,
+          customer_phone: selectedCustomer?.phone || null,
           items: cartItems.map((item) => ({
             product_id: item.product_id,
             variation_id: item.variation_id,
