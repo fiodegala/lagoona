@@ -95,6 +95,7 @@ interface RawPOSSale {
   payment_method: string;
   payment_details: Record<string, unknown> | null;
   discount_amount: number | null;
+  items: { name?: string; qty?: number; quantity?: number; unit_price?: number; price?: number; is_promotional?: boolean; original_price?: number; total?: number }[];
   created_at: string;
 }
 
