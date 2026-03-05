@@ -189,6 +189,19 @@ const Stock = () => {
     }
   };
 
+  // Compute which variation IDs match the current search
+  const matchedVariationIds = useMemo(() => {
+    if (!search || search.length < 2) return new Set<string>();
+    const s = search.toLowerCase();
+    const ids = new Set<string>();
+    products.forEach(p => {
+      p.variation_codes.forEach(vc => {
+        if (vc.code.includes(s)) ids.add(vc.variation_id);
+      });
+    });
+    return ids;
+  }, [products, search]);
+
   const filteredProducts = useMemo(() => {
     return products.filter(p => {
       const s = search.toLowerCase();
@@ -206,6 +219,17 @@ const Stock = () => {
       return matchesSearch && matchesStatus;
     });
   }, [products, search, filterStatus]);
+
+  // Auto-expand product when search matches a variation code
+  useEffect(() => {
+    if (matchedVariationIds.size === 0) return;
+    const productToExpand = filteredProducts.find(p =>
+      p.has_variations && p.variation_codes.some(vc => matchedVariationIds.has(vc.variation_id))
+    );
+    if (productToExpand && expandedProductId !== productToExpand.id) {
+      toggleExpand(productToExpand);
+    }
+  }, [matchedVariationIds, filteredProducts]);
 
   const physicalStores = stores.filter(s => s.type === 'physical');
 
