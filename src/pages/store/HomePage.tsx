@@ -15,6 +15,20 @@ const DealsCountdownSection = lazy(() => import('@/components/store/DealsCountdo
 const VideoTestimonialsSection = lazy(() => import('@/components/store/VideoTestimonialsSection'));
 const FeaturedProductSection = lazy(() => import('@/components/store/FeaturedProductSection'));
 
+// Normalize banner link_url: strip origin for internal links so React Router works
+const normalizeBannerUrl = (url: string | null): string | null => {
+  if (!url) return null;
+  try {
+    const parsed = new URL(url, window.location.origin);
+    if (parsed.origin === window.location.origin) {
+      return parsed.pathname + parsed.search + parsed.hash;
+    }
+  } catch {
+    // already a relative path
+  }
+  return url;
+};
+
 const HomePage = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
