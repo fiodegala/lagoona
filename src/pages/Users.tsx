@@ -262,15 +262,22 @@ const UsersPage = () => {
     return <Navigate to="/" replace />;
   }
 
-  const handleOpenForm = (userRole?: UserWithRole) => {
+  const handleOpenForm = async (userRole?: UserWithRole) => {
     if (userRole) {
       setSelectedUser(userRole);
+      // Fetch existing menu permissions
+      const { data: menuPerms } = await supabase
+        .from('user_menu_permissions')
+        .select('allowed_menus')
+        .eq('user_id', userRole.user_id)
+        .maybeSingle();
       setFormData({
         email: '',
         password: '',
         fullName: userRole.profile?.full_name || '',
         role: userRole.role,
         store_id: userRole.store_id || '',
+        allowed_menus: (menuPerms?.allowed_menus as string[]) || [],
       });
     } else {
       setSelectedUser(null);
@@ -280,6 +287,7 @@ const UsersPage = () => {
         fullName: '',
         role: 'seller',
         store_id: '',
+        allowed_menus: [],
       });
     }
     setIsFormOpen(true);
@@ -294,6 +302,7 @@ const UsersPage = () => {
       fullName: '',
       role: 'seller',
       store_id: '',
+      allowed_menus: [],
     });
   };
 
@@ -301,7 +310,7 @@ const UsersPage = () => {
     e.preventDefault();
     
     if (selectedUser) {
-      updateRoleMutation.mutate({ userId: selectedUser.user_id, role: formData.role, store_id: formData.store_id || null });
+      updateRoleMutation.mutate({ userId: selectedUser.user_id, role: formData.role, store_id: formData.store_id || null, allowed_menus: formData.allowed_menus });
     } else {
       if (!formData.email || !formData.password || !formData.fullName) {
         toast({ title: 'Preencha todos os campos', variant: 'destructive' });
