@@ -653,7 +653,7 @@ const Stock = () => {
                                               .map(av => av.value)
                                               .join(' / ') || '—';
                                             return (
-                                              <TableRow key={vd.variation.id} className="hover:bg-muted/30">
+                                              <TableRow key={vd.variation.id} className={cn("hover:bg-muted/30", matchedVariationIds.has(vd.variation.id) && "bg-primary/10 ring-1 ring-primary/30")}>
                                                 <TableCell className="py-1.5 text-sm font-medium">{label}</TableCell>
                                                 {physicalStores.map(store => (
                                                   <TableCell key={store.id} className="py-1.5 text-center">
