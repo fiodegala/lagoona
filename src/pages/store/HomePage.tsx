@@ -20,18 +20,21 @@ const HomePage = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [heroBanners, setHeroBanners] = useState<Banner[]>([]);
   const [promoBanners, setPromoBanners] = useState<Banner[]>([]);
+  const [midBanners, setMidBanners] = useState<Banner[]>([]);
   const [currentHeroBanner, setCurrentHeroBanner] = useState(0);
+  const [currentMidBanner, setCurrentMidBanner] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [featuredProduct, setFeaturedProduct] = useState<Product | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [productsData, categoriesData, bannersData, promoData, featuredConfig] = await Promise.all([
+        const [productsData, categoriesData, bannersData, promoData, midData, featuredConfig] = await Promise.all([
           productsService.getAll(),
           categoriesService.getAll(),
           bannersService.getByType('hero').catch(() => []),
           bannersService.getByType('promo').catch(() => []),
+          bannersService.getByType('mid').catch(() => []),
           supabase.from('store_config').select('value').eq('key', 'featured_product').maybeSingle(),
         ]);
         const activeProducts = productsData.filter(p => p.is_active);
@@ -40,6 +43,7 @@ const HomePage = () => {
         setCategories(categoriesData.filter(c => c.is_active));
         setHeroBanners(bannersData);
         setPromoBanners(promoData);
+        setMidBanners(midData);
 
         // Set featured product from config
         const featuredId = (featuredConfig.data?.value as { product_id?: string })?.product_id;
@@ -64,6 +68,15 @@ const HomePage = () => {
     }, 5000);
     return () => clearInterval(interval);
   }, [heroBanners.length]);
+
+  // Auto-rotate mid banners
+  useEffect(() => {
+    if (midBanners.length <= 1) return;
+    const interval = setInterval(() => {
+      setCurrentMidBanner(prev => (prev + 1) % midBanners.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [midBanners.length]);
 
   const newProducts = [...products].sort((a, b) =>
     new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
@@ -286,6 +299,53 @@ const HomePage = () => {
           </div>
         </div>
       </section>
+
+      {/* Banner Rotativo Entre Seções */}
+      {midBanners.length > 0 && (
+        <section className="py-8 md:py-12">
+          <div className="container mx-auto px-4">
+            <div className="relative overflow-hidden rounded-xl aspect-[21/9] md:aspect-[3/1]">
+              {midBanners.map((banner, index) => (
+                <Link
+                  key={banner.id}
+                  to={banner.link_url || '/loja'}
+                  className="absolute inset-0 transition-opacity duration-700"
+                  style={{ opacity: index === currentMidBanner ? 1 : 0, pointerEvents: index === currentMidBanner ? 'auto' : 'none' }}
+                >
+                  <img
+                    src={banner.image_url}
+                    alt={banner.title || 'Banner'}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+                  {(banner.title || banner.subtitle) && (
+                    <div className="absolute bottom-0 left-0 right-0 p-5 md:p-8">
+                      {banner.title && (
+                        <h3 className="text-lg md:text-2xl font-display font-bold text-white mb-1">{banner.title}</h3>
+                      )}
+                      {banner.subtitle && (
+                        <p className="text-sm md:text-base text-white/70 font-light">{banner.subtitle}</p>
+                      )}
+                    </div>
+                  )}
+                </Link>
+              ))}
+              {midBanners.length > 1 && (
+                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-2 z-10">
+                  {midBanners.map((_, idx) => (
+                    <button
+                      key={idx}
+                      className={`w-2 h-2 rounded-full transition-all ${idx === currentMidBanner ? 'bg-store-gold scale-125' : 'bg-white/40'}`}
+                      onClick={(e) => { e.preventDefault(); setCurrentMidBanner(idx); }}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Categorias em Destaque */}
       {categories.length > 0 && (
