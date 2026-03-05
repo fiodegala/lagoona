@@ -16,6 +16,7 @@ interface UpsellSectionProps {
   currentPrice: number;
   currentVariation?: ProductVariation | null;
   categoryId?: string | null;
+  onSelectionChange?: (hasSelection: boolean, buyTogetherFn: (() => void) | null) => void;
 }
 
 interface SelectedUpsellItem {
