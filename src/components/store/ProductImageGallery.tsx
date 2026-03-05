@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight, ZoomIn, X, Package, Play } from 'lucide-reac
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
+import { useSwipe } from '@/hooks/useSwipe';
 
 interface MediaItem {
   type: 'image' | 'video';
