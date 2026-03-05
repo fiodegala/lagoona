@@ -16,6 +16,7 @@ import FeaturedProductSettings from '@/components/settings/FeaturedProductSettin
 import VideoTestimonialsSettings from '@/components/settings/VideoTestimonialsSettings';
 import RecoveryCouponSettings from '@/components/settings/RecoveryCouponSettings';
 import SpinWheelSettings from '@/components/settings/SpinWheelSettings';
+import WholesaleVideoSettings from '@/components/settings/WholesaleVideoSettings';
 
 const Settings = () => {
   const { profile, isAdmin, user } = useAuth();
@@ -215,6 +216,8 @@ const Settings = () => {
             <VideoTestimonialsSettings />
             <SpinWheelSettings />
             <RecoveryCouponSettings />
+            <WholesaleVideoSettings />
+            <WhatsAppTemplatesSettings />
             <WhatsAppTemplatesSettings />
           </>
         )}
