@@ -299,7 +299,15 @@ const HomePage = () => {
             <div className="relative">
               <div
                 id="lancamentos-carousel"
-                className="flex gap-4 md:gap-6 overflow-hidden -mx-4 px-4"
+                className="flex gap-4 md:gap-6 overflow-hidden -mx-4 px-4 touch-pan-y"
+                onTouchStart={(e) => { lancamentosStartX.current = e.touches[0].clientX; }}
+                onTouchEnd={(e) => {
+                  const delta = e.changedTouches[0].clientX - lancamentosStartX.current;
+                  if (Math.abs(delta) > 50) {
+                    const el = document.getElementById('lancamentos-carousel');
+                    if (el) el.scrollBy({ left: delta < 0 ? 300 : -300, behavior: 'smooth' });
+                  }
+                }}
               >
                 {newProducts.slice(0, 15).map((product) => (
                   <div key={product.id} className="shrink-0 w-[160px] sm:w-[200px] md:w-[220px] lg:w-[240px]">
