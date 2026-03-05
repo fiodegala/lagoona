@@ -127,6 +127,32 @@ const Sales = () => {
     setTimeout(() => printWindow.print(), 300);
   };
 
+  const handleCancelSale = async () => {
+    if (!cancelSale || !user) return;
+    setIsCancelling(true);
+    try {
+      const { error } = await supabase
+        .from('pos_sales')
+        .update({
+          status: 'cancelled',
+          cancelled_at: new Date().toISOString(),
+          cancelled_by: user.id,
+          cancel_reason: cancelReason || null,
+        } as any)
+        .eq('id', cancelSale.id);
+      if (error) throw error;
+      toast.success('Venda cancelada com sucesso');
+      queryClient.invalidateQueries({ queryKey: ['pos-sales'] });
+      setCancelSale(null);
+      setCancelReason('');
+      if (detailSale?.id === cancelSale.id) setDetailSale(null);
+    } catch (e: any) {
+      toast.error('Erro ao cancelar venda: ' + (e.message || ''));
+    } finally {
+      setIsCancelling(false);
+    }
+  };
+
   const dateRange = useMemo(() => {
     const now = new Date();
     switch (periodFilter) {
