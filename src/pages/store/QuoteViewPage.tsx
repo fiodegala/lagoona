@@ -182,7 +182,7 @@ const QuoteViewPage = () => {
                       <div className="text-right shrink-0">
                         <p className="font-bold text-lg">{formatCurrency(item.total || (item.unit_price * item.quantity))}</p>
                         {item.discount_amount > 0 && (
-                          <p className="text-xs text-red-500">-{formatCurrency(item.discount_amount)}</p>
+                          <p className="text-xs text-destructive">-{formatCurrency(item.discount_amount)}</p>
                         )}
                       </div>
                     </div>
@@ -199,7 +199,7 @@ const QuoteViewPage = () => {
                   <span>{formatCurrency(quote.subtotal)}</span>
                 </div>
                 {quote.discount_amount > 0 && (
-                  <div className="flex justify-between text-red-500">
+                  <div className="flex justify-between text-destructive">
                     <span>Desconto</span>
                     <span>-{formatCurrency(quote.discount_amount)}</span>
                   </div>
