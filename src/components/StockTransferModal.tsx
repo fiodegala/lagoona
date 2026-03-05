@@ -69,6 +69,8 @@ const StockTransferModal: React.FC<Props> = ({ open, onOpenChange, stores, onTra
   const { user, isAdmin } = useAuth();
   const { toast } = useToast();
   const physicalStores = stores.filter(s => s.type === 'physical');
+  const onlineStore = stores.find(s => s.type === 'online');
+  const destinationStores = [...physicalStores, ...(onlineStore ? [onlineStore] : [])];
 
   // New transfer form
   const [fromStoreId, setFromStoreId] = useState('');
