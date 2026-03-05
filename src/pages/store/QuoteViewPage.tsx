@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import StoreHeader from '@/components/store/StoreHeader';
 import StoreFooter from '@/components/store/StoreFooter';
-import StoreFooter from '@/components/store/StoreFooter';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Loader2, FileText, User, CreditCard, Package, Clock, Printer } from 'lucide-react';
