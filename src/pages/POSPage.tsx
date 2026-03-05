@@ -272,6 +272,7 @@ const POSPage = () => {
           discount_amount: totalDiscount,
           total,
           payment_method: method,
+          payment_details: paymentDetails || {},
           notes: selectedSeller ? `Vendedor: ${selectedSeller.full_name}` : null,
           status: 'pending',
         };

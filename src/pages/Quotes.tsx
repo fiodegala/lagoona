@@ -28,6 +28,7 @@ interface Quote {
   created_at: string;
   expires_at: string | null;
   payment_method: string | null;
+  payment_details: Record<string, any> | null;
 }
 
 const formatCurrency = (v: number) =>
