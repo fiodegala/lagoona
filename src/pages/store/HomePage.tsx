@@ -301,7 +301,8 @@ const HomePage = () => {
             <div className="relative">
               <div
                 id="lancamentos-carousel"
-                className="flex gap-4 md:gap-6 overflow-hidden -mx-4 px-4 touch-pan-y"
+                className="flex gap-4 md:gap-6 overflow-x-auto scrollbar-none -mx-4 px-4 touch-pan-y"
+                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                 onTouchStart={(e) => { lancamentosStartX.current = e.touches[0].clientX; }}
                 onTouchEnd={(e) => {
                   const delta = e.changedTouches[0].clientX - lancamentosStartX.current;
