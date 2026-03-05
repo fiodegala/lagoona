@@ -78,6 +78,12 @@ const RelatedProducts = ({
     el.scrollTo({ left: newPosition, behavior: 'smooth' });
     setTimeout(updateScrollButtons, 350);
   };
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    }).format(price);
+  };
 
   if (isLoading) {
     return (
@@ -96,12 +102,6 @@ const RelatedProducts = ({
     return null;
   }
 
-  const canScrollLeft = scrollPosition > 0;
-  const container = document.getElementById('related-products-container');
-  const canScrollRight = container 
-    ? scrollPosition < container.scrollWidth - container.clientWidth - 10
-    : false;
-
   return (
     <div className="py-12">
       <div className="flex items-center justify-between mb-6">
@@ -112,9 +112,9 @@ const RelatedProducts = ({
 
       <div className="relative">
         <div 
-          id="related-products-container"
+          ref={containerRef}
           className="flex gap-4 overflow-hidden pb-4"
-          onScroll={handleScroll}
+          onScroll={updateScrollButtons}
         >
           {products.map((product) => {
             const hasDiscount = (product as any).promotional_price != null && (product as any).promotional_price < product.price;
