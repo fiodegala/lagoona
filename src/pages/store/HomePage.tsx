@@ -29,11 +29,12 @@ const HomePage = () => {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [productsData, categoriesData, bannersData, promoData, featuredConfig] = await Promise.all([
+        const [productsData, categoriesData, bannersData, promoData, midData, featuredConfig] = await Promise.all([
           productsService.getAll(),
           categoriesService.getAll(),
           bannersService.getByType('hero').catch(() => []),
           bannersService.getByType('promo').catch(() => []),
+          bannersService.getByType('mid').catch(() => []),
           supabase.from('store_config').select('value').eq('key', 'featured_product').maybeSingle(),
         ]);
         const activeProducts = productsData.filter(p => p.is_active);
@@ -42,6 +43,7 @@ const HomePage = () => {
         setCategories(categoriesData.filter(c => c.is_active));
         setHeroBanners(bannersData);
         setPromoBanners(promoData);
+        setMidBanners(midData);
 
         // Set featured product from config
         const featuredId = (featuredConfig.data?.value as { product_id?: string })?.product_id;
