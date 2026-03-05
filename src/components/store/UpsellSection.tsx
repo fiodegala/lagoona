@@ -123,29 +123,37 @@ const UpsellSection = ({ currentProduct, currentPrice, categoryId }: UpsellSecti
               <Plus className="h-3 w-3 text-muted-foreground shrink-0" />
               <div className="flex-1 h-px bg-border" />
             </div>
-              <button
-                onClick={() => toggleSelect(product.id)}
-                className={`w-full flex items-center gap-3 p-1.5 rounded-lg transition-all text-left ${
+              <div className={`w-full flex items-center gap-3 p-1.5 rounded-lg transition-all ${
                   isSelected ? 'bg-store-primary/5 ring-1 ring-store-primary' : 'hover:bg-muted/50'
-                }`}
-              >
-                <div className="relative shrink-0 w-10 h-10 rounded-lg overflow-hidden border bg-muted">
-                  {product.image_url ? (
-                    <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-xs">📦</div>
-                  )}
-                  <div className={`absolute top-0.5 right-0.5 w-4 h-4 rounded-full border flex items-center justify-center transition-colors ${
+                }`}>
+                {/* Checkbox */}
+                <button
+                  onClick={() => toggleSelect(product.id)}
+                  className={`shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
                     isSelected ? 'bg-store-primary border-store-primary' : 'bg-background border-muted-foreground/30'
-                  }`}>
-                    {isSelected && <Check className="h-2.5 w-2.5 text-white" />}
+                  }`}
+                >
+                  {isSelected && <Check className="h-3 w-3 text-white" />}
+                </button>
+                {/* Clickable product info → navigates to product page */}
+                <Link
+                  to={`/produto/${product.id}`}
+                  className="flex items-center gap-3 min-w-0 flex-1"
+                >
+                  <div className="shrink-0 w-10 h-10 rounded-lg overflow-hidden border bg-muted">
+                    {product.image_url ? (
+                      <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-xs">📦</div>
+                    )}
                   </div>
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-medium line-clamp-1">{product.name}</p>
-                </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-medium line-clamp-1 hover:text-store-primary transition-colors">{product.name}</p>
+                    <p className="text-[10px] text-muted-foreground">Ver detalhes</p>
+                  </div>
+                </Link>
                 <span className="text-xs font-bold text-store-accent shrink-0">{formatPrice(price)}</span>
-              </button>
+              </div>
             </div>
           );
         })}
