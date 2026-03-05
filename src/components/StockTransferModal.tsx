@@ -32,7 +32,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowRight, Check, X, Clock, Search, Package } from 'lucide-react';
+import { ArrowRight, Check, X, Clock, Search, Package, Undo2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
@@ -387,6 +387,31 @@ const StockTransferModal: React.FC<Props> = ({ open, onOpenChange, stores, onTra
     }
   };
 
+  const handleReverse = async (transfer: TransferRecord) => {
+    if (!confirm(`Reverter transferência de ${transfer.quantity}x ${transfer.product_name}?\nIsso devolverá as peças de "${transfer.to_store_name}" para "${transfer.from_store_name}".`)) return;
+    try {
+      // Execute reverse: from destination back to origin
+      await executeTransfer(
+        transfer.to_store_id,
+        transfer.from_store_id,
+        transfer.product_id,
+        transfer.variation_id,
+        transfer.quantity
+      );
+
+      await supabase
+        .from('stock_transfers')
+        .update({ status: 'reversed', approved_by: user!.id } as any)
+        .eq('id', transfer.id);
+
+      toast({ title: 'Transferência revertida com sucesso!' });
+      loadHistory();
+      onTransferComplete();
+    } catch (error: any) {
+      toast({ title: 'Erro ao reverter', description: error.message, variant: 'destructive' });
+    }
+  };
+
   const resetForm = () => {
     setFromStoreId('');
     setToStoreId('');
@@ -405,6 +430,8 @@ const StockTransferModal: React.FC<Props> = ({ open, onOpenChange, stores, onTra
         return <Badge className="bg-green-600"><Check className="h-3 w-3 mr-1" />Concluída</Badge>;
       case 'rejected':
         return <Badge variant="destructive"><X className="h-3 w-3 mr-1" />Rejeitada</Badge>;
+      case 'reversed':
+        return <Badge variant="outline" className="border-amber-500 text-amber-600"><Undo2 className="h-3 w-3 mr-1" />Revertida</Badge>;
       default:
         return <Badge variant="secondary"><Clock className="h-3 w-3 mr-1" />Pendente</Badge>;
     }
@@ -663,6 +690,11 @@ const StockTransferModal: React.FC<Props> = ({ open, onOpenChange, stores, onTra
                                   <X className="h-3 w-3" />
                                 </Button>
                               </div>
+                            )}
+                            {t.status === 'completed' && (
+                              <Button size="sm" variant="outline" className="text-amber-600 border-amber-500 hover:bg-amber-50" onClick={() => handleReverse(t)}>
+                                <Undo2 className="h-3 w-3 mr-1" /> Reverter
+                              </Button>
                             )}
                           </TableCell>
                         )}
