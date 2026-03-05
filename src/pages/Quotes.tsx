@@ -9,8 +9,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
+import QuoteEditModal from '@/components/QuoteEditModal';
 
-import { Search, FileText, Eye, Trash2, Loader2, Clock, User, CreditCard, Package, Printer, Share2 } from 'lucide-react';
+import { Search, FileText, Eye, Trash2, Loader2, Clock, User, CreditCard, Package, Printer, Share2, Pencil } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
