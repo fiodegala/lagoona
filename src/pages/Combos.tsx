@@ -338,13 +338,26 @@ const Combos = () => {
                 {combos.map(combo => (
                   <TableRow key={combo.id}>
                     <TableCell>
-                      <div>
-                        <p className="font-medium">{combo.name}</p>
-                        {combo.description && (
-                          <p className="text-xs text-muted-foreground line-clamp-1">
-                            {combo.description}
-                          </p>
+                      <div className="flex items-center gap-3">
+                        {combo.image_url ? (
+                          <img
+                            src={combo.image_url}
+                            alt={combo.name}
+                            className="h-10 w-10 rounded-md object-cover border"
+                          />
+                        ) : (
+                          <div className="h-10 w-10 rounded-md bg-muted flex items-center justify-center">
+                            <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                          </div>
                         )}
+                        <div>
+                          <p className="font-medium">{combo.name}</p>
+                          {combo.description && (
+                            <p className="text-xs text-muted-foreground line-clamp-1">
+                              {combo.description}
+                            </p>
+                          )}
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell>
