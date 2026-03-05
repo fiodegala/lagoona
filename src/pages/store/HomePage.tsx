@@ -1,8 +1,9 @@
-import { useEffect, useState, lazy, Suspense } from 'react';
+import { useEffect, useState, lazy, Suspense, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Loader2, ShoppingBag, Truck, RefreshCw, Shield, MessageCircle, TrendingUp, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import StoreLayout from '@/components/store/StoreLayout';
+import { useSwipe } from '@/hooks/useSwipe';
 import ProductCard from '@/components/store/ProductCard';
 import { productsService, Product } from '@/services/products';
 import { categoriesService, Category } from '@/services/categories';
@@ -109,10 +110,20 @@ const HomePage = () => {
 
   const categoryIcons = ['👕', '👖', '👟', '👜', '💍', '🎮', '📱', '🏠'];
 
+  const heroSwipe = useSwipe({
+    onSwipeLeft: useCallback(() => setCurrentHeroBanner(prev => (prev + 1) % heroBanners.length), [heroBanners.length]),
+    onSwipeRight: useCallback(() => setCurrentHeroBanner(prev => (prev - 1 + heroBanners.length) % heroBanners.length), [heroBanners.length]),
+  });
+
+  const midSwipe = useSwipe({
+    onSwipeLeft: useCallback(() => setCurrentMidBanner(prev => (prev + 1) % midBanners.length), [midBanners.length]),
+    onSwipeRight: useCallback(() => setCurrentMidBanner(prev => (prev - 1 + midBanners.length) % midBanners.length), [midBanners.length]),
+  });
+
   return (
     <StoreLayout>
       {/* Hero Section */}
-      <section className="relative h-[500px] md:h-[600px] lg:h-[700px] overflow-hidden">
+      <section className="relative h-[500px] md:h-[600px] lg:h-[700px] overflow-hidden" {...heroSwipe}>
         {isLoading ? (
           <div className="absolute inset-0 bg-store-dark flex items-center justify-center">
             <Loader2 className="h-10 w-10 animate-spin text-store-gold" />
@@ -341,7 +352,7 @@ const HomePage = () => {
       {midBanners.length > 0 && (
         <section className="py-8 md:py-12">
           <div className="container mx-auto px-4">
-            <div className="relative overflow-hidden rounded-xl aspect-[21/9] md:aspect-[3/1]">
+            <div className="relative overflow-hidden rounded-xl aspect-[21/9] md:aspect-[3/1]" {...midSwipe}>
               {midBanners.map((banner, index) => (
                 <Link
                   key={banner.id}
