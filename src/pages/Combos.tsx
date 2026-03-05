@@ -94,20 +94,16 @@ const Combos = () => {
   const loadProducts = async () => {
     try {
       setProductsLoading(true);
-      const { data: prods } = await supabase
-        .from('products')
-        .select('id, name, price, image_url')
-        .eq('is_active', true)
-        .order('name');
-
-      if (!prods) return;
-
-      const productOptions: ProductOption[] = [];
-      for (const prod of prods) {
-        const { data: vars } = await supabase
+      const [{ data: prods }, { data: allVars }] = await Promise.all([
+        supabase
+          .from('products')
+          .select('id, name, price, image_url')
+          .eq('is_active', true)
+          .order('name'),
+        supabase
           .from('product_variations')
           .select(`
-            id, price,
+            id, price, product_id,
             product_variation_values (
               attribute_value_id,
               product_attribute_values:attribute_value_id (
@@ -116,10 +112,22 @@ const Combos = () => {
               )
             )
           `)
-          .eq('product_id', prod.id)
-          .eq('is_active', true);
+          .eq('is_active', true),
+      ]);
 
-        const variations = (vars || []).map((v: any) => {
+      if (!prods) return;
+
+      // Group variations by product_id
+      const varsByProduct = new Map<string, any[]>();
+      (allVars || []).forEach((v: any) => {
+        const list = varsByProduct.get(v.product_id) || [];
+        list.push(v);
+        varsByProduct.set(v.product_id, list);
+      });
+
+      const productOptions: ProductOption[] = prods.map(prod => {
+        const vars = varsByProduct.get(prod.id) || [];
+        const variations = vars.map((v: any) => {
           const labels = (v.product_variation_values || [])
             .map((pvv: any) => pvv.product_attribute_values?.value)
             .filter(Boolean);
@@ -129,15 +137,14 @@ const Combos = () => {
             label: labels.join(' / ') || 'Variação',
           };
         });
-
-        productOptions.push({
+        return {
           id: prod.id,
           name: prod.name,
           price: prod.price,
           image_url: prod.image_url,
           variations,
-        });
-      }
+        };
+      });
 
       setProducts(productOptions);
     } catch {
