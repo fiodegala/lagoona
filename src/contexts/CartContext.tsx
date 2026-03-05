@@ -88,18 +88,33 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     for (const combo of activeCombos) {
       if (!combo.items || combo.items.length === 0) continue;
 
-      // Check if all combo items are present in cart with sufficient quantity
-      const allMatch = combo.items.every((comboItem) => {
-        const cartItem = items.find((ci) => {
-          const productMatch = ci.productId === comboItem.product_id;
-          if (!productMatch) return false;
-          // If combo specifies a variation, it must match
-          if (comboItem.variation_id) {
-            return ci.variationId === comboItem.variation_id;
-          }
-          return true;
-        });
-        return cartItem && cartItem.quantity >= comboItem.quantity;
+      // Aggregate combo requirements by product+variation key
+      const comboRequirements = new Map<string, { product_id: string; variation_id: string | null; totalQty: number }>();
+      for (const comboItem of combo.items) {
+        const key = `${comboItem.product_id}__${comboItem.variation_id || 'any'}`;
+        const existing = comboRequirements.get(key);
+        if (existing) {
+          existing.totalQty += comboItem.quantity;
+        } else {
+          comboRequirements.set(key, {
+            product_id: comboItem.product_id,
+            variation_id: comboItem.variation_id,
+            totalQty: comboItem.quantity,
+          });
+        }
+      }
+
+      // Check if all aggregated requirements are met by the cart
+      const allMatch = Array.from(comboRequirements.values()).every((req) => {
+        // Find matching cart items and sum their quantities
+        const matchingQty = items
+          .filter((ci) => {
+            if (ci.productId !== req.product_id) return false;
+            if (req.variation_id) return ci.variationId === req.variation_id;
+            return true;
+          })
+          .reduce((sum, ci) => sum + ci.quantity, 0);
+        return matchingQty >= req.totalQty;
       });
 
       if (allMatch) {
