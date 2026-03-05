@@ -37,7 +37,7 @@ const Upsells = () => {
 
   // Form state
   const [formProductId, setFormProductId] = useState('');
-  const [formUpsellProductId, setFormUpsellProductId] = useState('');
+  const [formUpsellProductIds, setFormUpsellProductIds] = useState<string[]>([]);
   const [formDiscount, setFormDiscount] = useState('5');
   const [formSortOrder, setFormSortOrder] = useState('0');
   const [formIsActive, setFormIsActive] = useState(true);
