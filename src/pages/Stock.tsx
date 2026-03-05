@@ -247,6 +247,7 @@ const Stock = () => {
     if (expandedProductId === product.id) {
       setExpandedProductId(null);
       setExpandedData([]);
+      setVariationSearch('');
       return;
     }
 
