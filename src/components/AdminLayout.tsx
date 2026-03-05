@@ -128,7 +128,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
       {/* Navigation */}
       <div className="flex-1 overflow-y-auto py-4 px-2 space-y-1">
         {navItems.map((item) => (
-          <NavItem key={item.path} {...item} />
+          <NavItem key={item.key} {...item} />
         ))}
 
         <Separator className="my-4 bg-sidebar-border" />
@@ -141,7 +141,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
         
         <div className="space-y-1 mt-2">
           {settingsItems.map((item) => (
-            <NavItem key={item.path} {...item} />
+            <NavItem key={item.key} {...item} />
           ))}
         </div>
       </div>
