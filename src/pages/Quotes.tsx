@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
-import { ScrollArea } from '@/components/ui/scroll-area';
+
 import { Search, FileText, Eye, Trash2, Loader2, Clock, User, CreditCard, Package } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -161,16 +161,16 @@ const Quotes = () => {
 
       {/* Detail Modal */}
       <Dialog open={!!selectedQuote} onOpenChange={open => !open && setSelectedQuote(null)}>
-        <DialogContent className="max-w-lg max-h-[90vh] flex flex-col">
+        <DialogContent className="max-w-lg max-h-[90vh] flex flex-col overflow-hidden">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
+              <FileText className="h-5 w-5 shrink-0" />
               Orçamento #{selectedQuote?.id.slice(0, 8).toUpperCase()}
             </DialogTitle>
           </DialogHeader>
           {selectedQuote && (
-            <ScrollArea className="flex-1 min-h-0 pr-2">
-              <div className="space-y-5 py-2">
+            <div className="flex-1 min-h-0 overflow-y-auto pr-1">
+              <div className="space-y-5 py-2 px-1">
                 {/* Status e Data */}
                 <div className="flex items-center justify-between">
                   <Badge variant={(statusMap[selectedQuote.status] || statusMap.pending).variant}>
@@ -318,7 +318,7 @@ const Quotes = () => {
                   </>
                 )}
               </div>
-            </ScrollArea>
+            </div>
           )}
         </DialogContent>
       </Dialog>
