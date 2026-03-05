@@ -133,6 +133,7 @@ const Quotes = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [selectedQuote, setSelectedQuote] = useState<Quote | null>(null);
+  const [editQuote, setEditQuote] = useState<Quote | null>(null);
 
   const fetchQuotes = async () => {
     setLoading(true);
