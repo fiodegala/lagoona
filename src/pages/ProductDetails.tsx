@@ -208,7 +208,7 @@ const ProductDetails = () => {
 
   return (
     <StoreLayout>
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8 overflow-hidden">
         {/* Breadcrumb */}
         <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
           <Link to="/" className="hover:text-store-primary transition-colors">
