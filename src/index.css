@@ -222,3 +222,19 @@
   scrollbar-width: thin;
   scrollbar-color: hsl(var(--muted-foreground) / 0.3) hsl(var(--muted));
 }
+
+/* Sticky horizontal scrollbar - keeps h-scroll visible at viewport bottom */
+.sticky-hscroll {
+  overflow-x: auto;
+  overflow-y: auto;
+  transform: rotateX(0deg); /* force compositing layer */
+}
+.sticky-hscroll::-webkit-scrollbar:horizontal {
+  position: sticky;
+  bottom: 0;
+}
+@supports (overflow: overlay) {
+  .sticky-hscroll {
+    overflow-x: overlay;
+  }
+}
