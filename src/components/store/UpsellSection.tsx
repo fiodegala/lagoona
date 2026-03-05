@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { Plus, ShoppingCart, Loader2, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { productsService, Product } from '@/services/products';
 import { enrichProductsWithStock } from '@/services/stockService';
 import { useCart } from '@/contexts/CartContext';
@@ -30,7 +32,7 @@ const UpsellSection = ({ currentProduct, currentPrice, categoryId }: UpsellSecti
           const other = candidates.filter(p => p.category_id !== categoryId);
           candidates = [...same, ...other];
         }
-        const enriched = await enrichProductsWithStock(candidates.slice(0, 3));
+        const enriched = await enrichProductsWithStock(candidates.slice(0, 2));
         setSuggestions(enriched);
         if (enriched.length > 0) setSelectedIds(new Set([enriched[0].id]));
       } catch (err) {
@@ -66,13 +68,9 @@ const UpsellSection = ({ currentProduct, currentPrice, categoryId }: UpsellSecti
 
   const handleBuyTogether = () => {
     addItem({
-      id: currentProduct.id,
-      productId: currentProduct.id,
-      name: currentProduct.name,
-      price: currentPrice,
-      imageUrl: currentProduct.image_url || undefined,
-      stock: currentProduct.stock,
-      quantity: 1,
+      id: currentProduct.id, productId: currentProduct.id, name: currentProduct.name,
+      price: currentPrice, imageUrl: currentProduct.image_url || undefined,
+      stock: currentProduct.stock, quantity: 1,
     });
     selectedProducts.forEach(p => {
       addItem({
@@ -97,61 +95,75 @@ const UpsellSection = ({ currentProduct, currentPrice, categoryId }: UpsellSecti
         )}
       </div>
 
-      <div className="flex items-center gap-2 overflow-x-auto pb-1">
-        {/* Current product thumbnail */}
-        <div className="shrink-0 w-12 h-12 rounded-lg overflow-hidden border-2 border-store-primary bg-muted">
-          {currentProduct.image_url ? (
-            <img src={currentProduct.image_url} alt={currentProduct.name} className="w-full h-full object-cover" />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-sm">📦</div>
-          )}
+      <div className="rounded-xl border bg-card p-3 space-y-2">
+        {/* Current product row */}
+        <div className="flex items-center gap-3">
+          <div className="shrink-0 w-10 h-10 rounded-lg overflow-hidden border bg-muted">
+            {currentProduct.image_url ? (
+              <img src={currentProduct.image_url} alt={currentProduct.name} className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-xs">📦</div>
+            )}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-medium line-clamp-1">{currentProduct.name}</p>
+            <p className="text-xs text-muted-foreground">Este produto</p>
+          </div>
+          <span className="text-xs font-bold text-store-accent shrink-0">{formatPrice(currentPrice)}</span>
         </div>
 
+        {/* Suggestion rows */}
         {suggestions.map((product) => {
           const isSelected = selectedIds.has(product.id);
+          const price = getPrice(product);
           return (
-            <div key={product.id} className="contents">
-              <Plus className="h-3 w-3 text-muted-foreground shrink-0" />
+            <div key={product.id}>
+              <div className="flex items-center justify-center py-0.5">
+                <Plus className="h-3 w-3 text-muted-foreground" />
+              </div>
               <button
                 onClick={() => toggleSelect(product.id)}
-                className={`shrink-0 w-12 h-12 rounded-lg overflow-hidden border-2 transition-all relative ${
-                  isSelected ? 'border-store-primary' : 'border-transparent hover:border-muted-foreground/30'
+                className={`w-full flex items-center gap-3 p-1.5 rounded-lg transition-all text-left ${
+                  isSelected ? 'bg-store-primary/5 ring-1 ring-store-primary' : 'hover:bg-muted/50'
                 }`}
               >
-                {product.image_url ? (
-                  <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full bg-muted flex items-center justify-center text-sm">📦</div>
-                )}
-                {isSelected && (
-                  <div className="absolute inset-0 bg-store-primary/20 flex items-center justify-center">
-                    <Check className="h-3 w-3 text-store-primary" />
+                <div className="relative shrink-0 w-10 h-10 rounded-lg overflow-hidden border bg-muted">
+                  {product.image_url ? (
+                    <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-xs">📦</div>
+                  )}
+                  <div className={`absolute top-0.5 right-0.5 w-4 h-4 rounded-full border flex items-center justify-center transition-colors ${
+                    isSelected ? 'bg-store-primary border-store-primary' : 'bg-background border-muted-foreground/30'
+                  }`}>
+                    {isSelected && <Check className="h-2.5 w-2.5 text-white" />}
                   </div>
-                )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-medium line-clamp-1">{product.name}</p>
+                </div>
+                <span className="text-xs font-bold text-store-accent shrink-0">{formatPrice(price)}</span>
               </button>
             </div>
           );
         })}
 
-        {/* Divider + Price + CTA */}
+        {/* Total + CTA */}
         {selectedProducts.length > 0 && (
-          <>
-            <div className="h-10 w-px bg-border shrink-0 mx-1" />
-            <div className="shrink-0 flex items-center gap-2">
-              <div className="text-right">
-                <p className="text-[10px] text-muted-foreground line-through leading-none">{formatPrice(bundleTotal)}</p>
-                <p className="text-sm font-bold text-store-accent leading-tight">{formatPrice(bundleDiscounted)}</p>
-              </div>
-              <Button
-                size="sm"
-                onClick={handleBuyTogether}
-                className="gap-1 bg-store-primary text-store-accent hover:bg-store-primary/90 text-xs h-8 px-3"
-              >
-                <ShoppingCart className="h-3 w-3" />
-                Comprar
-              </Button>
+          <div className="flex items-center justify-between gap-3 pt-2 border-t">
+            <div>
+              <p className="text-[10px] text-muted-foreground line-through">{formatPrice(bundleTotal)}</p>
+              <p className="text-sm font-bold text-store-accent">{formatPrice(bundleDiscounted)}</p>
             </div>
-          </>
+            <Button
+              size="sm"
+              onClick={handleBuyTogether}
+              className="gap-1.5 bg-store-primary text-store-accent hover:bg-store-primary/90 text-xs h-8"
+            >
+              <ShoppingCart className="h-3.5 w-3.5" />
+              Comprar junto
+            </Button>
+          </div>
         )}
       </div>
     </div>
