@@ -30,7 +30,7 @@ const HomePage = () => {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [productsData, categoriesData, bannersData, promoData, midData, featuredConfig] = await Promise.all([
+        const [productsData, categoriesData, bannersData, promoData, midData, featuredConfig, wholesaleConfig] = await Promise.all([
           productsService.getAll(),
           categoriesService.getAll(),
           bannersService.getByType('hero').catch(() => []),
@@ -53,6 +53,10 @@ const HomePage = () => {
           const fp = enrichedProducts.find(p => p.id === featuredId);
           setFeaturedProduct(fp || null);
         }
+
+        // Set wholesale video from config
+        const wvUrl = (wholesaleConfig.data?.value as { url?: string })?.url;
+        if (wvUrl) setWholesaleVideoUrl(wvUrl);
       } catch (error) {
         console.error('Error loading data:', error);
       } finally {
