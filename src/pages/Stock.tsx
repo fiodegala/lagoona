@@ -619,7 +619,7 @@ const Stock = () => {
                         {/* Expanded variation details */}
                         {expandedProductId === product.id && (
                           <TableRow key={`${product.id}-expanded`}>
-                            <TableCell colSpan={4 + physicalStores.length + (isAdmin ? 1 : 0)} className="bg-muted/30 p-0">
+                            <TableCell colSpan={4 + physicalStores.length + (isAdmin ? 1 : 0)} className="bg-muted/20 p-0 border-l-4 border-l-primary">
                               {isLoadingExpanded ? (
                                 <div className="p-4 space-y-2">
                                   <Skeleton className="h-6 w-full" />
@@ -627,56 +627,99 @@ const Stock = () => {
                                   <Skeleton className="h-6 w-full" />
                                 </div>
                               ) : (
-                                <div className="p-4 space-y-5">
-                                  {expandedData.map((group) => (
-                                    <div key={group.color}>
-                                      <div className="flex items-center gap-2 mb-2">
-                                        <Badge variant="outline" className="font-semibold">
-                                          {group.color}
-                                        </Badge>
-                                        <span className="text-sm font-bold text-foreground">
-                                          Total: {group.total}
-                                        </span>
-                                      </div>
-                                      <Table>
-                                        <TableHeader>
-                                          <TableRow className="bg-muted/50">
-                                            <TableHead className="text-xs h-8">Tamanho</TableHead>
-                                            {physicalStores.map(store => (
-                                              <TableHead key={store.id} className="text-xs text-center h-8">{store.name}</TableHead>
-                                            ))}
-                                            <TableHead className="text-xs text-center font-bold h-8">Total</TableHead>
-                                            <TableHead className="text-xs h-8">SKU</TableHead>
-                                          </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                          {group.variations.map((vd) => {
-                                            const label = vd.variation.attribute_values
-                                              ?.filter(av => av.attribute_name.toLowerCase() !== 'cor')
-                                              .map(av => av.value)
-                                              .join(' / ') || '—';
-                                            return (
-                                              <TableRow key={vd.variation.id} className={cn("hover:bg-muted/30", matchedVariationIds.has(vd.variation.id) && "bg-primary/10 ring-1 ring-primary/30")}>
-                                                <TableCell className="py-1.5 text-sm font-medium">{label}</TableCell>
-                                                {physicalStores.map(store => (
-                                                  <TableCell key={store.id} className="py-1.5 text-center">
-                                                    <Badge
-                                                      variant={(vd.storeQuantities[store.id] || 0) === 0 ? 'destructive' : 'secondary'}
-                                                      className="min-w-[32px] justify-center text-xs"
-                                                    >
-                                                      {vd.storeQuantities[store.id] || 0}
-                                                    </Badge>
-                                                  </TableCell>
-                                                ))}
-                                                <TableCell className="py-1.5 text-center font-bold text-sm">{vd.total}</TableCell>
-                                                <TableCell className="py-1.5 text-xs text-muted-foreground">{vd.variation.sku || '—'}</TableCell>
-                                              </TableRow>
-                                            );
-                                          })}
-                                        </TableBody>
-                                      </Table>
+                                <div className="p-4 space-y-4">
+                                  {/* Variation search */}
+                                  <div className="flex items-center gap-3">
+                                    <div className="relative flex-1 max-w-sm">
+                                      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                                      <Input
+                                        placeholder="Filtrar variações por cor, tamanho, SKU..."
+                                        value={variationSearch}
+                                        onChange={(e) => setVariationSearch(e.target.value)}
+                                        className="pl-8 h-8 text-sm"
+                                        onClick={(e) => e.stopPropagation()}
+                                      />
                                     </div>
-                                  ))}
+                                    <span className="text-xs text-muted-foreground">
+                                      {expandedData.reduce((s, g) => s + g.variations.length, 0)} variações
+                                    </span>
+                                  </div>
+
+                                  {/* Color groups */}
+                                  {expandedData.map((group) => {
+                                    const vs = variationSearch.toLowerCase();
+                                    const filteredVars = vs
+                                      ? group.variations.filter(vd => {
+                                          const attrs = vd.variation.attribute_values?.map(av => av.value.toLowerCase()).join(' ') || '';
+                                          const sku = vd.variation.sku?.toLowerCase() || '';
+                                          const barcode = vd.variation.barcode?.toLowerCase() || '';
+                                          return attrs.includes(vs) || sku.includes(vs) || barcode.includes(vs) || group.color.toLowerCase().includes(vs);
+                                        })
+                                      : group.variations;
+
+                                    if (filteredVars.length === 0) return null;
+
+                                    return (
+                                      <div key={group.color} className="rounded-lg border bg-background overflow-hidden">
+                                        <div className="flex items-center justify-between px-4 py-2 bg-muted/50 border-b">
+                                          <div className="flex items-center gap-2">
+                                            <div className="w-3 h-3 rounded-full bg-primary/60" />
+                                            <span className="font-semibold text-sm">{group.color}</span>
+                                          </div>
+                                          <Badge variant="secondary" className="text-xs">
+                                            {filteredVars.reduce((s, v) => s + v.total, 0)} un.
+                                          </Badge>
+                                        </div>
+                                        <Table>
+                                          <TableHeader>
+                                            <TableRow className="bg-muted/30">
+                                              <TableHead className="text-xs h-8 w-24">Tamanho</TableHead>
+                                              <TableHead className="text-xs h-8 w-24">SKU</TableHead>
+                                              {physicalStores.map(store => (
+                                                <TableHead key={store.id} className="text-xs text-center h-8">{store.name}</TableHead>
+                                              ))}
+                                              <TableHead className="text-xs text-center font-bold h-8">Total</TableHead>
+                                            </TableRow>
+                                          </TableHeader>
+                                          <TableBody>
+                                            {filteredVars.map((vd) => {
+                                              const label = vd.variation.attribute_values
+                                                ?.filter(av => av.attribute_name.toLowerCase() !== 'cor')
+                                                .map(av => av.value)
+                                                .join(' / ') || '—';
+                                              return (
+                                                <TableRow key={vd.variation.id} className={cn(
+                                                  "hover:bg-muted/30 transition-colors",
+                                                  matchedVariationIds.has(vd.variation.id) && "bg-primary/10 ring-1 ring-inset ring-primary/30"
+                                                )}>
+                                                  <TableCell className="py-1.5 text-sm font-medium">{label}</TableCell>
+                                                  <TableCell className="py-1.5 text-xs text-muted-foreground font-mono">{vd.variation.sku || '—'}</TableCell>
+                                                  {physicalStores.map(store => (
+                                                    <TableCell key={store.id} className="py-1.5 text-center">
+                                                      <Badge
+                                                        variant={(vd.storeQuantities[store.id] || 0) === 0 ? 'destructive' : 'secondary'}
+                                                        className="min-w-[32px] justify-center text-xs"
+                                                      >
+                                                        {vd.storeQuantities[store.id] || 0}
+                                                      </Badge>
+                                                    </TableCell>
+                                                  ))}
+                                                  <TableCell className="py-1.5 text-center">
+                                                    <span className={cn(
+                                                      "font-bold text-sm",
+                                                      vd.total === 0 && "text-destructive"
+                                                    )}>
+                                                      {vd.total}
+                                                    </span>
+                                                  </TableCell>
+                                                </TableRow>
+                                              );
+                                            })}
+                                          </TableBody>
+                                        </Table>
+                                      </div>
+                                    );
+                                  })}
                                   {expandedData.length === 0 && (
                                     <p className="text-sm text-muted-foreground">Nenhuma variação encontrada.</p>
                                   )}
