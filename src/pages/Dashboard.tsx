@@ -375,8 +375,8 @@ const Dashboard = () => {
     // Prioritize store-specific goal, fallback to global (store_id = null)
     const findGoal = (type: string) => {
       if (activeStoreFilter) {
-        const storeGoal = salesGoals.find(g => g.type === type && g.store_id === activeStoreFilter);
-        if (storeGoal) return storeGoal;
+        // Use only the store-specific goal — no fallback to global
+        return salesGoals.find(g => g.type === type && g.store_id === activeStoreFilter) || null;
       }
       return salesGoals.find(g => g.type === type && !g.store_id) || null;
     };
