@@ -50,9 +50,9 @@ const StoreHeader = ({ categories }: StoreHeaderProps) => {
     { label: 'Loja', to: '/loja' },
     { label: 'Lançamentos', to: '/loja?ordenar=recentes' },
     { label: 'Ofertas', to: '/loja?ofertas=true' },
+    { label: 'Combos', to: '/combos' },
     { label: 'Categorias', to: '/categorias' },
     { label: 'Atacado', to: '/atacado' },
-    { label: 'Sobre', to: '/sobre' },
     { label: 'Contato', to: '/contato' },
   ];
 

@@ -59,6 +59,7 @@ const StoreLoginPage = lazy(() => import("./pages/store/StoreLoginPage"));
 const MyAccountPage = lazy(() => import("./pages/store/MyAccountPage"));
 const WholesalePage = lazy(() => import("./pages/store/WholesalePage"));
 const WorkWithUsPage = lazy(() => import("./pages/store/WorkWithUsPage"));
+const CombosPage = lazy(() => import("./pages/store/CombosPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -108,6 +109,7 @@ const App = () => (
               <Route path="/conta/login" element={<StoreLoginPage />} />
               <Route path="/minha-conta" element={<MyAccountPage />} />
               <Route path="/atacado" element={<WholesalePage />} />
+              <Route path="/combos" element={<CombosPage />} />
               <Route path="/trabalhe-conosco" element={<WorkWithUsPage />} />
 
               {/* Admin Routes */}
