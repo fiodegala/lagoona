@@ -62,6 +62,7 @@ const MyAccountPage = lazy(() => import("./pages/store/MyAccountPage"));
 const WholesalePage = lazy(() => import("./pages/store/WholesalePage"));
 const WorkWithUsPage = lazy(() => import("./pages/store/WorkWithUsPage"));
 const CombosPage = lazy(() => import("./pages/store/CombosPage"));
+const QuoteViewPage = lazy(() => import("./pages/store/QuoteViewPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
