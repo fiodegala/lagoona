@@ -71,7 +71,7 @@ const Upsells = () => {
   const openCreate = () => {
     setEditingRule(null);
     setFormProductId('');
-    setFormUpsellProductId('');
+    setFormUpsellProductIds([]);
     setFormDiscount('5');
     setFormSortOrder('0');
     setFormIsActive(true);
@@ -81,7 +81,7 @@ const Upsells = () => {
   const openEdit = (rule: UpsellRule) => {
     setEditingRule(rule);
     setFormProductId(rule.product_id);
-    setFormUpsellProductId(rule.upsell_product_id);
+    setFormUpsellProductIds([rule.upsell_product_id]);
     setFormDiscount(String(rule.discount_percent));
     setFormSortOrder(String(rule.sort_order));
     setFormIsActive(rule.is_active);
@@ -89,32 +89,38 @@ const Upsells = () => {
   };
 
   const handleSave = async () => {
-    if (!formProductId || !formUpsellProductId) {
-      return toast.error('Selecione os dois produtos');
+    if (!formProductId || formUpsellProductIds.length === 0) {
+      return toast.error('Selecione o produto principal e pelo menos um produto sugerido');
     }
-    if (formProductId === formUpsellProductId) {
+    if (formUpsellProductIds.includes(formProductId)) {
       return toast.error('O produto não pode ser upsell dele mesmo');
     }
 
     setSaving(true);
     try {
-      const payload = {
-        product_id: formProductId,
-        upsell_product_id: formUpsellProductId,
-        discount_percent: parseFloat(formDiscount) || 5,
-        sort_order: parseInt(formSortOrder) || 0,
-        is_active: formIsActive,
-        updated_at: new Date().toISOString(),
-      };
-
       if (editingRule) {
+        const payload = {
+          product_id: formProductId,
+          upsell_product_id: formUpsellProductIds[0],
+          discount_percent: parseFloat(formDiscount) || 5,
+          sort_order: parseInt(formSortOrder) || 0,
+          is_active: formIsActive,
+          updated_at: new Date().toISOString(),
+        };
         const { error } = await supabase.from('product_upsells').update(payload).eq('id', editingRule.id);
         if (error) throw error;
         toast.success('Upsell atualizado');
       } else {
-        const { error } = await supabase.from('product_upsells').insert(payload);
+        const rows = formUpsellProductIds.map((uid, idx) => ({
+          product_id: formProductId,
+          upsell_product_id: uid,
+          discount_percent: parseFloat(formDiscount) || 5,
+          sort_order: (parseInt(formSortOrder) || 0) + idx,
+          is_active: formIsActive,
+        }));
+        const { error } = await supabase.from('product_upsells').insert(rows);
         if (error) throw error;
-        toast.success('Upsell criado');
+        toast.success(`${rows.length} upsell(s) criado(s)`);
       }
       setModalOpen(false);
       loadData();
