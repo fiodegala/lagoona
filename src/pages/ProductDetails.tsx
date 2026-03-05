@@ -517,7 +517,7 @@ const ProductDetails = () => {
         {/* Product Details Tabs */}
         <div className="mt-12">
           <Tabs defaultValue="description" className="w-full">
-            <TabsList className="w-full justify-start border-b rounded-none h-auto p-0 bg-transparent">
+            <TabsList className="w-full justify-start border-b rounded-none h-auto p-0 bg-transparent overflow-x-auto">
               <TabsTrigger 
                 value="description" 
                 className="rounded-none border-b-2 border-transparent data-[state=active]:border-store-primary data-[state=active]:text-store-primary px-6 py-3"
