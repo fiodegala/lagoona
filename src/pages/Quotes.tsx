@@ -247,7 +247,8 @@ const Quotes = () => {
             {selectedQuote && (
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" onClick={() => {
-                  const url = `${window.location.origin}/orcamento/${selectedQuote.id}`;
+                  const publishedUrl = 'https://fiodegalafdg.lovable.app';
+                  const url = `${publishedUrl}/orcamento/${selectedQuote.id}`;
                   navigator.clipboard.writeText(url);
                   toast({ title: 'Link copiado!', description: 'Envie o link para o cliente visualizar o orçamento.' });
                 }} className="shrink-0">
