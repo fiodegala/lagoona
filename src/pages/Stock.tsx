@@ -57,6 +57,7 @@ interface StockProduct {
   stores: Record<string, number>;
   total: number;
   has_variations: boolean;
+  variation_codes: string[];
 }
 
 interface VariationDetail {
@@ -176,6 +177,7 @@ const Stock = () => {
           stores: storeQuantities,
           total,
           has_variations: hasVariations,
+          variation_codes: variationCodesMap[p.id] || [],
         };
       });
 
@@ -189,9 +191,11 @@ const Stock = () => {
 
   const filteredProducts = useMemo(() => {
     return products.filter(p => {
+      const s = search.toLowerCase();
       const matchesSearch = !search || 
-        p.name.toLowerCase().includes(search.toLowerCase()) ||
-        p.barcode?.toLowerCase().includes(search.toLowerCase());
+        p.name.toLowerCase().includes(s) ||
+        p.barcode?.toLowerCase().includes(s) ||
+        p.variation_codes.some(code => code.includes(s));
 
       const matchesStatus = filterStatus === 'all' ||
         (filterStatus === 'in-stock' && p.total > 0) ||
