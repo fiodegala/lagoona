@@ -37,6 +37,7 @@ const LegacyImport = lazy(() => import("./pages/LegacyImport"));
 const ImportCSVProducts = lazy(() => import("./pages/ImportCSVProducts"));
 const Combos = lazy(() => import("./pages/Combos"));
 const Analytics = lazy(() => import("./pages/Analytics"));
+const AuditLogs = lazy(() => import("./pages/AuditLogs"));
 
 // Lazy-loaded Store Pages
 const HomePage = lazy(() => import("./pages/store/HomePage"));
@@ -246,6 +247,13 @@ const App = () => (
                   </ProtectedRoute>
                 }
               />
+              <Route
+                path="/admin/audit-logs"
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <AuditLogs />
+                  </ProtectedRoute>
+                }
               <Route
                 path="/admin/settings"
                 element={
