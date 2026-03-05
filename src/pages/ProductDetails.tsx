@@ -36,6 +36,8 @@ const ProductDetails = () => {
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [showVideoPopup, setShowVideoPopup] = useState(false);
   const [productHasVariations, setProductHasVariations] = useState(false);
+  const [upsellHasSelection, setUpsellHasSelection] = useState(false);
+  const [upsellBuyTogether, setUpsellBuyTogether] = useState<(() => void) | null>(null);
   const { addItem } = useCart();
 
   useEffect(() => {
@@ -450,6 +452,10 @@ const ProductDetails = () => {
                 currentPrice={currentPrice}
                 currentVariation={selectedVariation}
                 categoryId={product.category_id}
+                onSelectionChange={(hasSelection, buyFn) => {
+                  setUpsellHasSelection(hasSelection);
+                  setUpsellBuyTogether(() => buyFn);
+                }}
               />
             )}
 
@@ -458,11 +464,11 @@ const ProductDetails = () => {
               <Button
                 size="lg"
                 className="flex-1 gap-2 bg-store-primary text-store-accent hover:bg-store-primary/90 font-semibold"
-                onClick={handleAddToCart}
+                onClick={upsellHasSelection && upsellBuyTogether ? upsellBuyTogether : handleAddToCart}
                 disabled={isOutOfStock}
               >
                 <ShoppingCart className="h-5 w-5" />
-                {isOutOfStock ? 'Produto Indisponível' : 'Adicionar ao Carrinho'}
+                {isOutOfStock ? 'Produto Indisponível' : upsellHasSelection ? 'Comprar Junto' : 'Adicionar ao Carrinho'}
               </Button>
               <Button
                 variant="outline"

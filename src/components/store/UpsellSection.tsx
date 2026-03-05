@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Plus, ShoppingCart, Check, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -198,7 +198,7 @@ const UpsellSection = ({ currentProduct, currentPrice, currentVariation, categor
     setPickerProduct(null);
   };
 
-  const handleBuyTogether = () => {
+  const handleBuyTogether = useCallback(() => {
     const discountMultiplier = 1 - discountPercent / 100;
     const currentVarLabel = currentVariation?.attribute_values?.map(av => av.value).join(' / ');
     addItem({
@@ -226,7 +226,18 @@ const UpsellSection = ({ currentProduct, currentPrice, currentVariation, categor
     toast.success(`${selectedProducts.length + 1} produtos adicionados ao carrinho com ${discountPercent}% de desconto!`, {
       action: { label: 'Ver carrinho', onClick: () => window.location.href = '/carrinho' },
     });
-  };
+  }, [discountPercent, currentVariation, currentProduct, currentPrice, selectedProducts, addItem]);
+
+  // Notify parent about selection changes
+  const buyTogetherRef = useRef(handleBuyTogether);
+  buyTogetherRef.current = handleBuyTogether;
+
+  useEffect(() => {
+    if (onSelectionChange) {
+      const hasSelection = selectedProducts.length > 0;
+      onSelectionChange(hasSelection, hasSelection ? () => buyTogetherRef.current() : null);
+    }
+  }, [selectedProducts.length, onSelectionChange]);
 
   if (isLoading) return null;
   if (suggestions.length === 0) return null;
