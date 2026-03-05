@@ -124,6 +124,7 @@ const Quotes = () => {
                       <TableHead>Data</TableHead>
                       <TableHead>Cliente</TableHead>
                       <TableHead>Itens</TableHead>
+                      <TableHead>Pagamento</TableHead>
                       <TableHead className="text-right">Total</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead className="text-right">Ações</TableHead>
@@ -135,10 +136,11 @@ const Quotes = () => {
                       return (
                         <TableRow key={q.id}>
                           <TableCell className="font-mono text-xs">{q.id.slice(0, 8)}</TableCell>
-                          <TableCell>{format(new Date(q.created_at), "dd/MM/yy HH:mm", { locale: ptBR })}</TableCell>
+                          <TableCell className="whitespace-nowrap">{format(new Date(q.created_at), "dd/MM/yy HH:mm", { locale: ptBR })}</TableCell>
                           <TableCell>{q.customer_name || '—'}</TableCell>
                           <TableCell>{(q.items || []).length}</TableCell>
-                          <TableCell className="text-right font-semibold">{formatCurrency(q.total)}</TableCell>
+                          <TableCell className="whitespace-nowrap">{q.payment_method ? (paymentMethodLabels[q.payment_method] || q.payment_method) : '—'}</TableCell>
+                          <TableCell className="text-right font-semibold whitespace-nowrap">{formatCurrency(q.total)}</TableCell>
                           <TableCell><Badge variant={st.variant}>{st.label}</Badge></TableCell>
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-1">
