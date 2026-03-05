@@ -53,7 +53,7 @@ const WholesalePage = () => {
     setIsSubmitting(true);
     // Build WhatsApp message
     const msg = `Olá! Quero me cadastrar como revendedor.\n\nNome: ${formData.name}\nEmpresa: ${formData.company || 'N/A'}\nCPF/CNPJ: ${formData.document}\nCidade/UF: ${formData.city}/${formData.state}\nWhatsApp: ${formData.whatsapp}\nInstagram: ${formData.instagram || 'N/A'}\nVolume estimado: ${formData.volume || 'N/A'}\nMensagem: ${formData.message || 'N/A'}`;
-    window.open(`https://wa.me/5562994165785?text=${encodeURIComponent(msg)}`, '_blank');
+    window.open(`https://wa.me/556281746605?text=${encodeURIComponent(msg)}`, '_blank');
     toast.success('Redirecionando para o WhatsApp...');
     setIsSubmitting(false);
   };
