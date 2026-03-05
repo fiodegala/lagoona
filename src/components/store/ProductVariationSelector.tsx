@@ -8,9 +8,10 @@ import { supabase } from '@/integrations/supabase/client';
 interface ProductVariationSelectorProps {
   productId: string;
   onVariationSelect: (variation: ProductVariation | null) => void;
+  onHasVariations?: (has: boolean) => void;
 }
 
-const ProductVariationSelector = ({ productId, onVariationSelect }: ProductVariationSelectorProps) => {
+const ProductVariationSelector = ({ productId, onVariationSelect, onHasVariations }: ProductVariationSelectorProps) => {
   const [attributes, setAttributes] = useState<ProductAttribute[]>([]);
   const [variations, setVariations] = useState<ProductVariation[]>([]);
   const [selectedValues, setSelectedValues] = useState<Record<string, string>>({});
