@@ -24,6 +24,7 @@ import { DollarSign, ArrowUpDown, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type WizardStep = 'sale-type' | 'seller' | 'customer' | 'products' | 'payment';
+const isQuoteType = (t: SaleType) => t === 'orcamento';
 
 const STEPS: { key: WizardStep; label: string }[] = [
   { key: 'sale-type', label: 'Tipo' },
@@ -237,6 +238,52 @@ const POSPage = () => {
   const handlePayment = async (method: 'cash' | 'card' | 'pix' | 'mixed', amountReceived?: number, paymentDetails?: Record<string, number>, saleDate?: string) => {
     if (cartItems.length === 0) return;
     setIsProcessing(true);
+
+    // If it's a quote, save to quotes table instead
+    if (isQuoteType(saleType)) {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('Usuário não autenticado');
+
+        const quoteData = {
+          local_id: offlineService.generateLocalId(),
+          user_id: user.id,
+          store_id: selectedSeller?.store_id || userStoreId || null,
+          customer_id: selectedCustomer?.id || null,
+          customer_name: selectedCustomer?.name || null,
+          customer_document: selectedCustomer?.document || null,
+          items: cartItems.map((item) => ({
+            product_id: item.product_id,
+            variation_id: item.variation_id,
+            name: item.name,
+            sku: item.sku,
+            image_url: item.image_url || null,
+            quantity: item.quantity,
+            unit_price: item.unit_price,
+            discount_amount: item.discount_amount,
+            total: item.total,
+          })) as unknown as Record<string, unknown>[],
+          subtotal,
+          discount_type: generalDiscount.value > 0 ? generalDiscount.type : null,
+          discount_value: generalDiscount.value,
+          discount_amount: totalDiscount,
+          total,
+          notes: selectedSeller ? `Vendedor: ${selectedSeller.full_name}` : null,
+          status: 'pending',
+        };
+
+        await supabase.from('quotes').insert(quoteData as never);
+
+        toast({ title: 'Orçamento gerado!', description: `Total: R$ ${total.toFixed(2)}${selectedCustomer ? ` • Cliente: ${selectedCustomer.name}` : ''}` });
+        resetWizard();
+      } catch (error) {
+        console.error('Error creating quote:', error);
+        toast({ title: 'Erro ao gerar orçamento', variant: 'destructive' });
+      } finally {
+        setIsProcessing(false);
+      }
+      return;
+    }
 
     const saleData: CreateSaleData = {
       local_id: offlineService.generateLocalId(),

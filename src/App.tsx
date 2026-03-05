@@ -40,6 +40,7 @@ const Analytics = lazy(() => import("./pages/Analytics"));
 const AuditLogs = lazy(() => import("./pages/AuditLogs"));
 const Upsells = lazy(() => import("./pages/Upsells"));
 const AdminAssistant = lazy(() => import("./pages/AdminAssistant"));
+const Quotes = lazy(() => import("./pages/Quotes"));
 
 // Lazy-loaded Store Pages
 const HomePage = lazy(() => import("./pages/store/HomePage"));
@@ -316,6 +317,15 @@ const App = () => (
                 element={
                   <ProtectedRoute requiredRole="manager">
                     <AdminAssistant />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/admin/orcamentos"
+                element={
+                  <ProtectedRoute>
+                    <Quotes />
                   </ProtectedRoute>
                 }
               />
