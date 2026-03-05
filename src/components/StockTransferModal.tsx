@@ -507,18 +507,58 @@ const StockTransferModal: React.FC<Props> = ({ open, onOpenChange, stores, onTra
             {variations.length > 0 && (
               <div className="space-y-2">
                 <Label>Variação</Label>
-                <Select value={selectedVariationId} onValueChange={setSelectedVariationId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione a variação..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {variations.map(v => (
-                      <SelectItem key={v.id} value={v.id}>
-                        {v.label} {v.sku ? `(${v.sku})` : ''}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {selectedVariationId ? (
+                  <div className="flex items-center gap-2 p-2.5 bg-primary/10 border border-primary/30 rounded-lg">
+                    <Package className="h-4 w-4 text-primary shrink-0" />
+                    <span className="text-sm font-medium flex-1">
+                      {variations.find((v: any) => v.id === selectedVariationId)?.label}
+                    </span>
+                    {variations.find((v: any) => v.id === selectedVariationId)?.sku && (
+                      <span className="text-xs text-muted-foreground font-mono">
+                        {variations.find((v: any) => v.id === selectedVariationId)?.sku}
+                      </span>
+                    )}
+                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => { setSelectedVariationId(''); setVariationSearch(''); }}>
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    <div className="relative">
+                      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                      <Input
+                        placeholder="Filtrar por cor, tamanho, SKU ou código de barras..."
+                        value={variationSearch}
+                        onChange={(e) => setVariationSearch(e.target.value)}
+                        className="pl-8 h-9 text-sm"
+                      />
+                    </div>
+                    <ScrollArea className="max-h-48">
+                      <div className="space-y-1 pt-1">
+                        {filteredVariations.length === 0 ? (
+                          <p className="text-sm text-muted-foreground text-center py-3">Nenhuma variação encontrada</p>
+                        ) : (
+                          filteredVariations.map((v: any) => (
+                            <button
+                              key={v.id}
+                              className={cn(
+                                "w-full flex items-center justify-between p-2.5 rounded-lg border text-left transition-all text-sm",
+                                "hover:border-primary/50 hover:bg-accent"
+                              )}
+                              onClick={() => setSelectedVariationId(v.id)}
+                            >
+                              <div className="flex-1 min-w-0">
+                                <span className="font-medium">{v.label}</span>
+                                {v.sku && <span className="ml-2 text-xs text-muted-foreground font-mono">SKU: {v.sku}</span>}
+                                {v.barcode && <span className="ml-2 text-xs text-muted-foreground font-mono">CB: {v.barcode}</span>}
+                              </div>
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    </ScrollArea>
+                  </>
+                )}
               </div>
             )}
 
