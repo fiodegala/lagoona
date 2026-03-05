@@ -547,51 +547,30 @@ const ProductVariationsEditor = ({ productId, basePrice }: ProductVariationsEdit
               Nenhuma variação criada. Adicione atributos e clique em "Gerar Combinações".
             </p>
           ) : (
-            <StickyHorizontalScroll>
-              <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragEnd={handleDragEnd}
-              >
-                <Table>
-                  <TableHeader className="sticky top-0 z-10 bg-background">
-                    <TableRow>
-                      <TableHead className="w-10"></TableHead>
-                      <TableHead>Variação</TableHead>
-                      <TableHead>SKU</TableHead>
-                      <TableHead>Código de Barras</TableHead>
-                      <TableHead>Varejo</TableHead>
-                      <TableHead className="text-store-deal">Promo</TableHead>
-                      <TableHead>Atacado</TableHead>
-                      <TableHead>Exclusivo</TableHead>
-                      {stores.map((store) => (
-                        <TableHead key={store.id}>{store.name}</TableHead>
-                      ))}
-                      <TableHead>Ativo</TableHead>
-                      <TableHead className="w-10"></TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    <SortableContext
-                      items={variations.map((v) => v.id)}
-                      strategy={verticalListSortingStrategy}
-                    >
-                      {variations.map((variation) => (
-                        <VariationRow
-                          key={variation.id}
-                          variation={variation}
-                          stores={stores}
-                          storeStock={storeStockMap[variation.id] || {}}
-                          onUpdate={handleUpdateVariation}
-                          onUpdateStoreStock={handleUpdateStoreStock}
-                          onDelete={handleDeleteVariation}
-                        />
-                      ))}
-                    </SortableContext>
-                  </TableBody>
-                </Table>
-              </DndContext>
-            </StickyHorizontalScroll>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <div className="space-y-1">
+                <SortableContext
+                  items={variations.map((v) => v.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  {variations.map((variation) => (
+                    <VariationRow
+                      key={variation.id}
+                      variation={variation}
+                      stores={stores}
+                      storeStock={storeStockMap[variation.id] || {}}
+                      onUpdate={handleUpdateVariation}
+                      onUpdateStoreStock={handleUpdateStoreStock}
+                      onDelete={handleDeleteVariation}
+                    />
+                  ))}
+                </SortableContext>
+              </div>
+            </DndContext>
           )}
         </CardContent>
       </Card>
