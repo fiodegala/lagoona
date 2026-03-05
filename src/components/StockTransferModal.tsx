@@ -69,6 +69,8 @@ const StockTransferModal: React.FC<Props> = ({ open, onOpenChange, stores, onTra
   const { user, isAdmin } = useAuth();
   const { toast } = useToast();
   const physicalStores = stores.filter(s => s.type === 'physical');
+  const onlineStore = stores.find(s => s.type === 'online');
+  const destinationStores = [...physicalStores, ...(onlineStore ? [onlineStore] : [])];
 
   // New transfer form
   const [fromStoreId, setFromStoreId] = useState('');
@@ -301,30 +303,37 @@ const StockTransferModal: React.FC<Props> = ({ open, onOpenChange, stores, onTra
         .eq('id', source.id);
     }
 
-    // Increase at destination
-    const destQuery = supabase
-      .from('store_stock')
-      .select('id, quantity')
-      .eq('store_id', toStore)
-      .eq('product_id', productId);
-    if (variationId) destQuery.eq('variation_id', variationId);
-    else destQuery.is('variation_id', null);
+    // Check if destination is an online/website store (aggregated stock)
+    // If so, skip adding stock there — the online stock is the sum of all physical stores
+    const destStore = stores.find(s => s.id === toStore);
+    const isOnlineDestination = destStore?.type === 'online' || destStore?.type === 'website';
 
-    const { data: dest } = await destQuery.maybeSingle();
-    if (dest) {
-      await supabase
+    if (!isOnlineDestination) {
+      // Increase at destination (physical store only)
+      const destQuery = supabase
         .from('store_stock')
-        .update({ quantity: dest.quantity + qty, updated_at: new Date().toISOString() } as any)
-        .eq('id', dest.id);
-    } else {
-      await supabase
-        .from('store_stock')
-        .insert({
-          store_id: toStore,
-          product_id: productId,
-          variation_id: variationId,
-          quantity: qty,
-        } as any);
+        .select('id, quantity')
+        .eq('store_id', toStore)
+        .eq('product_id', productId);
+      if (variationId) destQuery.eq('variation_id', variationId);
+      else destQuery.is('variation_id', null);
+
+      const { data: dest } = await destQuery.maybeSingle();
+      if (dest) {
+        await supabase
+          .from('store_stock')
+          .update({ quantity: dest.quantity + qty, updated_at: new Date().toISOString() } as any)
+          .eq('id', dest.id);
+      } else {
+        await supabase
+          .from('store_stock')
+          .insert({
+            store_id: toStore,
+            product_id: productId,
+            variation_id: variationId,
+            quantity: qty,
+          } as any);
+      }
     }
   };
 
@@ -394,8 +403,8 @@ const StockTransferModal: React.FC<Props> = ({ open, onOpenChange, stores, onTra
       <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Transferência de Estoque</DialogTitle>
-          <DialogDescription>
-            Transfira peças entre os estoques das lojas físicas
+         <DialogDescription>
+            Transfira peças entre as lojas físicas ou para o depósito Online
           </DialogDescription>
         </DialogHeader>
 
@@ -429,8 +438,10 @@ const StockTransferModal: React.FC<Props> = ({ open, onOpenChange, stores, onTra
                     <SelectValue placeholder="Selecione..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {physicalStores.filter(s => s.id !== fromStoreId).map(s => (
-                      <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                    {destinationStores.filter(s => s.id !== fromStoreId).map(s => (
+                      <SelectItem key={s.id} value={s.id}>
+                        {s.name}{s.type === 'online' ? ' (Depósito)' : ''}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
