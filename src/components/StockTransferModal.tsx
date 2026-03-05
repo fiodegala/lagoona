@@ -392,6 +392,7 @@ const StockTransferModal: React.FC<Props> = ({ open, onOpenChange, stores, onTra
     setToStoreId('');
     setSelectedProductId('');
     setSelectedVariationId('');
+    setVariationSearch('');
     setQuantity(1);
     setNotes('');
     setProductSearch('');
