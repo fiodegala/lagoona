@@ -1,4 +1,4 @@
-import { useState, useEffect, forwardRef, memo } from 'react';
+import { useState, useEffect, forwardRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Package, ShoppingCart, Heart, Star, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -9,7 +9,6 @@ import { toast } from 'sonner';
 import { Product } from '@/services/products';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
-import { thumbnailUrl } from '@/lib/imageUtils';
 
 const COLOR_MAP: Record<string, string> = {
   preto: '#000000', black: '#000000',
@@ -47,7 +46,7 @@ interface ProductCardProps {
   showDiscount?: boolean;
 }
 
-const ProductCard = memo(forwardRef<HTMLAnchorElement, ProductCardProps>(({ product, showDiscount = true }, ref) => {
+const ProductCard = forwardRef<HTMLAnchorElement, ProductCardProps>(({ product, showDiscount = true }, ref) => {
   const { addItem } = useCart();
   const { isFavorite, toggleFavorite } = useFavorites();
   const [isHovered, setIsHovered] = useState(false);
@@ -55,10 +54,8 @@ const ProductCard = memo(forwardRef<HTMLAnchorElement, ProductCardProps>(({ prod
   
   const isWishlisted = isFavorite(product.id);
 
-  // Fetch color variations - debounced with IntersectionObserver would be ideal,
-  // but at minimum we cache via React state
+  // Fetch color variations
   useEffect(() => {
-    let cancelled = false;
     const fetchColors = async () => {
       const { data: attrs } = await supabase
         .from('product_attributes')
@@ -66,22 +63,22 @@ const ProductCard = memo(forwardRef<HTMLAnchorElement, ProductCardProps>(({ prod
         .eq('product_id', product.id)
         .ilike('name', '%cor%');
 
-      if (cancelled || !attrs || attrs.length === 0) return;
+      if (attrs && attrs.length > 0) {
+        const attrIds = attrs.map(a => a.id);
+        const { data: values } = await supabase
+          .from('product_attribute_values')
+          .select('value')
+          .in('attribute_id', attrIds);
 
-      const attrIds = attrs.map(a => a.id);
-      const { data: values } = await supabase
-        .from('product_attribute_values')
-        .select('value')
-        .in('attribute_id', attrIds);
-
-      if (!cancelled && values) {
-        setColorValues(values.map(v => v.value));
+        if (values) {
+          setColorValues(values.map(v => v.value));
+        }
       }
     };
     fetchColors();
-    return () => { cancelled = true; };
   }, [product.id]);
 
+  // Desconto real baseado em promotional_price
   const hasRealDiscount = (product as any).promotional_price != null && (product as any).promotional_price < product.price;
   const discountPercent = hasRealDiscount
     ? Math.round(((product.price - (product as any).promotional_price) / product.price) * 100)
@@ -129,7 +126,6 @@ const ProductCard = memo(forwardRef<HTMLAnchorElement, ProductCardProps>(({ prod
   };
 
   const isOutOfStock = product.stock <= 0;
-  const optimizedSrc = thumbnailUrl(product.image_url);
 
   return (
     <Link 
@@ -143,13 +139,12 @@ const ProductCard = memo(forwardRef<HTMLAnchorElement, ProductCardProps>(({ prod
         <div className="relative aspect-[4/5] overflow-hidden bg-store-secondary/30">
           {product.image_url ? (
             <img
-              src={optimizedSrc}
+              src={product.image_url}
               alt={product.name}
-              loading="lazy"
-              decoding="async"
-              width={400}
-              height={500}
-              className="w-full h-full object-cover"
+              className={cn(
+                "w-full h-full object-cover transition-transform duration-500",
+                isHovered && "scale-110"
+              )}
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-store-secondary to-store-secondary/50">
@@ -291,7 +286,7 @@ const ProductCard = memo(forwardRef<HTMLAnchorElement, ProductCardProps>(({ prod
       </div>
     </Link>
   );
-}));
+});
 
 ProductCard.displayName = 'ProductCard';
 

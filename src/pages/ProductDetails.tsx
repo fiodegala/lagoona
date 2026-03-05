@@ -34,7 +34,7 @@ const ProductDetails = () => {
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isWishlisted, setIsWishlisted] = useState(false);
-  
+  const [showVideoPopup, setShowVideoPopup] = useState(false);
   const { addItem } = useCart();
 
   useEffect(() => {
@@ -227,13 +227,117 @@ const ProductDetails = () => {
 
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
           {/* Product Images Gallery */}
-          <ProductImageGallery
-              images={allImages}
-              productName={product.name}
-              selectedImage={selectedImage || undefined}
-              onImageChange={setSelectedImage}
-              videoUrl={thumbnailVideoUrl || videoUrl}
-            />
+          <div className="space-y-4">
+            {/* Main Product Image with Navigation */}
+            {product.image_url && (
+              <div className="rounded-xl overflow-hidden border bg-muted relative group">
+                <img
+                  src={selectedImage || product.image_url}
+                  alt={product.name}
+                  className="w-full aspect-[4/5] object-cover"
+                />
+                {allImages.length > 1 && (
+                  <>
+                    <button
+                      onClick={() => {
+                        const currentIdx = allImages.indexOf(selectedImage || product.image_url || '');
+                        const prevIdx = (currentIdx - 1 + allImages.length) % allImages.length;
+                        setSelectedImage(allImages[prevIdx]);
+                      }}
+                      className="absolute left-2 top-1/2 -translate-y-1/2 bg-background/80 backdrop-blur-sm hover:bg-background rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <ArrowLeft className="h-5 w-5" />
+                    </button>
+                    <button
+                      onClick={() => {
+                        const currentIdx = allImages.indexOf(selectedImage || product.image_url || '');
+                        const nextIdx = (currentIdx + 1) % allImages.length;
+                        setSelectedImage(allImages[nextIdx]);
+                      }}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 bg-background/80 backdrop-blur-sm hover:bg-background rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                    </button>
+                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-background/70 backdrop-blur-sm rounded-full px-3 py-1 text-xs font-medium">
+                      {allImages.indexOf(selectedImage || product.image_url || '') + 1} / {allImages.length}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* Thumbnail Video */}
+            {thumbnailVideoUrl && (
+              <>
+                <div
+                  className="rounded-xl overflow-hidden border bg-muted cursor-pointer relative group"
+                  onClick={() => setShowVideoPopup(true)}
+                >
+                  <video
+                    src={thumbnailVideoUrl}
+                    muted
+                    autoPlay
+                    loop
+                    playsInline
+                    className="w-full aspect-[9/16] object-cover max-h-[400px]"
+                  />
+                  <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <div className="bg-background/80 backdrop-blur-sm rounded-full p-3">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-foreground" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Video Popup 9:16 */}
+                {showVideoPopup && (
+                  <div
+                    className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center"
+                    onClick={() => setShowVideoPopup(false)}
+                  >
+                    <div
+                      className="relative w-full max-w-[360px] aspect-[9/16] rounded-2xl overflow-hidden shadow-2xl"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <video
+                        src={thumbnailVideoUrl}
+                        autoPlay
+                        loop
+                        playsInline
+                        controls
+                        className="w-full h-full object-cover"
+                      />
+                      <button
+                        onClick={() => setShowVideoPopup(false)}
+                        className="absolute top-3 right-3 bg-black/60 hover:bg-black/80 text-white rounded-full p-2 transition-colors"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* Gallery Thumbnails */}
+            {galleryImages.length > 0 && (
+              <div className="grid grid-cols-4 gap-2">
+                {galleryImages.map((img, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setSelectedImage(img)}
+                    className={cn(
+                      "rounded-lg overflow-hidden border-2 transition-all aspect-square",
+                      (selectedImage || product.image_url) === img
+                        ? "border-store-primary ring-2 ring-store-primary/30"
+                        : "border-transparent hover:border-muted-foreground/30"
+                    )}
+                  >
+                    <img src={img} alt={`${product.name} ${idx + 2}`} className="w-full h-full object-cover" />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
 
           {/* Product Info */}
           <div className="space-y-6">

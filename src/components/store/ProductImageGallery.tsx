@@ -3,7 +3,6 @@ import { ChevronLeft, ChevronRight, ZoomIn, X, Package, Play } from 'lucide-reac
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
-import { mediumImageUrl, fullImageUrl, thumbnailUrl } from '@/lib/imageUtils';
 
 interface MediaItem {
   type: 'image' | 'video';
@@ -181,12 +180,27 @@ const ProductImageGallery = ({
     }
 
     return (
-      <img
-        src={mediumImageUrl(currentItem.url)}
-        alt={`${productName} - Imagem ${currentIndex + 1}`}
-        decoding="async"
-        className="w-full h-auto block"
-      />
+      <>
+        <img
+          src={currentItem.url}
+          alt={`${productName} - Imagem ${currentIndex + 1}`}
+          className={cn(
+            "w-full h-full object-cover transition-opacity duration-200",
+            isZoomed ? "opacity-0" : "opacity-100"
+          )}
+        />
+        <div
+          className={cn(
+            "absolute inset-0 transition-opacity duration-200",
+            isZoomed ? "opacity-100" : "opacity-0 pointer-events-none"
+          )}
+          style={{
+            backgroundImage: `url(${currentItem.url})`,
+            backgroundSize: '200%',
+            backgroundPosition: `${zoomPosition.x}% ${zoomPosition.y}%`,
+          }}
+        />
+      </>
     );
   };
 
@@ -218,7 +232,7 @@ const ProductImageGallery = ({
 
     return (
       <img
-        src={fullImageUrl(currentItem.url)}
+        src={currentItem.url}
         alt={`${productName} - Imagem ${currentIndex + 1}`}
         className="max-w-full max-h-full object-contain"
       />
@@ -231,10 +245,26 @@ const ProductImageGallery = ({
       <div className="relative group">
         <div
           ref={imageContainerRef}
-          className="rounded-xl overflow-hidden bg-muted border relative cursor-pointer"
+          className={cn(
+            "aspect-[4/5] rounded-xl overflow-hidden bg-muted border relative",
+            !isCurrentVideo && "cursor-zoom-in"
+          )}
+          onMouseMove={!isCurrentVideo ? handleMouseMove : undefined}
+          onMouseEnter={!isCurrentVideo ? () => setIsZoomed(true) : undefined}
+          onMouseLeave={!isCurrentVideo ? () => setIsZoomed(false) : undefined}
           onClick={!isCurrentVideo ? () => setIsLightboxOpen(true) : undefined}
         >
           {renderMainContent()}
+
+          {/* Zoom indicator (images only) */}
+          {!isCurrentVideo && (
+            <div className={cn(
+              "absolute bottom-4 right-4 bg-background/80 backdrop-blur-sm rounded-full p-2 transition-opacity",
+              "opacity-0 group-hover:opacity-100"
+            )}>
+              <ZoomIn className="h-5 w-5 text-foreground" />
+            </div>
+          )}
         </div>
 
         {/* Navigation Arrows */}
@@ -302,11 +332,9 @@ const ProductImageGallery = ({
                 </div>
               ) : (
                 <img
-                  src={thumbnailUrl(item.url)}
+                  src={item.url}
                   alt={`${productName} - Miniatura ${index + 1}`}
                   className="w-full h-full object-cover"
-                  loading="lazy"
-                  decoding="async"
                 />
               )}
             </button>
