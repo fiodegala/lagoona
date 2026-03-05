@@ -403,8 +403,8 @@ const StockTransferModal: React.FC<Props> = ({ open, onOpenChange, stores, onTra
       <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Transferência de Estoque</DialogTitle>
-          <DialogDescription>
-            Transfira peças entre os estoques das lojas físicas
+         <DialogDescription>
+            Transfira peças entre as lojas físicas ou para o depósito Online
           </DialogDescription>
         </DialogHeader>
 
