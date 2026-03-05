@@ -8,9 +8,10 @@ import { supabase } from '@/integrations/supabase/client';
 interface ProductVariationSelectorProps {
   productId: string;
   onVariationSelect: (variation: ProductVariation | null) => void;
+  onHasVariations?: (has: boolean) => void;
 }
 
-const ProductVariationSelector = ({ productId, onVariationSelect }: ProductVariationSelectorProps) => {
+const ProductVariationSelector = ({ productId, onVariationSelect, onHasVariations }: ProductVariationSelectorProps) => {
   const [attributes, setAttributes] = useState<ProductAttribute[]>([]);
   const [variations, setVariations] = useState<ProductVariation[]>([]);
   const [selectedValues, setSelectedValues] = useState<Record<string, string>>({});
@@ -31,7 +32,9 @@ const ProductVariationSelector = ({ productId, onVariationSelect }: ProductVaria
             .not('variation_id', 'is', null),
         ]);
         setAttributes(attrs);
-        setVariations(vars.filter(v => v.is_active));
+        const activeVars = vars.filter(v => v.is_active);
+        setVariations(activeVars);
+        onHasVariations?.(activeVars.length > 0);
 
         // Build stock map: variation_id -> total quantity across stores
         const map: Record<string, number> = {};

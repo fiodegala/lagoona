@@ -35,6 +35,7 @@ const ProductDetails = () => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [showVideoPopup, setShowVideoPopup] = useState(false);
+  const [productHasVariations, setProductHasVariations] = useState(false);
   const { addItem } = useCart();
 
   useEffect(() => {
@@ -401,6 +402,7 @@ const ProductDetails = () => {
             <ProductVariationSelector
               productId={product.id}
               onVariationSelect={handleVariationSelect}
+              onHasVariations={setProductHasVariations}
             />
 
             {/* Size Guide */}
@@ -441,13 +443,15 @@ const ProductDetails = () => {
               </div>
             </div>
 
-            {/* Upsell - Buy Together */}
-            <UpsellSection
-              currentProduct={product}
-              currentPrice={currentPrice}
-              currentVariation={selectedVariation}
-              categoryId={product.category_id}
-            />
+            {/* Upsell - Buy Together (only show when variation is selected, or product has no variations) */}
+            {(!productHasVariations || selectedVariation) && (
+              <UpsellSection
+                currentProduct={product}
+                currentPrice={currentPrice}
+                currentVariation={selectedVariation}
+                categoryId={product.category_id}
+              />
+            )}
 
             {/* Action Buttons */}
             <div className="flex gap-3">
