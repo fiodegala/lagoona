@@ -462,7 +462,7 @@ const ProductDetails = () => {
             )}
 
             {/* Action Buttons */}
-            <div className="flex gap-3">
+            <div className="flex gap-2 sm:gap-3 flex-wrap">
               <Button
                 size="lg"
                 className="flex-1 gap-2 bg-store-primary text-store-accent hover:bg-store-primary/90 font-semibold"
