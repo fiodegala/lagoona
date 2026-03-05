@@ -13,15 +13,15 @@ const StickyHorizontalScroll = ({ children, className = '' }: StickyHorizontalSc
   const [contentWidth, setContentWidth] = useState(0);
   const [containerWidth, setContainerWidth] = useState(0);
   const syncing = useRef(false);
+  const uid = useRef(`shsc-${Math.random().toString(36).slice(2, 8)}`);
 
   const syncSizes = useCallback(() => {
     const content = contentRef.current;
     const wrapper = wrapperRef.current;
     if (!content || !wrapper) return;
 
-    // Measure the actual inner content width
-    const inner = content.firstElementChild as HTMLElement;
-    const innerW = inner ? inner.scrollWidth : content.scrollWidth;
+    // Measure actual scrollable width
+    const innerW = content.scrollWidth;
     const wrapperW = wrapper.clientWidth;
 
     setContentWidth(innerW);
@@ -33,24 +33,25 @@ const StickyHorizontalScroll = ({ children, className = '' }: StickyHorizontalSc
   }, []);
 
   useEffect(() => {
-    syncSizes();
+    // Small delay to ensure DOM is painted
+    const timer = setTimeout(syncSizes, 100);
     const obs = new ResizeObserver(syncSizes);
     if (wrapperRef.current) obs.observe(wrapperRef.current);
     if (contentRef.current) obs.observe(contentRef.current);
-    // Also observe mutations for dynamic content
-    const mutObs = new MutationObserver(syncSizes);
+    const mutObs = new MutationObserver(() => setTimeout(syncSizes, 50));
     if (contentRef.current) {
       mutObs.observe(contentRef.current, { childList: true, subtree: true });
     }
     window.addEventListener('resize', syncSizes);
     return () => {
+      clearTimeout(timer);
       obs.disconnect();
       mutObs.disconnect();
       window.removeEventListener('resize', syncSizes);
     };
   }, [syncSizes]);
 
-  const hasOverflow = contentWidth > containerWidth;
+  const hasOverflow = contentWidth > containerWidth + 1;
 
   const handleContentScroll = () => {
     if (syncing.current) return;
@@ -72,33 +73,39 @@ const StickyHorizontalScroll = ({ children, className = '' }: StickyHorizontalSc
 
   return (
     <div ref={wrapperRef} className="relative">
-      {/* Content with horizontal scroll but hidden scrollbar */}
+      {/* Hide native horizontal scrollbar via scoped style */}
+      <style>{`
+        #${uid.current}::-webkit-scrollbar:horizontal {
+          height: 0px;
+          display: none;
+        }
+        #${uid.current} {
+          scrollbar-width: none;
+        }
+      `}</style>
+
+      {/* Scrollable content - native h-scrollbar hidden */}
       <div
+        id={uid.current}
         ref={contentRef}
         onScroll={handleContentScroll}
         className={`overflow-x-auto ${className}`}
-        style={{
-          // Hide the native horizontal scrollbar
-          scrollbarWidth: 'none',
-        }}
       >
-        <style>{`
-          .sticky-hscroll-content::-webkit-scrollbar:horizontal {
-            display: none;
-          }
-        `}</style>
-        <div className="sticky-hscroll-content" style={{ display: 'contents' }}>
-          {children}
-        </div>
+        {children}
       </div>
 
-      {/* Fake scrollbar that sticks to the bottom of the viewport */}
+      {/* Sticky fake horizontal scrollbar */}
       {hasOverflow && (
         <div
           ref={fakeBarRef}
           onScroll={handleFakeScroll}
-          className="sticky bottom-0 z-20 overflow-x-auto scrollbar-always-visible bg-background/80 backdrop-blur-sm"
-          style={{ height: 14 }}
+          className="sticky bottom-0 z-20 overflow-x-auto scrollbar-always-visible"
+          style={{
+            height: 14,
+            background: 'hsl(var(--background) / 0.85)',
+            backdropFilter: 'blur(4px)',
+            borderTop: '1px solid hsl(var(--border))',
+          }}
         >
           <div ref={fakeInnerRef} style={{ height: 1, width: contentWidth }} />
         </div>
