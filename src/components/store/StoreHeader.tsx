@@ -278,15 +278,17 @@ const StoreHeader = ({ categories }: StoreHeaderProps) => {
 
                   <div className="p-4 border-b">
                     <form onSubmit={(e) => { handleSearch(e); setMobileMenuOpen(false); }}>
-                      <div className="relative">
+                      <div className="relative" ref={suggestionsRef}>
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input
                           type="search"
                           placeholder="Buscar..."
                           value={searchQuery}
-                          onChange={(e) => setSearchQuery(e.target.value)}
+                          onChange={(e) => handleSearchInput(e.target.value)}
+                          onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
                           className="pl-10"
                         />
+                        <SuggestionsList />
                       </div>
                     </form>
                   </div>
