@@ -352,7 +352,7 @@ const HomePage = () => {
       {midBanners.length > 0 && (
         <section className="py-8 md:py-12">
           <div className="container mx-auto px-4">
-            <div className="relative overflow-hidden rounded-xl aspect-[21/9] md:aspect-[3/1]">
+            <div className="relative overflow-hidden rounded-xl aspect-[21/9] md:aspect-[3/1]" {...midSwipe}>
               {midBanners.map((banner, index) => (
                 <Link
                   key={banner.id}
