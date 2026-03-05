@@ -1498,6 +1498,7 @@ export type Database = {
           items: Json
           local_id: string
           notes: string | null
+          payment_details: Json | null
           payment_method: string | null
           status: string
           store_id: string | null
@@ -1520,6 +1521,7 @@ export type Database = {
           items?: Json
           local_id: string
           notes?: string | null
+          payment_details?: Json | null
           payment_method?: string | null
           status?: string
           store_id?: string | null
@@ -1542,6 +1544,7 @@ export type Database = {
           items?: Json
           local_id?: string
           notes?: string | null
+          payment_details?: Json | null
           payment_method?: string | null
           status?: string
           store_id?: string | null

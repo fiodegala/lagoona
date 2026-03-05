@@ -1,0 +1,1 @@
+ALTER TABLE public.quotes ADD COLUMN payment_details jsonb DEFAULT '{}'::jsonb;

@@ -28,6 +28,7 @@ interface Quote {
   created_at: string;
   expires_at: string | null;
   payment_method: string | null;
+  payment_details: Record<string, any> | null;
 }
 
 const formatCurrency = (v: number) =>
@@ -123,6 +124,7 @@ const Quotes = () => {
                       <TableHead>Data</TableHead>
                       <TableHead>Cliente</TableHead>
                       <TableHead>Itens</TableHead>
+                      <TableHead>Pagamento</TableHead>
                       <TableHead className="text-right">Total</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead className="text-right">Ações</TableHead>
@@ -134,10 +136,11 @@ const Quotes = () => {
                       return (
                         <TableRow key={q.id}>
                           <TableCell className="font-mono text-xs">{q.id.slice(0, 8)}</TableCell>
-                          <TableCell>{format(new Date(q.created_at), "dd/MM/yy HH:mm", { locale: ptBR })}</TableCell>
+                          <TableCell className="whitespace-nowrap">{format(new Date(q.created_at), "dd/MM/yy HH:mm", { locale: ptBR })}</TableCell>
                           <TableCell>{q.customer_name || '—'}</TableCell>
                           <TableCell>{(q.items || []).length}</TableCell>
-                          <TableCell className="text-right font-semibold">{formatCurrency(q.total)}</TableCell>
+                          <TableCell className="whitespace-nowrap">{q.payment_method ? (paymentMethodLabels[q.payment_method] || q.payment_method) : '—'}</TableCell>
+                          <TableCell className="text-right font-semibold whitespace-nowrap">{formatCurrency(q.total)}</TableCell>
                           <TableCell><Badge variant={st.variant}>{st.label}</Badge></TableCell>
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-1">
@@ -204,9 +207,33 @@ const Quotes = () => {
                         <CreditCard className="h-3.5 w-3.5 text-muted-foreground" />
                         Forma de Pagamento
                       </h4>
-                      <p className="text-sm font-medium">
-                        {paymentMethodLabels[selectedQuote.payment_method] || selectedQuote.payment_method}
-                      </p>
+                      <div className="text-sm space-y-0.5">
+                        <p className="font-medium">
+                          {paymentMethodLabels[selectedQuote.payment_method] || selectedQuote.payment_method}
+                        </p>
+                        {selectedQuote.payment_method === 'card' && selectedQuote.payment_details && (
+                          <>
+                            <p className="text-muted-foreground">
+                              {selectedQuote.payment_details.cardType === 'credit' ? 'Cartão de Crédito' : 'Cartão de Débito'}
+                            </p>
+                            {selectedQuote.payment_details.cardType === 'credit' && selectedQuote.payment_details.installments > 1 && (
+                              <p className="text-muted-foreground">
+                                {selectedQuote.payment_details.installments}x de {formatCurrency(selectedQuote.total / selectedQuote.payment_details.installments)} sem juros
+                              </p>
+                            )}
+                            {selectedQuote.payment_details.cardType === 'credit' && (selectedQuote.payment_details.installments || 1) === 1 && (
+                              <p className="text-muted-foreground">À vista</p>
+                            )}
+                          </>
+                        )}
+                        {selectedQuote.payment_method === 'mixed' && selectedQuote.payment_details && (
+                          <div className="text-muted-foreground space-y-0.5">
+                            {selectedQuote.payment_details.cash > 0 && <p>Dinheiro: {formatCurrency(selectedQuote.payment_details.cash)}</p>}
+                            {selectedQuote.payment_details.card > 0 && <p>Cartão: {formatCurrency(selectedQuote.payment_details.card)}</p>}
+                            {selectedQuote.payment_details.pix > 0 && <p>PIX: {formatCurrency(selectedQuote.payment_details.pix)}</p>}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </>
                 )}
