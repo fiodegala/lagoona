@@ -7,14 +7,21 @@
 
 /* Admin Dashboard Design System - Professional Enterprise Style */
 
-html, body {
+html {
+  overflow-x: hidden;
+}
+
+body {
   overflow-x: hidden;
   width: 100%;
   max-width: 100vw;
+  min-width: 0;
 }
 
 #root {
   overflow-x: hidden;
+  width: 100%;
+  min-width: 0;
 }
 
 @layer base {

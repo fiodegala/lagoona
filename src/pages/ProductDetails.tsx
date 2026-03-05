@@ -208,7 +208,7 @@ const ProductDetails = () => {
 
   return (
     <StoreLayout>
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8 overflow-hidden">
         {/* Breadcrumb */}
         <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
           <Link to="/" className="hover:text-store-primary transition-colors">
@@ -462,7 +462,7 @@ const ProductDetails = () => {
             )}
 
             {/* Action Buttons */}
-            <div className="flex gap-3">
+            <div className="flex gap-2 sm:gap-3 flex-wrap">
               <Button
                 size="lg"
                 className="flex-1 gap-2 bg-store-primary text-store-accent hover:bg-store-primary/90 font-semibold"
@@ -517,7 +517,7 @@ const ProductDetails = () => {
         {/* Product Details Tabs */}
         <div className="mt-12">
           <Tabs defaultValue="description" className="w-full">
-            <TabsList className="w-full justify-start border-b rounded-none h-auto p-0 bg-transparent">
+            <TabsList className="w-full justify-start border-b rounded-none h-auto p-0 bg-transparent overflow-x-auto">
               <TabsTrigger 
                 value="description" 
                 className="rounded-none border-b-2 border-transparent data-[state=active]:border-store-primary data-[state=active]:text-store-primary px-6 py-3"
