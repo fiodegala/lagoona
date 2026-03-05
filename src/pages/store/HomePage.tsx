@@ -345,7 +345,7 @@ const HomePage = () => {
               {midBanners.map((banner, index) => (
                 <Link
                   key={banner.id}
-                  to={banner.link_url || '/loja'}
+                  to={normalizeBannerUrl(banner.link_url) || '/loja'}
                   className="absolute inset-0 transition-opacity duration-700"
                   style={{ opacity: index === currentMidBanner ? 1 : 0, pointerEvents: index === currentMidBanner ? 'auto' : 'none' }}
                 >
@@ -450,7 +450,7 @@ const HomePage = () => {
               {promoBanners.map((banner) => (
                 <Link
                   key={banner.id}
-                  to={banner.link_url || '/loja'}
+                  to={normalizeBannerUrl(banner.link_url) || '/loja'}
                   className="group relative overflow-hidden rounded-xl aspect-[2/1] block"
                 >
                   <img
