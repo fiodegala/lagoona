@@ -298,7 +298,7 @@ const HomePage = () => {
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
           ) : newProducts.length > 0 ? (
-            <div className="relative">
+            <div className="relative overflow-hidden">
               <div
                 id="lancamentos-carousel"
                 className="flex gap-4 md:gap-6 overflow-x-auto scrollbar-none -mx-4 px-4 touch-pan-y"
