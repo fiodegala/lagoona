@@ -110,6 +110,8 @@ const HomePage = () => {
 
   const categoryIcons = ['👕', '👖', '👟', '👜', '💍', '🎮', '📱', '🏠'];
 
+  const lancamentosStartX = useRef(0);
+
   const heroSwipe = useSwipe({
     onSwipeLeft: useCallback(() => setCurrentHeroBanner(prev => (prev + 1) % heroBanners.length), [heroBanners.length]),
     onSwipeRight: useCallback(() => setCurrentHeroBanner(prev => (prev - 1 + heroBanners.length) % heroBanners.length), [heroBanners.length]),
