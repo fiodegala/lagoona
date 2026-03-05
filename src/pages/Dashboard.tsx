@@ -183,7 +183,7 @@ const Dashboard = () => {
       const storeFilter = activeStoreFilter;
 
       // Orders: filter by store
-      let ordersQuery = supabase.from('orders').select('id, status, total, customer_name, customer_email, created_at, shipping_address');
+      let ordersQuery = supabase.from('orders').select('id, status, total, customer_name, customer_email, created_at, shipping_address, items');
       if (isSiteStoreSelected) {
         ordersQuery = ordersQuery.eq('store_id', SITE_STORE_ID);
       } else if (storeFilter && canAccessSiteStore) {
@@ -226,6 +226,7 @@ const Dashboard = () => {
       setRawOrders((ordersRes.data || []).map(order => ({
         ...order,
         shipping_address: order.shipping_address as { state?: string; city?: string } | null,
+        items: (order.items as any[] || []),
       })));
       setReviews(reviewsRes.data || []);
       setCoupons(couponsRes.data || []);
@@ -240,6 +241,7 @@ const Dashboard = () => {
         payment_method: sale.payment_method,
         payment_details: sale.payment_details as Record<string, unknown> | null,
         discount_amount: sale.discount_amount ? Number(sale.discount_amount) : null,
+        items: (sale.items as any[] || []),
         created_at: sale.created_at,
       })));
 
