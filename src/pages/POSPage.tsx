@@ -643,7 +643,27 @@ const POSPage = () => {
             </div>
           )}
 
-          {currentStep === 'payment' && (
+          {currentStep === 'payment' && isQuoteMode && (
+            <div className="flex-1 flex flex-col items-center justify-center p-8 gap-6">
+              <FileText className="h-16 w-16 text-muted-foreground" />
+              <div className="text-center">
+                <h2 className="text-2xl font-bold mb-2">Confirmar Orçamento</h2>
+                <p className="text-muted-foreground mb-1">{cartItems.length} item(ns) • {selectedCustomer?.name || 'Sem cliente'}</p>
+                <p className="text-3xl font-bold text-primary mt-4">
+                  {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(total)}
+                </p>
+              </div>
+              <div className="flex gap-3">
+                <Button variant="outline" onClick={() => setCurrentStep('products')}>Voltar</Button>
+                <Button size="lg" disabled={isProcessing || cartItems.length === 0} onClick={() => handlePayment('pix')}>
+                  {isProcessing ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <FileText className="h-4 w-4 mr-2" />}
+                  Gerar Orçamento
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {currentStep === 'payment' && !isQuoteMode && (
             <PaymentStep
               cartItems={cartItems}
               subtotal={subtotal}
