@@ -19,6 +19,7 @@ interface Quote {
   local_id: string;
   customer_name: string | null;
   customer_document: string | null;
+  customer_phone: string | null;
   items: any[];
   subtotal: number;
   discount_amount: number;
