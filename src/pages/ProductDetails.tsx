@@ -445,6 +445,7 @@ const ProductDetails = () => {
             <UpsellSection
               currentProduct={product}
               currentPrice={currentPrice}
+              currentVariation={selectedVariation}
               categoryId={product.category_id}
             />
 
