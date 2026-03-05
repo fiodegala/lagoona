@@ -25,17 +25,19 @@ const HomePage = () => {
   const [currentMidBanner, setCurrentMidBanner] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [featuredProduct, setFeaturedProduct] = useState<Product | null>(null);
+  const [wholesaleVideoUrl, setWholesaleVideoUrl] = useState('/assets/atacado-fdg.mp4');
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [productsData, categoriesData, bannersData, promoData, midData, featuredConfig] = await Promise.all([
+        const [productsData, categoriesData, bannersData, promoData, midData, featuredConfig, wholesaleConfig] = await Promise.all([
           productsService.getAll(),
           categoriesService.getAll(),
           bannersService.getByType('hero').catch(() => []),
           bannersService.getByType('promo').catch(() => []),
           bannersService.getByType('mid').catch(() => []),
           supabase.from('store_config').select('value').eq('key', 'featured_product').maybeSingle(),
+          supabase.from('store_config').select('value').eq('key', 'wholesale_video').maybeSingle(),
         ]);
         const activeProducts = productsData.filter(p => p.is_active);
         const enrichedProducts = await enrichProductsWithStock(activeProducts);
@@ -51,6 +53,10 @@ const HomePage = () => {
           const fp = enrichedProducts.find(p => p.id === featuredId);
           setFeaturedProduct(fp || null);
         }
+
+        // Set wholesale video from config
+        const wvUrl = (wholesaleConfig.data?.value as { url?: string })?.url;
+        if (wvUrl) setWholesaleVideoUrl(wvUrl);
       } catch (error) {
         console.error('Error loading data:', error);
       } finally {
@@ -527,7 +533,7 @@ const HomePage = () => {
             </div>
             <div className="flex-shrink-0">
               <video
-                src="/assets/atacado-fdg.mp4"
+                src={wholesaleVideoUrl}
                 controls
                 loop
                 muted
