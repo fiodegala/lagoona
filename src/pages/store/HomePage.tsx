@@ -25,6 +25,7 @@ const HomePage = () => {
   const [currentMidBanner, setCurrentMidBanner] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [featuredProduct, setFeaturedProduct] = useState<Product | null>(null);
+  const [wholesaleVideoUrl, setWholesaleVideoUrl] = useState('/assets/atacado-fdg.mp4');
 
   useEffect(() => {
     const loadData = async () => {
@@ -36,6 +37,7 @@ const HomePage = () => {
           bannersService.getByType('promo').catch(() => []),
           bannersService.getByType('mid').catch(() => []),
           supabase.from('store_config').select('value').eq('key', 'featured_product').maybeSingle(),
+          supabase.from('store_config').select('value').eq('key', 'wholesale_video').maybeSingle(),
         ]);
         const activeProducts = productsData.filter(p => p.is_active);
         const enrichedProducts = await enrichProductsWithStock(activeProducts);
