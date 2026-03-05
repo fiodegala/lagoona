@@ -1209,6 +1209,54 @@ export type Database = {
           },
         ]
       }
+      product_upsells: {
+        Row: {
+          created_at: string
+          discount_percent: number
+          id: string
+          is_active: boolean
+          product_id: string
+          sort_order: number
+          updated_at: string
+          upsell_product_id: string
+        }
+        Insert: {
+          created_at?: string
+          discount_percent?: number
+          id?: string
+          is_active?: boolean
+          product_id: string
+          sort_order?: number
+          updated_at?: string
+          upsell_product_id: string
+        }
+        Update: {
+          created_at?: string
+          discount_percent?: number
+          id?: string
+          is_active?: boolean
+          product_id?: string
+          sort_order?: number
+          updated_at?: string
+          upsell_product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_upsells_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_upsells_upsell_product_id_fkey"
+            columns: ["upsell_product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_variation_values: {
         Row: {
           attribute_value_id: string

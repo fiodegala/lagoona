@@ -38,6 +38,7 @@ const ImportCSVProducts = lazy(() => import("./pages/ImportCSVProducts"));
 const Combos = lazy(() => import("./pages/Combos"));
 const Analytics = lazy(() => import("./pages/Analytics"));
 const AuditLogs = lazy(() => import("./pages/AuditLogs"));
+const Upsells = lazy(() => import("./pages/Upsells"));
 
 // Lazy-loaded Store Pages
 const HomePage = lazy(() => import("./pages/store/HomePage"));
@@ -276,6 +277,15 @@ const App = () => (
                 element={
                   <ProtectedRoute requiredRole="manager">
                     <ApiDocs />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/admin/upsells"
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <Upsells />
                   </ProtectedRoute>
                 }
               />

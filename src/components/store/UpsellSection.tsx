@@ -23,8 +23,15 @@ interface SelectedUpsellItem {
   price: number;
 }
 
+interface UpsellRule {
+  upsell_product_id: string;
+  discount_percent: number;
+  sort_order: number;
+}
+
 const UpsellSection = ({ currentProduct, currentPrice, categoryId }: UpsellSectionProps) => {
   const [suggestions, setSuggestions] = useState<Product[]>([]);
+  const [discountPercent, setDiscountPercent] = useState(5);
   const [selectedItems, setSelectedItems] = useState<Map<string, SelectedUpsellItem>>(new Map());
   const [isLoading, setIsLoading] = useState(true);
   const { addItem } = useCart();
@@ -41,15 +48,41 @@ const UpsellSection = ({ currentProduct, currentPrice, categoryId }: UpsellSecti
     const load = async () => {
       try {
         setIsLoading(true);
-        const all = await productsService.getAll();
-        let candidates = all.filter(p => p.id !== currentProduct.id && p.is_active && p.stock > 0);
-        if (categoryId) {
-          const same = candidates.filter(p => p.category_id === categoryId);
-          const other = candidates.filter(p => p.category_id !== categoryId);
-          candidates = [...same, ...other];
+
+        // Try to load configured upsells first
+        const { data: upsellRules } = await supabase
+          .from('product_upsells')
+          .select('upsell_product_id, discount_percent, sort_order')
+          .eq('product_id', currentProduct.id)
+          .eq('is_active', true)
+          .order('sort_order');
+
+        if (upsellRules && upsellRules.length > 0) {
+          // Use configured upsells
+          const avgDiscount = upsellRules.reduce((s, r) => s + Number(r.discount_percent), 0) / upsellRules.length;
+          setDiscountPercent(avgDiscount);
+
+          const all = await productsService.getAll();
+          const productMap = new Map(all.map(p => [p.id, p]));
+          const configured = upsellRules
+            .map(r => productMap.get(r.upsell_product_id))
+            .filter((p): p is Product => !!p && p.is_active && p.stock > 0);
+
+          const enriched = await enrichProductsWithStock(configured.slice(0, 3));
+          setSuggestions(enriched);
+        } else {
+          // Fallback: auto-suggest from same category
+          setDiscountPercent(5);
+          const all = await productsService.getAll();
+          let candidates = all.filter(p => p.id !== currentProduct.id && p.is_active && p.stock > 0);
+          if (categoryId) {
+            const same = candidates.filter(p => p.category_id === categoryId);
+            const other = candidates.filter(p => p.category_id !== categoryId);
+            candidates = [...same, ...other];
+          }
+          const enriched = await enrichProductsWithStock(candidates.slice(0, 2));
+          setSuggestions(enriched);
         }
-        const enriched = await enrichProductsWithStock(candidates.slice(0, 2));
-        setSuggestions(enriched);
       } catch (err) {
         console.error('Error loading upsell:', err);
       } finally {
@@ -69,8 +102,8 @@ const UpsellSection = ({ currentProduct, currentPrice, categoryId }: UpsellSecti
 
   const selectedProducts = Array.from(selectedItems.values());
   const bundleTotal = currentPrice + selectedProducts.reduce((sum, item) => sum + item.price, 0);
-  const discountPercent = selectedProducts.length > 0 ? 5 : 0;
-  const bundleDiscounted = bundleTotal * (1 - discountPercent / 100);
+  const effectiveDiscount = selectedProducts.length > 0 ? discountPercent : 0;
+  const bundleDiscounted = bundleTotal * (1 - effectiveDiscount / 100);
 
   // Open variation picker for a product
   const openPicker = async (product: Product) => {
@@ -193,8 +226,8 @@ const UpsellSection = ({ currentProduct, currentPrice, categoryId }: UpsellSecti
     <div className="space-y-3">
       <div className="flex items-center gap-2">
         <span className="text-sm font-semibold">Compre junto</span>
-        {discountPercent > 0 && selectedProducts.length > 0 && (
-          <Badge variant="secondary" className="text-[10px] px-1.5 py-0">-{discountPercent}%</Badge>
+        {effectiveDiscount > 0 && selectedProducts.length > 0 && (
+          <Badge variant="secondary" className="text-[10px] px-1.5 py-0">-{effectiveDiscount}%</Badge>
         )}
       </div>
 
