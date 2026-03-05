@@ -82,6 +82,7 @@ const StockTransferModal: React.FC<Props> = ({ open, onOpenChange, stores, onTra
   const [selectedProductId, setSelectedProductId] = useState('');
   const [variations, setVariations] = useState<any[]>([]);
   const [selectedVariationId, setSelectedVariationId] = useState('');
+  const [variationSearch, setVariationSearch] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [notes, setNotes] = useState('');
   const [availableStock, setAvailableStock] = useState<number | null>(null);
