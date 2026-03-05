@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { productsService, Product } from '@/services/products';
 import { enrichProductsWithStock } from '@/services/stockService';
 import { cn } from '@/lib/utils';
+import { thumbnailUrl } from '@/lib/imageUtils';
 
 interface RelatedProductsProps {
   currentProductId: string;
