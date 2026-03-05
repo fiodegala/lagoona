@@ -184,7 +184,7 @@ const UpsellSection = ({ currentProduct, currentPrice, categoryId }: UpsellSecti
 
   const confirmVariation = () => {
     if (!pickerProduct || !pickerMatchedVariation) return;
-    const realStock = pickerStockMap[pickerMatchedVariation.id] || 0;
+    const realStock = pickerStockMap[pickerMatchedVariation.id] ?? pickerMatchedVariation.stock;
     const enrichedVar = { ...pickerMatchedVariation, stock: realStock };
     const price = enrichedVar.price ?? getPrice(pickerProduct);
 
@@ -379,7 +379,7 @@ const UpsellSection = ({ currentProduct, currentPrice, categoryId }: UpsellSecti
                           // Check if any variation has this value with stock
                           const hasStock = pickerVariations.some(v =>
                             v.attribute_values?.some(av => av.attribute_name === attr.name && av.value === val) &&
-                            (pickerStockMap[v.id] || 0) > 0
+                            ((pickerStockMap[v.id] ?? v.stock) > 0)
                           );
                           return (
                             <Button
