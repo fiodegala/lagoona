@@ -198,9 +198,10 @@ const Sales = () => {
     return matchesSearch;
   });
 
-  const totalRevenue = filteredSales.reduce((sum, s) => sum + Number(s.total), 0);
-  const totalDiscount = filteredSales.reduce((sum, s) => sum + Number(s.discount_amount || 0), 0);
-  const avgTicket = filteredSales.length > 0 ? totalRevenue / filteredSales.length : 0;
+  const activeSales = filteredSales.filter(s => (s as any).status !== 'cancelled');
+  const totalRevenue = activeSales.reduce((sum, s) => sum + Number(s.total), 0);
+  const totalDiscount = activeSales.reduce((sum, s) => sum + Number(s.discount_amount || 0), 0);
+  const avgTicket = activeSales.length > 0 ? totalRevenue / activeSales.length : 0;
 
   const saleItems = (items: any) => {
     try {
