@@ -155,7 +155,7 @@ const HomePage = () => {
               return banner.link_url ? (
                 <Link
                   key={banner.id}
-                  to={banner.link_url}
+                  to={normalizeBannerUrl(banner.link_url) || '/loja'}
                   className="absolute inset-0 transition-opacity duration-700 block cursor-pointer"
                   style={{ opacity: index === currentHeroBanner ? 1 : 0, pointerEvents: index === currentHeroBanner ? 'auto' : 'none', zIndex: index === currentHeroBanner ? 1 : 0 }}
                 >
