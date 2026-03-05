@@ -1561,6 +1561,77 @@ const Dashboard = () => {
         </div>
         )}
 
+        {/* Promotional Sales Section */}
+        {promotionalStats.totalQty > 0 && (
+          <Card className="card-elevated border-l-4 border-l-warning">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Tag className="h-5 w-5 text-warning" />
+                Vendas Promocionais
+              </CardTitle>
+              <CardDescription>
+                Produtos vendidos com preço promocional — {getPeriodLabel(periodFilter)}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-6 lg:grid-cols-3">
+                {/* Summary KPIs */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-3 bg-warning/5 rounded-lg border border-warning/20">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Itens vendidos</p>
+                      <p className="text-2xl font-bold">{promotionalStats.totalQty}</p>
+                    </div>
+                    <Package className="h-8 w-8 text-warning/60" />
+                  </div>
+                  <div className="flex items-center justify-between p-3 bg-success/5 rounded-lg border border-success/20">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Valor total</p>
+                      <p className="text-2xl font-bold">{formatCurrency(promotionalStats.totalValue)}</p>
+                    </div>
+                    <DollarSign className="h-8 w-8 text-success/60" />
+                  </div>
+                </div>
+
+                {/* Products breakdown */}
+                <div className="space-y-2">
+                  <h4 className="text-sm font-medium text-muted-foreground mb-3">Produtos</h4>
+                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                    {promotionalStats.products.slice(0, 10).map((p, i) => (
+                      <div key={i} className="flex items-center justify-between text-sm py-1.5 border-b last:border-0">
+                        <div className="flex-1 min-w-0">
+                          <p className="truncate font-medium">{p.name}</p>
+                          <p className="text-xs text-muted-foreground">{p.qty} un.</p>
+                        </div>
+                        <span className="font-semibold ml-2 shrink-0">{formatCurrency(p.total)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Payment methods breakdown */}
+                <div className="space-y-2">
+                  <h4 className="text-sm font-medium text-muted-foreground mb-3">Formas de Pagamento</h4>
+                  <div className="space-y-2">
+                    {promotionalStats.payments.map((pm, i) => (
+                      <div key={i} className="flex items-center justify-between text-sm py-1.5 border-b last:border-0">
+                        <div className="flex items-center gap-2">
+                          <CreditCard className="h-4 w-4 text-muted-foreground" />
+                          <span>{pm.method}</span>
+                        </div>
+                        <div className="text-right">
+                          <span className="font-semibold">{formatCurrency(pm.total)}</span>
+                          <span className="text-xs text-muted-foreground ml-1">({pm.count}x)</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Sales by Region Map - All stores */}
         <BrazilSalesMap salesByState={salesByState} isLoading={isLoading} />
 
