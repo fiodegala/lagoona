@@ -252,6 +252,15 @@ const Quotes = () => {
             </DialogTitle>
             {selectedQuote && (
               <div className="flex gap-2">
+                {selectedQuote.status === 'pending' && (
+                  <Button variant="outline" size="sm" onClick={() => {
+                    setEditQuote(selectedQuote);
+                    setSelectedQuote(null);
+                  }} className="shrink-0">
+                    <Pencil className="h-4 w-4 mr-1" />
+                    Editar
+                  </Button>
+                )}
                 <Button variant="outline" size="sm" onClick={() => {
                   const publishedUrl = 'https://fiodegalafdg.lovable.app';
                   const url = `${publishedUrl}/orcamento/${selectedQuote.id}`;
