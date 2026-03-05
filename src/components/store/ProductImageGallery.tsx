@@ -127,6 +127,15 @@ const ProductImageGallery = ({
     else if (e.key === 'Escape') setIsLightboxOpen(false);
   }, [handlePrevious, handleNext]);
 
+  const mainSwipe = useSwipe({
+    onSwipeLeft: handleNext,
+    onSwipeRight: handlePrevious,
+  });
+
+  const lightboxSwipe = useSwipe({
+    onSwipeLeft: handleNext,
+    onSwipeRight: handlePrevious,
+  });
   // Sync with external selectedImage changes
   if (selectedImage && currentItem?.type === 'image' && currentItem.url !== selectedImage) {
     const newIndex = mediaItems.findIndex(m => m.type === 'image' && m.url === selectedImage);
