@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 
-import { Search, FileText, Eye, Trash2, Loader2, Clock, User, CreditCard, Package, Printer } from 'lucide-react';
+import { Search, FileText, Eye, Trash2, Loader2, Clock, User, CreditCard, Package, Printer, Share2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -245,10 +245,20 @@ const Quotes = () => {
               Orçamento #{selectedQuote?.id.slice(0, 8).toUpperCase()}
             </DialogTitle>
             {selectedQuote && (
-              <Button variant="outline" size="sm" onClick={() => handlePrintQuote(selectedQuote)} className="shrink-0">
-                <Printer className="h-4 w-4 mr-1" />
-                Imprimir
-              </Button>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={() => {
+                  const url = `${window.location.origin}/orcamento/${selectedQuote.id}`;
+                  navigator.clipboard.writeText(url);
+                  toast({ title: 'Link copiado!', description: 'Envie o link para o cliente visualizar o orçamento.' });
+                }} className="shrink-0">
+                  <Share2 className="h-4 w-4 mr-1" />
+                  Compartilhar
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => handlePrintQuote(selectedQuote)} className="shrink-0">
+                  <Printer className="h-4 w-4 mr-1" />
+                  Imprimir
+                </Button>
+              </div>
             )}
           </DialogHeader>
           {selectedQuote && (
