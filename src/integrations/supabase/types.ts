@@ -764,6 +764,9 @@ export type Database = {
       pos_sales: {
         Row: {
           amount_received: number | null
+          cancel_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
           change_amount: number | null
           coupon_code: string | null
           coupon_id: string | null
@@ -781,6 +784,7 @@ export type Database = {
           payment_details: Json | null
           payment_method: string
           session_id: string | null
+          status: string
           store_id: string | null
           subtotal: number
           synced: boolean
@@ -790,6 +794,9 @@ export type Database = {
         }
         Insert: {
           amount_received?: number | null
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
           change_amount?: number | null
           coupon_code?: string | null
           coupon_id?: string | null
@@ -807,6 +814,7 @@ export type Database = {
           payment_details?: Json | null
           payment_method: string
           session_id?: string | null
+          status?: string
           store_id?: string | null
           subtotal: number
           synced?: boolean
@@ -816,6 +824,9 @@ export type Database = {
         }
         Update: {
           amount_received?: number | null
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
           change_amount?: number | null
           coupon_code?: string | null
           coupon_id?: string | null
@@ -833,6 +844,7 @@ export type Database = {
           payment_details?: Json | null
           payment_method?: string
           session_id?: string | null
+          status?: string
           store_id?: string | null
           subtotal?: number
           synced?: boolean
