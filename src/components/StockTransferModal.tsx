@@ -117,26 +117,25 @@ const StockTransferModal: React.FC<Props> = ({ open, onOpenChange, stores, onTra
     const loadVariations = async () => {
       const { data: vars } = await supabase
         .from('product_variations')
-        .select('id, sku, product_variation_values(attribute_value_id, product_attribute_values(value, product_attributes(name)))')
+        .select('id, sku, barcode, product_variation_values(attribute_value_id, product_attribute_values(value, product_attributes(name)))')
         .eq('product_id', selectedProductId)
         .eq('is_active', true);
 
       if (vars && vars.length > 0) {
         const mapped = vars.map((v: any) => {
-          const label = (v.product_variation_values || [])
-            .map((pvv: any) => {
-              const attrName = pvv.product_attribute_values?.product_attributes?.name || '';
-              const val = pvv.product_attribute_values?.value || '';
-              return `${attrName}: ${val}`;
-            })
-            .join(' / ');
-          return { id: v.id, label, sku: v.sku };
+          const attrs = (v.product_variation_values || []).map((pvv: any) => ({
+            name: pvv.product_attribute_values?.product_attributes?.name || '',
+            value: pvv.product_attribute_values?.value || '',
+          }));
+          const label = attrs.map((a: any) => `${a.name}: ${a.value}`).join(' / ');
+          return { id: v.id, label, sku: v.sku, barcode: v.barcode, attrs };
         });
         setVariations(mapped);
       } else {
         setVariations([]);
       }
       setSelectedVariationId('');
+      setVariationSearch('');
     };
     loadVariations();
   }, [selectedProductId]);
