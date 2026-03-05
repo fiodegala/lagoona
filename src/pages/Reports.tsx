@@ -317,6 +317,59 @@ const Reports = () => {
     return [...map.values()].sort((a, b) => b.revenue - a.revenue).slice(0, 10);
   }, [filteredOrders]);
 
+  // === Promotional Sales ===
+  const promotionalStats = useMemo(() => {
+    const promoItems: { name: string; qty: number; totalValue: number; paymentMethod: string }[] = [];
+
+    filteredPOS.forEach(sale => {
+      (sale.items || []).forEach((item: any) => {
+        if (item.is_promotional) {
+          promoItems.push({
+            name: item.name || 'Produto',
+            qty: item.quantity || item.qty || 1,
+            totalValue: item.total || (item.unit_price || 0) * (item.quantity || item.qty || 1),
+            paymentMethod: sale.payment_method,
+          });
+        }
+      });
+    });
+
+    filteredOrders.filter(o => o.status !== 'cancelled').forEach(order => {
+      (order.items || []).forEach((item: any) => {
+        if (item.is_promotional) {
+          promoItems.push({
+            name: item.name || 'Produto',
+            qty: item.quantity || item.qty || 1,
+            totalValue: (item.price || 0) * (item.quantity || item.qty || 1),
+            paymentMethod: order.payment_method || 'online',
+          });
+        }
+      });
+    });
+
+    const byProduct: Record<string, { qty: number; total: number }> = {};
+    promoItems.forEach(item => {
+      if (!byProduct[item.name]) byProduct[item.name] = { qty: 0, total: 0 };
+      byProduct[item.name].qty += item.qty;
+      byProduct[item.name].total += item.totalValue;
+    });
+
+    const byPayment: Record<string, { count: number; total: number }> = {};
+    promoItems.forEach(item => {
+      const label = PAYMENT_LABELS[item.paymentMethod] || item.paymentMethod;
+      if (!byPayment[label]) byPayment[label] = { count: 0, total: 0 };
+      byPayment[label].count += item.qty;
+      byPayment[label].total += item.totalValue;
+    });
+
+    return {
+      totalQty: promoItems.reduce((s, i) => s + i.qty, 0),
+      totalValue: promoItems.reduce((s, i) => s + i.totalValue, 0),
+      products: Object.entries(byProduct).map(([name, d]) => ({ name, ...d })).sort((a, b) => b.total - a.total),
+      payments: Object.entries(byPayment).map(([method, d]) => ({ method, ...d })).sort((a, b) => b.total - a.total),
+    };
+  }, [filteredPOS, filteredOrders]);
+
   const exportToCSV = () => {
     const BOM = '\uFEFF';
     let csv = BOM + 'Relatório de Vendas\n';
