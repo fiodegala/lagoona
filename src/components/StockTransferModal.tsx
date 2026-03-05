@@ -387,6 +387,31 @@ const StockTransferModal: React.FC<Props> = ({ open, onOpenChange, stores, onTra
     }
   };
 
+  const handleReverse = async (transfer: TransferRecord) => {
+    if (!confirm(`Reverter transferência de ${transfer.quantity}x ${transfer.product_name}?\nIsso devolverá as peças de "${transfer.to_store_name}" para "${transfer.from_store_name}".`)) return;
+    try {
+      // Execute reverse: from destination back to origin
+      await executeTransfer(
+        transfer.to_store_id,
+        transfer.from_store_id,
+        transfer.product_id,
+        transfer.variation_id,
+        transfer.quantity
+      );
+
+      await supabase
+        .from('stock_transfers')
+        .update({ status: 'reversed', approved_by: user!.id } as any)
+        .eq('id', transfer.id);
+
+      toast({ title: 'Transferência revertida com sucesso!' });
+      loadHistory();
+      onTransferComplete();
+    } catch (error: any) {
+      toast({ title: 'Erro ao reverter', description: error.message, variant: 'destructive' });
+    }
+  };
+
   const resetForm = () => {
     setFromStoreId('');
     setToStoreId('');
