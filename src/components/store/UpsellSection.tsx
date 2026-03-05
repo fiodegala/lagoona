@@ -197,24 +197,26 @@ const UpsellSection = ({ currentProduct, currentPrice, categoryId }: UpsellSecti
   };
 
   const handleBuyTogether = () => {
+    const discountMultiplier = 1 - discountPercent / 100;
     addItem({
       id: currentProduct.id, productId: currentProduct.id, name: currentProduct.name,
-      price: currentPrice, imageUrl: currentProduct.image_url || undefined,
+      price: currentPrice * discountMultiplier, imageUrl: currentProduct.image_url || undefined,
       stock: currentProduct.stock, quantity: 1,
     });
     selectedProducts.forEach(({ product, variation, price }) => {
       const variationLabel = variation?.attribute_values?.map(av => av.value).join(' / ');
+      const discountedPrice = price * discountMultiplier;
       addItem({
         id: variation?.id || product.id,
         productId: product.id,
         name: variationLabel ? `${product.name} - ${variationLabel}` : product.name,
-        price,
+        price: discountedPrice,
         imageUrl: variation?.image_url || product.image_url || undefined,
         stock: variation?.stock ?? product.stock,
         quantity: 1,
       });
     });
-    toast.success(`${selectedProducts.length + 1} produtos adicionados ao carrinho!`, {
+    toast.success(`${selectedProducts.length + 1} produtos adicionados ao carrinho com ${discountPercent}% de desconto!`, {
       action: { label: 'Ver carrinho', onClick: () => window.location.href = '/carrinho' },
     });
   };
