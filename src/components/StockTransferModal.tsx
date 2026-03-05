@@ -691,6 +691,11 @@ const StockTransferModal: React.FC<Props> = ({ open, onOpenChange, stores, onTra
                                 </Button>
                               </div>
                             )}
+                            {t.status === 'completed' && (
+                              <Button size="sm" variant="outline" className="text-amber-600 border-amber-500 hover:bg-amber-50" onClick={() => handleReverse(t)}>
+                                <Undo2 className="h-3 w-3 mr-1" /> Reverter
+                              </Button>
+                            )}
                           </TableCell>
                         )}
                       </TableRow>
