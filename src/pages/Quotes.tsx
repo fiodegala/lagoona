@@ -225,6 +225,9 @@ const Quotes = () => {
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-1">
                               <Button variant="ghost" size="icon" onClick={() => setSelectedQuote(q)}><Eye className="h-4 w-4" /></Button>
+                              {q.status === 'pending' && (
+                                <Button variant="ghost" size="icon" onClick={() => setEditQuote(q)}><Pencil className="h-4 w-4" /></Button>
+                              )}
                               <Button variant="ghost" size="icon" onClick={() => handleDelete(q.id)} className="text-destructive"><Trash2 className="h-4 w-4" /></Button>
                             </div>
                           </TableCell>
