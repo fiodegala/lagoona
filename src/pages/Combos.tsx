@@ -453,7 +453,7 @@ const Combos = () => {
 
               {formItems.length === 0 ? (
                 <div className="text-center py-6 text-muted-foreground text-sm border rounded-md border-dashed">
-                  Adicione pelo menos 2 produtos ao combo
+                  Adicione produtos ao combo (mínimo 2 unidades no total — pode ser o mesmo produto)
                 </div>
               ) : (
                 <div className="space-y-3">
