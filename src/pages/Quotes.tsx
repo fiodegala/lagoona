@@ -454,6 +454,51 @@ const Quotes = () => {
                     </div>
                   </>
                 )}
+
+                {/* Histórico de Alterações */}
+                {quoteHistory.length > 0 && (
+                  <>
+                    <Separator />
+                    <div>
+                      <h4 className="text-sm font-semibold mb-2 flex items-center gap-1.5">
+                        <History className="h-3.5 w-3.5 text-muted-foreground" />
+                        Histórico de Alterações
+                      </h4>
+                      <div className="space-y-2">
+                        {quoteHistory.map((entry: any) => (
+                          <div key={entry.id} className="rounded-md border p-2.5 text-xs space-y-1">
+                            <div className="flex items-center justify-between">
+                              <span className="font-medium">{entry.user_name || 'Usuário'}</span>
+                              <span className="text-muted-foreground">
+                                {format(new Date(entry.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                              </span>
+                            </div>
+                            {entry.changes && Object.keys(entry.changes).length > 0 && (
+                              <div className="text-muted-foreground space-y-0.5">
+                                {Object.entries(entry.changes).map(([key, val]: [string, any]) => {
+                                  const labels: Record<string, string> = {
+                                    customer_name: 'Cliente',
+                                    notes: 'Observações',
+                                    payment_method: 'Pagamento',
+                                    total: 'Total',
+                                  };
+                                  const label = labels[key] || key;
+                                  if (key === 'total') {
+                                    return <p key={key}>{label}: {formatCurrency(val.from)} → {formatCurrency(val.to)}</p>;
+                                  }
+                                  return <p key={key}>{label} alterado</p>;
+                                })}
+                              </div>
+                            )}
+                            {(!entry.changes || Object.keys(entry.changes).length === 0) && (
+                              <p className="text-muted-foreground">Edição realizada</p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           )}
