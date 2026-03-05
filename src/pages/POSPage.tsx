@@ -67,6 +67,7 @@ const POSPage = () => {
   } | null>(null);
 
   const isExchangeMode = saleType === 'troca';
+  const isQuoteMode = isQuoteType(saleType);
 
   useEffect(() => {
     const unsubscribe = offlineService.onOnlineStatusChange(setIsOnline);
@@ -130,6 +131,8 @@ const POSPage = () => {
         return product.exclusive_price ?? product.price;
       case 'troca':
         return 0;
+      case 'orcamento':
+        return product.promotional_price ?? product.price;
       default:
         return product.promotional_price ?? product.price;
     }
