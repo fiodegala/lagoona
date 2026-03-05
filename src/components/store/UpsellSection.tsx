@@ -184,7 +184,7 @@ const UpsellSection = ({ currentProduct, currentPrice, categoryId }: UpsellSecti
 
   const confirmVariation = () => {
     if (!pickerProduct || !pickerMatchedVariation) return;
-    const realStock = pickerStockMap[pickerMatchedVariation.id] || 0;
+    const realStock = pickerStockMap[pickerMatchedVariation.id] ?? pickerMatchedVariation.stock;
     const enrichedVar = { ...pickerMatchedVariation, stock: realStock };
     const price = enrichedVar.price ?? getPrice(pickerProduct);
 
