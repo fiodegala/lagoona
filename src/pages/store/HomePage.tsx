@@ -1,4 +1,4 @@
-import { useEffect, useState, lazy, Suspense, useCallback } from 'react';
+import { useEffect, useState, lazy, Suspense, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Loader2, ShoppingBag, Truck, RefreshCw, Shield, MessageCircle, TrendingUp, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
