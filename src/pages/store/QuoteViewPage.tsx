@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
 import StoreHeader from '@/components/store/StoreHeader';
+import StoreFooter from '@/components/store/StoreFooter';
 import StoreFooter from '@/components/store/StoreFooter';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -53,11 +53,6 @@ const QuoteViewPage = () => {
     const fetchQuote = async () => {
       if (!id) { setError(true); setLoading(false); return; }
       try {
-        const { data, error: fnError } = await supabase.functions.invoke('public-quote', {
-          body: null,
-          headers: {},
-        });
-        // Use query param approach
         const response = await fetch(
           `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/public-quote?id=${id}`,
           { headers: { 'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY } }
