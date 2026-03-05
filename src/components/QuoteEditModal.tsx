@@ -101,6 +101,7 @@ const QuoteEditModal = ({ quote, open, onOpenChange, onSaved }: QuoteEditModalPr
 
   // Variation picker state
   const [variationPickerProduct, setVariationPickerProduct] = useState<SearchResult | null>(null);
+  const [loadingVariations, setLoadingVariations] = useState(false);
 
   useEffect(() => {
     if (quote && open) {
