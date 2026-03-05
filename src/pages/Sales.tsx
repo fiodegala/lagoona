@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import AdminLayout from '@/components/AdminLayout';
 import { Card, CardContent, CardDescription, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -9,10 +9,17 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
-import { Receipt, Search, Eye, Calendar, DollarSign, TrendingUp, ShoppingBag, Printer, User, Phone, Mail, MapPin, FileText, Building2 } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Receipt, Search, Eye, Calendar, DollarSign, TrendingUp, ShoppingBag, Printer, User, Phone, Mail, MapPin, FileText, Building2, Ban } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { format, startOfDay, endOfDay, startOfWeek, startOfMonth, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { toast } from 'sonner';
 
 const paymentMethodLabels: Record<string, string> = {
   cash: 'Dinheiro',
@@ -22,6 +29,9 @@ const paymentMethodLabels: Record<string, string> = {
 };
 
 const Sales = () => {
+  const { isAdmin, isManager, user } = useAuth();
+  const queryClient = useQueryClient();
+  const canCancel = isAdmin || isManager;
   const [search, setSearch] = useState('');
   const [periodFilter, setPeriodFilter] = useState('today');
   const [customStart, setCustomStart] = useState('');
@@ -29,7 +39,9 @@ const Sales = () => {
   const [detailSale, setDetailSale] = useState<any>(null);
   const [detailCustomer, setDetailCustomer] = useState<any>(null);
   const [isLoadingCustomer, setIsLoadingCustomer] = useState(false);
-  
+  const [cancelSale, setCancelSale] = useState<any>(null);
+  const [cancelReason, setCancelReason] = useState('');
+  const [isCancelling, setIsCancelling] = useState(false);
 
   // Fetch full customer data when opening detail
   const openSaleDetail = async (sale: any) => {
@@ -115,6 +127,32 @@ const Sales = () => {
     setTimeout(() => printWindow.print(), 300);
   };
 
+  const handleCancelSale = async () => {
+    if (!cancelSale || !user) return;
+    setIsCancelling(true);
+    try {
+      const { error } = await supabase
+        .from('pos_sales')
+        .update({
+          status: 'cancelled',
+          cancelled_at: new Date().toISOString(),
+          cancelled_by: user.id,
+          cancel_reason: cancelReason || null,
+        } as any)
+        .eq('id', cancelSale.id);
+      if (error) throw error;
+      toast.success('Venda cancelada com sucesso');
+      queryClient.invalidateQueries({ queryKey: ['pos-sales'] });
+      setCancelSale(null);
+      setCancelReason('');
+      if (detailSale?.id === cancelSale.id) setDetailSale(null);
+    } catch (e: any) {
+      toast.error('Erro ao cancelar venda: ' + (e.message || ''));
+    } finally {
+      setIsCancelling(false);
+    }
+  };
+
   const dateRange = useMemo(() => {
     const now = new Date();
     switch (periodFilter) {
@@ -160,9 +198,10 @@ const Sales = () => {
     return matchesSearch;
   });
 
-  const totalRevenue = filteredSales.reduce((sum, s) => sum + Number(s.total), 0);
-  const totalDiscount = filteredSales.reduce((sum, s) => sum + Number(s.discount_amount || 0), 0);
-  const avgTicket = filteredSales.length > 0 ? totalRevenue / filteredSales.length : 0;
+  const activeSales = filteredSales.filter(s => (s as any).status !== 'cancelled');
+  const totalRevenue = activeSales.reduce((sum, s) => sum + Number(s.total), 0);
+  const totalDiscount = activeSales.reduce((sum, s) => sum + Number(s.discount_amount || 0), 0);
+  const avgTicket = activeSales.length > 0 ? totalRevenue / activeSales.length : 0;
 
   const saleItems = (items: any) => {
     try {
@@ -271,6 +310,7 @@ const Sales = () => {
                   <TableRow>
                     <TableHead>Venda</TableHead>
                     <TableHead>Cliente</TableHead>
+                    <TableHead>Status</TableHead>
                     <TableHead>Itens</TableHead>
                     <TableHead>Subtotal</TableHead>
                     <TableHead>Desconto</TableHead>
@@ -283,8 +323,9 @@ const Sales = () => {
                 <TableBody>
                   {filteredSales.map(sale => {
                     const items = saleItems(sale.items);
+                    const isCancelled = (sale as any).status === 'cancelled';
                     return (
-                      <TableRow key={sale.id}>
+                      <TableRow key={sale.id} className={isCancelled ? 'opacity-60' : ''}>
                         <TableCell className="font-mono text-xs">{sale.id.slice(0, 8)}...</TableCell>
                         <TableCell>
                           <div>
@@ -293,6 +334,13 @@ const Sales = () => {
                               <p className="text-xs text-muted-foreground">{sale.customer_document}</p>
                             )}
                           </div>
+                        </TableCell>
+                        <TableCell>
+                          {isCancelled ? (
+                            <Badge variant="destructive" className="text-xs">Cancelada</Badge>
+                          ) : (
+                            <Badge variant="default" className="text-xs bg-green-600">Concluída</Badge>
+                          )}
                         </TableCell>
                         <TableCell>
                           <Badge variant="secondary" className="text-xs">
@@ -307,7 +355,9 @@ const Sales = () => {
                             <span className="text-muted-foreground">—</span>
                           )}
                         </TableCell>
-                        <TableCell className="font-medium">R$ {Number(sale.total).toFixed(2)}</TableCell>
+                        <TableCell className={`font-medium ${isCancelled ? 'line-through text-muted-foreground' : ''}`}>
+                          R$ {Number(sale.total).toFixed(2)}
+                        </TableCell>
                         <TableCell>
                           <Badge variant="outline" className="text-xs">
                             {paymentMethodLabels[sale.payment_method] || sale.payment_method}
@@ -320,10 +370,18 @@ const Sales = () => {
                           {format(new Date(sale.created_at), "dd/MM/yy HH:mm", { locale: ptBR })}
                         </TableCell>
                         <TableCell>
-                          <Button variant="outline" size="sm" onClick={() => openSaleDetail(sale)}>
-                            <Eye className="h-3 w-3 mr-1" />
-                            Detalhes
-                          </Button>
+                          <div className="flex items-center gap-1">
+                            <Button variant="outline" size="sm" onClick={() => openSaleDetail(sale)}>
+                              <Eye className="h-3 w-3 mr-1" />
+                              Detalhes
+                            </Button>
+                            {canCancel && !isCancelled && (
+                              <Button variant="destructive" size="sm" onClick={() => setCancelSale(sale)}>
+                                <Ban className="h-3 w-3 mr-1" />
+                                Cancelar
+                              </Button>
+                            )}
+                          </div>
                         </TableCell>
                       </TableRow>
                     );
@@ -351,10 +409,22 @@ const Sales = () => {
       <Dialog open={!!detailSale} onOpenChange={o => !o && setDetailSale(null)}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader className="flex flex-row items-center justify-between">
-            <DialogTitle>Detalhes da Venda</DialogTitle>
-            <Button variant="outline" size="sm" className="gap-1.5" onClick={handlePrint}>
-              <Printer className="h-4 w-4" /> Imprimir
-            </Button>
+            <div className="flex items-center gap-2">
+              <DialogTitle>Detalhes da Venda</DialogTitle>
+              {detailSale && (detailSale as any).status === 'cancelled' && (
+                <Badge variant="destructive">Cancelada</Badge>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              {canCancel && detailSale && (detailSale as any).status !== 'cancelled' && (
+                <Button variant="destructive" size="sm" className="gap-1.5" onClick={() => setCancelSale(detailSale)}>
+                  <Ban className="h-4 w-4" /> Cancelar
+                </Button>
+              )}
+              <Button variant="outline" size="sm" className="gap-1.5" onClick={handlePrint}>
+                <Printer className="h-4 w-4" /> Imprimir
+              </Button>
+            </div>
           </DialogHeader>
           {detailSale && (
             <div className="flex-1 overflow-y-auto pr-2 space-y-4" style={{ maxHeight: 'calc(90vh - 100px)' }}>
@@ -548,6 +618,36 @@ const Sales = () => {
 
         </DialogContent>
       </Dialog>
+      {/* Cancel Sale Dialog */}
+      <AlertDialog open={!!cancelSale} onOpenChange={o => { if (!o) { setCancelSale(null); setCancelReason(''); } }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancelar Venda</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja cancelar a venda #{cancelSale?.id?.slice(0, 8)}? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Motivo do cancelamento (opcional)</label>
+            <Textarea
+              placeholder="Informe o motivo do cancelamento..."
+              value={cancelReason}
+              onChange={e => setCancelReason(e.target.value)}
+              rows={3}
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isCancelling}>Voltar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleCancelSale}
+              disabled={isCancelling}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isCancelling ? 'Cancelando...' : 'Confirmar Cancelamento'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AdminLayout>
   );
 };
