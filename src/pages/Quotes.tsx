@@ -205,9 +205,33 @@ const Quotes = () => {
                         <CreditCard className="h-3.5 w-3.5 text-muted-foreground" />
                         Forma de Pagamento
                       </h4>
-                      <p className="text-sm font-medium">
-                        {paymentMethodLabels[selectedQuote.payment_method] || selectedQuote.payment_method}
-                      </p>
+                      <div className="text-sm space-y-0.5">
+                        <p className="font-medium">
+                          {paymentMethodLabels[selectedQuote.payment_method] || selectedQuote.payment_method}
+                        </p>
+                        {selectedQuote.payment_method === 'card' && selectedQuote.payment_details && (
+                          <>
+                            <p className="text-muted-foreground">
+                              {selectedQuote.payment_details.cardType === 'credit' ? 'Cartão de Crédito' : 'Cartão de Débito'}
+                            </p>
+                            {selectedQuote.payment_details.cardType === 'credit' && selectedQuote.payment_details.installments > 1 && (
+                              <p className="text-muted-foreground">
+                                {selectedQuote.payment_details.installments}x de {formatCurrency(selectedQuote.total / selectedQuote.payment_details.installments)} sem juros
+                              </p>
+                            )}
+                            {selectedQuote.payment_details.cardType === 'credit' && (selectedQuote.payment_details.installments || 1) === 1 && (
+                              <p className="text-muted-foreground">À vista</p>
+                            )}
+                          </>
+                        )}
+                        {selectedQuote.payment_method === 'mixed' && selectedQuote.payment_details && (
+                          <div className="text-muted-foreground space-y-0.5">
+                            {selectedQuote.payment_details.cash > 0 && <p>Dinheiro: {formatCurrency(selectedQuote.payment_details.cash)}</p>}
+                            {selectedQuote.payment_details.card > 0 && <p>Cartão: {formatCurrency(selectedQuote.payment_details.card)}</p>}
+                            {selectedQuote.payment_details.pix > 0 && <p>PIX: {formatCurrency(selectedQuote.payment_details.pix)}</p>}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </>
                 )}
