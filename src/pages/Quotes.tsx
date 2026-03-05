@@ -318,7 +318,7 @@ const Quotes = () => {
                   </>
                 )}
               </div>
-            </ScrollArea>
+            </div>
           )}
         </DialogContent>
       </Dialog>
