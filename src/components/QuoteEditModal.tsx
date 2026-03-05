@@ -485,7 +485,12 @@ const QuoteEditModal = ({ quote, open, onOpenChange, onSaved }: QuoteEditModalPr
             </div>
 
             {/* Variation Picker Inline */}
-            {variationPickerProduct && (
+            {loadingVariations && (
+              <div className="mb-3 border rounded-lg p-4 bg-muted/50 flex items-center justify-center gap-2 text-muted-foreground text-sm">
+                <Loader2 className="h-4 w-4 animate-spin" /> Carregando variações...
+              </div>
+            )}
+            {variationPickerProduct && !loadingVariations && (
               <div className="mb-3 border rounded-lg p-3 bg-muted/50 space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
