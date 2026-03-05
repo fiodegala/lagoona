@@ -9,7 +9,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
-import { Search, FileText, Eye, Trash2, Loader2 } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Search, FileText, Eye, Trash2, Loader2, Clock, User, CreditCard, Package } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -26,6 +27,7 @@ interface Quote {
   notes: string | null;
   created_at: string;
   expires_at: string | null;
+  payment_method: string | null;
 }
 
 const formatCurrency = (v: number) =>
@@ -36,6 +38,13 @@ const statusMap: Record<string, { label: string; variant: 'default' | 'secondary
   converted: { label: 'Convertido', variant: 'default' },
   expired: { label: 'Expirado', variant: 'destructive' },
   cancelled: { label: 'Cancelado', variant: 'outline' },
+};
+
+const paymentMethodLabels: Record<string, string> = {
+  cash: 'Dinheiro',
+  card: 'Cartão',
+  pix: 'PIX',
+  mixed: 'Misto',
 };
 
 const Quotes = () => {
@@ -149,42 +158,140 @@ const Quotes = () => {
 
       {/* Detail Modal */}
       <Dialog open={!!selectedQuote} onOpenChange={open => !open && setSelectedQuote(null)}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[90vh] flex flex-col">
           <DialogHeader>
-            <DialogTitle>Orçamento #{selectedQuote?.id.slice(0, 8)}</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Orçamento #{selectedQuote?.id.slice(0, 8).toUpperCase()}
+            </DialogTitle>
           </DialogHeader>
           {selectedQuote && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                <div><span className="text-muted-foreground">Data:</span> {format(new Date(selectedQuote.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}</div>
-                <div><span className="text-muted-foreground">Cliente:</span> {selectedQuote.customer_name || '—'}</div>
-                {selectedQuote.customer_document && <div><span className="text-muted-foreground">Documento:</span> {selectedQuote.customer_document}</div>}
-              </div>
-              <Separator />
-              <div className="space-y-2">
-                <h4 className="font-semibold text-sm">Itens</h4>
-                {(selectedQuote.items || []).map((item: any, i: number) => (
-                  <div key={i} className="flex justify-between text-sm">
-                    <span>{item.quantity}x {item.name}</span>
-                    <span className="font-medium">{formatCurrency(item.total || item.unit_price * item.quantity)}</span>
+            <ScrollArea className="flex-1 min-h-0 pr-2">
+              <div className="space-y-5 py-2">
+                {/* Status e Data */}
+                <div className="flex items-center justify-between">
+                  <Badge variant={(statusMap[selectedQuote.status] || statusMap.pending).variant}>
+                    {(statusMap[selectedQuote.status] || statusMap.pending).label}
+                  </Badge>
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <Clock className="h-3 w-3" />
+                    {format(new Date(selectedQuote.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
                   </div>
-                ))}
-              </div>
-              <Separator />
-              <div className="space-y-1 text-sm">
-                <div className="flex justify-between"><span>Subtotal</span><span>{formatCurrency(selectedQuote.subtotal)}</span></div>
-                {selectedQuote.discount_amount > 0 && (
-                  <div className="flex justify-between text-destructive"><span>Desconto</span><span>-{formatCurrency(selectedQuote.discount_amount)}</span></div>
+                </div>
+
+                <Separator />
+
+                {/* Cliente */}
+                <div>
+                  <h4 className="text-sm font-semibold mb-2 flex items-center gap-1.5">
+                    <User className="h-3.5 w-3.5 text-muted-foreground" />
+                    Cliente
+                  </h4>
+                  <div className="text-sm space-y-0.5">
+                    <p className="font-medium">{selectedQuote.customer_name || 'Não informado'}</p>
+                    {selectedQuote.customer_document && (
+                      <p className="text-muted-foreground">Documento: {selectedQuote.customer_document}</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Pagamento */}
+                {selectedQuote.payment_method && (
+                  <>
+                    <Separator />
+                    <div>
+                      <h4 className="text-sm font-semibold mb-2 flex items-center gap-1.5">
+                        <CreditCard className="h-3.5 w-3.5 text-muted-foreground" />
+                        Forma de Pagamento
+                      </h4>
+                      <p className="text-sm font-medium">
+                        {paymentMethodLabels[selectedQuote.payment_method] || selectedQuote.payment_method}
+                      </p>
+                    </div>
+                  </>
                 )}
-                <div className="flex justify-between text-lg font-bold"><span>Total</span><span className="text-primary">{formatCurrency(selectedQuote.total)}</span></div>
-              </div>
-              {selectedQuote.notes && (
-                <>
+
+                <Separator />
+
+                {/* Itens */}
+                <div>
+                  <h4 className="text-sm font-semibold mb-2 flex items-center gap-1.5">
+                    <Package className="h-3.5 w-3.5 text-muted-foreground" />
+                    Itens do Orçamento
+                  </h4>
+                  {(selectedQuote.items || []).length > 0 ? (
+                    <div className="space-y-2">
+                      {(selectedQuote.items || []).map((item: any, idx: number) => (
+                        <div key={idx} className="flex items-center justify-between rounded-md border p-2.5 text-sm">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <img
+                              src={item.image_url || '/placeholder.svg'}
+                              alt={item.name || 'Produto'}
+                              className="h-12 w-12 rounded-md object-cover shrink-0 border bg-muted"
+                            />
+                            <div className="min-w-0">
+                              <p className="font-medium truncate">{item.name || 'Produto'}</p>
+                              {item.sku && <p className="text-xs text-muted-foreground">SKU: {item.sku}</p>}
+                            </div>
+                          </div>
+                          <div className="text-right shrink-0 ml-2">
+                            <p className="font-medium">{formatCurrency(item.unit_price || 0)}</p>
+                            <p className="text-xs text-muted-foreground">Qtd: {item.quantity || 1}</p>
+                            {item.discount_amount > 0 && (
+                              <p className="text-xs text-destructive">-{formatCurrency(item.discount_amount)}</p>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">Nenhum item</p>
+                  )}
+                </div>
+
+                <Separator />
+
+                {/* Totais */}
+                <div className="space-y-1 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Subtotal</span>
+                    <span>{formatCurrency(selectedQuote.subtotal)}</span>
+                  </div>
+                  {selectedQuote.discount_amount > 0 && (
+                    <div className="flex justify-between text-destructive">
+                      <span>Desconto</span>
+                      <span>-{formatCurrency(selectedQuote.discount_amount)}</span>
+                    </div>
+                  )}
                   <Separator />
-                  <p className="text-sm text-muted-foreground">{selectedQuote.notes}</p>
-                </>
-              )}
-            </div>
+                  <div className="flex justify-between text-lg font-bold">
+                    <span>Total</span>
+                    <span className="text-primary">{formatCurrency(selectedQuote.total)}</span>
+                  </div>
+                </div>
+
+                {/* Validade */}
+                {selectedQuote.expires_at && (
+                  <>
+                    <Separator />
+                    <p className="text-xs text-muted-foreground">
+                      Válido até: {format(new Date(selectedQuote.expires_at), "dd/MM/yyyy", { locale: ptBR })}
+                    </p>
+                  </>
+                )}
+
+                {/* Notas */}
+                {selectedQuote.notes && (
+                  <>
+                    <Separator />
+                    <div>
+                      <h4 className="text-sm font-semibold mb-1">Observações</h4>
+                      <p className="text-sm text-muted-foreground">{selectedQuote.notes}</p>
+                    </div>
+                  </>
+                )}
+              </div>
+            </ScrollArea>
           )}
         </DialogContent>
       </Dialog>
