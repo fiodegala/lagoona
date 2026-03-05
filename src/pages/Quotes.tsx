@@ -134,6 +134,7 @@ const Quotes = () => {
   const [search, setSearch] = useState('');
   const [selectedQuote, setSelectedQuote] = useState<Quote | null>(null);
   const [editQuote, setEditQuote] = useState<Quote | null>(null);
+  const [quoteHistory, setQuoteHistory] = useState<any[]>([]);
 
   const fetchQuotes = async () => {
     setLoading(true);
