@@ -357,7 +357,11 @@ const ProductImageGallery = ({
       {/* Lightbox Dialog */}
       <Dialog open={isLightboxOpen} onOpenChange={setIsLightboxOpen}>
         <DialogContent className="max-w-[95vw] max-h-[95vh] p-0 bg-black/95 border-none">
-          <div className="relative w-full h-[90vh] flex items-center justify-center">
+          <div
+            className="relative w-full h-[90vh] flex items-center justify-center"
+            onTouchStart={lightboxSwipe.onTouchStart}
+            onTouchEnd={lightboxSwipe.onTouchEnd}
+          >
             <Button
               variant="ghost"
               size="icon"
