@@ -16,6 +16,7 @@ import { bannersService, Banner, CreateBannerData } from '@/services/banners';
 
 const bannerTypes = [
   { value: 'hero', label: 'Hero (Principal)' },
+  { value: 'mid', label: 'Rotativo (Entre Seções)' },
   { value: 'promo', label: 'Promocional' },
   { value: 'category', label: 'Categoria' },
   { value: 'launches', label: 'Lançamentos' },

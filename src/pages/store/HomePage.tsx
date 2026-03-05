@@ -20,7 +20,9 @@ const HomePage = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [heroBanners, setHeroBanners] = useState<Banner[]>([]);
   const [promoBanners, setPromoBanners] = useState<Banner[]>([]);
+  const [midBanners, setMidBanners] = useState<Banner[]>([]);
   const [currentHeroBanner, setCurrentHeroBanner] = useState(0);
+  const [currentMidBanner, setCurrentMidBanner] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [featuredProduct, setFeaturedProduct] = useState<Product | null>(null);
 
