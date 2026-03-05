@@ -41,22 +41,15 @@ const StickyHorizontalScroll = ({ children, className = '' }: StickyHorizontalSc
     const rect = content.getBoundingClientRect();
     const viewportH = window.innerHeight;
 
-    // Only show if the content is visible and overflows horizontally
-    const isVisible = rect.top < viewportH && rect.bottom > 0;
+    // Only show if the content is at least partially visible and overflows horizontally
     const hasOverflow = content.scrollWidth > content.clientWidth + 1;
 
-    if (!isVisible || !hasOverflow) {
+    if (!hasOverflow) {
       setBarStyle({ display: 'none' });
       return;
     }
 
-    // If the natural bottom scrollbar position is already visible, don't show fixed bar
-    const naturalBarY = rect.bottom;
-    if (naturalBarY <= viewportH) {
-      setBarStyle({ display: 'none' });
-      return;
-    }
-
+    // Always show fixed at bottom when content overflows horizontally
     setBarStyle({
       position: 'fixed',
       bottom: 0,
