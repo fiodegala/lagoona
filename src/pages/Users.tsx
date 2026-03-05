@@ -99,6 +99,7 @@ const UsersPage = () => {
     fullName: '',
     role: 'seller' as AppRole,
     store_id: '' as string,
+    allowed_menus: [] as string[],
   });
 
   // Fetch stores
@@ -173,11 +174,11 @@ const UsersPage = () => {
           fullName: data.fullName,
           role: data.role,
           store_id: data.store_id || null,
+          allowed_menus: data.allowed_menus,
         },
       });
 
       if (fnError) {
-        // Try to parse error from response body or fnError context
         let errorMsg = 'Erro ao criar usuário';
         try {
           if (responseData?.error) {
@@ -212,13 +213,20 @@ const UsersPage = () => {
   });
 
   const updateRoleMutation = useMutation({
-    mutationFn: async ({ userId, role, store_id }: { userId: string; role: AppRole; store_id: string | null }) => {
+    mutationFn: async ({ userId, role, store_id, allowed_menus }: { userId: string; role: AppRole; store_id: string | null; allowed_menus: string[] }) => {
       const { error } = await supabase
         .from('user_roles')
         .update({ role, store_id } as never)
         .eq('user_id', userId);
 
       if (error) throw error;
+
+      // Upsert menu permissions
+      const { error: menuError } = await supabase
+        .from('user_menu_permissions')
+        .upsert({ user_id: userId, allowed_menus, updated_at: new Date().toISOString() } as never, { onConflict: 'user_id' });
+
+      if (menuError) throw menuError;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users-with-roles'] });
