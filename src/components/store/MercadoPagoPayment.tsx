@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { CreditCard, QrCode, Barcode, Loader2, Copy, Check, ExternalLink } from 'lucide-react';
+import CreditCardMockup from './CreditCardMockup';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -74,6 +75,13 @@ const MercadoPagoPayment = ({
   const [docNumber, setDocNumber] = useState('');
   const [installments, setInstallments] = useState('1');
 
+  // Card mockup state
+  const [cardDisplayNumber, setCardDisplayNumber] = useState('');
+  const [cardDisplayName, setCardDisplayName] = useState('');
+  const [cardDisplayExpiry, setCardDisplayExpiry] = useState('');
+  const [cardBrand, setCardBrand] = useState('');
+  const [isCardFlipped, setIsCardFlipped] = useState(false);
+
   // Initialize MercadoPago SDK
   useEffect(() => {
     let cancelled = false;
@@ -129,14 +137,30 @@ const MercadoPagoPayment = ({
                 return;
               }
               cardFormMountedRef.current = true;
+
+              // Listen to cardholder name input changes
+              const nameInput = document.getElementById('mp-cardholder-name') as HTMLInputElement;
+              if (nameInput) {
+                nameInput.addEventListener('input', (e) => {
+                  setCardDisplayName((e.target as HTMLInputElement).value);
+                });
+                nameInput.addEventListener('focus', () => setIsCardFlipped(false));
+              }
             },
             onSubmit: async (event: Event) => {
               event.preventDefault();
-              // handled by our own submit
             },
             onFetching: (resource: string) => {
-              // SDK fetching
               return () => {};
+            },
+            onCardTokenReceived: (error: any, token: any) => {
+              // noop
+            },
+            onPaymentMethodsReceived: (error: any, data: any) => {
+              if (!error && data && data.length > 0) {
+                const method = data[0];
+                setCardBrand(method.id || '');
+              }
             },
           },
         });
@@ -148,6 +172,24 @@ const MercadoPagoPayment = ({
 
     return () => clearTimeout(timeout);
   }, [activeTab, sdkReady, amount]);
+
+  // Poll card form data for brand detection
+  useEffect(() => {
+    if (activeTab !== 'credit_card' || !cardFormMountedRef.current || !cardFormRef.current) return;
+
+    const interval = setInterval(() => {
+      try {
+        const data = cardFormRef.current?.getCardFormData?.();
+        if (data) {
+          if (data.paymentMethodId) setCardBrand(data.paymentMethodId);
+        }
+      } catch {
+        // silent
+      }
+    }, 800);
+
+    return () => clearInterval(interval);
+  }, [activeTab, sdkReady]);
 
   // PIX polling
   useEffect(() => {
@@ -399,9 +441,23 @@ const MercadoPagoPayment = ({
               </div>
             ) : (
               <form id="mp-card-form" onSubmit={handleCardPayment} className="space-y-4">
+                {/* Animated Card Mockup */}
+                <CreditCardMockup
+                  cardNumber={cardDisplayNumber}
+                  cardholderName={cardDisplayName}
+                  expirationDate={cardDisplayExpiry}
+                  isFlipped={isCardFlipped}
+                  brand={cardBrand}
+                />
+
                 <div className="space-y-2">
                   <Label>Número do Cartão *</Label>
-                  <div id="mp-card-number" className="h-10 border rounded-md bg-background [&>iframe]:!h-full [&>iframe]:!w-full" style={{ minHeight: '40px' }} />
+                  <div
+                    id="mp-card-number"
+                    className="h-10 border rounded-md bg-background [&>iframe]:!h-full [&>iframe]:!w-full"
+                    style={{ minHeight: '40px' }}
+                    onFocus={() => setIsCardFlipped(false)}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Nome no Cartão *</Label>
@@ -409,16 +465,28 @@ const MercadoPagoPayment = ({
                     id="mp-cardholder-name"
                     type="text"
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    onFocus={() => setIsCardFlipped(false)}
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-2">
                     <Label>Validade *</Label>
-                    <div id="mp-expiration-date" className="h-10 border rounded-md bg-background [&>iframe]:!h-full [&>iframe]:!w-full" style={{ minHeight: '40px' }} />
+                    <div
+                      id="mp-expiration-date"
+                      className="h-10 border rounded-md bg-background [&>iframe]:!h-full [&>iframe]:!w-full"
+                      style={{ minHeight: '40px' }}
+                      onFocus={() => setIsCardFlipped(false)}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label>CVV *</Label>
-                    <div id="mp-security-code" className="h-10 border rounded-md bg-background [&>iframe]:!h-full [&>iframe]:!w-full" style={{ minHeight: '40px' }} />
+                    <div
+                      id="mp-security-code"
+                      className="h-10 border rounded-md bg-background [&>iframe]:!h-full [&>iframe]:!w-full"
+                      style={{ minHeight: '40px' }}
+                      onClick={() => setIsCardFlipped(true)}
+                      onFocus={() => setIsCardFlipped(true)}
+                    />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
