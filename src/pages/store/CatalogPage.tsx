@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import StoreLayout from '@/components/store/StoreLayout';
 import { productsService, Product } from '@/services/products';
 import { categoriesService, Category } from '@/services/categories';
@@ -6,7 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Search, Share2, MessageCircle, Loader2 } from 'lucide-react';
+import { Search, Share2, MessageCircle, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const WHATSAPP_NUMBER = '556299416578';
 
@@ -28,7 +28,7 @@ const CatalogPage = () => {
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [variationsMap, setVariationsMap] = useState<ProductVariationsMap>({});
-  const [selectedImage, setSelectedImage] = useState<Record<string, string>>({});
+  
 
   useEffect(() => {
     const load = async () => {
@@ -134,9 +134,43 @@ const CatalogPage = () => {
   );
   const visibleCategories = categories.filter((c) => usedCategoryIds.has(c.id));
 
+  // Build all images list per product (original + variation images)
+  const productImagesMap = useMemo(() => {
+    const map: Record<string, string[]> = {};
+    products.forEach((product) => {
+      const images: string[] = [];
+      if (product.image_url) images.push(product.image_url);
+      const variations = variationsMap[product.id] || [];
+      variations.forEach((v) => {
+        if (v.image_url && !images.includes(v.image_url)) {
+          images.push(v.image_url);
+        }
+      });
+      if (images.length === 0) images.push('/placeholder.svg');
+      map[product.id] = images;
+    });
+    return map;
+  }, [products, variationsMap]);
+
+  const [imageIndex, setImageIndex] = useState<Record<string, number>>({});
+
   const getDisplayImage = (product: Product) => {
-    return selectedImage[product.id] || product.image_url || '/placeholder.svg';
+    const images = productImagesMap[product.id] || ['/placeholder.svg'];
+    const idx = imageIndex[product.id] || 0;
+    return images[idx] || images[0];
   };
+
+  const navigateImage = useCallback((productId: string, direction: 'prev' | 'next') => {
+    const images = productImagesMap[productId] || [];
+    if (images.length <= 1) return;
+    setImageIndex((prev) => {
+      const current = prev[productId] || 0;
+      const next = direction === 'next'
+        ? (current + 1) % images.length
+        : (current - 1 + images.length) % images.length;
+      return { ...prev, [productId]: next };
+    });
+  }, [productImagesMap]);
 
   return (
     <StoreLayout>
@@ -212,70 +246,54 @@ const CatalogPage = () => {
                     key={product.id}
                     className="group rounded-lg border bg-card text-card-foreground shadow-sm overflow-hidden flex flex-col"
                   >
-                    {/* Image 4:7 ratio */}
-                    <div className="relative bg-muted overflow-hidden" style={{ aspectRatio: '4/7' }}>
-                      <img
-                        src={getDisplayImage(product)}
-                        alt={product.name}
-                        loading="lazy"
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                    </div>
+                    {/* Image 4:7 ratio with arrows */}
+                    {(() => {
+                      const images = productImagesMap[product.id] || ['/placeholder.svg'];
+                      const hasMultiple = images.length > 1;
+                      const currentIdx = imageIndex[product.id] || 0;
+                      return (
+                        <div className="relative bg-muted overflow-hidden group/img" style={{ aspectRatio: '4/7' }}>
+                          <img
+                            src={getDisplayImage(product)}
+                            alt={product.name}
+                            loading="lazy"
+                            className="w-full h-full object-cover transition-transform duration-300"
+                          />
+                          {hasMultiple && (
+                            <>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); navigateImage(product.id, 'prev'); }}
+                                className="absolute left-1 top-1/2 -translate-y-1/2 bg-background/80 backdrop-blur-sm rounded-full p-1 shadow opacity-0 group-hover/img:opacity-100 transition-opacity"
+                                aria-label="Foto anterior"
+                              >
+                                <ChevronLeft className="h-4 w-4 text-foreground" />
+                              </button>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); navigateImage(product.id, 'next'); }}
+                                className="absolute right-1 top-1/2 -translate-y-1/2 bg-background/80 backdrop-blur-sm rounded-full p-1 shadow opacity-0 group-hover/img:opacity-100 transition-opacity"
+                                aria-label="Próxima foto"
+                              >
+                                <ChevronRight className="h-4 w-4 text-foreground" />
+                              </button>
+                              {/* Dots */}
+                              <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 flex gap-1">
+                                {images.map((_, i) => (
+                                  <span
+                                    key={i}
+                                    className={`block w-1.5 h-1.5 rounded-full transition-colors ${
+                                      i === currentIdx ? 'bg-primary' : 'bg-background/60'
+                                    }`}
+                                  />
+                                ))}
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      );
+                    })()}
 
-                    {/* Variation thumbnails */}
-                    {variationsWithImages.length > 0 && (
-                      <div className="px-3 pt-2 flex gap-1.5 overflow-x-auto scrollbar-hide">
-                        {/* Original product image */}
-                        {product.image_url && (
-                          <button
-                            onClick={() =>
-                              setSelectedImage((prev) => {
-                                const next = { ...prev };
-                                delete next[product.id];
-                                return next;
-                              })
-                            }
-                            className={`shrink-0 w-9 h-9 rounded border-2 overflow-hidden transition-all ${
-                              !selectedImage[product.id]
-                                ? 'border-primary ring-1 ring-primary/30'
-                                : 'border-border opacity-60 hover:opacity-100'
-                            }`}
-                          >
-                            <img
-                              src={product.image_url}
-                              alt="Original"
-                              className="w-full h-full object-cover"
-                            />
-                          </button>
-                        )}
-                        {variationsWithImages.map((v) => (
-                          <button
-                            key={v.id}
-                            title={v.label}
-                            onClick={() =>
-                              setSelectedImage((prev) => ({
-                                ...prev,
-                                [product.id]: v.image_url!,
-                              }))
-                            }
-                            className={`shrink-0 w-9 h-9 rounded border-2 overflow-hidden transition-all ${
-                              selectedImage[product.id] === v.image_url
-                                ? 'border-primary ring-1 ring-primary/30'
-                                : 'border-border opacity-60 hover:opacity-100'
-                            }`}
-                          >
-                            <img
-                              src={v.image_url!}
-                              alt={v.label}
-                              className="w-full h-full object-cover"
-                            />
-                          </button>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Variation count badge (when no images) */}
-                    {variations.length > 0 && variationsWithImages.length === 0 && (
+                    {/* Variation count badge */}
+                    {variations.length > 0 && (
                       <div className="px-3 pt-2">
                         <Badge variant="secondary" className="text-xs">
                           {variations.length} {variations.length === 1 ? 'variação' : 'variações'}
