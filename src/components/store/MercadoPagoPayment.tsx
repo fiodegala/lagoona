@@ -180,6 +180,21 @@ const MercadoPagoPayment = ({
                 setCardBrand(method.id || '');
               }
             },
+            onBinChange: (bin: string) => {
+              if (bin) {
+                // Show first 6-8 digits, mask the rest
+                setCardDisplayNumber(bin.padEnd(16, '•').replace(/(.{4})/g, '$1 ').trim());
+                // Detect brand from BIN
+                if (bin.startsWith('4')) setCardBrand('visa');
+                else if (bin.startsWith('5') || bin.startsWith('2')) setCardBrand('mastercard');
+                else if (bin.startsWith('34') || bin.startsWith('37')) setCardBrand('amex');
+                else if (bin.startsWith('636368') || bin.startsWith('438935') || bin.startsWith('504175') || bin.startsWith('451416') || bin.startsWith('636297') || bin.startsWith('5067') || bin.startsWith('4576') || bin.startsWith('4011')) setCardBrand('elo');
+                else if (bin.startsWith('606282') || bin.startsWith('3841')) setCardBrand('hipercard');
+              } else {
+                setCardDisplayNumber('');
+                setCardBrand('');
+              }
+            },
           },
         });
         cardFormRef.current = cardForm;
