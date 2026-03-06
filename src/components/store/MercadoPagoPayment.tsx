@@ -423,9 +423,23 @@ const MercadoPagoPayment = ({
               </div>
             ) : (
               <form id="mp-card-form" onSubmit={handleCardPayment} className="space-y-4">
+                {/* Animated Card Mockup */}
+                <CreditCardMockup
+                  cardNumber={cardDisplayNumber}
+                  cardholderName={cardDisplayName}
+                  expirationDate={cardDisplayExpiry}
+                  isFlipped={isCardFlipped}
+                  brand={cardBrand}
+                />
+
                 <div className="space-y-2">
                   <Label>Número do Cartão *</Label>
-                  <div id="mp-card-number" className="h-10 border rounded-md bg-background [&>iframe]:!h-full [&>iframe]:!w-full" style={{ minHeight: '40px' }} />
+                  <div
+                    id="mp-card-number"
+                    className="h-10 border rounded-md bg-background [&>iframe]:!h-full [&>iframe]:!w-full"
+                    style={{ minHeight: '40px' }}
+                    onFocus={() => setIsCardFlipped(false)}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Nome no Cartão *</Label>
@@ -433,16 +447,28 @@ const MercadoPagoPayment = ({
                     id="mp-cardholder-name"
                     type="text"
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    onFocus={() => setIsCardFlipped(false)}
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-2">
                     <Label>Validade *</Label>
-                    <div id="mp-expiration-date" className="h-10 border rounded-md bg-background [&>iframe]:!h-full [&>iframe]:!w-full" style={{ minHeight: '40px' }} />
+                    <div
+                      id="mp-expiration-date"
+                      className="h-10 border rounded-md bg-background [&>iframe]:!h-full [&>iframe]:!w-full"
+                      style={{ minHeight: '40px' }}
+                      onFocus={() => setIsCardFlipped(false)}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label>CVV *</Label>
-                    <div id="mp-security-code" className="h-10 border rounded-md bg-background [&>iframe]:!h-full [&>iframe]:!w-full" style={{ minHeight: '40px' }} />
+                    <div
+                      id="mp-security-code"
+                      className="h-10 border rounded-md bg-background [&>iframe]:!h-full [&>iframe]:!w-full"
+                      style={{ minHeight: '40px' }}
+                      onClick={() => setIsCardFlipped(true)}
+                      onFocus={() => setIsCardFlipped(true)}
+                    />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
