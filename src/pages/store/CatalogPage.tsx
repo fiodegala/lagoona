@@ -53,38 +53,58 @@ const CatalogPage = () => {
 
           if (variations && variations.length > 0) {
             const varIds = variations.map((v) => v.id);
-            const allProductIds = [...new Set(variations.map((v) => v.product_id))];
 
-            // Fetch color attributes (name contains "cor")
-            const { data: colorAttrs } = await supabase
-              .from('product_attributes')
-              .select('id, product_id, name')
-              .in('product_id', allProductIds)
-              .ilike('name', '%cor%');
-
-            const colorAttrIds = new Set((colorAttrs || []).map((a) => a.id));
-
-            // Fetch attribute values for color attrs only
-            let colorAttrValuesMap: Record<string, string> = {};
-            if (colorAttrIds.size > 0) {
-              const { data: attrValues } = await supabase
-                .from('product_attribute_values')
-                .select('id, value, attribute_id')
-                .in('attribute_id', [...colorAttrIds]);
-              if (attrValues) {
-                colorAttrValuesMap = Object.fromEntries(attrValues.map((av) => [av.id, av.value]));
-              }
+            // Fetch variation values (links variation -> attribute_value)
+            // Batch varIds in chunks of 500 to avoid URL length limits
+            const chunkSize = 500;
+            let allVarValues: { variation_id: string; attribute_value_id: string }[] = [];
+            for (let i = 0; i < varIds.length; i += chunkSize) {
+              const chunk = varIds.slice(i, i + chunkSize);
+              const { data: vv } = await supabase
+                .from('product_variation_values')
+                .select('variation_id, attribute_value_id')
+                .in('variation_id', chunk);
+              if (vv) allVarValues = allVarValues.concat(vv);
             }
 
-            // Fetch variation values
-            const { data: varValues } = await supabase
-              .from('product_variation_values')
-              .select('variation_id, attribute_value_id')
-              .in('variation_id', varIds);
+            // Get all unique attribute_value_ids
+            const allAttrValueIds = [...new Set(allVarValues.map((vv) => vv.attribute_value_id))];
 
-            // Build color labels per variation_id (only color attributes)
+            // Fetch attribute values with their attribute info (batched)
+            let allAttrValues: { id: string; value: string; attribute_id: string }[] = [];
+            for (let i = 0; i < allAttrValueIds.length; i += chunkSize) {
+              const chunk = allAttrValueIds.slice(i, i + chunkSize);
+              const { data: av } = await supabase
+                .from('product_attribute_values')
+                .select('id, value, attribute_id')
+                .in('id', chunk);
+              if (av) allAttrValues = allAttrValues.concat(av);
+            }
+
+            // Fetch the attribute definitions to identify color attributes
+            const allAttrIds = [...new Set(allAttrValues.map((av) => av.attribute_id))];
+            let colorAttrIdSet = new Set<string>();
+            for (let i = 0; i < allAttrIds.length; i += chunkSize) {
+              const chunk = allAttrIds.slice(i, i + chunkSize);
+              const { data: attrs } = await supabase
+                .from('product_attributes')
+                .select('id, name')
+                .in('id', chunk)
+                .ilike('name', '%cor%');
+              if (attrs) attrs.forEach((a) => colorAttrIdSet.add(a.id));
+            }
+
+            // Build map: attribute_value_id -> color name (only for color attributes)
+            const colorAttrValuesMap: Record<string, string> = {};
+            allAttrValues.forEach((av) => {
+              if (colorAttrIdSet.has(av.attribute_id)) {
+                colorAttrValuesMap[av.id] = av.value;
+              }
+            });
+
+            // Build color labels per variation_id
             const varLabelsMap: Record<string, string[]> = {};
-            (varValues || []).forEach((vv) => {
+            allVarValues.forEach((vv) => {
               const colorName = colorAttrValuesMap[vv.attribute_value_id];
               if (colorName) {
                 if (!varLabelsMap[vv.variation_id]) varLabelsMap[vv.variation_id] = [];
@@ -97,9 +117,7 @@ const CatalogPage = () => {
             variations.forEach((v) => {
               if (!map[v.product_id]) map[v.product_id] = [];
               const colorLabel = (varLabelsMap[v.id] || []).join(' / ');
-              // Skip if we already have a chip with this color for this product
               if (colorLabel && map[v.product_id].some((existing) => existing.label === colorLabel)) {
-                // But if existing has no image and this one does, replace it
                 const existingIdx = map[v.product_id].findIndex((existing) => existing.label === colorLabel);
                 if (!map[v.product_id][existingIdx].image_url && v.image_url) {
                   map[v.product_id][existingIdx].image_url = v.image_url;
@@ -107,7 +125,6 @@ const CatalogPage = () => {
                 return;
               }
               const label = colorLabel || v.sku || `Var. ${(map[v.product_id]?.length || 0) + 1}`;
-              // Also skip duplicates for non-color labels
               if (!colorLabel && map[v.product_id].some((existing) => existing.label === label)) return;
               map[v.product_id].push({
                 id: v.id,
