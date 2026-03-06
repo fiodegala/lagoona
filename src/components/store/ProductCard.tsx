@@ -1,5 +1,5 @@
 import { useState, useEffect, forwardRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Package, ShoppingCart, Heart, Star, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -49,33 +49,44 @@ interface ProductCardProps {
 const ProductCard = forwardRef<HTMLAnchorElement, ProductCardProps>(({ product, showDiscount = true }, ref) => {
   const { addItem } = useCart();
   const { isFavorite, toggleFavorite } = useFavorites();
+  const navigate = useNavigate();
   const [isHovered, setIsHovered] = useState(false);
   const [colorValues, setColorValues] = useState<string[]>([]);
+  const [hasVariations, setHasVariations] = useState(false);
   
   const isWishlisted = isFavorite(product.id);
 
   // Fetch color variations
   useEffect(() => {
-    const fetchColors = async () => {
-      const { data: attrs } = await supabase
-        .from('product_attributes')
-        .select('id, name')
-        .eq('product_id', product.id)
-        .ilike('name', '%cor%');
+    const fetchProductMeta = async () => {
+      const [colorsRes, varsRes] = await Promise.all([
+        supabase
+          .from('product_attributes')
+          .select('id, name')
+          .eq('product_id', product.id)
+          .ilike('name', '%cor%'),
+        supabase
+          .from('product_variations')
+          .select('id')
+          .eq('product_id', product.id)
+          .eq('is_active', true)
+          .limit(1),
+      ]);
 
-      if (attrs && attrs.length > 0) {
-        const attrIds = attrs.map(a => a.id);
+      // Colors
+      if (colorsRes.data && colorsRes.data.length > 0) {
+        const attrIds = colorsRes.data.map(a => a.id);
         const { data: values } = await supabase
           .from('product_attribute_values')
           .select('value')
           .in('attribute_id', attrIds);
-
-        if (values) {
-          setColorValues(values.map(v => v.value));
-        }
+        if (values) setColorValues(values.map(v => v.value));
       }
+
+      // Has variations
+      setHasVariations((varsRes.data || []).length > 0);
     };
-    fetchColors();
+    fetchProductMeta();
   }, [product.id]);
 
   // Desconto real baseado em promotional_price
@@ -98,6 +109,11 @@ const ProductCard = forwardRef<HTMLAnchorElement, ProductCardProps>(({ product, 
 
     if (product.stock <= 0) {
       toast.error('Produto fora de estoque');
+      return;
+    }
+
+    if (hasVariations) {
+      navigate(`/produto/${product.id}`);
       return;
     }
 
