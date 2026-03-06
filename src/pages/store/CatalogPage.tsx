@@ -52,31 +52,44 @@ const CatalogPage = () => {
             .order('sort_order', { ascending: true });
 
           if (variations && variations.length > 0) {
-            // Fetch variation attribute values for labels
             const varIds = variations.map((v) => v.id);
+            const allProductIds = [...new Set(variations.map((v) => v.product_id))];
+
+            // Fetch color attributes (name contains "cor")
+            const { data: colorAttrs } = await supabase
+              .from('product_attributes')
+              .select('id, product_id, name')
+              .in('product_id', allProductIds)
+              .ilike('name', '%cor%');
+
+            const colorAttrIds = new Set((colorAttrs || []).map((a) => a.id));
+
+            // Fetch attribute values for color attrs only
+            let colorAttrValuesMap: Record<string, string> = {};
+            if (colorAttrIds.size > 0) {
+              const { data: attrValues } = await supabase
+                .from('product_attribute_values')
+                .select('id, value, attribute_id')
+                .in('attribute_id', [...colorAttrIds]);
+              if (attrValues) {
+                colorAttrValuesMap = Object.fromEntries(attrValues.map((av) => [av.id, av.value]));
+              }
+            }
+
+            // Fetch variation values
             const { data: varValues } = await supabase
               .from('product_variation_values')
               .select('variation_id, attribute_value_id')
               .in('variation_id', varIds);
 
-            const attrValueIds = [...new Set((varValues || []).map((vv) => vv.attribute_value_id))];
-            let attrValuesMap: Record<string, string> = {};
-            if (attrValueIds.length > 0) {
-              const { data: attrValues } = await supabase
-                .from('product_attribute_values')
-                .select('id, value')
-                .in('id', attrValueIds);
-              if (attrValues) {
-                attrValuesMap = Object.fromEntries(attrValues.map((av) => [av.id, av.value]));
-              }
-            }
-
-            // Build variation labels per variation_id
+            // Build color labels per variation_id (only color attributes)
             const varLabelsMap: Record<string, string[]> = {};
             (varValues || []).forEach((vv) => {
-              if (!varLabelsMap[vv.variation_id]) varLabelsMap[vv.variation_id] = [];
-              const val = attrValuesMap[vv.attribute_value_id];
-              if (val) varLabelsMap[vv.variation_id].push(val);
+              const colorName = colorAttrValuesMap[vv.attribute_value_id];
+              if (colorName) {
+                if (!varLabelsMap[vv.variation_id]) varLabelsMap[vv.variation_id] = [];
+                varLabelsMap[vv.variation_id].push(colorName);
+              }
             });
 
             // Group by product
@@ -86,7 +99,7 @@ const CatalogPage = () => {
               map[v.product_id].push({
                 id: v.id,
                 image_url: v.image_url,
-                label: (varLabelsMap[v.id] || []).join(' / ') || v.sku || `Var. ${map[v.product_id]?.length ? map[v.product_id].length + 1 : 1}`,
+                label: (varLabelsMap[v.id] || []).join(' / ') || v.sku || `Var. ${(map[v.product_id]?.length || 0) + 1}`,
               });
             });
             setVariationsMap(map);
