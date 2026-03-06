@@ -308,12 +308,52 @@ const CatalogPage = () => {
                       );
                     })()}
 
-                    {/* Variation count badge */}
+                    {/* Clickable variation thumbnails */}
                     {variations.length > 0 && (
-                      <div className="px-3 pt-2">
-                        <Badge variant="secondary" className="text-xs">
-                          {variations.length} {variations.length === 1 ? 'variação' : 'variações'}
-                        </Badge>
+                      <div className="px-3 pt-2 flex flex-wrap gap-1.5">
+                        {/* Original product image as first option */}
+                        {product.image_url && (
+                          <button
+                            onClick={() => setImageIndex((prev) => ({ ...prev, [product.id]: 0 }))}
+                            className={`shrink-0 w-9 h-9 rounded border-2 overflow-hidden transition-all ${
+                              (imageIndex[product.id] || 0) === 0
+                                ? 'border-primary ring-1 ring-primary/30'
+                                : 'border-border opacity-60 hover:opacity-100'
+                            }`}
+                          >
+                            <img src={product.image_url} alt="Original" className="w-full h-full object-cover" />
+                          </button>
+                        )}
+                        {variations.map((v) => {
+                          const images = productImagesMap[product.id] || [];
+                          const imgIdx = v.image_url ? images.indexOf(v.image_url) : -1;
+                          return (
+                            <button
+                              key={v.id}
+                              title={v.label}
+                              onClick={() => {
+                                if (imgIdx >= 0) {
+                                  setImageIndex((prev) => ({ ...prev, [product.id]: imgIdx }));
+                                }
+                              }}
+                              className={`shrink-0 rounded border-2 overflow-hidden transition-all ${
+                                v.image_url
+                                  ? `w-9 h-9 ${
+                                      imgIdx >= 0 && (imageIndex[product.id] || 0) === imgIdx
+                                        ? 'border-primary ring-1 ring-primary/30'
+                                        : 'border-border opacity-60 hover:opacity-100'
+                                    }`
+                                  : 'px-1.5 py-0.5 text-[10px] text-muted-foreground border-border'
+                              }`}
+                            >
+                              {v.image_url ? (
+                                <img src={v.image_url} alt={v.label} className="w-full h-full object-cover" />
+                              ) : (
+                                <span>{v.label}</span>
+                              )}
+                            </button>
+                          );
+                        })}
                       </div>
                     )}
 
