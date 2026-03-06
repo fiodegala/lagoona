@@ -63,6 +63,7 @@ const WholesalePage = lazy(() => import("./pages/store/WholesalePage"));
 const WorkWithUsPage = lazy(() => import("./pages/store/WorkWithUsPage"));
 const CombosPage = lazy(() => import("./pages/store/CombosPage"));
 const QuoteViewPage = lazy(() => import("./pages/store/QuoteViewPage"));
+const CatalogPage = lazy(() => import("./pages/store/CatalogPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -115,6 +116,7 @@ const App = () => (
               <Route path="/combos" element={<CombosPage />} />
               <Route path="/trabalhe-conosco" element={<WorkWithUsPage />} />
               <Route path="/orcamento/:id" element={<QuoteViewPage />} />
+              <Route path="/catalogo" element={<CatalogPage />} />
 
               {/* Admin Routes */}
               <Route path="/login" element={<Login />} />
