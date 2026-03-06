@@ -58,6 +58,7 @@ interface POSCartProps {
     discountType: 'percentage' | 'fixed' | undefined,
     discountValue: number
   ) => void;
+  onTogglePromoPrice: (itemId: string, usePromo: boolean) => void;
   generalDiscount: { type: 'percentage' | 'fixed'; value: number };
   onApplyGeneralDiscount: (type: 'percentage' | 'fixed', value: number) => void;
   subtotal: number;
@@ -70,6 +71,7 @@ const POSCart = ({
   onUpdateQuantity,
   onRemoveItem,
   onApplyItemDiscount,
+  onTogglePromoPrice,
   generalDiscount,
   onApplyGeneralDiscount,
   subtotal,
