@@ -170,8 +170,32 @@ const POSCart = ({
                       </div>
                     )}
                     <div className="text-sm text-muted-foreground">
+                      {item.is_promotional && item.original_price && (
+                        <span className="line-through text-xs mr-1">{formatCurrency(item.original_price)}</span>
+                      )}
                       {formatCurrency(item.unit_price)} un.
+                      {item.is_promotional && (
+                        <Badge variant="secondary" className="ml-1 text-[10px] bg-green-500/20 text-green-700 border-green-500/30">
+                          Promo
+                        </Badge>
+                      )}
                     </div>
+                    {item.available_promotional_price && (
+                      <Button
+                        variant={item.is_promotional ? 'secondary' : 'ghost'}
+                        size="sm"
+                        className={cn(
+                          'h-6 text-xs gap-1 mt-0.5',
+                          item.is_promotional
+                            ? 'bg-green-500/20 text-green-700 hover:bg-green-500/30'
+                            : 'text-green-600 hover:text-green-700'
+                        )}
+                        onClick={() => onTogglePromoPrice(item.id, !item.is_promotional)}
+                      >
+                        <Tag className="h-3 w-3" />
+                        {item.is_promotional ? 'Remover promoção' : `Usar promo ${formatCurrency(item.available_promotional_price)}`}
+                      </Button>
+                    )}
                   </div>
                   <Button
                     variant="ghost"
