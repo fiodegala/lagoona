@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import StoreLayout from '@/components/store/StoreLayout';
 import { productsService, Product } from '@/services/products';
 import { categoriesService, Category } from '@/services/categories';
