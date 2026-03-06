@@ -445,7 +445,9 @@ const CheckoutPage = () => {
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Frete</span>
-                    <span className="text-success">Grátis</span>
+                    <span className={shippingResult?.price === 0 || !shippingResult ? 'text-success' : ''}>
+                      {!shippingResult ? 'Calcule o frete' : shippingResult.price === 0 ? 'Grátis' : formatPrice(shippingResult.price)}
+                    </span>
                   </div>
                 </div>
 
