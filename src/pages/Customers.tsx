@@ -503,6 +503,7 @@ const Customers = () => {
                       <TableHead>Nome</TableHead>
                       <TableHead>Contato</TableHead>
                       <TableHead>Documento</TableHead>
+                      <TableHead>Loja</TableHead>
                       <TableHead>Cidade/UF</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead className="text-right">Ações</TableHead>
