@@ -115,25 +115,51 @@ const StockTransferModal: React.FC<Props> = ({ open, onOpenChange, stores, onTra
       return;
     }
     const loadVariations = async () => {
+      // Fetch variations separately from their attribute values to avoid nested query limits
       const { data: vars } = await supabase
         .from('product_variations')
-        .select('id, sku, barcode, is_active, product_variation_values(attribute_value_id, product_attribute_values(value, product_attributes(name)))')
+        .select('id, sku, barcode, is_active')
         .eq('product_id', selectedProductId)
         .order('sort_order');
 
-      if (vars && vars.length > 0) {
-        const mapped = vars.map((v: any) => {
-          const attrs = (v.product_variation_values || []).map((pvv: any) => ({
-            name: pvv.product_attribute_values?.product_attributes?.name || '',
-            value: pvv.product_attribute_values?.value || '',
-          }));
-          const label = attrs.map((a: any) => `${a.name}: ${a.value}`).join(' / ');
-          return { id: v.id, label, sku: v.sku, barcode: v.barcode, attrs };
-        });
-        setVariations(mapped);
-      } else {
+      if (!vars || vars.length === 0) {
         setVariations([]);
+        setSelectedVariationId('');
+        setVariationSearch('');
+        return;
       }
+
+      // Fetch all variation values with attribute names in a separate query
+      const varIds = vars.map(v => v.id);
+      const allValues: any[] = [];
+      // Paginate to handle large sets
+      for (let i = 0; i < varIds.length; i += 50) {
+        const batch = varIds.slice(i, i + 50);
+        const { data: vvData } = await supabase
+          .from('product_variation_values')
+          .select('variation_id, product_attribute_values(value, product_attributes(name))')
+          .in('variation_id', batch);
+        if (vvData) allValues.push(...vvData);
+      }
+
+      // Group attribute values by variation_id
+      const attrMap: Record<string, { name: string; value: string }[]> = {};
+      allValues.forEach((pvv: any) => {
+        const vid = pvv.variation_id;
+        if (!attrMap[vid]) attrMap[vid] = [];
+        attrMap[vid].push({
+          name: pvv.product_attribute_values?.product_attributes?.name || '',
+          value: pvv.product_attribute_values?.value || '',
+        });
+      });
+
+      const mapped = vars.map((v: any) => {
+        const attrs = attrMap[v.id] || [];
+        const label = attrs.map((a: any) => `${a.name}: ${a.value}`).join(' / ');
+        return { id: v.id, label: label || v.sku || v.id.slice(0, 8), sku: v.sku, barcode: v.barcode, attrs };
+      });
+      
+      setVariations(mapped);
       setSelectedVariationId('');
       setVariationSearch('');
     };
