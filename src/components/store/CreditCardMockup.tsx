@@ -60,7 +60,8 @@ const BrandLogo = ({ brand }: { brand: string }) => {
 };
 
 const formatDisplayNumber = (num: string): string => {
-  const clean = num.replace(/\s/g, '');
+  const clean = num.replace(/[^\d•]/g, '');
+  if (!clean || clean === '••••••••••••••••') return '•••• •••• •••• ••••';
   const padded = clean.padEnd(16, '•');
   return `${padded.slice(0, 4)} ${padded.slice(4, 8)} ${padded.slice(8, 12)} ${padded.slice(12, 16)}`;
 };
