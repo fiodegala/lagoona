@@ -75,6 +75,7 @@ const emptyForm = {
   responsavel_telefone: '',
   notes: '',
   store_id: '' as string,
+  referral_source: '',
 };
 
 const CustomerStep = ({ selectedCustomer, onSelectCustomer, saleType, onNext, onBack }: CustomerStepProps) => {
@@ -210,6 +211,7 @@ const CustomerStep = ({ selectedCustomer, onSelectCustomer, saleType, onNext, on
         responsavel_telefone: isPJ ? (formData.responsavel_telefone.trim() || null) : null,
         notes: formData.notes.trim() || null,
         store_id: formData.store_id || null,
+        referral_source: formData.referral_source || null,
       };
 
       const { data, error } = await supabase
@@ -406,6 +408,28 @@ const CustomerStep = ({ selectedCustomer, onSelectCustomer, saleType, onNext, on
                         {store.name}
                       </SelectItem>
                     ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Como conheceu a loja */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Como conheceu a loja?</Label>
+                <Select
+                  value={formData.referral_source || 'none'}
+                  onValueChange={(v) => updateField('referral_source', v === 'none' ? '' : v)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione uma opção" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Não informado</SelectItem>
+                    <SelectItem value="Instagram">Instagram</SelectItem>
+                    <SelectItem value="Loja BS">Loja BS</SelectItem>
+                    <SelectItem value="Loja 44">Loja 44</SelectItem>
+                    <SelectItem value="Site">Site</SelectItem>
+                    <SelectItem value="Indicação">Indicação</SelectItem>
+                    <SelectItem value="Assessor">Assessor</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

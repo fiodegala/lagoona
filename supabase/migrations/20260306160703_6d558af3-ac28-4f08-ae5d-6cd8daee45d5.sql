@@ -1,0 +1,1 @@
+ALTER TABLE public.customers ADD COLUMN referral_source text DEFAULT NULL;

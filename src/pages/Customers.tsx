@@ -67,6 +67,7 @@ interface Customer {
   responsavel_nome: string | null;
   responsavel_telefone: string | null;
   store_id: string | null;
+  referral_source: string | null;
 }
 
 interface Store {
@@ -100,6 +101,7 @@ const emptyFormData: CustomerFormData = {
   responsavel_nome: '',
   responsavel_telefone: '',
   store_id: null,
+  referral_source: '',
 };
 
 const Customers = () => {
@@ -210,6 +212,7 @@ const Customers = () => {
         responsavel_nome: customer.responsavel_nome || '',
         responsavel_telefone: customer.responsavel_telefone || '',
         store_id: customer.store_id || null,
+        referral_source: customer.referral_source || '',
       });
     } else {
       setSelectedCustomer(null);
@@ -660,6 +663,28 @@ const Customers = () => {
                         {store.name}
                       </SelectItem>
                     ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Como conheceu a loja */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Como conheceu a loja?</Label>
+                <Select
+                  value={formData.referral_source || 'none'}
+                  onValueChange={(v) => setFormData({ ...formData, referral_source: v === 'none' ? '' : v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione uma opção" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Não informado</SelectItem>
+                    <SelectItem value="Instagram">Instagram</SelectItem>
+                    <SelectItem value="Loja BS">Loja BS</SelectItem>
+                    <SelectItem value="Loja 44">Loja 44</SelectItem>
+                    <SelectItem value="Site">Site</SelectItem>
+                    <SelectItem value="Indicação">Indicação</SelectItem>
+                    <SelectItem value="Assessor">Assessor</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
