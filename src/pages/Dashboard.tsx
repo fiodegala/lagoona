@@ -136,6 +136,7 @@ const Dashboard = () => {
   const [selectedStoreId, setSelectedStoreId] = useState<string>('all');
   const [stores, setStores] = useState<{ id: string; name: string; type: string }[]>([]);
   const [customDateRange, setCustomDateRange] = useState<DateRange | undefined>(undefined);
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [rawOrders, setRawOrders] = useState<RawOrder[]>([]);
   const [rawPOSSales, setRawPOSSales] = useState<RawPOSSale[]>([]);
   const [products, setProducts] = useState<{ id: string; is_active: boolean }[]>([]);
@@ -716,6 +717,10 @@ const Dashboard = () => {
     setCustomDateRange(range);
     if (range?.from) {
       setPeriodFilter('custom');
+      // Only close the popover when both dates are selected
+      if (range.to) {
+        setIsDatePickerOpen(false);
+      }
     }
   };
 
@@ -763,6 +768,7 @@ const Dashboard = () => {
                     setPeriodFilter(period);
                     if (period !== 'custom') {
                       setCustomDateRange(undefined);
+                      setIsDatePickerOpen(false);
                     }
                   }}
                   className="text-xs px-3"
@@ -772,7 +778,7 @@ const Dashboard = () => {
               ))}
               
               {/* Custom Date Range Picker */}
-              <Popover>
+              <Popover open={isDatePickerOpen} onOpenChange={setIsDatePickerOpen}>
                 <PopoverTrigger asChild>
                   <Button
                     variant={periodFilter === 'custom' ? 'default' : 'ghost'}
