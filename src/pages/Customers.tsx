@@ -531,6 +531,9 @@ const Customers = () => {
                         </TableCell>
                         <TableCell>{customer.document || '-'}</TableCell>
                         <TableCell>
+                          {stores.find(s => s.id === customer.store_id)?.name || '-'}
+                        </TableCell>
+                        <TableCell>
                           {customer.city && customer.state
                             ? `${customer.city}/${customer.state}`
                             : customer.city || customer.state || '-'}
