@@ -1091,7 +1091,17 @@ const Customers = () => {
               {selectedCustomer.address && (
                 <div>
                   <p className="text-xs text-muted-foreground">Endereço</p>
-                  <p className="font-medium">{selectedCustomer.address}</p>
+                  <p className="font-medium">
+                    {selectedCustomer.address}
+                    {selectedCustomer.address_number && `, ${selectedCustomer.address_number}`}
+                    {selectedCustomer.address_complement && ` - ${selectedCustomer.address_complement}`}
+                  </p>
+                </div>
+              )}
+              {selectedCustomer.neighborhood && (
+                <div>
+                  <p className="text-xs text-muted-foreground">Bairro</p>
+                  <p className="font-medium">{selectedCustomer.neighborhood}</p>
                 </div>
               )}
               {selectedCustomer.notes && (
