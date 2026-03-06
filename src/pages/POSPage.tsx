@@ -251,6 +251,25 @@ const POSPage = () => {
     );
   };
 
+  const handleTogglePromoPrice = (itemId: string, usePromo: boolean) => {
+    setCartItems((items) =>
+      items.map((item) => {
+        if (item.id !== itemId || !item.available_promotional_price) return item;
+        const retailPrice = item.is_promotional ? (item.original_price ?? item.unit_price) : item.unit_price;
+        const promoPrice = item.available_promotional_price;
+        const newPrice = usePromo ? promoPrice : retailPrice;
+        const newTotal = newPrice * item.quantity - item.discount_amount;
+        return {
+          ...item,
+          unit_price: newPrice,
+          original_price: usePromo ? retailPrice : undefined,
+          is_promotional: usePromo || undefined,
+          total: newTotal,
+        };
+      })
+    );
+  };
+
   const handlePayment = async (method: 'cash' | 'card' | 'pix' | 'mixed', amountReceived?: number, paymentDetails?: Record<string, number>, saleDate?: string) => {
     if (cartItems.length === 0) return;
     setIsProcessing(true);
