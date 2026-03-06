@@ -375,17 +375,24 @@ const Dashboard = () => {
 
   // Calculate goal progress
   const goalProgress = useMemo(() => {
-    // Prioritize store-specific goal, fallback to global (store_id = null)
-    const findGoal = (type: string) => {
+    // Find goal: store-specific when filtered, sum of all store goals when showing all
+    const findGoalTarget = (type: string): number => {
       if (activeStoreFilter) {
-        // Use only the store-specific goal — no fallback to global
-        return salesGoals.find(g => g.type === type && g.store_id === activeStoreFilter) || null;
+        const goal = salesGoals.find(g => g.type === type && g.store_id === activeStoreFilter);
+        return goal?.target_amount || 0;
       }
-      return salesGoals.find(g => g.type === type && !g.store_id) || null;
+      // Meta geral = soma de todas as metas de lojas (incluindo site)
+      const storeGoals = salesGoals.filter(g => g.type === type && g.store_id);
+      if (storeGoals.length > 0) {
+        return storeGoals.reduce((sum, g) => sum + Number(g.target_amount), 0);
+      }
+      // Fallback para meta global antiga sem store_id
+      const globalGoal = salesGoals.find(g => g.type === type && !g.store_id);
+      return globalGoal?.target_amount || 0;
     };
 
-    const dailyGoal = findGoal('daily');
-    const monthlyGoal = findGoal('monthly');
+    const dailyTarget = findGoalTarget('daily');
+    const monthlyTarget = findGoalTarget('monthly');
 
     // Get today's sales (online + POS)
     const today = new Date();
