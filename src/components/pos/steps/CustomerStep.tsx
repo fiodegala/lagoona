@@ -153,6 +153,7 @@ const CustomerStep = ({ selectedCustomer, onSelectCustomer, saleType, onNext, on
           setFormData((prev) => ({
             ...prev,
             address: data.logradouro || '',
+            neighborhood: data.bairro || '',
             city: data.localidade || '',
             state: data.uf || '',
           }));
@@ -195,6 +196,9 @@ const CustomerStep = ({ selectedCustomer, onSelectCustomer, saleType, onNext, on
         birthday: formData.birthday || null,
         zip_code: formData.zip_code.trim() || null,
         address: formData.address.trim() || null,
+        address_number: formData.address_number.trim() || null,
+        address_complement: formData.address_complement.trim() || null,
+        neighborhood: formData.neighborhood.trim() || null,
         city: formData.city.trim() || null,
         state: formData.state.trim() || null,
         razao_social: isPJ ? formData.razao_social.trim() : null,
