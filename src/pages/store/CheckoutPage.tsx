@@ -455,7 +455,7 @@ const CheckoutPage = () => {
 
                 <div className="flex justify-between font-semibold text-lg">
                   <span>Total</span>
-                  <span className="text-primary">{formatPrice(total)}</span>
+                  <span className="text-primary">{formatPrice(total + (shippingResult?.price || 0))}</span>
                 </div>
               </CardContent>
               {step === 'info' && (
