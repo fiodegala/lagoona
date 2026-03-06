@@ -40,6 +40,7 @@ export interface CartItem {
   unit_price: number;
   original_price?: number;
   is_promotional?: boolean;
+  available_promotional_price?: number;
   quantity: number;
   discount_type?: 'percentage' | 'fixed';
   discount_value?: number;
