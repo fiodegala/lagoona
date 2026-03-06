@@ -252,7 +252,23 @@ const CatalogPage = () => {
                       const hasMultiple = images.length > 1;
                       const currentIdx = imageIndex[product.id] || 0;
                       return (
-                        <div className="relative bg-muted overflow-hidden group/img" style={{ aspectRatio: '4/7' }}>
+                        <div
+                          className="relative bg-muted overflow-hidden group/img"
+                          style={{ aspectRatio: '4/7' }}
+                          onTouchStart={(e) => {
+                            (e.currentTarget as any)._touchStartX = e.touches[0].clientX;
+                            (e.currentTarget as any)._touchStartY = e.touches[0].clientY;
+                          }}
+                          onTouchEnd={(e) => {
+                            const startX = (e.currentTarget as any)._touchStartX || 0;
+                            const startY = (e.currentTarget as any)._touchStartY || 0;
+                            const dx = e.changedTouches[0].clientX - startX;
+                            const dy = e.changedTouches[0].clientY - startY;
+                            if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 40) {
+                              navigateImage(product.id, dx < 0 ? 'next' : 'prev');
+                            }
+                          }}
+                        >
                           <img
                             src={getDisplayImage(product)}
                             alt={product.name}
