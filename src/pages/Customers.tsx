@@ -119,6 +119,18 @@ const Customers = () => {
     },
   });
 
+  const { data: stores = [] } = useQuery({
+    queryKey: ['stores'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('stores')
+        .select('id, name, type')
+        .order('name');
+      if (error) throw error;
+      return data as Store[];
+    },
+  });
+
   const createMutation = useMutation({
     mutationFn: async (data: CustomerFormData) => {
       const { error } = await supabase.from('customers').insert(data);
