@@ -374,7 +374,7 @@ const CheckoutPage = () => {
                   </CardContent>
                 </Card>
 
-                <ShippingCalculator orderTotal={total} />
+                <ShippingCalculator orderTotal={total} onShippingCalculated={setShippingResult} />
 
                 <div className="mt-6 lg:hidden">
                   <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>

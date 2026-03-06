@@ -71,14 +71,20 @@ const ShippingCalculator = ({ productWeight = 0.5, orderTotal = 0, onShippingCal
 
       if (!result) {
         setOptions([]);
+        onShippingCalculated?.(null);
         toast.info('Não há opções de frete disponíveis para este CEP.');
       } else {
-        setOptions([{
+        const shippingData = {
           name: result.zone.name,
           price: result.price,
           days: result.estimatedDays,
+          isFreeShipping: result.isFreeShipping,
+        };
+        setOptions([{
+          ...shippingData,
           company: result.isFreeShipping ? 'Frete Grátis' : 'Transportadora',
         }]);
+        onShippingCalculated?.(shippingData);
       }
     } catch (error) {
       console.error('Error calculating shipping:', error);
