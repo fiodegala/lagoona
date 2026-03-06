@@ -165,6 +165,97 @@ const CatalogPage = () => {
     window.open(`https://wa.me/?text=${text}`, '_blank');
   };
 
+  const [generatingPdf, setGeneratingPdf] = useState(false);
+
+  const generatePDF = useCallback(async () => {
+    setGeneratingPdf(true);
+    try {
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+      // Header
+      doc.setFontSize(20);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Catálogo de Produtos', 105, 20, { align: 'center' });
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(120, 120, 120);
+      doc.text('Varejo e Atacado', 105, 27, { align: 'center' });
+      doc.setTextColor(0, 0, 0);
+
+      // Group products by category
+      const categoryMap = new Map<string, Product[]>();
+      const uncategorized: Product[] = [];
+      filtered.forEach((p) => {
+        if (p.category_id) {
+          const cat = categories.find((c) => c.id === p.category_id);
+          const catName = cat?.name || 'Outros';
+          if (!categoryMap.has(catName)) categoryMap.set(catName, []);
+          categoryMap.get(catName)!.push(p);
+        } else {
+          uncategorized.push(p);
+        }
+      });
+      if (uncategorized.length > 0) categoryMap.set('Outros', uncategorized);
+
+      let startY = 35;
+
+      categoryMap.forEach((prods, catName) => {
+        // Category header
+        if (startY > 260) {
+          doc.addPage();
+          startY = 20;
+        }
+
+        doc.setFontSize(13);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(40, 40, 40);
+        doc.text(catName, 14, startY);
+        doc.setTextColor(0, 0, 0);
+        startY += 2;
+
+        const tableData = prods.map((p) => {
+          const colors = (variationsMap[p.id] || []).map((v) => v.label).join(', ');
+          return [
+            p.name,
+            colors || '—',
+            formatPrice(p.price),
+            p.wholesale_price && p.wholesale_price > 0 ? formatPrice(p.wholesale_price) : '—',
+          ];
+        });
+
+        autoTable(doc, {
+          startY,
+          head: [['Produto', 'Cores', 'Varejo', 'Atacado']],
+          body: tableData,
+          styles: { fontSize: 8, cellPadding: 2 },
+          headStyles: { fillColor: [30, 30, 30], textColor: 255, fontStyle: 'bold', fontSize: 8 },
+          columnStyles: {
+            0: { cellWidth: 65 },
+            1: { cellWidth: 65 },
+            2: { cellWidth: 25, halign: 'right' },
+            3: { cellWidth: 25, halign: 'right', textColor: [22, 163, 74] },
+          },
+          margin: { left: 14, right: 14 },
+          didDrawPage: () => {
+            // Footer
+            doc.setFontSize(7);
+            doc.setTextColor(150);
+            doc.text(`Gerado em ${new Date().toLocaleDateString('pt-BR')}`, 14, 290);
+            doc.text('Fio de Gala', 196, 290, { align: 'right' });
+          },
+        });
+
+        startY = (doc as any).lastAutoTable?.finalY + 8 || startY + 20;
+      });
+
+      doc.save('catalogo-fio-de-gala.pdf');
+    } catch (e) {
+      console.error('Erro ao gerar PDF:', e);
+    } finally {
+      setGeneratingPdf(false);
+    }
+  }, [filtered, categories, variationsMap]);
+
   const askAboutProduct = (product: Product) => {
     const productUrl = `${window.location.origin}/produto/${product.id}`;
     const text = encodeURIComponent(
