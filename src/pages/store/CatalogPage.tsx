@@ -398,7 +398,7 @@ const CatalogPage = () => {
                           {formatPrice(product.price)}
                         </p>
                         {product.wholesale_price != null && product.wholesale_price > 0 && (
-                          <p className="text-sm font-semibold text-emerald-600">
+                          <p className="text-base font-bold text-emerald-600">
                             Atacado: {formatPrice(product.wholesale_price)}
                           </p>
                         )}
