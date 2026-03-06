@@ -75,6 +75,13 @@ const MercadoPagoPayment = ({
   const [docNumber, setDocNumber] = useState('');
   const [installments, setInstallments] = useState('1');
 
+  // Card mockup state
+  const [cardDisplayNumber, setCardDisplayNumber] = useState('');
+  const [cardDisplayName, setCardDisplayName] = useState('');
+  const [cardDisplayExpiry, setCardDisplayExpiry] = useState('');
+  const [cardBrand, setCardBrand] = useState('');
+  const [isCardFlipped, setIsCardFlipped] = useState(false);
+
   // Initialize MercadoPago SDK
   useEffect(() => {
     let cancelled = false;
