@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Separator } from '@/components/ui/separator';
 import QuoteEditModal from '@/components/QuoteEditModal';
 
-import { Search, FileText, Eye, Trash2, Loader2, Clock, User, CreditCard, Package, Printer, Share2, Pencil, History } from 'lucide-react';
+import { Search, FileText, Eye, Trash2, Loader2, Clock, User, CreditCard, Package, Printer, Share2, Pencil, History, ShoppingCart } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -135,6 +135,7 @@ const Quotes = () => {
   const [selectedQuote, setSelectedQuote] = useState<Quote | null>(null);
   const [editQuote, setEditQuote] = useState<Quote | null>(null);
   const [quoteHistory, setQuoteHistory] = useState<any[]>([]);
+  const [converting, setConverting] = useState(false);
 
   const fetchQuotes = async () => {
     setLoading(true);
@@ -176,6 +177,51 @@ const Quotes = () => {
       toast({ title: 'Orçamento excluído' });
       setQuotes(q => q.filter(x => x.id !== id));
       if (selectedQuote?.id === id) setSelectedQuote(null);
+    }
+  };
+
+  const handleConvertToSale = async (quote: Quote) => {
+    if (!confirm('Deseja converter este orçamento em venda? Esta ação não pode ser desfeita.')) return;
+    setConverting(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Não autenticado');
+
+      // Create POS sale from quote data
+      const { data: sale, error: saleError } = await supabase.from('pos_sales').insert({
+        local_id: quote.local_id || crypto.randomUUID(),
+        user_id: user.id,
+        customer_name: quote.customer_name,
+        customer_document: quote.customer_document,
+        customer_id: (quote as any).customer_id || null,
+        items: quote.items as any,
+        subtotal: quote.subtotal,
+        discount_amount: quote.discount_amount || 0,
+        discount_type: (quote as any).discount_type || null,
+        discount_value: (quote as any).discount_value || 0,
+        total: quote.total,
+        payment_method: quote.payment_method || 'cash',
+        payment_details: (quote.payment_details || {}) as any,
+        store_id: (quote as any).store_id || null,
+        notes: quote.notes ? `[Convertido do orçamento #${quote.id.slice(0, 8).toUpperCase()}] ${quote.notes}` : `Convertido do orçamento #${quote.id.slice(0, 8).toUpperCase()}`,
+        status: 'completed',
+      }).select('id').single();
+
+      if (saleError) throw saleError;
+
+      // Update quote status to converted
+      await supabase.from('quotes').update({
+        status: 'converted',
+        converted_sale_id: sale.id,
+      }).eq('id', quote.id);
+
+      toast({ title: 'Orçamento convertido em venda!', description: `Venda #${sale.id.slice(0, 8).toUpperCase()} criada com sucesso.` });
+      setSelectedQuote(null);
+      fetchQuotes();
+    } catch (err: any) {
+      toast({ title: 'Erro ao converter', description: err.message, variant: 'destructive' });
+    } finally {
+      setConverting(false);
     }
   };
 
@@ -241,7 +287,10 @@ const Quotes = () => {
                             <div className="flex justify-end gap-1">
                               <Button variant="ghost" size="icon" onClick={() => setSelectedQuote(q)}><Eye className="h-4 w-4" /></Button>
                               {q.status === 'pending' && (
-                                <Button variant="ghost" size="icon" onClick={() => setEditQuote(q)}><Pencil className="h-4 w-4" /></Button>
+                                <>
+                                  <Button variant="ghost" size="icon" onClick={() => setEditQuote(q)} title="Editar"><Pencil className="h-4 w-4" /></Button>
+                                  <Button variant="ghost" size="icon" onClick={() => handleConvertToSale(q)} title="Converter em Venda" className="text-green-600 hover:text-green-700"><ShoppingCart className="h-4 w-4" /></Button>
+                                </>
                               )}
                               <Button variant="ghost" size="icon" onClick={() => handleDelete(q.id)} className="text-destructive"><Trash2 className="h-4 w-4" /></Button>
                             </div>
@@ -268,13 +317,20 @@ const Quotes = () => {
             {selectedQuote && (
               <div className="flex flex-wrap gap-2">
                 {selectedQuote.status === 'pending' && (
-                  <Button variant="outline" size="sm" onClick={() => {
-                    setEditQuote(selectedQuote);
-                    setSelectedQuote(null);
-                  }}>
-                    <Pencil className="h-4 w-4 mr-1" />
-                    Editar
-                  </Button>
+                  <>
+                    <Button variant="outline" size="sm" onClick={() => {
+                      setEditQuote(selectedQuote);
+                      setSelectedQuote(null);
+                    }}>
+                      <Pencil className="h-4 w-4 mr-1" />
+                      Editar
+                    </Button>
+                    <Button size="sm" onClick={() => handleConvertToSale(selectedQuote)} disabled={converting}
+                      className="bg-green-600 hover:bg-green-700 text-white">
+                      {converting ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <ShoppingCart className="h-4 w-4 mr-1" />}
+                      Converter em Venda
+                    </Button>
+                  </>
                 )}
                 <Button variant="outline" size="sm" onClick={() => {
                   const publishedUrl = 'https://fiodegalafdg.lovable.app';
