@@ -136,6 +136,7 @@ const Dashboard = () => {
   const [selectedStoreId, setSelectedStoreId] = useState<string>('all');
   const [stores, setStores] = useState<{ id: string; name: string; type: string }[]>([]);
   const [customDateRange, setCustomDateRange] = useState<DateRange | undefined>(undefined);
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [rawOrders, setRawOrders] = useState<RawOrder[]>([]);
   const [rawPOSSales, setRawPOSSales] = useState<RawPOSSale[]>([]);
   const [products, setProducts] = useState<{ id: string; is_active: boolean }[]>([]);
