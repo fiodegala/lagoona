@@ -49,8 +49,10 @@ interface ProductCardProps {
 const ProductCard = forwardRef<HTMLAnchorElement, ProductCardProps>(({ product, showDiscount = true }, ref) => {
   const { addItem } = useCart();
   const { isFavorite, toggleFavorite } = useFavorites();
+  const navigate = useNavigate();
   const [isHovered, setIsHovered] = useState(false);
   const [colorValues, setColorValues] = useState<string[]>([]);
+  const [hasVariations, setHasVariations] = useState(false);
   
   const isWishlisted = isFavorite(product.id);
 
