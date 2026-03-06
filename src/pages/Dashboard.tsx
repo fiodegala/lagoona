@@ -242,6 +242,7 @@ const Dashboard = () => {
         payment_method: sale.payment_method,
         payment_details: sale.payment_details as Record<string, unknown> | null,
         discount_amount: sale.discount_amount ? Number(sale.discount_amount) : null,
+        status: sale.status,
         items: (sale.items as any[] || []),
         created_at: sale.created_at,
       })));
