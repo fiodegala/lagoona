@@ -777,7 +777,7 @@ const Dashboard = () => {
               ))}
               
               {/* Custom Date Range Picker */}
-              <Popover>
+              <Popover open={isDatePickerOpen} onOpenChange={setIsDatePickerOpen}>
                 <PopoverTrigger asChild>
                   <Button
                     variant={periodFilter === 'custom' ? 'default' : 'ghost'}
