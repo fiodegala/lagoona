@@ -102,7 +102,19 @@ const CustomerStep = ({ selectedCustomer, onSelectCustomer, saleType, onNext, on
         setIsLoading(false);
       }
     };
+    const fetchStores = async () => {
+      try {
+        const { data } = await supabase
+          .from('stores')
+          .select('id, name, type')
+          .order('name');
+        setStores(data || []);
+      } catch (error) {
+        console.error('Erro ao carregar lojas:', error);
+      }
+    };
     fetchCustomers();
+    fetchStores();
   }, []);
 
   const filteredCustomers = customers.filter((c) => {
