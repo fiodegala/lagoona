@@ -112,6 +112,11 @@ const ProductCard = forwardRef<HTMLAnchorElement, ProductCardProps>(({ product, 
       return;
     }
 
+    if (hasVariations) {
+      navigate(`/produto/${product.id}`);
+      return;
+    }
+
     addItem({
       id: product.id,
       productId: product.id,
