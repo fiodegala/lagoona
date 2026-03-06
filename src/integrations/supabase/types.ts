@@ -475,6 +475,7 @@ export type Database = {
           responsavel_nome: string | null
           responsavel_telefone: string | null
           state: string | null
+          store_id: string | null
           updated_at: string
           zip_code: string | null
         }
@@ -499,6 +500,7 @@ export type Database = {
           responsavel_nome?: string | null
           responsavel_telefone?: string | null
           state?: string | null
+          store_id?: string | null
           updated_at?: string
           zip_code?: string | null
         }
@@ -523,10 +525,19 @@ export type Database = {
           responsavel_nome?: string | null
           responsavel_telefone?: string | null
           state?: string | null
+          store_id?: string | null
           updated_at?: string
           zip_code?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "customers_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       fiscal_requests: {
         Row: {

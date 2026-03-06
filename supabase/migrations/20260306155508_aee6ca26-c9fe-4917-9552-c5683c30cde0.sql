@@ -1,0 +1,1 @@
+ALTER TABLE public.customers ADD COLUMN store_id uuid REFERENCES public.stores(id) ON DELETE SET NULL DEFAULT NULL;
