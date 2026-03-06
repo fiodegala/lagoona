@@ -47,6 +47,9 @@ interface Customer {
   phone: string | null;
   document: string | null;
   address: string | null;
+  address_number: string | null;
+  address_complement: string | null;
+  neighborhood: string | null;
   city: string | null;
   state: string | null;
   zip_code: string | null;
@@ -80,6 +83,9 @@ const emptyFormData: CustomerFormData = {
   phone: '',
   document: '',
   address: '',
+  address_number: '',
+  address_complement: '',
+  neighborhood: '',
   city: '',
   state: '',
   zip_code: '',
