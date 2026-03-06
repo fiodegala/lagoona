@@ -86,7 +86,7 @@ const CatalogPage = () => {
               map[v.product_id].push({
                 id: v.id,
                 image_url: v.image_url,
-                label: (varLabelsMap[v.id] || []).join(' / ') || 'Variação',
+                label: (varLabelsMap[v.id] || []).join(' / ') || v.sku || `Var. ${map[v.product_id]?.length ? map[v.product_id].length + 1 : 1}`,
               });
             });
             setVariationsMap(map);
