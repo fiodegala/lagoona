@@ -11,6 +11,13 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
   Command,
   CommandEmpty,
   CommandGroup,
@@ -63,6 +70,7 @@ const emptyForm = {
   responsavel_nome: '',
   responsavel_telefone: '',
   notes: '',
+  store_id: '' as string,
 };
 
 const CustomerStep = ({ selectedCustomer, onSelectCustomer, saleType, onNext, onBack }: CustomerStepProps) => {
