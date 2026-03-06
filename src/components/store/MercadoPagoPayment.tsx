@@ -165,21 +165,61 @@ const MercadoPagoPayment = ({
                 nameInput.addEventListener('focus', () => setIsCardFlipped(false));
               }
 
-              // Listen to CVV focus via click on container
+              // Flip card on CVV focus, flip back on other fields
+              // Since SDK fields are iframes, we can't capture focus inside them directly.
+              // Use a global focus/blur listener + interval to detect which field has focus.
+              const detectFocusInterval = setInterval(() => {
+                try {
+                  const activeEl = document.activeElement;
+                  if (!activeEl) return;
+                  
+                  // Check if focus is inside the CVV container's iframe
+                  const cvvContainer = document.getElementById('mp-security-code');
+                  if (cvvContainer) {
+                    const cvvIframe = cvvContainer.querySelector('iframe');
+                    if (cvvIframe && (activeEl === cvvIframe || cvvContainer.contains(activeEl))) {
+                      setIsCardFlipped(true);
+                      return;
+                    }
+                  }
+                  
+                  // Check if focus is on other card fields - flip back
+                  const otherContainers = ['mp-card-number', 'mp-expiration-date'];
+                  for (const id of otherContainers) {
+                    const container = document.getElementById(id);
+                    if (container) {
+                      const iframe = container.querySelector('iframe');
+                      if (iframe && (activeEl === iframe || container.contains(activeEl))) {
+                        setIsCardFlipped(false);
+                        return;
+                      }
+                    }
+                  }
+                  
+                  // Check cardholder name
+                  const nameInput = document.getElementById('mp-cardholder-name');
+                  if (activeEl === nameInput) {
+                    setIsCardFlipped(false);
+                  }
+                } catch {
+                  // silent
+                }
+              }, 300);
+
+              // Also add mousedown listeners on containers as backup
               const cvvContainer = document.getElementById('mp-security-code');
               if (cvvContainer) {
-                cvvContainer.addEventListener('click', () => setIsCardFlipped(true));
-                cvvContainer.addEventListener('focusin', () => setIsCardFlipped(true));
+                cvvContainer.addEventListener('mousedown', () => setIsCardFlipped(true));
               }
-
-              // Listen to other containers to flip back
               ['mp-card-number', 'mp-expiration-date'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) {
-                  el.addEventListener('click', () => setIsCardFlipped(false));
-                  el.addEventListener('focusin', () => setIsCardFlipped(false));
+                  el.addEventListener('mousedown', () => setIsCardFlipped(false));
                 }
               });
+
+              // Cleanup interval on unmount via a custom attribute
+              (window as any).__cardFocusInterval = detectFocusInterval;
             },
             onSubmit: async (event: Event) => {
               event.preventDefault();
