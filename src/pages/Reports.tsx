@@ -47,6 +47,7 @@ interface RawPOSSale {
   subtotal: number;
   discount_amount: number | null;
   payment_method: string;
+  status: string;
   items: { name?: string; qty?: number; price?: number; product_id?: string }[];
   created_at: string;
 }
@@ -108,7 +109,7 @@ const Reports = () => {
     setIsLoading(true);
     const [ordersRes, posRes] = await Promise.all([
       supabase.from('orders').select('id, status, total, customer_name, customer_email, payment_method, payment_status, items, created_at, shipping_address'),
-      supabase.from('pos_sales').select('id, customer_name, total, subtotal, discount_amount, payment_method, items, created_at'),
+      supabase.from('pos_sales').select('id, customer_name, total, subtotal, discount_amount, payment_method, status, items, created_at'),
     ]);
     setOrders((ordersRes.data || []).map(o => ({
       ...o,
@@ -150,6 +151,7 @@ const Reports = () => {
 
   const filteredPOS = useMemo(() =>
     posSales.filter(s => {
+      if (s.status === 'cancelled') return false;
       const d = new Date(s.created_at);
       return d >= dateRange.start && d <= dateRange.end;
     }), [posSales, dateRange]);
