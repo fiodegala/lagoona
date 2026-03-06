@@ -164,6 +164,22 @@ const MercadoPagoPayment = ({
                 });
                 nameInput.addEventListener('focus', () => setIsCardFlipped(false));
               }
+
+              // Listen to CVV focus via click on container
+              const cvvContainer = document.getElementById('mp-security-code');
+              if (cvvContainer) {
+                cvvContainer.addEventListener('click', () => setIsCardFlipped(true));
+                cvvContainer.addEventListener('focusin', () => setIsCardFlipped(true));
+              }
+
+              // Listen to other containers to flip back
+              ['mp-card-number', 'mp-expiration-date'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                  el.addEventListener('click', () => setIsCardFlipped(false));
+                  el.addEventListener('focusin', () => setIsCardFlipped(false));
+                }
+              });
             },
             onSubmit: async (event: Event) => {
               event.preventDefault();
