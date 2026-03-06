@@ -505,7 +505,6 @@ const MercadoPagoPayment = ({
                     id="mp-card-number"
                     className="h-10 border rounded-md bg-background [&>iframe]:!h-full [&>iframe]:!w-full"
                     style={{ minHeight: '40px' }}
-                    onFocus={() => setIsCardFlipped(false)}
                   />
                 </div>
                 <div className="space-y-2">
@@ -514,7 +513,6 @@ const MercadoPagoPayment = ({
                     id="mp-cardholder-name"
                     type="text"
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    onFocus={() => setIsCardFlipped(false)}
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
@@ -524,7 +522,6 @@ const MercadoPagoPayment = ({
                       id="mp-expiration-date"
                       className="h-10 border rounded-md bg-background [&>iframe]:!h-full [&>iframe]:!w-full"
                       style={{ minHeight: '40px' }}
-                      onFocus={() => setIsCardFlipped(false)}
                     />
                   </div>
                   <div className="space-y-2">
@@ -533,8 +530,6 @@ const MercadoPagoPayment = ({
                       id="mp-security-code"
                       className="h-10 border rounded-md bg-background [&>iframe]:!h-full [&>iframe]:!w-full"
                       style={{ minHeight: '40px' }}
-                      onClick={() => setIsCardFlipped(true)}
-                      onFocus={() => setIsCardFlipped(true)}
                     />
                   </div>
                 </div>
