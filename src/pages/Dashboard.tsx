@@ -768,6 +768,7 @@ const Dashboard = () => {
                     setPeriodFilter(period);
                     if (period !== 'custom') {
                       setCustomDateRange(undefined);
+                      setIsDatePickerOpen(false);
                     }
                   }}
                   className="text-xs px-3"
