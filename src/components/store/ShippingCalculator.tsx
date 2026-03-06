@@ -12,9 +12,17 @@ interface ShippingOption {
   company: string;
 }
 
+interface ShippingResult {
+  name: string;
+  price: number;
+  days: string;
+  isFreeShipping: boolean;
+}
+
 interface ShippingCalculatorProps {
   productWeight?: number;
   orderTotal?: number;
+  onShippingCalculated?: (result: ShippingResult | null) => void;
 }
 
 const ShippingCalculator = ({ productWeight = 0.5, orderTotal = 0 }: ShippingCalculatorProps) => {

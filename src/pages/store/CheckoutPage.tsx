@@ -45,6 +45,7 @@ const CheckoutPage = () => {
     complement: '',
   });
   const [isFetchingCep, setIsFetchingCep] = useState(false);
+  const [shippingResult, setShippingResult] = useState<{ name: string; price: number; days: string; isFreeShipping: boolean } | null>(null);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('pt-BR', {
