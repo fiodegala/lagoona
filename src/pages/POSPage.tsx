@@ -134,7 +134,8 @@ const POSPage = () => {
       case 'orcamento':
         return product.promotional_price ?? product.price;
       default:
-        return product.promotional_price ?? product.price;
+        // Varejo: always use regular retail price
+        return product.price;
     }
   }, [saleType]);
 
@@ -153,11 +154,15 @@ const POSPage = () => {
           case 'troca':
             return 0;
           default:
-            return variation.promotional_price ?? variation.price ?? product.promotional_price ?? product.price;
+            // Varejo: use regular retail price
+            return variation.price ?? product.price;
         }
       })();
 
-      const isPromotional = saleType === 'varejo' && variationPrice < basePrice && (variation.promotional_price != null || product.promotional_price != null);
+      // Determine available promotional price for this variation
+      const availablePromoPrice = variation.promotional_price ?? product.promotional_price ?? null;
+      const hasValidPromo = saleType === 'varejo' && availablePromoPrice != null && availablePromoPrice < basePrice;
+      const isPromotional = false; // No longer auto-apply promo
 
       const existingItem = cartItems.find((item) => item.product_id === product.id && item.variation_id === variationId);
       if (existingItem) {
@@ -180,6 +185,7 @@ const POSPage = () => {
           unit_price: variationPrice,
           original_price: isPromotional ? basePrice : undefined,
           is_promotional: isPromotional || undefined,
+          available_promotional_price: hasValidPromo ? availablePromoPrice! : undefined,
           quantity: 1,
           discount_amount: 0,
           total: variationPrice,
@@ -189,7 +195,7 @@ const POSPage = () => {
       }
     } else {
       const unitPrice = resolvePrice(product);
-      const isPromotional = saleType === 'varejo' && product.promotional_price != null && product.promotional_price < product.price;
+      const hasValidPromo = saleType === 'varejo' && product.promotional_price != null && product.promotional_price < product.price;
       const existingItem = cartItems.find((item) => item.product_id === product.id && !item.variation_id);
 
       if (existingItem) {
@@ -207,8 +213,7 @@ const POSPage = () => {
           name: product.name,
           image_url: product.image_url || null,
           unit_price: unitPrice,
-          original_price: isPromotional ? product.price : undefined,
-          is_promotional: isPromotional || undefined,
+          available_promotional_price: hasValidPromo ? product.promotional_price! : undefined,
           quantity: 1,
           discount_amount: 0,
           total: unitPrice,
@@ -242,6 +247,25 @@ const POSPage = () => {
           ? item.unit_price * item.quantity * (discountValue / 100)
           : discountValue;
         return { ...item, discount_type: discountType, discount_value: discountValue, discount_amount: discountAmount, total: item.unit_price * item.quantity - discountAmount };
+      })
+    );
+  };
+
+  const handleTogglePromoPrice = (itemId: string, usePromo: boolean) => {
+    setCartItems((items) =>
+      items.map((item) => {
+        if (item.id !== itemId || !item.available_promotional_price) return item;
+        const retailPrice = item.is_promotional ? (item.original_price ?? item.unit_price) : item.unit_price;
+        const promoPrice = item.available_promotional_price;
+        const newPrice = usePromo ? promoPrice : retailPrice;
+        const newTotal = newPrice * item.quantity - item.discount_amount;
+        return {
+          ...item,
+          unit_price: newPrice,
+          original_price: usePromo ? retailPrice : undefined,
+          is_promotional: usePromo || undefined,
+          total: newTotal,
+        };
       })
     );
   };
@@ -626,6 +650,7 @@ const POSPage = () => {
               onUpdateQuantity={handleUpdateQuantity}
               onRemoveItem={handleRemoveItem}
               onApplyItemDiscount={handleApplyItemDiscount}
+              onTogglePromoPrice={handleTogglePromoPrice}
               generalDiscount={generalDiscount}
               onApplyGeneralDiscount={(type, value) => setGeneralDiscount({ type, value })}
               subtotal={subtotal}
