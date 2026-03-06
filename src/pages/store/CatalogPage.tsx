@@ -28,7 +28,7 @@ const CatalogPage = () => {
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [variationsMap, setVariationsMap] = useState<ProductVariationsMap>({});
-  const [selectedImage, setSelectedImage] = useState<Record<string, string>>({});
+  
 
   useEffect(() => {
     const load = async () => {
