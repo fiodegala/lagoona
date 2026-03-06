@@ -16,7 +16,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Plus, Trash2, X, Loader2, Wand2, PlusCircle } from 'lucide-react';
+import { Plus, Trash2, X, Loader2, Wand2, PlusCircle, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   variationsService,
