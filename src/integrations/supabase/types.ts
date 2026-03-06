@@ -456,6 +456,8 @@ export type Database = {
       customers: {
         Row: {
           address: string | null
+          address_complement: string | null
+          address_number: string | null
           birthday: string | null
           city: string | null
           created_at: string
@@ -468,6 +470,7 @@ export type Database = {
           inscricao_municipal: string | null
           is_active: boolean
           name: string
+          neighborhood: string | null
           nome_fantasia: string | null
           notes: string | null
           phone: string | null
@@ -481,6 +484,8 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          address_complement?: string | null
+          address_number?: string | null
           birthday?: string | null
           city?: string | null
           created_at?: string
@@ -493,6 +498,7 @@ export type Database = {
           inscricao_municipal?: string | null
           is_active?: boolean
           name: string
+          neighborhood?: string | null
           nome_fantasia?: string | null
           notes?: string | null
           phone?: string | null
@@ -506,6 +512,8 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          address_complement?: string | null
+          address_number?: string | null
           birthday?: string | null
           city?: string | null
           created_at?: string
@@ -518,6 +526,7 @@ export type Database = {
           inscricao_municipal?: string | null
           is_active?: boolean
           name?: string
+          neighborhood?: string | null
           nome_fantasia?: string | null
           notes?: string | null
           phone?: string | null

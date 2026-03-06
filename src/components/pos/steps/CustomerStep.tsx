@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
@@ -61,6 +62,9 @@ const emptyForm = {
   birthday: '',
   zip_code: '',
   address: '',
+  address_number: '',
+  address_complement: '',
+  neighborhood: '',
   city: '',
   state: '',
   razao_social: '',
@@ -150,6 +154,7 @@ const CustomerStep = ({ selectedCustomer, onSelectCustomer, saleType, onNext, on
           setFormData((prev) => ({
             ...prev,
             address: data.logradouro || '',
+            neighborhood: data.bairro || '',
             city: data.localidade || '',
             state: data.uf || '',
           }));
@@ -192,6 +197,9 @@ const CustomerStep = ({ selectedCustomer, onSelectCustomer, saleType, onNext, on
         birthday: formData.birthday || null,
         zip_code: formData.zip_code.trim() || null,
         address: formData.address.trim() || null,
+        address_number: formData.address_number.trim() || null,
+        address_complement: formData.address_complement.trim() || null,
+        neighborhood: formData.neighborhood.trim() || null,
         city: formData.city.trim() || null,
         state: formData.state.trim() || null,
         razao_social: isPJ ? formData.razao_social.trim() : null,
@@ -488,8 +496,38 @@ const CustomerStep = ({ selectedCustomer, onSelectCustomer, saleType, onNext, on
                 </div>
               </div>
               <div>
-                <Label className="text-sm">Endereço</Label>
-                <Input placeholder="Rua, número, complemento" value={formData.address} onChange={(e) => updateField('address', e.target.value)} />
+                <Label className="text-sm">Rua / Logradouro</Label>
+                <Input placeholder="Rua, Avenida..." value={formData.address} onChange={(e) => updateField('address', e.target.value)} />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label className="text-sm">Número</Label>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      placeholder="Nº"
+                      value={formData.address_number === 'S/N' ? '' : formData.address_number}
+                      onChange={(e) => updateField('address_number', e.target.value)}
+                      disabled={formData.address_number === 'S/N'}
+                      className="flex-1"
+                    />
+                    <div className="flex items-center gap-1 whitespace-nowrap">
+                      <Checkbox
+                        id="pos-sem-numero"
+                        checked={formData.address_number === 'S/N'}
+                        onCheckedChange={(checked) => updateField('address_number', checked ? 'S/N' : '')}
+                      />
+                      <Label htmlFor="pos-sem-numero" className="text-xs cursor-pointer font-normal">S/N</Label>
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-sm">Complemento</Label>
+                  <Input placeholder="Apto, Bloco..." value={formData.address_complement} onChange={(e) => updateField('address_complement', e.target.value)} />
+                </div>
+              </div>
+              <div>
+                <Label className="text-sm">Bairro</Label>
+                <Input placeholder="Bairro" value={formData.neighborhood} onChange={(e) => updateField('neighborhood', e.target.value)} />
               </div>
               <div className="grid grid-cols-3 gap-2">
                 <div className="col-span-2">
