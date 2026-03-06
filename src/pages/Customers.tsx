@@ -32,8 +32,9 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Search, Pencil, Trash2, UserPlus, Loader2, Phone, Mail, MapPin, History, Check, X, Eye, User, Building2 } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2, UserPlus, Loader2, Phone, Mail, MapPin, History, Check, X, Eye, User, Building2, Store } from 'lucide-react';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import CustomerPurchaseHistory from '@/components/customers/CustomerPurchaseHistory';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -61,6 +62,13 @@ interface Customer {
   inscricao_municipal: string | null;
   responsavel_nome: string | null;
   responsavel_telefone: string | null;
+  store_id: string | null;
+}
+
+interface Store {
+  id: string;
+  name: string;
+  type: string;
 }
 
 type CustomerFormData = Omit<Customer, 'id' | 'created_at' | 'updated_at'>;
@@ -84,6 +92,7 @@ const emptyFormData: CustomerFormData = {
   inscricao_municipal: '',
   responsavel_nome: '',
   responsavel_telefone: '',
+  store_id: null,
 };
 
 const Customers = () => {
@@ -107,6 +116,18 @@ const Customers = () => {
         .order('name');
       if (error) throw error;
       return data as Customer[];
+    },
+  });
+
+  const { data: stores = [] } = useQuery({
+    queryKey: ['stores'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('stores')
+        .select('id, name, type')
+        .order('name');
+      if (error) throw error;
+      return data as Store[];
     },
   });
 
@@ -178,6 +199,7 @@ const Customers = () => {
         inscricao_municipal: customer.inscricao_municipal || '',
         responsavel_nome: customer.responsavel_nome || '',
         responsavel_telefone: customer.responsavel_telefone || '',
+        store_id: customer.store_id || null,
       });
     } else {
       setSelectedCustomer(null);
@@ -481,6 +503,7 @@ const Customers = () => {
                       <TableHead>Nome</TableHead>
                       <TableHead>Contato</TableHead>
                       <TableHead>Documento</TableHead>
+                      <TableHead>Loja</TableHead>
                       <TableHead>Cidade/UF</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead className="text-right">Ações</TableHead>
@@ -507,6 +530,9 @@ const Customers = () => {
                           </div>
                         </TableCell>
                         <TableCell>{customer.document || '-'}</TableCell>
+                        <TableCell>
+                          {stores.find(s => s.id === customer.store_id)?.name || '-'}
+                        </TableCell>
                         <TableCell>
                           {customer.city && customer.state
                             ? `${customer.city}/${customer.state}`
@@ -602,6 +628,29 @@ const Customers = () => {
                     </Label>
                   </div>
                 </RadioGroup>
+              </div>
+
+              {/* Loja de origem */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium flex items-center gap-1.5">
+                  <Store className="h-3.5 w-3.5" /> Loja de Origem
+                </Label>
+                <Select
+                  value={formData.store_id || 'none'}
+                  onValueChange={(v) => setFormData({ ...formData, store_id: v === 'none' ? null : v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a loja" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Nenhuma</SelectItem>
+                    {stores.map((store) => (
+                      <SelectItem key={store.id} value={store.id}>
+                        {store.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               {formData.customer_type === 'pf' ? (

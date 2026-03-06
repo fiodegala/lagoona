@@ -11,6 +11,13 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
   Command,
   CommandEmpty,
   CommandGroup,
@@ -63,12 +70,14 @@ const emptyForm = {
   responsavel_nome: '',
   responsavel_telefone: '',
   notes: '',
+  store_id: '' as string,
 };
 
 const CustomerStep = ({ selectedCustomer, onSelectCustomer, saleType, onNext, onBack }: CustomerStepProps) => {
   const isExchange = saleType === 'troca';
 
   const [customers, setCustomers] = useState<Customer[]>([]);
+  const [stores, setStores] = useState<{ id: string; name: string; type: string }[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showRegisterDialog, setShowRegisterDialog] = useState(false);
@@ -93,7 +102,19 @@ const CustomerStep = ({ selectedCustomer, onSelectCustomer, saleType, onNext, on
         setIsLoading(false);
       }
     };
+    const fetchStores = async () => {
+      try {
+        const { data } = await supabase
+          .from('stores')
+          .select('id, name, type')
+          .order('name');
+        setStores(data || []);
+      } catch (error) {
+        console.error('Erro ao carregar lojas:', error);
+      }
+    };
     fetchCustomers();
+    fetchStores();
   }, []);
 
   const filteredCustomers = customers.filter((c) => {
@@ -180,6 +201,7 @@ const CustomerStep = ({ selectedCustomer, onSelectCustomer, saleType, onNext, on
         responsavel_nome: isPJ ? (formData.responsavel_nome.trim() || null) : null,
         responsavel_telefone: isPJ ? (formData.responsavel_telefone.trim() || null) : null,
         notes: formData.notes.trim() || null,
+        store_id: formData.store_id || null,
       };
 
       const { data, error } = await supabase
@@ -355,6 +377,29 @@ const CustomerStep = ({ selectedCustomer, onSelectCustomer, saleType, onNext, on
                     </Label>
                   </div>
                 </RadioGroup>
+              </div>
+
+              {/* Loja de Origem */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium flex items-center gap-1.5">
+                  <MapPin className="h-3.5 w-3.5" /> Loja de Origem
+                </Label>
+                <Select
+                  value={formData.store_id || 'none'}
+                  onValueChange={(v) => updateField('store_id', v === 'none' ? '' : v)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a loja" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Nenhuma</SelectItem>
+                    {stores.map((store) => (
+                      <SelectItem key={store.id} value={store.id}>
+                        {store.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               {formData.customer_type === 'pf' ? (
