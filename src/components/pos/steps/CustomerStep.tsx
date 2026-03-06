@@ -379,6 +379,29 @@ const CustomerStep = ({ selectedCustomer, onSelectCustomer, saleType, onNext, on
                 </RadioGroup>
               </div>
 
+              {/* Loja de Origem */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium flex items-center gap-1.5">
+                  <MapPin className="h-3.5 w-3.5" /> Loja de Origem
+                </Label>
+                <Select
+                  value={formData.store_id || 'none'}
+                  onValueChange={(v) => updateField('store_id', v === 'none' ? '' : v)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a loja" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Nenhuma</SelectItem>
+                    {stores.map((store) => (
+                      <SelectItem key={store.id} value={store.id}>
+                        {store.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
               {formData.customer_type === 'pf' ? (
                 <div className="space-y-3">
                   <div>
