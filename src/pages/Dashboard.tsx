@@ -438,16 +438,16 @@ const Dashboard = () => {
 
     return {
       daily: {
-        target: dailyGoal?.target_amount || 0,
+        target: dailyTarget,
         current: todayTotal,
-        percentage: dailyGoal?.target_amount ? Math.min((todayTotal / dailyGoal.target_amount) * 100, 100) : 0,
-        isComplete: dailyGoal?.target_amount ? todayTotal >= dailyGoal.target_amount : false,
+        percentage: dailyTarget ? Math.min((todayTotal / dailyTarget) * 100, 100) : 0,
+        isComplete: dailyTarget ? todayTotal >= dailyTarget : false,
       },
       monthly: {
-        target: monthlyGoal?.target_amount || 0,
+        target: monthlyTarget,
         current: monthTotal,
-        percentage: monthlyGoal?.target_amount ? Math.min((monthTotal / monthlyGoal.target_amount) * 100, 100) : 0,
-        isComplete: monthlyGoal?.target_amount ? monthTotal >= monthlyGoal.target_amount : false,
+        percentage: monthlyTarget ? Math.min((monthTotal / monthlyTarget) * 100, 100) : 0,
+        isComplete: monthlyTarget ? monthTotal >= monthlyTarget : false,
       },
     };
   }, [rawOrders, rawPOSSales, salesGoals, activeStoreFilter]);
