@@ -717,6 +717,10 @@ const Dashboard = () => {
     setCustomDateRange(range);
     if (range?.from) {
       setPeriodFilter('custom');
+      // Only close the popover when both dates are selected
+      if (range.to) {
+        setIsDatePickerOpen(false);
+      }
     }
   };
 
