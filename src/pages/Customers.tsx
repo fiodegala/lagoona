@@ -649,6 +649,7 @@ const Customers = () => {
                 </Select>
               </div>
 
+              {formData.customer_type === 'pf' ? (
                 <>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div className="space-y-2">
