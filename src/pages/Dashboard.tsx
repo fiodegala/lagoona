@@ -184,14 +184,12 @@ const Dashboard = () => {
       const storeFilter = activeStoreFilter;
 
       // Orders: filter by store
-      let ordersQuery = supabase.from('orders').select('id, status, total, customer_name, customer_email, payment_method, created_at, shipping_address, items');
+      let ordersQuery = supabase.from('orders').select('id, status, total, customer_name, customer_email, payment_method, created_at, shipping_address, items').in('status', ['completed', 'delivered']);
       if (isSiteStoreSelected) {
         ordersQuery = ordersQuery.eq('store_id', SITE_STORE_ID);
       } else if (storeFilter && canAccessSiteStore) {
-        // Online store user: also show site orders
         ordersQuery = ordersQuery.eq('store_id', SITE_STORE_ID);
       } else if (storeFilter) {
-        // Physical store: no orders
         ordersQuery = ordersQuery.eq('store_id', SITE_STORE_ID).limit(0);
       }
 
