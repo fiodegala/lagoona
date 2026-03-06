@@ -116,6 +116,7 @@ const App = () => (
               <Route path="/combos" element={<CombosPage />} />
               <Route path="/trabalhe-conosco" element={<WorkWithUsPage />} />
               <Route path="/orcamento/:id" element={<QuoteViewPage />} />
+              <Route path="/catalogo" element={<CatalogPage />} />
 
               {/* Admin Routes */}
               <Route path="/login" element={<Login />} />
