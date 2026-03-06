@@ -183,6 +183,8 @@ const CheckoutPage = () => {
           customer_name: formData.name,
           shipping_address: {
             address: formData.address,
+            number: formData.number,
+            neighborhood: formData.neighborhood,
             city: formData.city,
             state: formData.state,
             zip_code: formData.zipCode,
