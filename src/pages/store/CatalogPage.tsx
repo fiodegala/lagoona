@@ -246,26 +246,34 @@ const CatalogPage = () => {
             />
           </div>
 
-          {/* Category chips */}
+          {/* Category filter - horizontal scroll */}
           {visibleCategories.length > 0 && (
-            <div className="flex flex-wrap gap-2 justify-center">
-              <Badge
-                variant={selectedCategory === null ? 'default' : 'outline'}
-                className="cursor-pointer select-none"
-                onClick={() => setSelectedCategory(null)}
-              >
-                Todos
-              </Badge>
-              {visibleCategories.map((cat) => (
-                <Badge
-                  key={cat.id}
-                  variant={selectedCategory === cat.id ? 'default' : 'outline'}
-                  className="cursor-pointer select-none"
-                  onClick={() => setSelectedCategory(cat.id)}
+            <div className="relative -mx-4 px-4">
+              <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar snap-x">
+                <button
+                  onClick={() => setSelectedCategory(null)}
+                  className={`shrink-0 snap-start rounded-full px-4 py-1.5 text-xs font-medium border transition-all whitespace-nowrap ${
+                    selectedCategory === null
+                      ? 'border-primary bg-primary text-primary-foreground shadow-sm'
+                      : 'border-border bg-card text-muted-foreground hover:border-foreground hover:text-foreground'
+                  }`}
                 >
-                  {cat.name}
-                </Badge>
-              ))}
+                  Todos
+                </button>
+                {visibleCategories.map((cat) => (
+                  <button
+                    key={cat.id}
+                    onClick={() => setSelectedCategory(cat.id)}
+                    className={`shrink-0 snap-start rounded-full px-4 py-1.5 text-xs font-medium border transition-all whitespace-nowrap ${
+                      selectedCategory === cat.id
+                        ? 'border-primary bg-primary text-primary-foreground shadow-sm'
+                        : 'border-border bg-card text-muted-foreground hover:border-foreground hover:text-foreground'
+                    }`}
+                  >
+                    {cat.name}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
