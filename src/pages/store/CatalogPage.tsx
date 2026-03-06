@@ -134,9 +134,43 @@ const CatalogPage = () => {
   );
   const visibleCategories = categories.filter((c) => usedCategoryIds.has(c.id));
 
+  // Build all images list per product (original + variation images)
+  const productImagesMap = useMemo(() => {
+    const map: Record<string, string[]> = {};
+    products.forEach((product) => {
+      const images: string[] = [];
+      if (product.image_url) images.push(product.image_url);
+      const variations = variationsMap[product.id] || [];
+      variations.forEach((v) => {
+        if (v.image_url && !images.includes(v.image_url)) {
+          images.push(v.image_url);
+        }
+      });
+      if (images.length === 0) images.push('/placeholder.svg');
+      map[product.id] = images;
+    });
+    return map;
+  }, [products, variationsMap]);
+
+  const [imageIndex, setImageIndex] = useState<Record<string, number>>({});
+
   const getDisplayImage = (product: Product) => {
-    return selectedImage[product.id] || product.image_url || '/placeholder.svg';
+    const images = productImagesMap[product.id] || ['/placeholder.svg'];
+    const idx = imageIndex[product.id] || 0;
+    return images[idx] || images[0];
   };
+
+  const navigateImage = useCallback((productId: string, direction: 'prev' | 'next') => {
+    const images = productImagesMap[productId] || [];
+    if (images.length <= 1) return;
+    setImageIndex((prev) => {
+      const current = prev[productId] || 0;
+      const next = direction === 'next'
+        ? (current + 1) % images.length
+        : (current - 1 + images.length) % images.length;
+      return { ...prev, [productId]: next };
+    });
+  }, [productImagesMap]);
 
   return (
     <StoreLayout>
