@@ -45,6 +45,7 @@ const CheckoutPage = () => {
     complement: '',
   });
   const [isFetchingCep, setIsFetchingCep] = useState(false);
+  const [shippingResult, setShippingResult] = useState<{ name: string; price: number; days: string; isFreeShipping: boolean } | null>(null);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -373,7 +374,7 @@ const CheckoutPage = () => {
                   </CardContent>
                 </Card>
 
-                <ShippingCalculator orderTotal={total} />
+                <ShippingCalculator orderTotal={total} onShippingCalculated={setShippingResult} />
 
                 <div className="mt-6 lg:hidden">
                   <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
@@ -444,7 +445,9 @@ const CheckoutPage = () => {
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Frete</span>
-                    <span className="text-success">Grátis</span>
+                    <span className={shippingResult?.price === 0 || !shippingResult ? 'text-success' : ''}>
+                      {!shippingResult ? 'Calcule o frete' : shippingResult.price === 0 ? 'Grátis' : formatPrice(shippingResult.price)}
+                    </span>
                   </div>
                 </div>
 
@@ -452,7 +455,7 @@ const CheckoutPage = () => {
 
                 <div className="flex justify-between font-semibold text-lg">
                   <span>Total</span>
-                  <span className="text-primary">{formatPrice(total)}</span>
+                  <span className="text-primary">{formatPrice(total + (shippingResult?.price || 0))}</span>
                 </div>
               </CardContent>
               {step === 'info' && (
