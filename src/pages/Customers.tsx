@@ -626,7 +626,29 @@ const Customers = () => {
                 </RadioGroup>
               </div>
 
-              {formData.customer_type === 'pf' ? (
+              {/* Loja de origem */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium flex items-center gap-1.5">
+                  <Store className="h-3.5 w-3.5" /> Loja de Origem
+                </Label>
+                <Select
+                  value={formData.store_id || 'none'}
+                  onValueChange={(v) => setFormData({ ...formData, store_id: v === 'none' ? null : v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a loja" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Nenhuma</SelectItem>
+                    {stores.map((store) => (
+                      <SelectItem key={store.id} value={store.id}>
+                        {store.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
                 <>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div className="space-y-2">
