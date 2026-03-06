@@ -61,6 +61,13 @@ interface Customer {
   inscricao_municipal: string | null;
   responsavel_nome: string | null;
   responsavel_telefone: string | null;
+  store_id: string | null;
+}
+
+interface Store {
+  id: string;
+  name: string;
+  type: string;
 }
 
 type CustomerFormData = Omit<Customer, 'id' | 'created_at' | 'updated_at'>;
@@ -84,6 +91,7 @@ const emptyFormData: CustomerFormData = {
   inscricao_municipal: '',
   responsavel_nome: '',
   responsavel_telefone: '',
+  store_id: null,
 };
 
 const Customers = () => {
