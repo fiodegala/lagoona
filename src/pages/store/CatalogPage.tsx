@@ -503,15 +503,6 @@ const CatalogPage = () => {
                         )}
                       </div>
 
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="w-full gap-1.5 mt-1 text-xs"
-                        onClick={() => askAboutProduct(product)}
-                      >
-                        <MessageCircle className="h-3.5 w-3.5" />
-                        Pedir pelo WhatsApp
-                      </Button>
                     </div>
                   </div>
                 );
