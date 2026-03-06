@@ -259,7 +259,13 @@ const MercadoPagoPayment = ({
       }
     }, 500);
 
-    return () => clearTimeout(timeout);
+    return () => {
+      clearTimeout(timeout);
+      if ((window as any).__cardFocusInterval) {
+        clearInterval((window as any).__cardFocusInterval);
+        delete (window as any).__cardFocusInterval;
+      }
+    };
   }, [activeTab, sdkReady, amount]);
 
   // Poll card form data for brand detection
