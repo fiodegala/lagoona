@@ -137,14 +137,30 @@ const MercadoPagoPayment = ({
                 return;
               }
               cardFormMountedRef.current = true;
+
+              // Listen to cardholder name input changes
+              const nameInput = document.getElementById('mp-cardholder-name') as HTMLInputElement;
+              if (nameInput) {
+                nameInput.addEventListener('input', (e) => {
+                  setCardDisplayName((e.target as HTMLInputElement).value);
+                });
+                nameInput.addEventListener('focus', () => setIsCardFlipped(false));
+              }
             },
             onSubmit: async (event: Event) => {
               event.preventDefault();
-              // handled by our own submit
             },
             onFetching: (resource: string) => {
-              // SDK fetching
               return () => {};
+            },
+            onCardTokenReceived: (error: any, token: any) => {
+              // noop
+            },
+            onPaymentMethodsReceived: (error: any, data: any) => {
+              if (!error && data && data.length > 0) {
+                const method = data[0];
+                setCardBrand(method.id || '');
+              }
             },
           },
         });
