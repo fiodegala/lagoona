@@ -39,6 +39,7 @@ import CustomerPurchaseHistory from '@/components/customers/CustomerPurchaseHist
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface Customer {
   id: string;
@@ -429,6 +430,7 @@ const Customers = () => {
         setFormData(prev => ({
           ...prev,
           address: data.logradouro || prev.address,
+          neighborhood: data.bairro || prev.neighborhood,
           city: data.localidade || prev.city,
           state: data.uf || prev.state,
         }));
@@ -882,12 +884,59 @@ const Customers = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="address">Endereço</Label>
+                <Label htmlFor="address">Rua / Logradouro</Label>
                 <Input
                   id="address"
                   value={formData.address || ''}
                   onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                  placeholder="Rua, número, complemento"
+                  placeholder="Rua, Avenida..."
+                />
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="address_number">Número</Label>
+                  <div className="flex items-center gap-3">
+                    <Input
+                      id="address_number"
+                      value={formData.address_number === 'S/N' ? '' : (formData.address_number || '')}
+                      onChange={(e) => setFormData({ ...formData, address_number: e.target.value })}
+                      placeholder="Nº"
+                      disabled={formData.address_number === 'S/N'}
+                      className="flex-1"
+                    />
+                    <div className="flex items-center gap-1.5 whitespace-nowrap">
+                      <Checkbox
+                        id="sem-numero"
+                        checked={formData.address_number === 'S/N'}
+                        onCheckedChange={(checked) =>
+                          setFormData({ ...formData, address_number: checked ? 'S/N' : '' })
+                        }
+                      />
+                      <Label htmlFor="sem-numero" className="text-sm cursor-pointer font-normal">
+                        Sem número
+                      </Label>
+                    </div>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="address_complement">Complemento</Label>
+                  <Input
+                    id="address_complement"
+                    value={formData.address_complement || ''}
+                    onChange={(e) => setFormData({ ...formData, address_complement: e.target.value })}
+                    placeholder="Apto, Bloco, Sala..."
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="neighborhood">Bairro</Label>
+                <Input
+                  id="neighborhood"
+                  value={formData.neighborhood || ''}
+                  onChange={(e) => setFormData({ ...formData, neighborhood: e.target.value })}
+                  placeholder="Bairro"
                 />
               </div>
 
