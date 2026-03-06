@@ -320,10 +320,16 @@ const CatalogPage = () => {
             <p className="text-muted-foreground text-sm md:text-base mb-4">
               Confira todos os nossos produtos — varejo e atacado
             </p>
-            <Button onClick={shareCatalog} variant="outline" size="sm" className="gap-2">
-              <Share2 className="h-4 w-4" />
-              Compartilhar via WhatsApp
-            </Button>
+            <div className="flex gap-2 justify-center flex-wrap">
+              <Button onClick={shareCatalog} variant="outline" size="sm" className="gap-2">
+                <Share2 className="h-4 w-4" />
+                Compartilhar via WhatsApp
+              </Button>
+              <Button onClick={generatePDF} variant="outline" size="sm" className="gap-2" disabled={generatingPdf || loading}>
+                {generatingPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                Baixar PDF
+              </Button>
+            </div>
           </div>
         </div>
 
