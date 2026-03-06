@@ -156,7 +156,7 @@ const CheckoutPage = () => {
       return;
     }
 
-    if (!formData.name || !formData.email || !formData.phone || !formData.address || !formData.city || !formData.state || !formData.zipCode) {
+    if (!formData.name || !formData.email || !formData.phone || !formData.address || !formData.number || !formData.city || !formData.state || !formData.zipCode) {
       toast.error('Preencha todos os campos obrigatórios');
       return;
     }
