@@ -92,14 +92,27 @@ const CatalogPage = () => {
               }
             });
 
-            // Group by product
+            // Group by product, deduplicating by color label
             const map: ProductVariationsMap = {};
             variations.forEach((v) => {
               if (!map[v.product_id]) map[v.product_id] = [];
+              const colorLabel = (varLabelsMap[v.id] || []).join(' / ');
+              // Skip if we already have a chip with this color for this product
+              if (colorLabel && map[v.product_id].some((existing) => existing.label === colorLabel)) {
+                // But if existing has no image and this one does, replace it
+                const existingIdx = map[v.product_id].findIndex((existing) => existing.label === colorLabel);
+                if (!map[v.product_id][existingIdx].image_url && v.image_url) {
+                  map[v.product_id][existingIdx].image_url = v.image_url;
+                }
+                return;
+              }
+              const label = colorLabel || v.sku || `Var. ${(map[v.product_id]?.length || 0) + 1}`;
+              // Also skip duplicates for non-color labels
+              if (!colorLabel && map[v.product_id].some((existing) => existing.label === label)) return;
               map[v.product_id].push({
                 id: v.id,
                 image_url: v.image_url,
-                label: (varLabelsMap[v.id] || []).join(' / ') || v.sku || `Var. ${(map[v.product_id]?.length || 0) + 1}`,
+                label,
               });
             });
             setVariationsMap(map);
