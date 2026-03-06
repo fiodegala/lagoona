@@ -246,70 +246,54 @@ const CatalogPage = () => {
                     key={product.id}
                     className="group rounded-lg border bg-card text-card-foreground shadow-sm overflow-hidden flex flex-col"
                   >
-                    {/* Image 4:7 ratio */}
-                    <div className="relative bg-muted overflow-hidden" style={{ aspectRatio: '4/7' }}>
-                      <img
-                        src={getDisplayImage(product)}
-                        alt={product.name}
-                        loading="lazy"
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                    </div>
+                    {/* Image 4:7 ratio with arrows */}
+                    {(() => {
+                      const images = productImagesMap[product.id] || ['/placeholder.svg'];
+                      const hasMultiple = images.length > 1;
+                      const currentIdx = imageIndex[product.id] || 0;
+                      return (
+                        <div className="relative bg-muted overflow-hidden group/img" style={{ aspectRatio: '4/7' }}>
+                          <img
+                            src={getDisplayImage(product)}
+                            alt={product.name}
+                            loading="lazy"
+                            className="w-full h-full object-cover transition-transform duration-300"
+                          />
+                          {hasMultiple && (
+                            <>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); navigateImage(product.id, 'prev'); }}
+                                className="absolute left-1 top-1/2 -translate-y-1/2 bg-background/80 backdrop-blur-sm rounded-full p-1 shadow opacity-0 group-hover/img:opacity-100 transition-opacity"
+                                aria-label="Foto anterior"
+                              >
+                                <ChevronLeft className="h-4 w-4 text-foreground" />
+                              </button>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); navigateImage(product.id, 'next'); }}
+                                className="absolute right-1 top-1/2 -translate-y-1/2 bg-background/80 backdrop-blur-sm rounded-full p-1 shadow opacity-0 group-hover/img:opacity-100 transition-opacity"
+                                aria-label="Próxima foto"
+                              >
+                                <ChevronRight className="h-4 w-4 text-foreground" />
+                              </button>
+                              {/* Dots */}
+                              <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 flex gap-1">
+                                {images.map((_, i) => (
+                                  <span
+                                    key={i}
+                                    className={`block w-1.5 h-1.5 rounded-full transition-colors ${
+                                      i === currentIdx ? 'bg-primary' : 'bg-background/60'
+                                    }`}
+                                  />
+                                ))}
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      );
+                    })()}
 
-                    {/* Variation thumbnails */}
-                    {variationsWithImages.length > 0 && (
-                      <div className="px-3 pt-2 flex gap-1.5 overflow-x-auto scrollbar-hide">
-                        {/* Original product image */}
-                        {product.image_url && (
-                          <button
-                            onClick={() =>
-                              setSelectedImage((prev) => {
-                                const next = { ...prev };
-                                delete next[product.id];
-                                return next;
-                              })
-                            }
-                            className={`shrink-0 w-9 h-9 rounded border-2 overflow-hidden transition-all ${
-                              !selectedImage[product.id]
-                                ? 'border-primary ring-1 ring-primary/30'
-                                : 'border-border opacity-60 hover:opacity-100'
-                            }`}
-                          >
-                            <img
-                              src={product.image_url}
-                              alt="Original"
-                              className="w-full h-full object-cover"
-                            />
-                          </button>
-                        )}
-                        {variationsWithImages.map((v) => (
-                          <button
-                            key={v.id}
-                            title={v.label}
-                            onClick={() =>
-                              setSelectedImage((prev) => ({
-                                ...prev,
-                                [product.id]: v.image_url!,
-                              }))
-                            }
-                            className={`shrink-0 w-9 h-9 rounded border-2 overflow-hidden transition-all ${
-                              selectedImage[product.id] === v.image_url
-                                ? 'border-primary ring-1 ring-primary/30'
-                                : 'border-border opacity-60 hover:opacity-100'
-                            }`}
-                          >
-                            <img
-                              src={v.image_url!}
-                              alt={v.label}
-                              className="w-full h-full object-cover"
-                            />
-                          </button>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Variation count badge (when no images) */}
-                    {variations.length > 0 && variationsWithImages.length === 0 && (
+                    {/* Variation count badge */}
+                    {variations.length > 0 && (
                       <div className="px-3 pt-2">
                         <Badge variant="secondary" className="text-xs">
                           {variations.length} {variations.length === 1 ? 'variação' : 'variações'}
