@@ -541,30 +541,52 @@ const ProductVariationsEditor = ({ productId, basePrice }: ProductVariationsEdit
               Nenhuma variação criada. Adicione atributos e clique em "Gerar Combinações".
             </p>
           ) : (
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={handleDragEnd}
-            >
-              <div className="space-y-1">
-                <SortableContext
-                  items={variations.map((v) => v.id)}
-                  strategy={verticalListSortingStrategy}
-                >
-                  {variations.map((variation) => (
-                    <VariationRow
-                      key={variation.id}
-                      variation={variation}
-                      stores={stores}
-                      storeStock={storeStockMap[variation.id] || {}}
-                      onUpdate={handleUpdateVariation}
-                      onUpdateStoreStock={handleUpdateStoreStock}
-                      onDelete={handleDeleteVariation}
-                    />
-                  ))}
-                </SortableContext>
+            <>
+              <div className="relative mb-3">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar por nome, SKU ou código de barras..."
+                  value={variationSearch}
+                  onChange={(e) => setVariationSearch(e.target.value)}
+                  className="pl-9"
+                />
               </div>
-            </DndContext>
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <div className="space-y-1">
+                  <SortableContext
+                    items={variations.map((v) => v.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    {variations
+                      .filter((v) => {
+                        if (!variationSearch.trim()) return true;
+                        const q = variationSearch.toLowerCase();
+                        const attrLabel = (v.attribute_values || []).map((av) => av.value).join(' ').toLowerCase();
+                        return (
+                          attrLabel.includes(q) ||
+                          (v.sku && v.sku.toLowerCase().includes(q)) ||
+                          (v.barcode && v.barcode.toLowerCase().includes(q))
+                        );
+                      })
+                      .map((variation) => (
+                        <VariationRow
+                          key={variation.id}
+                          variation={variation}
+                          stores={stores}
+                          storeStock={storeStockMap[variation.id] || {}}
+                          onUpdate={handleUpdateVariation}
+                          onUpdateStoreStock={handleUpdateStoreStock}
+                          onDelete={handleDeleteVariation}
+                        />
+                      ))}
+                  </SortableContext>
+                </div>
+              </DndContext>
+            </>
           )}
         </CardContent>
       </Card>
