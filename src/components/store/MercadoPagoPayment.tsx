@@ -164,6 +164,22 @@ const MercadoPagoPayment = ({
                 });
                 nameInput.addEventListener('focus', () => setIsCardFlipped(false));
               }
+
+              // Listen to CVV focus via click on container
+              const cvvContainer = document.getElementById('mp-security-code');
+              if (cvvContainer) {
+                cvvContainer.addEventListener('click', () => setIsCardFlipped(true));
+                cvvContainer.addEventListener('focusin', () => setIsCardFlipped(true));
+              }
+
+              // Listen to other containers to flip back
+              ['mp-card-number', 'mp-expiration-date'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                  el.addEventListener('click', () => setIsCardFlipped(false));
+                  el.addEventListener('focusin', () => setIsCardFlipped(false));
+                }
+              });
             },
             onSubmit: async (event: Event) => {
               event.preventDefault();
@@ -178,6 +194,21 @@ const MercadoPagoPayment = ({
               if (!error && data && data.length > 0) {
                 const method = data[0];
                 setCardBrand(method.id || '');
+              }
+            },
+            onBinChange: (bin: string) => {
+              if (bin) {
+                // Show first 6-8 digits, mask the rest
+                setCardDisplayNumber(bin.padEnd(16, '•').replace(/(.{4})/g, '$1 ').trim());
+                // Detect brand from BIN
+                if (bin.startsWith('4')) setCardBrand('visa');
+                else if (bin.startsWith('5') || bin.startsWith('2')) setCardBrand('mastercard');
+                else if (bin.startsWith('34') || bin.startsWith('37')) setCardBrand('amex');
+                else if (bin.startsWith('636368') || bin.startsWith('438935') || bin.startsWith('504175') || bin.startsWith('451416') || bin.startsWith('636297') || bin.startsWith('5067') || bin.startsWith('4576') || bin.startsWith('4011')) setCardBrand('elo');
+                else if (bin.startsWith('606282') || bin.startsWith('3841')) setCardBrand('hipercard');
+              } else {
+                setCardDisplayNumber('');
+                setCardBrand('');
               }
             },
           },
@@ -474,7 +505,6 @@ const MercadoPagoPayment = ({
                     id="mp-card-number"
                     className="h-10 border rounded-md bg-background [&>iframe]:!h-full [&>iframe]:!w-full"
                     style={{ minHeight: '40px' }}
-                    onFocus={() => setIsCardFlipped(false)}
                   />
                 </div>
                 <div className="space-y-2">
@@ -483,7 +513,6 @@ const MercadoPagoPayment = ({
                     id="mp-cardholder-name"
                     type="text"
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    onFocus={() => setIsCardFlipped(false)}
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
@@ -493,7 +522,6 @@ const MercadoPagoPayment = ({
                       id="mp-expiration-date"
                       className="h-10 border rounded-md bg-background [&>iframe]:!h-full [&>iframe]:!w-full"
                       style={{ minHeight: '40px' }}
-                      onFocus={() => setIsCardFlipped(false)}
                     />
                   </div>
                   <div className="space-y-2">
@@ -502,8 +530,6 @@ const MercadoPagoPayment = ({
                       id="mp-security-code"
                       className="h-10 border rounded-md bg-background [&>iframe]:!h-full [&>iframe]:!w-full"
                       style={{ minHeight: '40px' }}
-                      onClick={() => setIsCardFlipped(true)}
-                      onFocus={() => setIsCardFlipped(true)}
                     />
                   </div>
                 </div>
