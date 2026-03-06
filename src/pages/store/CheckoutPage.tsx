@@ -36,12 +36,15 @@ const CheckoutPage = () => {
     name: '',
     email: '',
     phone: '',
+    zipCode: '',
     address: '',
+    number: '',
+    neighborhood: '',
     city: '',
     state: '',
-    zipCode: '',
     complement: '',
   });
+  const [isFetchingCep, setIsFetchingCep] = useState(false);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('pt-BR', {
