@@ -201,6 +201,7 @@ const CustomerStep = ({ selectedCustomer, onSelectCustomer, saleType, onNext, on
         responsavel_nome: isPJ ? (formData.responsavel_nome.trim() || null) : null,
         responsavel_telefone: isPJ ? (formData.responsavel_telefone.trim() || null) : null,
         notes: formData.notes.trim() || null,
+        store_id: formData.store_id || null,
       };
 
       const { data, error } = await supabase
