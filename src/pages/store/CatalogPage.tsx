@@ -46,7 +46,7 @@ const CatalogPage = () => {
         if (productIds.length > 0) {
           const { data: variations } = await supabase
             .from('product_variations')
-            .select('id, product_id, image_url, is_active')
+            .select('id, product_id, image_url, is_active, sku')
             .in('product_id', productIds)
             .eq('is_active', true)
             .order('sort_order', { ascending: true });
