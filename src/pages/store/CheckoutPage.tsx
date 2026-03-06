@@ -336,13 +336,29 @@ const CheckoutPage = () => {
                     <CardTitle className="text-lg">Endereço de Entrega</CardTitle>
                   </CardHeader>
                   <CardContent className="grid sm:grid-cols-2 gap-4">
-                    <div className="sm:col-span-2">
-                      <Label htmlFor="address">Endereço *</Label>
-                      <Input id="address" name="address" placeholder="Rua, número" value={formData.address} onChange={handleInputChange} required />
+                    <div className="sm:col-span-1">
+                      <Label htmlFor="zipCode">CEP *</Label>
+                      <div className="relative">
+                        <Input id="zipCode" name="zipCode" placeholder="00000-000" value={formData.zipCode} onChange={handleInputChange} required />
+                        {isFetchingCep && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />}
+                      </div>
                     </div>
+                    <div className="sm:col-span-1" />
                     <div className="sm:col-span-2">
+                      <Label htmlFor="address">Rua / Avenida *</Label>
+                      <Input id="address" name="address" placeholder="Rua, avenida..." value={formData.address} onChange={handleInputChange} required />
+                    </div>
+                    <div>
+                      <Label htmlFor="number">Número *</Label>
+                      <Input id="number" name="number" placeholder="123" value={formData.number} onChange={handleInputChange} required />
+                    </div>
+                    <div>
                       <Label htmlFor="complement">Complemento</Label>
-                      <Input id="complement" name="complement" placeholder="Apartamento, bloco, etc." value={formData.complement} onChange={handleInputChange} />
+                      <Input id="complement" name="complement" placeholder="Apto, bloco..." value={formData.complement} onChange={handleInputChange} />
+                    </div>
+                    <div>
+                      <Label htmlFor="neighborhood">Bairro *</Label>
+                      <Input id="neighborhood" name="neighborhood" value={formData.neighborhood} onChange={handleInputChange} required />
                     </div>
                     <div>
                       <Label htmlFor="city">Cidade *</Label>
@@ -351,10 +367,6 @@ const CheckoutPage = () => {
                     <div>
                       <Label htmlFor="state">Estado *</Label>
                       <Input id="state" name="state" placeholder="SP" maxLength={2} value={formData.state} onChange={handleInputChange} required />
-                    </div>
-                    <div>
-                      <Label htmlFor="zipCode">CEP *</Label>
-                      <Input id="zipCode" name="zipCode" placeholder="00000-000" value={formData.zipCode} onChange={handleInputChange} required />
                     </div>
                   </CardContent>
                 </Card>
