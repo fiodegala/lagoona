@@ -77,6 +77,7 @@ const CustomerStep = ({ selectedCustomer, onSelectCustomer, saleType, onNext, on
   const isExchange = saleType === 'troca';
 
   const [customers, setCustomers] = useState<Customer[]>([]);
+  const [stores, setStores] = useState<{ id: string; name: string; type: string }[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showRegisterDialog, setShowRegisterDialog] = useState(false);
