@@ -36,12 +36,15 @@ const CheckoutPage = () => {
     name: '',
     email: '',
     phone: '',
+    zipCode: '',
     address: '',
+    number: '',
+    neighborhood: '',
     city: '',
     state: '',
-    zipCode: '',
     complement: '',
   });
+  const [isFetchingCep, setIsFetchingCep] = useState(false);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -115,6 +118,34 @@ const CheckoutPage = () => {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+
+    if (name === 'zipCode') {
+      const cleanCep = value.replace(/\D/g, '');
+      if (cleanCep.length === 8) {
+        fetchAddressByCep(cleanCep);
+      }
+    }
+  };
+
+  const fetchAddressByCep = async (cep: string) => {
+    setIsFetchingCep(true);
+    try {
+      const res = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+      const data = await res.json();
+      if (!data.erro) {
+        setFormData(prev => ({
+          ...prev,
+          address: data.logradouro || '',
+          neighborhood: data.bairro || '',
+          city: data.localidade || '',
+          state: data.uf || '',
+        }));
+      }
+    } catch (err) {
+      console.error('Erro ao buscar CEP:', err);
+    } finally {
+      setIsFetchingCep(false);
+    }
   };
 
   const handleCreateOrder = async (e: React.FormEvent) => {
@@ -125,7 +156,7 @@ const CheckoutPage = () => {
       return;
     }
 
-    if (!formData.name || !formData.email || !formData.phone || !formData.address || !formData.city || !formData.state || !formData.zipCode) {
+    if (!formData.name || !formData.email || !formData.phone || !formData.address || !formData.number || !formData.city || !formData.state || !formData.zipCode) {
       toast.error('Preencha todos os campos obrigatórios');
       return;
     }
@@ -152,6 +183,8 @@ const CheckoutPage = () => {
           customer_name: formData.name,
           shipping_address: {
             address: formData.address,
+            number: formData.number,
+            neighborhood: formData.neighborhood,
             city: formData.city,
             state: formData.state,
             zip_code: formData.zipCode,
@@ -305,13 +338,29 @@ const CheckoutPage = () => {
                     <CardTitle className="text-lg">Endereço de Entrega</CardTitle>
                   </CardHeader>
                   <CardContent className="grid sm:grid-cols-2 gap-4">
-                    <div className="sm:col-span-2">
-                      <Label htmlFor="address">Endereço *</Label>
-                      <Input id="address" name="address" placeholder="Rua, número" value={formData.address} onChange={handleInputChange} required />
+                    <div className="sm:col-span-1">
+                      <Label htmlFor="zipCode">CEP *</Label>
+                      <div className="relative">
+                        <Input id="zipCode" name="zipCode" placeholder="00000-000" value={formData.zipCode} onChange={handleInputChange} required />
+                        {isFetchingCep && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />}
+                      </div>
                     </div>
+                    <div className="sm:col-span-1" />
                     <div className="sm:col-span-2">
+                      <Label htmlFor="address">Rua / Avenida *</Label>
+                      <Input id="address" name="address" placeholder="Rua, avenida..." value={formData.address} onChange={handleInputChange} required />
+                    </div>
+                    <div>
+                      <Label htmlFor="number">Número *</Label>
+                      <Input id="number" name="number" placeholder="123" value={formData.number} onChange={handleInputChange} required />
+                    </div>
+                    <div>
                       <Label htmlFor="complement">Complemento</Label>
-                      <Input id="complement" name="complement" placeholder="Apartamento, bloco, etc." value={formData.complement} onChange={handleInputChange} />
+                      <Input id="complement" name="complement" placeholder="Apto, bloco..." value={formData.complement} onChange={handleInputChange} />
+                    </div>
+                    <div>
+                      <Label htmlFor="neighborhood">Bairro *</Label>
+                      <Input id="neighborhood" name="neighborhood" value={formData.neighborhood} onChange={handleInputChange} required />
                     </div>
                     <div>
                       <Label htmlFor="city">Cidade *</Label>
@@ -320,10 +369,6 @@ const CheckoutPage = () => {
                     <div>
                       <Label htmlFor="state">Estado *</Label>
                       <Input id="state" name="state" placeholder="SP" maxLength={2} value={formData.state} onChange={handleInputChange} required />
-                    </div>
-                    <div>
-                      <Label htmlFor="zipCode">CEP *</Label>
-                      <Input id="zipCode" name="zipCode" placeholder="00000-000" value={formData.zipCode} onChange={handleInputChange} required />
                     </div>
                   </CardContent>
                 </Card>
