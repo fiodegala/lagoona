@@ -475,6 +475,7 @@ export type Database = {
           notes: string | null
           phone: string | null
           razao_social: string | null
+          referral_source: string | null
           responsavel_nome: string | null
           responsavel_telefone: string | null
           state: string | null
@@ -503,6 +504,7 @@ export type Database = {
           notes?: string | null
           phone?: string | null
           razao_social?: string | null
+          referral_source?: string | null
           responsavel_nome?: string | null
           responsavel_telefone?: string | null
           state?: string | null
@@ -531,6 +533,7 @@ export type Database = {
           notes?: string | null
           phone?: string | null
           razao_social?: string | null
+          referral_source?: string | null
           responsavel_nome?: string | null
           responsavel_telefone?: string | null
           state?: string | null
