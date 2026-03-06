@@ -411,7 +411,7 @@ const Dashboard = () => {
     const todayPOSSales = rawPOSSales
       .filter(s => {
         const saleDate = new Date(s.created_at);
-        return saleDate >= today && saleDate < tomorrow;
+        return saleDate >= today && saleDate < tomorrow && s.status !== 'cancelled';
       })
       .reduce((sum, s) => sum + Number(s.total), 0);
 
@@ -431,7 +431,7 @@ const Dashboard = () => {
     const monthPOSSales = rawPOSSales
       .filter(s => {
         const saleDate = new Date(s.created_at);
-        return saleDate >= monthStart && saleDate <= monthEnd;
+        return saleDate >= monthStart && saleDate <= monthEnd && s.status !== 'cancelled';
       })
       .reduce((sum, s) => sum + Number(s.total), 0);
 
@@ -515,7 +515,7 @@ const Dashboard = () => {
 
       const dayPOSSales = rawPOSSales.filter(s => {
         const saleDate = new Date(s.created_at);
-        return saleDate >= date && saleDate < nextDate;
+        return saleDate >= date && saleDate < nextDate && s.status !== 'cancelled';
       });
 
       const dayName = daysCount === 1 
