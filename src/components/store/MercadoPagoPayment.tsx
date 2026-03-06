@@ -173,6 +173,24 @@ const MercadoPagoPayment = ({
     return () => clearTimeout(timeout);
   }, [activeTab, sdkReady, amount]);
 
+  // Poll card form data for brand detection
+  useEffect(() => {
+    if (activeTab !== 'credit_card' || !cardFormMountedRef.current || !cardFormRef.current) return;
+
+    const interval = setInterval(() => {
+      try {
+        const data = cardFormRef.current?.getCardFormData?.();
+        if (data) {
+          if (data.paymentMethodId) setCardBrand(data.paymentMethodId);
+        }
+      } catch {
+        // silent
+      }
+    }, 800);
+
+    return () => clearInterval(interval);
+  }, [activeTab, sdkReady]);
+
   // PIX polling
   useEffect(() => {
     if (!pixData) return;
