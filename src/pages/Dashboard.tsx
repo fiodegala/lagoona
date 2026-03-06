@@ -97,6 +97,7 @@ interface RawPOSSale {
   payment_method: string;
   payment_details: Record<string, unknown> | null;
   discount_amount: number | null;
+  status: string;
   items: { name?: string; qty?: number; quantity?: number; unit_price?: number; price?: number; is_promotional?: boolean; original_price?: number; total?: number }[];
   created_at: string;
 }
@@ -296,8 +297,9 @@ const Dashboard = () => {
   }, [rawOrders, periodStartDate, periodEndDate]);
 
   const filteredPOSSales = useMemo(() => {
-    if (!periodStartDate) return rawPOSSales;
-    return rawPOSSales.filter(s => {
+    const activeSales = rawPOSSales.filter(s => s.status !== 'cancelled');
+    if (!periodStartDate) return activeSales;
+    return activeSales.filter(s => {
       const saleDate = new Date(s.created_at);
       const afterStart = saleDate >= periodStartDate;
       const beforeEnd = !periodEndDate || saleDate <= periodEndDate;
