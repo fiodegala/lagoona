@@ -195,7 +195,7 @@ const POSPage = () => {
       }
     } else {
       const unitPrice = resolvePrice(product);
-      const isPromotional = saleType === 'varejo' && product.promotional_price != null && product.promotional_price < product.price;
+      const hasValidPromo = saleType === 'varejo' && product.promotional_price != null && product.promotional_price < product.price;
       const existingItem = cartItems.find((item) => item.product_id === product.id && !item.variation_id);
 
       if (existingItem) {
@@ -213,8 +213,7 @@ const POSPage = () => {
           name: product.name,
           image_url: product.image_url || null,
           unit_price: unitPrice,
-          original_price: isPromotional ? product.price : undefined,
-          is_promotional: isPromotional || undefined,
+          available_promotional_price: hasValidPromo ? product.promotional_price! : undefined,
           quantity: 1,
           discount_amount: 0,
           total: unitPrice,
