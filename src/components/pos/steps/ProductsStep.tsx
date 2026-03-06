@@ -15,6 +15,7 @@ interface ProductsStepProps {
   onUpdateQuantity: (itemId: string, quantity: number) => void;
   onRemoveItem: (itemId: string) => void;
   onApplyItemDiscount: (itemId: string, discountType: 'percentage' | 'fixed' | undefined, discountValue: number) => void;
+  onTogglePromoPrice: (itemId: string, usePromo: boolean) => void;
   generalDiscount: { type: 'percentage' | 'fixed'; value: number };
   onApplyGeneralDiscount: (type: 'percentage' | 'fixed', value: number) => void;
   subtotal: number;
@@ -31,6 +32,7 @@ const ProductsStep = ({
   onUpdateQuantity,
   onRemoveItem,
   onApplyItemDiscount,
+  onTogglePromoPrice,
   generalDiscount,
   onApplyGeneralDiscount,
   subtotal,
@@ -71,6 +73,7 @@ const ProductsStep = ({
       onUpdateQuantity={onUpdateQuantity}
       onRemoveItem={onRemoveItem}
       onApplyItemDiscount={onApplyItemDiscount}
+      onTogglePromoPrice={onTogglePromoPrice}
       generalDiscount={generalDiscount}
       onApplyGeneralDiscount={onApplyGeneralDiscount}
       subtotal={subtotal}

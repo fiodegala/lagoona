@@ -650,6 +650,7 @@ const POSPage = () => {
               onUpdateQuantity={handleUpdateQuantity}
               onRemoveItem={handleRemoveItem}
               onApplyItemDiscount={handleApplyItemDiscount}
+              onTogglePromoPrice={handleTogglePromoPrice}
               generalDiscount={generalDiscount}
               onApplyGeneralDiscount={(type, value) => setGeneralDiscount({ type, value })}
               subtotal={subtotal}
