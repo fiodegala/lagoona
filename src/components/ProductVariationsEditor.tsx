@@ -71,6 +71,9 @@ const ProductVariationsEditor = ({ productId, basePrice }: ProductVariationsEdit
   // Manual variation modal
   const [isManualModalOpen, setIsManualModalOpen] = useState(false);
 
+  // Search filter for variations
+  const [variationSearch, setVariationSearch] = useState('');
+
   // Drag and drop sensors
   const sensors = useSensors(
     useSensor(PointerSensor, {
