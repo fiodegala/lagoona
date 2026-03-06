@@ -117,9 +117,9 @@ const StockTransferModal: React.FC<Props> = ({ open, onOpenChange, stores, onTra
     const loadVariations = async () => {
       const { data: vars } = await supabase
         .from('product_variations')
-        .select('id, sku, barcode, product_variation_values(attribute_value_id, product_attribute_values(value, product_attributes(name)))')
+        .select('id, sku, barcode, is_active, product_variation_values(attribute_value_id, product_attribute_values(value, product_attributes(name)))')
         .eq('product_id', selectedProductId)
-        .eq('is_active', true);
+        .order('sort_order');
 
       if (vars && vars.length > 0) {
         const mapped = vars.map((v: any) => {
