@@ -111,7 +111,25 @@ const MercadoPagoPayment = ({
 
   // Mount CardForm when tab switches to credit_card and SDK is ready
   useEffect(() => {
-    if (activeTab !== 'credit_card' || !sdkReady || !mpInstanceRef.current || cardFormMountedRef.current) return;
+    if (activeTab !== 'credit_card' || !sdkReady || !mpInstanceRef.current) return;
+
+    // Reset mounted flag when re-entering the tab (DOM elements may have been destroyed)
+    // Check if the container still has an iframe; if not, we need to remount
+    const container = document.getElementById('mp-card-number');
+    if (cardFormMountedRef.current && container && container.querySelector('iframe')) {
+      return; // Already mounted and iframe still exists
+    }
+
+    // Cleanup previous card form if any
+    if (cardFormRef.current) {
+      try {
+        cardFormRef.current.unmount();
+      } catch {
+        // silent
+      }
+      cardFormRef.current = null;
+      cardFormMountedRef.current = false;
+    }
 
     // Small delay to ensure DOM elements exist
     const timeout = setTimeout(() => {
@@ -168,7 +186,7 @@ const MercadoPagoPayment = ({
       } catch (err) {
         console.error('CardForm init error:', err);
       }
-    }, 300);
+    }, 500);
 
     return () => clearTimeout(timeout);
   }, [activeTab, sdkReady, amount]);
