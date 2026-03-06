@@ -134,7 +134,8 @@ const POSPage = () => {
       case 'orcamento':
         return product.promotional_price ?? product.price;
       default:
-        return product.promotional_price ?? product.price;
+        // Varejo: always use regular retail price
+        return product.price;
     }
   }, [saleType]);
 
@@ -153,11 +154,15 @@ const POSPage = () => {
           case 'troca':
             return 0;
           default:
-            return variation.promotional_price ?? variation.price ?? product.promotional_price ?? product.price;
+            // Varejo: use regular retail price
+            return variation.price ?? product.price;
         }
       })();
 
-      const isPromotional = saleType === 'varejo' && variationPrice < basePrice && (variation.promotional_price != null || product.promotional_price != null);
+      // Determine available promotional price for this variation
+      const availablePromoPrice = variation.promotional_price ?? product.promotional_price ?? null;
+      const hasValidPromo = saleType === 'varejo' && availablePromoPrice != null && availablePromoPrice < basePrice;
+      const isPromotional = false; // No longer auto-apply promo
 
       const existingItem = cartItems.find((item) => item.product_id === product.id && item.variation_id === variationId);
       if (existingItem) {
@@ -180,6 +185,7 @@ const POSPage = () => {
           unit_price: variationPrice,
           original_price: isPromotional ? basePrice : undefined,
           is_promotional: isPromotional || undefined,
+          available_promotional_price: hasValidPromo ? availablePromoPrice! : undefined,
           quantity: 1,
           discount_amount: 0,
           total: variationPrice,
