@@ -118,6 +118,34 @@ const CheckoutPage = () => {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+
+    if (name === 'zipCode') {
+      const cleanCep = value.replace(/\D/g, '');
+      if (cleanCep.length === 8) {
+        fetchAddressByCep(cleanCep);
+      }
+    }
+  };
+
+  const fetchAddressByCep = async (cep: string) => {
+    setIsFetchingCep(true);
+    try {
+      const res = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+      const data = await res.json();
+      if (!data.erro) {
+        setFormData(prev => ({
+          ...prev,
+          address: data.logradouro || '',
+          neighborhood: data.bairro || '',
+          city: data.localidade || '',
+          state: data.uf || '',
+        }));
+      }
+    } catch (err) {
+      console.error('Erro ao buscar CEP:', err);
+    } finally {
+      setIsFetchingCep(false);
+    }
   };
 
   const handleCreateOrder = async (e: React.FormEvent) => {
