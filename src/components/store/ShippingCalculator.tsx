@@ -25,7 +25,7 @@ interface ShippingCalculatorProps {
   onShippingCalculated?: (result: ShippingResult | null) => void;
 }
 
-const ShippingCalculator = ({ productWeight = 0.5, orderTotal = 0 }: ShippingCalculatorProps) => {
+const ShippingCalculator = ({ productWeight = 0.5, orderTotal = 0, onShippingCalculated }: ShippingCalculatorProps) => {
   const [cep, setCep] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [options, setOptions] = useState<ShippingOption[] | null>(null);
