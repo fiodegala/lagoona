@@ -481,7 +481,6 @@ const CheckoutPage = () => {
                     className="w-full hidden lg:flex"
                     size="lg"
                     disabled={isSubmitting}
-                    onClick={handleCreateOrder}
                   >
                     {isSubmitting ? (
                       <>
