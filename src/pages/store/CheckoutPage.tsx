@@ -221,6 +221,7 @@ const CheckoutPage = () => {
         await supabase
           .from('orders')
            .update({
+            status: paymentData.status === 'approved' ? 'confirmed' : 'pending',
             payment_status: paymentData.status === 'approved' ? 'paid' : 'pending',
             payment_method: paymentData.payment_method_id,
             metadata: {
