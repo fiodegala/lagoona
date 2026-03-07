@@ -10,6 +10,8 @@ export interface Product {
   category_id: string | null;
   image_url: string | null;
   is_active: boolean;
+  visible_in_pos: boolean;
+  visible_in_catalog: boolean;
   metadata: Record<string, unknown>;
   barcode: string | null;
   wholesale_price: number | null;
@@ -43,6 +45,8 @@ export interface CreateProductData {
   category_id?: string;
   image_url?: string;
   is_active?: boolean;
+  visible_in_pos?: boolean;
+  visible_in_catalog?: boolean;
   metadata?: Record<string, unknown>;
   wholesale_price?: number;
   exclusive_price?: number;
@@ -86,6 +90,8 @@ export const productsService = {
       category_id: input.category_id || null,
       image_url: input.image_url || null,
       is_active: input.is_active ?? true,
+      visible_in_pos: input.visible_in_pos ?? true,
+      visible_in_catalog: input.visible_in_catalog ?? true,
       metadata: input.metadata || {},
       wholesale_price: input.wholesale_price ?? null,
       exclusive_price: input.exclusive_price ?? null,
@@ -120,6 +126,8 @@ export const productsService = {
     if (input.category_id !== undefined) updateData.category_id = input.category_id || null;
     if (input.image_url !== undefined) updateData.image_url = input.image_url;
     if (input.is_active !== undefined) updateData.is_active = input.is_active;
+    if (input.visible_in_pos !== undefined) updateData.visible_in_pos = input.visible_in_pos;
+    if (input.visible_in_catalog !== undefined) updateData.visible_in_catalog = input.visible_in_catalog;
     if (input.metadata !== undefined) updateData.metadata = input.metadata;
     if (input.wholesale_price !== undefined) updateData.wholesale_price = input.wholesale_price;
     if (input.exclusive_price !== undefined) updateData.exclusive_price = input.exclusive_price;

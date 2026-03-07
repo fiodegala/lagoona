@@ -39,7 +39,7 @@ const CatalogPage = () => {
           productsService.getAll(),
           categoriesService.getAll(),
         ]);
-        const activeProducts = prods.filter((p) => p.is_active);
+        const activeProducts = prods.filter((p) => (p as any).visible_in_catalog !== false);
         setProducts(activeProducts);
         setCategories(cats);
 

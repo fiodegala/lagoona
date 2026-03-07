@@ -1391,6 +1391,8 @@ export type Database = {
           promotional_price: number | null
           stock: number
           updated_at: string
+          visible_in_catalog: boolean
+          visible_in_pos: boolean
           weight_kg: number | null
           wholesale_price: number | null
           width_cm: number | null
@@ -1413,6 +1415,8 @@ export type Database = {
           promotional_price?: number | null
           stock?: number
           updated_at?: string
+          visible_in_catalog?: boolean
+          visible_in_pos?: boolean
           weight_kg?: number | null
           wholesale_price?: number | null
           width_cm?: number | null
@@ -1435,6 +1439,8 @@ export type Database = {
           promotional_price?: number | null
           stock?: number
           updated_at?: string
+          visible_in_catalog?: boolean
+          visible_in_pos?: boolean
           weight_kg?: number | null
           wholesale_price?: number | null
           width_cm?: number | null

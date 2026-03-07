@@ -65,6 +65,8 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
   const [videoUrl, setVideoUrl] = useState('');
   const [thumbnailVideoUrl, setThumbnailVideoUrl] = useState('');
   const [isActive, setIsActive] = useState(true);
+  const [visibleInPos, setVisibleInPos] = useState(true);
+  const [visibleInCatalog, setVisibleInCatalog] = useState(true);
   const [productType, setProductType] = useState<'simple' | 'variable'>('simple');
   const [hasVariations, setHasVariations] = useState(false);
   const [barcode, setBarcode] = useState('');
@@ -105,6 +107,8 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
         setVideoUrl(metadata?.video_url || '');
         setThumbnailVideoUrl(metadata?.thumbnail_video_url || '');
         setIsActive(product.is_active);
+        setVisibleInPos((product as any).visible_in_pos !== false);
+        setVisibleInCatalog((product as any).visible_in_catalog !== false);
         setBarcode((product as { barcode?: string }).barcode || '');
         setWeightKg(product.weight_kg?.toString() || '');
         setWidthCm(product.width_cm?.toString() || '');
@@ -206,6 +210,8 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
     setVideoUrl('');
     setThumbnailVideoUrl('');
     setIsActive(true);
+    setVisibleInPos(true);
+    setVisibleInCatalog(true);
     setActiveTab('details');
     setProductType('simple');
     setHasVariations(false);
@@ -245,6 +251,8 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
           category_id: (categoryId && categoryId !== 'none') ? categoryId : undefined,
           image_url: imageUrl.trim() || undefined,
           is_active: isActive,
+          visible_in_pos: visibleInPos,
+          visible_in_catalog: visibleInCatalog,
           barcode: barcode.trim() || undefined,
           wholesale_price: wholesalePrice ? parseFloat(wholesalePrice) : undefined,
           exclusive_price: exclusivePrice ? parseFloat(exclusivePrice) : undefined,
@@ -297,6 +305,8 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
         category_id: (categoryId && categoryId !== 'none') ? categoryId : undefined,
         image_url: imageUrl.trim() || undefined,
         is_active: isActive,
+        visible_in_pos: visibleInPos,
+        visible_in_catalog: visibleInCatalog,
         barcode: barcode.trim() || undefined,
         wholesale_price: wholesalePrice ? parseFloat(wholesalePrice) : undefined,
         exclusive_price: exclusivePrice ? parseFloat(exclusivePrice) : undefined,
@@ -731,18 +741,27 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
         </div>
       </div>
 
-      <div className="flex items-center justify-between rounded-lg border p-3">
-        <div>
-          <Label htmlFor="isActive" className="font-medium">Produto ativo</Label>
-          <p className="text-sm text-muted-foreground">
-            Produtos inativos não aparecem na loja
-          </p>
+      <div className="space-y-3 rounded-lg border p-4">
+        <Label className="font-medium">Visibilidade por Canal</Label>
+        <p className="text-xs text-muted-foreground">Controle onde este produto aparece</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <Label htmlFor="isActive" className="text-sm">Site (Loja Online)</Label>
+          </div>
+          <Switch id="isActive" checked={isActive} onCheckedChange={setIsActive} />
         </div>
-        <Switch
-          id="isActive"
-          checked={isActive}
-          onCheckedChange={setIsActive}
-        />
+        <div className="flex items-center justify-between">
+          <div>
+            <Label htmlFor="visibleInPos" className="text-sm">PDV (Frente de Caixa)</Label>
+          </div>
+          <Switch id="visibleInPos" checked={visibleInPos} onCheckedChange={setVisibleInPos} />
+        </div>
+        <div className="flex items-center justify-between">
+          <div>
+            <Label htmlFor="visibleInCatalog" className="text-sm">Catálogo (WhatsApp)</Label>
+          </div>
+          <Switch id="visibleInCatalog" checked={visibleInCatalog} onCheckedChange={setVisibleInCatalog} />
+        </div>
       </div>
 
       <DialogFooter className="pt-4">
