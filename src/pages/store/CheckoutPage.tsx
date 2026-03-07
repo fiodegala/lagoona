@@ -205,6 +205,7 @@ const CheckoutPage = () => {
 
       setOrderId(data.id);
       setStep('payment');
+      markCartRecovered();
       toast.success('Pedido criado! Agora escolha a forma de pagamento.');
     } catch (error) {
       console.error('Error creating order:', error);
@@ -241,7 +242,6 @@ const CheckoutPage = () => {
 
     setOrderComplete(true);
     clearCart();
-    markCartRecovered();
   };
 
   const handlePaymentError = (error: string) => {
