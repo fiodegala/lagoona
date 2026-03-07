@@ -437,11 +437,11 @@ const CustomerStep = ({ selectedCustomer, onSelectCustomer, saleType, onNext, on
                     <Input placeholder="000.000.000-00" value={formData.document} onChange={(e) => updateField('document', e.target.value)} />
                   </div>
                   <div>
-                    <Label className="text-sm">Data de Nascimento *</Label>
+                    <Label className="text-sm">Data de Nascimento</Label>
                     <Input type="date" value={formData.birthday} onChange={(e) => updateField('birthday', e.target.value)} />
                   </div>
                   <div>
-                    <Label className="text-sm">WhatsApp *</Label>
+                    <Label className="text-sm">WhatsApp</Label>
                     <Input placeholder="(00) 00000-0000" value={formData.phone} onChange={(e) => updateField('phone', e.target.value)} />
                   </div>
                   <div>

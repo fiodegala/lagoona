@@ -726,7 +726,7 @@ const Customers = () => {
                   </div>
                   <div className="grid gap-4 sm:grid-cols-3">
                     <div className="space-y-2">
-                      <Label htmlFor="birthday">Data de Nascimento *</Label>
+                      <Label htmlFor="birthday">Data de Nascimento</Label>
                       <Input
                         id="birthday"
                         type="date"
@@ -735,7 +735,7 @@ const Customers = () => {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="phone">WhatsApp *</Label>
+                      <Label htmlFor="phone">WhatsApp</Label>
                       <Input
                         id="phone"
                         value={formData.phone || ''}
