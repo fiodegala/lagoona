@@ -65,6 +65,8 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
   const [videoUrl, setVideoUrl] = useState('');
   const [thumbnailVideoUrl, setThumbnailVideoUrl] = useState('');
   const [isActive, setIsActive] = useState(true);
+  const [visibleInPos, setVisibleInPos] = useState(true);
+  const [visibleInCatalog, setVisibleInCatalog] = useState(true);
   const [productType, setProductType] = useState<'simple' | 'variable'>('simple');
   const [hasVariations, setHasVariations] = useState(false);
   const [barcode, setBarcode] = useState('');
@@ -105,6 +107,8 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
         setVideoUrl(metadata?.video_url || '');
         setThumbnailVideoUrl(metadata?.thumbnail_video_url || '');
         setIsActive(product.is_active);
+        setVisibleInPos((product as any).visible_in_pos !== false);
+        setVisibleInCatalog((product as any).visible_in_catalog !== false);
         setBarcode((product as { barcode?: string }).barcode || '');
         setWeightKg(product.weight_kg?.toString() || '');
         setWidthCm(product.width_cm?.toString() || '');
@@ -206,6 +210,8 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
     setVideoUrl('');
     setThumbnailVideoUrl('');
     setIsActive(true);
+    setVisibleInPos(true);
+    setVisibleInCatalog(true);
     setActiveTab('details');
     setProductType('simple');
     setHasVariations(false);
