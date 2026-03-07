@@ -270,7 +270,7 @@ const ProductDetails = () => {
                       <ArrowLeft className="h-4 w-4 md:h-5 md:w-5" />
                     </button>
                     <button
-                      onClick={() => {
+                      onClick={(e) => { e.stopPropagation();
                         const currentIdx = allImages.indexOf(selectedImage || product.image_url || '');
                         const nextIdx = (currentIdx + 1) % allImages.length;
                         setSelectedImage(allImages[nextIdx]);
