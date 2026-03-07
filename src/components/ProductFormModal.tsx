@@ -741,18 +741,27 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
         </div>
       </div>
 
-      <div className="flex items-center justify-between rounded-lg border p-3">
-        <div>
-          <Label htmlFor="isActive" className="font-medium">Produto ativo</Label>
-          <p className="text-sm text-muted-foreground">
-            Produtos inativos não aparecem na loja
-          </p>
+      <div className="space-y-3 rounded-lg border p-4">
+        <Label className="font-medium">Visibilidade por Canal</Label>
+        <p className="text-xs text-muted-foreground">Controle onde este produto aparece</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <Label htmlFor="isActive" className="text-sm">Site (Loja Online)</Label>
+          </div>
+          <Switch id="isActive" checked={isActive} onCheckedChange={setIsActive} />
         </div>
-        <Switch
-          id="isActive"
-          checked={isActive}
-          onCheckedChange={setIsActive}
-        />
+        <div className="flex items-center justify-between">
+          <div>
+            <Label htmlFor="visibleInPos" className="text-sm">PDV (Frente de Caixa)</Label>
+          </div>
+          <Switch id="visibleInPos" checked={visibleInPos} onCheckedChange={setVisibleInPos} />
+        </div>
+        <div className="flex items-center justify-between">
+          <div>
+            <Label htmlFor="visibleInCatalog" className="text-sm">Catálogo (WhatsApp)</Label>
+          </div>
+          <Switch id="visibleInCatalog" checked={visibleInCatalog} onCheckedChange={setVisibleInCatalog} />
+        </div>
       </div>
 
       <DialogFooter className="pt-4">
