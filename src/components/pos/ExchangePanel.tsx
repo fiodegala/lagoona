@@ -161,6 +161,15 @@ const ExchangePanel = ({
   const removeReturned = (id: string) => setReturnedItems(items => items.filter(i => i.id !== id));
   const removeNew = (id: string) => setNewItems(items => items.filter(i => i.id !== id));
 
+  const updateItemDiscount = (
+    setter: React.Dispatch<React.SetStateAction<ExchangeItem[]>>,
+    id: string,
+    discountType: 'percentage' | 'fixed' | undefined,
+    discountValue: number
+  ) => {
+    setter(items => items.map(i => i.id === id ? { ...i, discount_type: discountType, discount_value: discountValue } : i));
+  };
+
   const parseCurrency = (value: string) => parseFloat(value.replace(',', '.')) || 0;
 
   const canConfirm = () => {
