@@ -134,6 +134,15 @@ const MercadoPagoPayment = ({
     // Small delay to ensure DOM elements exist
     const timeout = setTimeout(() => {
       try {
+        // Verify DOM elements exist before mounting
+        const requiredIds = ['mp-card-form', 'mp-card-number', 'mp-expiration-date', 'mp-security-code', 'mp-cardholder-name', 'mp-installments', 'mp-identification-number', 'mp-identification-type', 'mp-issuer'];
+        for (const id of requiredIds) {
+          if (!document.getElementById(id)) {
+            console.warn(`MP CardForm: element #${id} not found, skipping mount`);
+            return;
+          }
+        }
+
         const cardForm = mpInstanceRef.current.cardForm({
           amount: String(amount),
           iframe: true,
@@ -166,14 +175,11 @@ const MercadoPagoPayment = ({
               }
 
               // Flip card on CVV focus, flip back on other fields
-              // Since SDK fields are iframes, we can't capture focus inside them directly.
-              // Use a global focus/blur listener + interval to detect which field has focus.
               const detectFocusInterval = setInterval(() => {
                 try {
                   const activeEl = document.activeElement;
                   if (!activeEl) return;
                   
-                  // Check if focus is inside the CVV container's iframe
                   const cvvContainer = document.getElementById('mp-security-code');
                   if (cvvContainer) {
                     const cvvIframe = cvvContainer.querySelector('iframe');
@@ -183,7 +189,6 @@ const MercadoPagoPayment = ({
                     }
                   }
                   
-                  // Check if focus is on other card fields - flip back
                   const otherContainers = ['mp-card-number', 'mp-expiration-date'];
                   for (const id of otherContainers) {
                     const container = document.getElementById(id);
@@ -196,7 +201,6 @@ const MercadoPagoPayment = ({
                     }
                   }
                   
-                  // Check cardholder name
                   const nameInput = document.getElementById('mp-cardholder-name');
                   if (activeEl === nameInput) {
                     setIsCardFlipped(false);
@@ -206,7 +210,6 @@ const MercadoPagoPayment = ({
                 }
               }, 300);
 
-              // Also add mousedown listeners on containers as backup
               const cvvContainer = document.getElementById('mp-security-code');
               if (cvvContainer) {
                 cvvContainer.addEventListener('mousedown', () => setIsCardFlipped(true));
@@ -218,7 +221,6 @@ const MercadoPagoPayment = ({
                 }
               });
 
-              // Cleanup interval on unmount via a custom attribute
               (window as any).__cardFocusInterval = detectFocusInterval;
             },
             onSubmit: async (event: Event) => {
@@ -238,9 +240,7 @@ const MercadoPagoPayment = ({
             },
             onBinChange: (bin: string) => {
               if (bin) {
-                // Show first 6-8 digits, mask the rest
                 setCardDisplayNumber(bin.padEnd(16, '•').replace(/(.{4})/g, '$1 ').trim());
-                // Detect brand from BIN
                 if (bin.startsWith('4')) setCardBrand('visa');
                 else if (bin.startsWith('5') || bin.startsWith('2')) setCardBrand('mastercard');
                 else if (bin.startsWith('34') || bin.startsWith('37')) setCardBrand('amex');
@@ -251,13 +251,16 @@ const MercadoPagoPayment = ({
                 setCardBrand('');
               }
             },
+            onError: (error: any) => {
+              console.error('CardForm error callback:', error);
+            },
           },
         });
         cardFormRef.current = cardForm;
       } catch (err) {
         console.error('CardForm init error:', err);
       }
-    }, 500);
+    }, 600);
 
     return () => {
       clearTimeout(timeout);
@@ -379,6 +382,8 @@ const MercadoPagoPayment = ({
 
   const handleCardPayment = async (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation();
+    
     if (!cardFormRef.current) {
       toast.error('SDK de pagamento não está pronto. Aguarde.');
       return;
@@ -386,12 +391,40 @@ const MercadoPagoPayment = ({
 
     setIsProcessing(true);
     try {
-      const cardFormData = cardFormRef.current.getCardFormData();
+      let cardFormData: any;
+      try {
+        cardFormData = cardFormRef.current.getCardFormData();
+      } catch (formErr) {
+        console.error('getCardFormData error:', formErr);
+        toast.error('Erro ao ler dados do cartão. Preencha todos os campos.');
+        setIsProcessing(false);
+        return;
+      }
+
+      if (!cardFormData || typeof cardFormData !== 'object') {
+        toast.error('Preencha todos os dados do cartão.');
+        setIsProcessing(false);
+        return;
+      }
+
       if (!cardFormData.token) {
-        // Try to create token
-        const tokenData = await cardFormRef.current.createCardToken();
-        if (!tokenData?.id) throw new Error('Não foi possível tokenizar o cartão');
-        cardFormData.token = tokenData.id;
+        try {
+          const tokenData = await cardFormRef.current.createCardToken();
+          if (!tokenData?.id) throw new Error('Não foi possível tokenizar o cartão');
+          cardFormData.token = tokenData.id;
+        } catch (tokenErr: any) {
+          console.error('createCardToken error:', tokenErr);
+          const msg = tokenErr?.message || tokenErr?.[0]?.message || 'Verifique os dados do cartão e tente novamente.';
+          toast.error(msg);
+          setIsProcessing(false);
+          return;
+        }
+      }
+
+      if (!cardFormData.paymentMethodId) {
+        toast.error('Não foi possível identificar a bandeira do cartão. Verifique o número.');
+        setIsProcessing(false);
+        return;
       }
 
       const { data, error } = await supabase.functions.invoke('mercadopago-payment', {
@@ -417,7 +450,7 @@ const MercadoPagoPayment = ({
       });
 
       if (error) throw new Error(error.message);
-      if (data.error) throw new Error(data.error);
+      if (data?.error) throw new Error(data.error);
 
       if (data.status === 'approved') {
         onPaymentSuccess(data);
@@ -425,10 +458,25 @@ const MercadoPagoPayment = ({
       } else if (data.status === 'in_process' || data.status === 'pending') {
         toast.info('Pagamento em análise. Você receberá uma confirmação em breve.');
         onPaymentSuccess(data);
+      } else if (data.status === 'rejected') {
+        const rejectionMessages: Record<string, string> = {
+          cc_rejected_insufficient_amount: 'Saldo insuficiente no cartão.',
+          cc_rejected_bad_filled_security_code: 'Código de segurança inválido.',
+          cc_rejected_bad_filled_date: 'Data de validade inválida.',
+          cc_rejected_bad_filled_other: 'Verifique os dados do cartão.',
+          cc_rejected_high_risk: 'Pagamento recusado por segurança. Tente outro método.',
+          cc_rejected_call_for_authorize: 'Autorize o pagamento junto ao seu banco.',
+          cc_rejected_card_disabled: 'Cartão desabilitado. Entre em contato com seu banco.',
+          cc_rejected_max_attempts: 'Limite de tentativas excedido. Tente outro cartão.',
+        };
+        const detail = data.status_detail || '';
+        const friendlyMsg = rejectionMessages[detail] || `Pagamento recusado: ${detail}`;
+        toast.error(friendlyMsg);
       } else {
         throw new Error(`Pagamento ${data.status}: ${data.status_detail}`);
       }
     } catch (err: any) {
+      console.error('Card payment error:', err);
       onPaymentError(err.message || 'Erro ao processar pagamento');
       toast.error(err.message || 'Erro ao processar pagamento com cartão.');
     } finally {
