@@ -604,7 +604,7 @@ export const posService = {
       supabase
         .from('products')
         .select('*, product_variations(*), categories(name)')
-        .eq('is_active', true)
+        .eq('visible_in_pos', true)
         .order('name'),
       supabase
         .from('store_stock')
