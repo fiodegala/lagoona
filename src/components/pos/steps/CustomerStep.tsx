@@ -178,14 +178,6 @@ const CustomerStep = ({ selectedCustomer, onSelectCustomer, saleType, onNext, on
       toast.error('Nome Completo é obrigatório');
       return;
     }
-    if (!isPJ && !formData.phone.trim()) {
-      toast.error('WhatsApp é obrigatório');
-      return;
-    }
-    if (!isPJ && !formData.birthday) {
-      toast.error('Data de Nascimento é obrigatória');
-      return;
-    }
 
     setIsSaving(true);
     try {
