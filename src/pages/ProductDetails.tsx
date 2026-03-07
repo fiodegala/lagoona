@@ -234,9 +234,9 @@ const ProductDetails = () => {
           <span className="text-foreground line-clamp-1">{product.name}</span>
         </nav>
 
-        <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-12">
           {/* Product Images Gallery */}
-          <div className="space-y-4">
+          <div className="space-y-3 overflow-hidden">
             {/* Main Product Image with Navigation */}
             {product.image_url && (
               <div className="rounded-xl overflow-hidden border bg-muted relative group">
@@ -253,9 +253,9 @@ const ProductDetails = () => {
                         const prevIdx = (currentIdx - 1 + allImages.length) % allImages.length;
                         setSelectedImage(allImages[prevIdx]);
                       }}
-                      className="absolute left-2 top-1/2 -translate-y-1/2 bg-background/80 backdrop-blur-sm hover:bg-background rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="absolute left-2 top-1/2 -translate-y-1/2 bg-background/80 backdrop-blur-sm hover:bg-background rounded-full p-1.5 md:p-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
                     >
-                      <ArrowLeft className="h-5 w-5" />
+                      <ArrowLeft className="h-4 w-4 md:h-5 md:w-5" />
                     </button>
                     <button
                       onClick={() => {
@@ -263,7 +263,7 @@ const ProductDetails = () => {
                         const nextIdx = (currentIdx + 1) % allImages.length;
                         setSelectedImage(allImages[nextIdx]);
                       }}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 bg-background/80 backdrop-blur-sm hover:bg-background rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 bg-background/80 backdrop-blur-sm hover:bg-background rounded-full p-1.5 md:p-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
                     </button>
@@ -288,7 +288,7 @@ const ProductDetails = () => {
                     autoPlay
                     loop
                     playsInline
-                    className="w-full aspect-[9/16] object-cover max-h-[400px]"
+                    className="w-full aspect-[9/16] object-cover max-h-[300px] md:max-h-[400px]"
                   />
                   <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                     <div className="bg-background/80 backdrop-blur-sm rounded-full p-3">
@@ -415,7 +415,7 @@ const ProductDetails = () => {
                   {formatPrice(basePrice)}
                 </p>
               )}
-              <p className="text-3xl font-bold text-store-accent">
+              <p className="text-2xl md:text-3xl font-bold text-store-accent">
                 {formatPrice(currentPrice)}
               </p>
               <p className="text-sm text-muted-foreground">
@@ -551,7 +551,7 @@ const ProductDetails = () => {
             <ShippingCalculator productWeight={product.weight_kg || 0.5} orderTotal={product.promotional_price || product.price} />
 
             {/* Trust Badges */}
-            <div className="grid grid-cols-3 gap-4 py-4">
+            <div className="grid grid-cols-3 gap-2 md:gap-4 py-4">
               <div className="text-center">
                 <Truck className="h-6 w-6 mx-auto mb-1 text-store-primary" />
                 <span className="text-xs text-muted-foreground">Entrega Rápida</span>
