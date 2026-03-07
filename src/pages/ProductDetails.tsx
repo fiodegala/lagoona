@@ -326,23 +326,25 @@ const ProductDetails = () => {
               </>
             )}
 
-            {/* Gallery Thumbnails */}
+            {/* Gallery Thumbnails - Single Row Carousel */}
             {galleryImages.length > 0 && (
-              <div className="grid grid-cols-4 gap-2">
-                {galleryImages.map((img, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => setSelectedImage(img)}
-                    className={cn(
-                      "rounded-lg overflow-hidden border-2 transition-all aspect-square",
-                      (selectedImage || product.image_url) === img
-                        ? "border-store-primary ring-2 ring-store-primary/30"
-                        : "border-transparent hover:border-muted-foreground/30"
-                    )}
-                  >
-                    <img src={img} alt={`${product.name} ${idx + 2}`} className="w-full h-full object-cover" />
-                  </button>
-                ))}
+              <div className="relative group/gallery">
+                <div className="flex flex-nowrap gap-2 overflow-x-auto no-scrollbar scroll-smooth">
+                  {galleryImages.map((img, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setSelectedImage(img)}
+                      className={cn(
+                        "rounded-lg overflow-hidden border-2 transition-all shrink-0 w-16 h-16 md:w-20 md:h-20",
+                        (selectedImage || product.image_url) === img
+                          ? "border-store-primary ring-2 ring-store-primary/30"
+                          : "border-transparent hover:border-muted-foreground/30"
+                      )}
+                    >
+                      <img src={img} alt={`${product.name} ${idx + 2}`} className="w-full h-full object-cover" />
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
           </div>
