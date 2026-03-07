@@ -6,7 +6,8 @@ import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   ArrowLeft, Package, Loader2, ShoppingCart, Heart, Share2, 
-  Minus, Plus, Star, Truck, ShieldCheck, RotateCcw, Sparkles 
+  Minus, Plus, Star, Truck, ShieldCheck, RotateCcw, Sparkles,
+  ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { productsService, Product } from '@/services/products';
