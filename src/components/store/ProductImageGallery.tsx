@@ -317,40 +317,80 @@ const ProductImageGallery = ({
         )}
       </div>
 
-      {/* Thumbnails */}
+      {/* Thumbnails Carousel */}
       {mediaItems.length > 1 && (
-        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-muted">
-          {mediaItems.map((item, index) => (
-            <button
-              key={index}
-              onClick={() => handleThumbnailClick(index)}
-              className={cn(
-                "w-20 h-20 rounded-lg overflow-hidden border-2 shrink-0 transition-all relative",
-                index === currentIndex 
-                  ? "border-store-primary ring-2 ring-store-primary/20" 
-                  : "border-transparent hover:border-muted-foreground/30"
-              )}
-            >
-              {item.type === 'video' ? (
-                <div className="w-full h-full bg-muted flex items-center justify-center relative">
-                  {item.thumbnail ? (
-                    <img src={item.thumbnail} alt="Vídeo" className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full bg-muted-foreground/10" />
-                  )}
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                    <Play className="h-6 w-6 text-white fill-white" />
+        <div className="relative group/thumbs">
+          {/* Left arrow */}
+          <Button
+            variant="outline"
+            size="icon"
+            className={cn(
+              "absolute -left-1 top-1/2 -translate-y-1/2 z-10 h-7 w-7 rounded-full",
+              "bg-background/90 backdrop-blur-sm shadow-md",
+              "opacity-0 group-hover/thumbs:opacity-100 transition-opacity"
+            )}
+            onClick={() => {
+              const el = document.getElementById('thumb-carousel');
+              if (el) el.scrollBy({ left: -160, behavior: 'smooth' });
+            }}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+
+          <div
+            id="thumb-carousel"
+            className="flex gap-2 overflow-x-auto scrollbar-hide scroll-smooth"
+            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          >
+            {mediaItems.map((item, index) => (
+              <button
+                key={index}
+                onClick={() => handleThumbnailClick(index)}
+                className={cn(
+                  "w-16 h-16 md:w-20 md:h-20 rounded-lg overflow-hidden border-2 shrink-0 transition-all relative",
+                  index === currentIndex 
+                    ? "border-store-primary ring-2 ring-store-primary/20" 
+                    : "border-transparent hover:border-muted-foreground/30"
+                )}
+              >
+                {item.type === 'video' ? (
+                  <div className="w-full h-full bg-muted flex items-center justify-center relative">
+                    {item.thumbnail ? (
+                      <img src={item.thumbnail} alt="Vídeo" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full bg-muted-foreground/10" />
+                    )}
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                      <Play className="h-6 w-6 text-white fill-white" />
+                    </div>
                   </div>
-                </div>
-              ) : (
-                <img
-                  src={item.url}
-                  alt={`${productName} - Miniatura ${index + 1}`}
-                  className="w-full h-full object-cover"
-                />
-              )}
-            </button>
-          ))}
+                ) : (
+                  <img
+                    src={item.url}
+                    alt={`${productName} - Miniatura ${index + 1}`}
+                    className="w-full h-full object-cover"
+                  />
+                )}
+              </button>
+            ))}
+          </div>
+
+          {/* Right arrow */}
+          <Button
+            variant="outline"
+            size="icon"
+            className={cn(
+              "absolute -right-1 top-1/2 -translate-y-1/2 z-10 h-7 w-7 rounded-full",
+              "bg-background/90 backdrop-blur-sm shadow-md",
+              "opacity-0 group-hover/thumbs:opacity-100 transition-opacity"
+            )}
+            onClick={() => {
+              const el = document.getElementById('thumb-carousel');
+              if (el) el.scrollBy({ left: 160, behavior: 'smooth' });
+            }}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
         </div>
       )}
 
