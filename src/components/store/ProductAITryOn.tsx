@@ -127,7 +127,7 @@ const ProductAITryOn = ({
   }, [generatedImage]);
 
   return (
-    <div className="p-5 md:p-8">
+    <div className="p-4 md:p-8 overflow-hidden">
       {/* Section Header */}
       <div className="flex items-center gap-3 mb-2">
         <div className="h-px flex-1 bg-gradient-to-r from-transparent via-store-gold/30 to-transparent" />
@@ -138,8 +138,8 @@ const ProductAITryOn = ({
         <div className="h-px flex-1 bg-gradient-to-r from-transparent via-store-gold/30 to-transparent" />
       </div>
 
-      <div className="text-center mb-8">
-        <h2 className="text-2xl md:text-3xl font-display font-bold text-store-accent">
+      <div className="text-center mb-6">
+        <h2 className="text-xl md:text-3xl font-display font-bold text-store-accent">
           Experimente com IA
         </h2>
         <p className="text-muted-foreground text-sm mt-2 max-w-md mx-auto">
@@ -147,8 +147,8 @@ const ProductAITryOn = ({
         </p>
       </div>
 
-      <div className="rounded-2xl border border-store-gold/15 bg-gradient-to-b from-store-gold/[0.03] to-transparent p-5 md:p-8">
-        <div className="grid md:grid-cols-2 gap-6 md:gap-8">
+      <div className="rounded-2xl border border-store-gold/15 bg-gradient-to-b from-store-gold/[0.03] to-transparent p-4 md:p-8">
+        <div className="flex flex-col md:grid md:grid-cols-2 gap-5 md:gap-8">
           {/* Left — User Photo Upload */}
           <div className="space-y-4">
             <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
