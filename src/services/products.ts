@@ -126,6 +126,8 @@ export const productsService = {
     if (input.category_id !== undefined) updateData.category_id = input.category_id || null;
     if (input.image_url !== undefined) updateData.image_url = input.image_url;
     if (input.is_active !== undefined) updateData.is_active = input.is_active;
+    if (input.visible_in_pos !== undefined) updateData.visible_in_pos = input.visible_in_pos;
+    if (input.visible_in_catalog !== undefined) updateData.visible_in_catalog = input.visible_in_catalog;
     if (input.metadata !== undefined) updateData.metadata = input.metadata;
     if (input.wholesale_price !== undefined) updateData.wholesale_price = input.wholesale_price;
     if (input.exclusive_price !== undefined) updateData.exclusive_price = input.exclusive_price;
