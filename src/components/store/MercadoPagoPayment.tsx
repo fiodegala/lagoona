@@ -56,6 +56,8 @@ const MercadoPagoPayment = ({
   const mpInstanceRef = useRef<any>(null);
   const cardFormRef = useRef<any>(null);
   const cardFormMountedRef = useRef(false);
+  const tokenResolveRef = useRef<((token: string) => void) | null>(null);
+  const tokenRejectRef = useRef<((err: any) => void) | null>(null);
 
   // PIX state
   const [pixData, setPixData] = useState<{
@@ -230,7 +232,20 @@ const MercadoPagoPayment = ({
               return () => {};
             },
             onCardTokenReceived: (error: any, token: any) => {
-              // noop
+              if (error) {
+                console.warn('CardToken error (callback):', error);
+                if (tokenRejectRef.current) {
+                  tokenRejectRef.current(error);
+                  tokenRejectRef.current = null;
+                  tokenResolveRef.current = null;
+                }
+              } else if (token) {
+                if (tokenResolveRef.current) {
+                  tokenResolveRef.current(token);
+                  tokenResolveRef.current = null;
+                  tokenRejectRef.current = null;
+                }
+              }
             },
             onPaymentMethodsReceived: (error: any, data: any) => {
               if (!error && data && data.length > 0) {
@@ -409,12 +424,40 @@ const MercadoPagoPayment = ({
 
       if (!cardFormData.token) {
         try {
-          const tokenData = await cardFormRef.current.createCardToken();
-          if (!tokenData?.id) throw new Error('Não foi possível tokenizar o cartão');
-          cardFormData.token = tokenData.id;
+          // Use the SDK's built-in submit to generate the token via onCardTokenReceived callback
+          const tokenPromise = new Promise<string>((resolve, reject) => {
+            tokenResolveRef.current = resolve;
+            tokenRejectRef.current = reject;
+            // Timeout after 15s
+            setTimeout(() => {
+              tokenResolveRef.current = null;
+              tokenRejectRef.current = null;
+              reject(new Error('Tempo esgotado ao tokenizar o cartão.'));
+            }, 15000);
+          });
+
+          // Trigger the SDK's internal submit which generates the token
+          try {
+            const tokenResult = await cardFormRef.current.createCardToken();
+            if (tokenResult?.id) {
+              cardFormData.token = tokenResult.id;
+            }
+          } catch {
+            // createCardToken may fail; fall back to waiting for the callback
+          }
+
+          // If createCardToken didn't set the token, wait for the callback
+          if (!cardFormData.token) {
+            const token = await tokenPromise;
+            cardFormData.token = typeof token === 'string' ? token : (token as any)?.id;
+          }
+
+          if (!cardFormData.token) {
+            throw new Error('Verifique os dados do cartão e tente novamente.');
+          }
         } catch (tokenErr: any) {
-          console.error('createCardToken error:', tokenErr);
-          const msg = tokenErr?.message || tokenErr?.[0]?.message || 'Verifique os dados do cartão e tente novamente.';
+          console.error('Token generation error:', tokenErr);
+          const msg = tokenErr?.message || 'Verifique os dados do cartão e tente novamente.';
           toast.error(msg);
           setIsProcessing(false);
           return;
