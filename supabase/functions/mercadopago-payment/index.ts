@@ -154,10 +154,15 @@ async function createPayment(body: any, accessToken: string) {
     );
   }
 
+  // Build notification URL for MercadoPago webhooks
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+  const notificationUrl = `${supabaseUrl}/functions/v1/mercadopago-webhook`;
+
   const paymentBody: any = {
     transaction_amount: amount,
     description: typeof description === 'string' ? description.slice(0, 200) : 'Compra na Loja',
     payment_method_id,
+    notification_url: notificationUrl,
     payer: {
       email: payer.email,
       first_name: payer.first_name || undefined,
