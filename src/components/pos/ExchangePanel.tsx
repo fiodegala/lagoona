@@ -73,6 +73,7 @@ const ExchangePanel = ({
 }: ExchangePanelProps) => {
   const [returnedItems, setReturnedItems] = useState<ExchangeItem[]>([]);
   const [newItems, setNewItems] = useState<ExchangeItem[]>([]);
+  const [returnedItemsPriceType, setReturnedItemsPriceType] = useState<SaleType>('varejo');
   const [newItemsPriceType, setNewItemsPriceType] = useState<SaleType>('varejo');
   const [useCredit, setUseCredit] = useState(true);
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card' | 'pix' | null>(null);
