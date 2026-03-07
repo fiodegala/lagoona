@@ -6,8 +6,9 @@ import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   ArrowLeft, Package, Loader2, ShoppingCart, Heart, Share2, 
-  Minus, Plus, Star, Truck, ShieldCheck, RotateCcw 
+  Minus, Plus, Star, Truck, ShieldCheck, RotateCcw, Sparkles 
 } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { productsService, Product } from '@/services/products';
 import { categoriesService, Category } from '@/services/categories';
 import { ProductVariation } from '@/services/variations';
@@ -39,6 +40,7 @@ const ProductDetails = () => {
   const [productHasVariations, setProductHasVariations] = useState(false);
   const [upsellHasSelection, setUpsellHasSelection] = useState(false);
   const [upsellBuyTogether, setUpsellBuyTogether] = useState<(() => void) | null>(null);
+  const [tryOnOpen, setTryOnOpen] = useState(false);
   const { addItem } = useCart();
 
   useEffect(() => {
@@ -417,6 +419,34 @@ const ProductDetails = () => {
               </div>
             )}
 
+            {/* AI Try-On Button */}
+            <Dialog open={tryOnOpen} onOpenChange={setTryOnOpen}>
+              <DialogTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="w-full gap-2 h-11 border-store-gold/30 text-store-gold hover:bg-store-gold/5 hover:border-store-gold/50 transition-all"
+                >
+                  <Sparkles className="h-4 w-4" />
+                  Provador com IA
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto p-0">
+                <DialogHeader className="sr-only">
+                  <DialogTitle>Provador com IA</DialogTitle>
+                </DialogHeader>
+                <ProductAITryOn
+                  productName={product.name}
+                  productImage={selectedImage || product.image_url}
+                  selectedColor={selectedVariation?.attribute_values?.find(av => 
+                    av.attribute_name?.toLowerCase().includes('cor')
+                  )?.value}
+                  selectedSize={selectedVariation?.attribute_values?.find(av => 
+                    av.attribute_name?.toLowerCase().includes('tamanho') || av.attribute_name?.toLowerCase().includes('tam')
+                  )?.value}
+                />
+              </DialogContent>
+            </Dialog>
+
             {/* Quantity Selector */}
             <div className="space-y-2">
               <span className="font-medium text-sm">Quantidade:</span>
@@ -515,17 +545,6 @@ const ProductDetails = () => {
           </div>
         </div>
 
-        {/* AI Try-On Section */}
-        <ProductAITryOn
-          productName={product.name}
-          productImage={selectedImage || product.image_url}
-          selectedColor={selectedVariation?.attribute_values?.find(av => 
-            av.attribute_name?.toLowerCase().includes('cor')
-          )?.value}
-          selectedSize={selectedVariation?.attribute_values?.find(av => 
-            av.attribute_name?.toLowerCase().includes('tamanho') || av.attribute_name?.toLowerCase().includes('tam')
-          )?.value}
-        />
 
         {/* Product Details Tabs */}
         <div className="mt-12">

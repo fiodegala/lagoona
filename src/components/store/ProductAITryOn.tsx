@@ -106,7 +106,7 @@ const ProductAITryOn = ({
   }, [generatedImage]);
 
   return (
-    <section className="mt-16 mb-8">
+    <div className="p-5 md:p-8">
       {/* Section Header */}
       <div className="flex items-center gap-3 mb-2">
         <div className="h-px flex-1 bg-gradient-to-r from-transparent via-store-gold/30 to-transparent" />
@@ -343,7 +343,7 @@ const ProductAITryOn = ({
           </p>
         )}
       </div>
-    </section>
+    </div>
   );
 };
 
