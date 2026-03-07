@@ -158,8 +158,8 @@ const Reports = () => {
 
   // === KPI Cards ===
   const kpis = useMemo(() => {
-    const paidOrders = filteredOrders.filter(o => o.status !== 'cancelled');
-    const deliveredOrders = filteredOrders.filter(o => o.status === 'delivered' || o.status === 'completed');
+    const paidOrders = filteredOrders.filter(o => o.status !== 'cancelled' && o.status !== 'pending');
+    const deliveredOrders = filteredOrders.filter(o => ['confirmed', 'completed', 'delivered', 'processing', 'shipped'].includes(o.status));
     const onlineRevenue = deliveredOrders.reduce((s, o) => s + Number(o.total), 0);
     const posRevenue = filteredPOS.reduce((s, p) => s + p.total, 0);
     const totalRevenue = onlineRevenue + posRevenue;
@@ -173,7 +173,7 @@ const Reports = () => {
     const prevEnd = subDays(dateRange.end, daysDiff);
     const prevOrders = orders.filter(o => {
       const d = new Date(o.created_at);
-      return d >= prevStart && d <= prevEnd && (o.status === 'delivered' || o.status === 'completed');
+      return d >= prevStart && d <= prevEnd && ['confirmed', 'completed', 'delivered', 'processing', 'shipped'].includes(o.status);
     });
     const prevPOS = posSales.filter(s => {
       const d = new Date(s.created_at);
@@ -197,7 +197,7 @@ const Reports = () => {
       const dayEnd = endOfDay(date);
 
       const onlineDay = filteredOrders
-        .filter(o => { const d = new Date(o.created_at); return d >= dayStart && d <= dayEnd && o.status !== 'cancelled'; })
+        .filter(o => { const d = new Date(o.created_at); return d >= dayStart && d <= dayEnd && o.status !== 'cancelled' && o.status !== 'pending'; })
         .reduce((s, o) => s + Number(o.total), 0);
 
       const posDay = filteredPOS

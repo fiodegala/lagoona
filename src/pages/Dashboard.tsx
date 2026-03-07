@@ -186,7 +186,7 @@ const Dashboard = () => {
       const storeFilter = activeStoreFilter;
 
       // Orders: filter by store
-      let ordersQuery = supabase.from('orders').select('id, status, total, customer_name, customer_email, payment_method, created_at, shipping_address, items').in('status', ['completed', 'delivered']);
+      let ordersQuery = supabase.from('orders').select('id, status, total, customer_name, customer_email, payment_method, created_at, shipping_address, items').in('status', ['confirmed', 'completed', 'delivered', 'processing', 'shipped']);
       if (isSiteStoreSelected) {
         ordersQuery = ordersQuery.eq('store_id', SITE_STORE_ID);
       } else if (storeFilter && canAccessSiteStore) {
@@ -312,7 +312,7 @@ const Dashboard = () => {
   const stats: DashboardStats | null = useMemo(() => {
     if (isLoading) return null;
     
-    const completedOrders = filteredOrders.filter(o => o.status === 'completed' || o.status === 'delivered');
+    const completedOrders = filteredOrders.filter(o => ['confirmed', 'completed', 'delivered', 'processing', 'shipped'].includes(o.status));
     const pendingOrders = filteredOrders.filter(o => o.status === 'pending' || o.status === 'processing');
     const cancelledOrders = filteredOrders.filter(o => o.status === 'cancelled');
 
@@ -407,7 +407,7 @@ const Dashboard = () => {
     const todayOnlineSales = rawOrders
       .filter(o => {
         const orderDate = new Date(o.created_at);
-        return orderDate >= today && orderDate < tomorrow && (o.status === 'completed' || o.status === 'delivered');
+        return orderDate >= today && orderDate < tomorrow && ['confirmed', 'completed', 'delivered', 'processing', 'shipped'].includes(o.status);
       })
       .reduce((sum, o) => sum + Number(o.total), 0);
 
@@ -427,7 +427,7 @@ const Dashboard = () => {
     const monthOnlineSales = rawOrders
       .filter(o => {
         const orderDate = new Date(o.created_at);
-        return orderDate >= monthStart && orderDate <= monthEnd && (o.status === 'completed' || o.status === 'delivered');
+        return orderDate >= monthStart && orderDate <= monthEnd && ['confirmed', 'completed', 'delivered', 'processing', 'shipped'].includes(o.status);
       })
       .reduce((sum, o) => sum + Number(o.total), 0);
 
