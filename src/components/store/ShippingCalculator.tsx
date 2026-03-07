@@ -22,10 +22,11 @@ interface ShippingResult {
 interface ShippingCalculatorProps {
   productWeight?: number;
   orderTotal?: number;
+  forceFreeShipping?: boolean;
   onShippingCalculated?: (result: ShippingResult | null) => void;
 }
 
-const ShippingCalculator = ({ productWeight = 0.5, orderTotal = 0, onShippingCalculated }: ShippingCalculatorProps) => {
+const ShippingCalculator = ({ productWeight = 0.5, orderTotal = 0, forceFreeShipping = false, onShippingCalculated }: ShippingCalculatorProps) => {
   const [cep, setCep] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [options, setOptions] = useState<ShippingOption[] | null>(null);
@@ -74,15 +75,16 @@ const ShippingCalculator = ({ productWeight = 0.5, orderTotal = 0, onShippingCal
         onShippingCalculated?.(null);
         toast.info('Não há opções de frete disponíveis para este CEP.');
       } else {
+        const isFree = forceFreeShipping || result.isFreeShipping;
         const shippingData = {
           name: result.zone.name,
-          price: result.price,
+          price: isFree ? 0 : result.price,
           days: result.estimatedDays,
-          isFreeShipping: result.isFreeShipping,
+          isFreeShipping: isFree,
         };
         setOptions([{
           ...shippingData,
-          company: result.isFreeShipping ? 'Frete Grátis' : 'Transportadora',
+          company: isFree ? 'Frete Grátis' : 'Transportadora',
         }]);
         onShippingCalculated?.(shippingData);
       }

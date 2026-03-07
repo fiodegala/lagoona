@@ -25,7 +25,7 @@ const getOrCreateSessionId = () => {
 };
 
 const CheckoutPage = () => {
-  const { items, getTotal, getSubtotal, clearCart, getItemCount } = useCart();
+  const { items, getTotal, getSubtotal, clearCart, getItemCount, comboFreeShipping } = useCart();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderComplete, setOrderComplete] = useState(false);
   const [orderId, setOrderId] = useState<string | null>(null);
@@ -387,7 +387,7 @@ const CheckoutPage = () => {
                   </CardContent>
                 </Card>
 
-                <ShippingCalculator orderTotal={total} onShippingCalculated={setShippingResult} />
+                <ShippingCalculator orderTotal={total} forceFreeShipping={comboFreeShipping} onShippingCalculated={setShippingResult} />
 
                 <div className="mt-6 lg:hidden">
                   <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
