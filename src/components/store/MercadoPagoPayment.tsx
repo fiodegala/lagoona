@@ -56,6 +56,8 @@ const MercadoPagoPayment = ({
   const mpInstanceRef = useRef<any>(null);
   const cardFormRef = useRef<any>(null);
   const cardFormMountedRef = useRef(false);
+  const tokenResolveRef = useRef<((token: string) => void) | null>(null);
+  const tokenRejectRef = useRef<((err: any) => void) | null>(null);
 
   // PIX state
   const [pixData, setPixData] = useState<{
