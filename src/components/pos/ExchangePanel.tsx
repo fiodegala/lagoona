@@ -37,6 +37,8 @@ export interface ExchangeItem {
   unit_price: number;
   quantity: number;
   max_stock: number;
+  discount_type?: 'percentage' | 'fixed';
+  discount_value?: number;
 }
 
 interface ExchangePanelProps {
@@ -71,13 +73,21 @@ const ExchangePanel = ({
 }: ExchangePanelProps) => {
   const [returnedItems, setReturnedItems] = useState<ExchangeItem[]>([]);
   const [newItems, setNewItems] = useState<ExchangeItem[]>([]);
+  const [returnedItemsPriceType, setReturnedItemsPriceType] = useState<SaleType>('varejo');
   const [newItemsPriceType, setNewItemsPriceType] = useState<SaleType>('varejo');
   const [useCredit, setUseCredit] = useState(true);
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card' | 'pix' | null>(null);
   const [cashReceived, setCashReceived] = useState('');
 
-  const returnTotal = returnedItems.reduce((sum, item) => sum + item.unit_price * item.quantity, 0);
-  const newTotal = newItems.reduce((sum, item) => sum + item.unit_price * item.quantity, 0);
+  const calcItemTotal = (item: ExchangeItem) => {
+    const gross = item.unit_price * item.quantity;
+    if (!item.discount_type || !item.discount_value) return gross;
+    if (item.discount_type === 'percentage') return gross * (1 - item.discount_value / 100);
+    return Math.max(0, gross - item.discount_value);
+  };
+
+  const returnTotal = returnedItems.reduce((sum, item) => sum + calcItemTotal(item), 0);
+  const newTotal = newItems.reduce((sum, item) => sum + calcItemTotal(item), 0);
   const difference = newTotal - returnTotal;
 
   // If difference > 0 → customer pays. If < 0 → customer gets credit.
@@ -98,6 +108,7 @@ const ExchangePanel = ({
   }, []);
 
   const handleAddReturnedProduct = useCallback((product: ProductResult) => {
+    const unitPrice = resolvePrice(product, returnedItemsPriceType);
     const existing = returnedItems.find(i => i.product_id === product.id && !i.variation_id);
     if (existing) {
       setReturnedItems(items =>
@@ -108,12 +119,12 @@ const ExchangePanel = ({
         id: crypto.randomUUID(),
         product_id: product.id,
         name: product.name,
-        unit_price: product.price, // Always retail price for returns
+        unit_price: unitPrice,
         quantity: 1,
-        max_stock: 999, // No stock limit for returns
+        max_stock: 999,
       }]);
     }
-  }, [returnedItems]);
+  }, [returnedItems, returnedItemsPriceType, resolvePrice]);
 
   const handleAddNewProduct = useCallback((product: ProductResult) => {
     const unitPrice = resolvePrice(product, newItemsPriceType);
@@ -149,6 +160,15 @@ const ExchangePanel = ({
 
   const removeReturned = (id: string) => setReturnedItems(items => items.filter(i => i.id !== id));
   const removeNew = (id: string) => setNewItems(items => items.filter(i => i.id !== id));
+
+  const updateItemDiscount = (
+    setter: React.Dispatch<React.SetStateAction<ExchangeItem[]>>,
+    id: string,
+    discountType: 'percentage' | 'fixed' | undefined,
+    discountValue: number
+  ) => {
+    setter(items => items.map(i => i.id === id ? { ...i, discount_type: discountType, discount_value: discountValue } : i));
+  };
 
   const parseCurrency = (value: string) => parseFloat(value.replace(',', '.')) || 0;
 
@@ -190,37 +210,96 @@ const ExchangePanel = ({
               <Badge variant="secondary" className="text-xs">{returnedItems.length}</Badge>
             </div>
             <p className="text-xs text-muted-foreground mb-2">
-              Produtos que voltam ao estoque (preço de varejo)
+              Produtos que voltam ao estoque
             </p>
+            {/* Price type for returned items */}
+            <div className="flex gap-1 mb-2">
+              {([
+                { value: 'varejo' as SaleType, label: 'Varejo', icon: ShoppingBag },
+                { value: 'atacado' as SaleType, label: 'Atacado', icon: Package },
+                { value: 'exclusivo' as SaleType, label: 'Exclusivo', icon: Star },
+              ]).map(({ value, label, icon: Icon }) => (
+                <Button
+                  key={value}
+                  variant={returnedItemsPriceType === value ? 'default' : 'outline'}
+                  size="sm"
+                  className="flex-1 gap-1 text-xs"
+                  onClick={() => {
+                    if (returnedItems.length > 0) {
+                      setReturnedItems([]);
+                    }
+                    setReturnedItemsPriceType(value);
+                  }}
+                >
+                  <Icon className="h-3 w-3" />
+                  {label}
+                </Button>
+              ))}
+            </div>
             <ProductSearch
               onProductSelect={handleAddReturnedProduct}
               isOnline={isOnline}
             />
             {returnedItems.length > 0 && (
               <div className="mt-2 space-y-1.5">
-                {returnedItems.map(item => (
-                  <div key={item.id} className="flex items-center gap-2 p-2 rounded-md border bg-green-500/5 border-green-500/20">
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium truncate">{item.name}</div>
-                      <div className="text-xs text-muted-foreground">{formatCurrency(item.unit_price)} un.</div>
+                {returnedItems.map(item => {
+                  const itemTotal = calcItemTotal(item);
+                  const grossTotal = item.unit_price * item.quantity;
+                  const hasDiscount = item.discount_type && item.discount_value && item.discount_value > 0;
+                  return (
+                    <div key={item.id} className="p-2 rounded-md border bg-green-500/5 border-green-500/20 space-y-1.5">
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium truncate">{item.name}</div>
+                          <div className="text-xs text-muted-foreground">{formatCurrency(item.unit_price)} un.</div>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => updateReturnedQty(item.id, item.quantity - 1)}>
+                            <Minus className="h-3 w-3" />
+                          </Button>
+                          <span className="w-6 text-center text-sm font-medium">{item.quantity}</span>
+                          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => updateReturnedQty(item.id, item.quantity + 1)}>
+                            <Plus className="h-3 w-3" />
+                          </Button>
+                        </div>
+                        <span className="text-sm font-semibold w-20 text-right text-green-600">
+                          {formatCurrency(itemTotal)}
+                        </span>
+                        <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => removeReturned(item.id)}>
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                      {/* Per-item discount */}
+                      <div className="flex items-center gap-1.5">
+                        <Select
+                          value={item.discount_type || 'none'}
+                          onValueChange={(v) => updateItemDiscount(setReturnedItems, item.id, v === 'none' ? undefined : v as 'percentage' | 'fixed', item.discount_value || 0)}
+                        >
+                          <SelectTrigger className="h-7 w-24 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">Sem desc.</SelectItem>
+                            <SelectItem value="percentage">%</SelectItem>
+                            <SelectItem value="fixed">R$</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        {item.discount_type && (
+                          <Input
+                            type="number"
+                            className="h-7 w-20 text-xs"
+                            placeholder="0"
+                            value={item.discount_value || ''}
+                            onChange={e => updateItemDiscount(setReturnedItems, item.id, item.discount_type, parseFloat(e.target.value) || 0)}
+                          />
+                        )}
+                        {hasDiscount && (
+                          <span className="text-xs text-muted-foreground line-through">{formatCurrency(grossTotal)}</span>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => updateReturnedQty(item.id, item.quantity - 1)}>
-                        <Minus className="h-3 w-3" />
-                      </Button>
-                      <span className="w-6 text-center text-sm font-medium">{item.quantity}</span>
-                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => updateReturnedQty(item.id, item.quantity + 1)}>
-                        <Plus className="h-3 w-3" />
-                      </Button>
-                    </div>
-                    <span className="text-sm font-semibold w-20 text-right text-green-600">
-                      {formatCurrency(item.unit_price * item.quantity)}
-                    </span>
-                    <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => removeReturned(item.id)}>
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
-                  </div>
-                ))}
+                  );
+                })}
                 <div className="text-right text-sm font-semibold text-green-600">
                   Crédito: {formatCurrency(returnTotal)}
                 </div>
@@ -270,29 +349,64 @@ const ExchangePanel = ({
             />
             {newItems.length > 0 && (
               <div className="mt-2 space-y-1.5">
-                {newItems.map(item => (
-                  <div key={item.id} className="flex items-center gap-2 p-2 rounded-md border bg-blue-500/5 border-blue-500/20">
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium truncate">{item.name}</div>
-                      <div className="text-xs text-muted-foreground">{formatCurrency(item.unit_price)} un.</div>
+                {newItems.map(item => {
+                  const itemTotal = calcItemTotal(item);
+                  const grossTotal = item.unit_price * item.quantity;
+                  const hasDiscount = item.discount_type && item.discount_value && item.discount_value > 0;
+                  return (
+                    <div key={item.id} className="p-2 rounded-md border bg-blue-500/5 border-blue-500/20 space-y-1.5">
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium truncate">{item.name}</div>
+                          <div className="text-xs text-muted-foreground">{formatCurrency(item.unit_price)} un.</div>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => updateNewQty(item.id, item.quantity - 1)}>
+                            <Minus className="h-3 w-3" />
+                          </Button>
+                          <span className="w-6 text-center text-sm font-medium">{item.quantity}</span>
+                          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => updateNewQty(item.id, item.quantity + 1)}>
+                            <Plus className="h-3 w-3" />
+                          </Button>
+                        </div>
+                        <span className="text-sm font-semibold w-20 text-right text-blue-600">
+                          {formatCurrency(itemTotal)}
+                        </span>
+                        <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => removeNew(item.id)}>
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                      {/* Per-item discount */}
+                      <div className="flex items-center gap-1.5">
+                        <Select
+                          value={item.discount_type || 'none'}
+                          onValueChange={(v) => updateItemDiscount(setNewItems, item.id, v === 'none' ? undefined : v as 'percentage' | 'fixed', item.discount_value || 0)}
+                        >
+                          <SelectTrigger className="h-7 w-24 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">Sem desc.</SelectItem>
+                            <SelectItem value="percentage">%</SelectItem>
+                            <SelectItem value="fixed">R$</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        {item.discount_type && (
+                          <Input
+                            type="number"
+                            className="h-7 w-20 text-xs"
+                            placeholder="0"
+                            value={item.discount_value || ''}
+                            onChange={e => updateItemDiscount(setNewItems, item.id, item.discount_type, parseFloat(e.target.value) || 0)}
+                          />
+                        )}
+                        {hasDiscount && (
+                          <span className="text-xs text-muted-foreground line-through">{formatCurrency(grossTotal)}</span>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => updateNewQty(item.id, item.quantity - 1)}>
-                        <Minus className="h-3 w-3" />
-                      </Button>
-                      <span className="w-6 text-center text-sm font-medium">{item.quantity}</span>
-                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => updateNewQty(item.id, item.quantity + 1)}>
-                        <Plus className="h-3 w-3" />
-                      </Button>
-                    </div>
-                    <span className="text-sm font-semibold w-20 text-right text-blue-600">
-                      {formatCurrency(item.unit_price * item.quantity)}
-                    </span>
-                    <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => removeNew(item.id)}>
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
-                  </div>
-                ))}
+                  );
+                })}
                 <div className="text-right text-sm font-semibold text-blue-600">
                   Total novos: {formatCurrency(newTotal)}
                 </div>
