@@ -175,8 +175,6 @@ const CheckoutPage = () => {
 
           if (item.variationId) {
             query = query.eq('variation_id', item.variationId);
-          } else {
-            query = query.is('variation_id', null);
           }
 
           const { data: stockRows } = await query;
