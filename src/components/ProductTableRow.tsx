@@ -33,6 +33,7 @@ interface ProductTableRowProps {
   onEdit: () => void;
   onDelete: () => void;
   onToggleActive: () => void;
+  onToggleVisibility: (field: 'is_active' | 'visible_in_pos' | 'visible_in_catalog', value: boolean) => void;
   getCategoryName: (categoryId: string | null) => string | null;
   formatCurrency: (value: number) => string;
   highlightBarcode?: string;
@@ -47,6 +48,7 @@ const ProductTableRow = ({
   onEdit,
   onDelete,
   onToggleActive,
+  onToggleVisibility,
   getCategoryName,
   formatCurrency,
   highlightBarcode = '',
@@ -213,16 +215,40 @@ const ProductTableRow = ({
             </Badge>
           </TableCell>
           <TableCell>
-            <div className="flex items-center gap-2">
-              <Switch
-                checked={product.is_active}
-                onCheckedChange={() => onToggleActive()}
-                disabled={!canManageProducts}
-                aria-label={product.is_active ? 'Desativar produto no site' : 'Ativar produto no site'}
-              />
-              <span className={`text-xs ${product.is_active ? 'text-success' : 'text-muted-foreground'}`}>
-                {product.is_active ? 'Visível' : 'Oculto'}
-              </span>
+            <div className="flex flex-col gap-1.5">
+              <div className="flex items-center gap-1.5">
+                <Switch
+                  checked={product.is_active}
+                  onCheckedChange={(val) => onToggleVisibility('is_active', val)}
+                  disabled={!canManageProducts}
+                  className="scale-75"
+                />
+                <span className={`text-[10px] ${product.is_active ? 'text-success' : 'text-muted-foreground'}`}>
+                  Site
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <Switch
+                  checked={(product as any).visible_in_pos !== false}
+                  onCheckedChange={(val) => onToggleVisibility('visible_in_pos', val)}
+                  disabled={!canManageProducts}
+                  className="scale-75"
+                />
+                <span className={`text-[10px] ${(product as any).visible_in_pos !== false ? 'text-success' : 'text-muted-foreground'}`}>
+                  PDV
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <Switch
+                  checked={(product as any).visible_in_catalog !== false}
+                  onCheckedChange={(val) => onToggleVisibility('visible_in_catalog', val)}
+                  disabled={!canManageProducts}
+                  className="scale-75"
+                />
+                <span className={`text-[10px] ${(product as any).visible_in_catalog !== false ? 'text-success' : 'text-muted-foreground'}`}>
+                  Catálogo
+                </span>
+              </div>
             </div>
           </TableCell>
           <TableCell className="text-right">
