@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   ArrowLeft, Package, Loader2, ShoppingCart, Heart, Share2, 
   Minus, Plus, Star, Truck, ShieldCheck, RotateCcw, Sparkles,
-  ChevronLeft, ChevronRight
+  ChevronLeft, ChevronRight, X, ZoomIn
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { productsService, Product } from '@/services/products';
@@ -42,6 +42,8 @@ const ProductDetails = () => {
   const [upsellHasSelection, setUpsellHasSelection] = useState(false);
   const [upsellBuyTogether, setUpsellBuyTogether] = useState<(() => void) | null>(null);
   const [tryOnOpen, setTryOnOpen] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
   const { addItem } = useCart();
 
   useEffect(() => {
