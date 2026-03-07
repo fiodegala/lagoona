@@ -305,6 +305,8 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
         category_id: (categoryId && categoryId !== 'none') ? categoryId : undefined,
         image_url: imageUrl.trim() || undefined,
         is_active: isActive,
+        visible_in_pos: visibleInPos,
+        visible_in_catalog: visibleInCatalog,
         barcode: barcode.trim() || undefined,
         wholesale_price: wholesalePrice ? parseFloat(wholesalePrice) : undefined,
         exclusive_price: exclusivePrice ? parseFloat(exclusivePrice) : undefined,
