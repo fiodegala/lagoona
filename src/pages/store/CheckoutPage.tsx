@@ -165,6 +165,39 @@ const CheckoutPage = () => {
     setIsSubmitting(true);
 
     try {
+      // Verify real-time stock availability before creating order
+      const stockChecks = await Promise.all(
+        items.map(async (item) => {
+          let query = supabase
+            .from('store_stock')
+            .select('quantity')
+            .eq('product_id', item.productId);
+
+          if (item.variationId) {
+            query = query.eq('variation_id', item.variationId);
+          } else {
+            query = query.is('variation_id', null);
+          }
+
+          const { data: stockRows } = await query;
+          const totalStock = (stockRows || []).reduce((sum, r) => sum + (r.quantity || 0), 0);
+          return { item, totalStock };
+        })
+      );
+
+      const outOfStock = stockChecks.filter(s => s.totalStock < s.item.quantity);
+      if (outOfStock.length > 0) {
+        const names = outOfStock.map(s => {
+          const available = s.totalStock;
+          return available <= 0
+            ? `"${s.item.name}" está esgotado`
+            : `"${s.item.name}" tem apenas ${available} unidade(s) disponível(is)`;
+        });
+        toast.error(`Estoque insuficiente: ${names.join('; ')}`);
+        setIsSubmitting(false);
+        return;
+      }
+
       const orderItems = items.map(item => ({
         product_id: item.productId,
         variation_id: item.variationId || null,
