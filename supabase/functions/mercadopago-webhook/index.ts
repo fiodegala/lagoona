@@ -116,6 +116,10 @@ Deno.serve(async (req) => {
         paymentStatus = 'pending';
         break;
       case 'rejected':
+        // Keep order pending so user can retry with another card/method
+        orderStatus = 'pending';
+        paymentStatus = 'pending';
+        break;
       case 'cancelled':
         orderStatus = 'cancelled';
         paymentStatus = 'failed';

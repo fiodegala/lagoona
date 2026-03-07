@@ -1,0 +1,1 @@
+UPDATE orders SET status = 'pending', payment_status = 'pending' WHERE status = 'cancelled' AND payment_status = 'failed' AND created_at > now() - interval '1 day'
