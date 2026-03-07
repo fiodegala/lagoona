@@ -260,7 +260,7 @@ const ProductDetails = () => {
                 {allImages.length > 1 && (
                   <>
                     <button
-                      onClick={() => {
+                      onClick={(e) => { e.stopPropagation();
                         const currentIdx = allImages.indexOf(selectedImage || product.image_url || '');
                         const prevIdx = (currentIdx - 1 + allImages.length) % allImages.length;
                         setSelectedImage(allImages[prevIdx]);
