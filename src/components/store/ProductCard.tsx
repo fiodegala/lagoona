@@ -1,4 +1,4 @@
-import { useState, useEffect, forwardRef } from 'react';
+import { useState, useEffect, forwardRef, memo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Package, ShoppingCart, Heart, Star, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { Product } from '@/services/products';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
+import { ProductCardMeta } from '@/hooks/useProductCardsMeta';
 
 const COLOR_MAP: Record<string, string> = {
   preto: '#000000', black: '#000000',
@@ -44,20 +45,30 @@ const COLOR_MAP: Record<string, string> = {
 interface ProductCardProps {
   product: Product;
   showDiscount?: boolean;
+  /** Pre-fetched meta from useProductCardsMeta. If not provided, card fetches its own. */
+  meta?: ProductCardMeta;
 }
 
-const ProductCard = forwardRef<HTMLAnchorElement, ProductCardProps>(({ product, showDiscount = true }, ref) => {
+const ProductCard = memo(forwardRef<HTMLAnchorElement, ProductCardProps>(({ product, showDiscount = true, meta }, ref) => {
   const { addItem } = useCart();
   const { isFavorite, toggleFavorite } = useFavorites();
   const navigate = useNavigate();
   const [isHovered, setIsHovered] = useState(false);
-  const [colorValues, setColorValues] = useState<string[]>([]);
-  const [hasVariations, setHasVariations] = useState(false);
+  
+  // Use pre-fetched meta if available, otherwise fall back to local fetch
+  const [localColorValues, setLocalColorValues] = useState<string[]>([]);
+  const [localHasVariations, setLocalHasVariations] = useState(false);
+  const [localLoaded, setLocalLoaded] = useState(!!meta);
+
+  const colorValues = meta ? meta.colorValues : localColorValues;
+  const hasVariations = meta ? meta.hasVariations : localHasVariations;
   
   const isWishlisted = isFavorite(product.id);
 
-  // Fetch color variations
+  // Only fetch locally if no meta was provided (fallback for standalone usage)
   useEffect(() => {
+    if (meta) return; // Already have batch data
+    
     const fetchProductMeta = async () => {
       const [colorsRes, varsRes] = await Promise.all([
         supabase
@@ -73,21 +84,20 @@ const ProductCard = forwardRef<HTMLAnchorElement, ProductCardProps>(({ product, 
           .limit(1),
       ]);
 
-      // Colors
       if (colorsRes.data && colorsRes.data.length > 0) {
         const attrIds = colorsRes.data.map(a => a.id);
         const { data: values } = await supabase
           .from('product_attribute_values')
           .select('value')
           .in('attribute_id', attrIds);
-        if (values) setColorValues(values.map(v => v.value));
+        if (values) setLocalColorValues(values.map(v => v.value));
       }
 
-      // Has variations
-      setHasVariations((varsRes.data || []).length > 0);
+      setLocalHasVariations((varsRes.data || []).length > 0);
+      setLocalLoaded(true);
     };
     fetchProductMeta();
-  }, [product.id]);
+  }, [product.id, meta]);
 
   // Desconto real baseado em promotional_price
   const hasRealDiscount = (product as any).promotional_price != null && (product as any).promotional_price < product.price;
@@ -157,6 +167,8 @@ const ProductCard = forwardRef<HTMLAnchorElement, ProductCardProps>(({ product, 
             <img
               src={product.image_url}
               alt={product.name}
+              loading="lazy"
+              decoding="async"
               className={cn(
                 "w-full h-full object-cover transition-transform duration-500",
                 isHovered && "scale-110"
@@ -302,7 +314,7 @@ const ProductCard = forwardRef<HTMLAnchorElement, ProductCardProps>(({ product, 
       </div>
     </Link>
   );
-});
+}));
 
 ProductCard.displayName = 'ProductCard';
 
