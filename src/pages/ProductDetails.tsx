@@ -241,12 +241,22 @@ const ProductDetails = () => {
           <div className="space-y-3 overflow-hidden">
             {/* Main Product Image with Navigation */}
             {product.image_url && (
-              <div className="rounded-xl overflow-hidden border bg-muted relative group">
+              <div className="rounded-xl overflow-hidden border bg-muted relative group cursor-pointer"
+                onClick={() => {
+                  const idx = allImages.indexOf(selectedImage || product.image_url || '');
+                  setLightboxIndex(idx >= 0 ? idx : 0);
+                  setLightboxOpen(true);
+                }}
+              >
                 <img
                   src={selectedImage || product.image_url}
                   alt={product.name}
                   className="w-full aspect-[4/5] object-cover"
                 />
+                {/* Zoom indicator */}
+                <div className="absolute bottom-3 right-3 bg-background/80 backdrop-blur-sm rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <ZoomIn className="h-4 w-4 text-foreground" />
+                </div>
                 {allImages.length > 1 && (
                   <>
                     <button
