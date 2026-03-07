@@ -174,10 +174,10 @@ const ProductGrid = ({
                         <Badge variant="destructive">Sem estoque</Badge>
                       </div>
                     )}
-                    {product.stock <= 5 && product.stock > 0 && (
+                    {product.stock <= 3 && product.stock > 0 && (
                       <Badge
                         variant="secondary"
-                        className="absolute top-1 right-1 text-xs bg-orange-500/90 text-white"
+                        className="absolute top-1 right-1 text-xs bg-orange-500/90 text-white animate-pulse"
                       >
                         {product.stock} un.
                       </Badge>
