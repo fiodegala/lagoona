@@ -239,14 +239,6 @@ const Customers = () => {
       toast({ title: 'Nome Completo é obrigatório', variant: 'destructive' });
       return;
     }
-    if (!isPJ && !formData.phone?.trim()) {
-      toast({ title: 'WhatsApp é obrigatório', variant: 'destructive' });
-      return;
-    }
-    if (!isPJ && !formData.birthday) {
-      toast({ title: 'Data de Nascimento é obrigatória', variant: 'destructive' });
-      return;
-    }
 
     // Validate document if provided
     if (formData.document) {
