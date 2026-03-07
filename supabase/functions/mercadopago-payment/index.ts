@@ -223,10 +223,9 @@ async function createPayment(body: any, accessToken: string) {
     if (data.status === 'approved') {
       orderStatus = 'confirmed';
       paymentStatus = 'paid';
-    } else if (data.status === 'rejected' || data.status === 'cancelled') {
-      orderStatus = 'cancelled';
-      paymentStatus = 'failed';
     }
+    // For rejected/cancelled: keep order as 'pending' so user can retry with another card
+    // The webhook will handle definitive status updates later
 
     await supabase
       .from('orders')
