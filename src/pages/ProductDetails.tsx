@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   ArrowLeft, Package, Loader2, ShoppingCart, Heart, Share2, 
   Minus, Plus, Star, Truck, ShieldCheck, RotateCcw, Sparkles,
-  ChevronLeft, ChevronRight
+  ChevronLeft, ChevronRight, X, ZoomIn
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { productsService, Product } from '@/services/products';
@@ -42,6 +42,8 @@ const ProductDetails = () => {
   const [upsellHasSelection, setUpsellHasSelection] = useState(false);
   const [upsellBuyTogether, setUpsellBuyTogether] = useState<(() => void) | null>(null);
   const [tryOnOpen, setTryOnOpen] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
   const { addItem } = useCart();
 
   useEffect(() => {
@@ -239,16 +241,26 @@ const ProductDetails = () => {
           <div className="space-y-3 overflow-hidden">
             {/* Main Product Image with Navigation */}
             {product.image_url && (
-              <div className="rounded-xl overflow-hidden border bg-muted relative group">
+              <div className="rounded-xl overflow-hidden border bg-muted relative group cursor-pointer"
+                onClick={() => {
+                  const idx = allImages.indexOf(selectedImage || product.image_url || '');
+                  setLightboxIndex(idx >= 0 ? idx : 0);
+                  setLightboxOpen(true);
+                }}
+              >
                 <img
                   src={selectedImage || product.image_url}
                   alt={product.name}
                   className="w-full aspect-[4/5] object-cover"
                 />
+                {/* Zoom indicator */}
+                <div className="absolute bottom-3 right-3 bg-background/80 backdrop-blur-sm rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <ZoomIn className="h-4 w-4 text-foreground" />
+                </div>
                 {allImages.length > 1 && (
                   <>
                     <button
-                      onClick={() => {
+                      onClick={(e) => { e.stopPropagation();
                         const currentIdx = allImages.indexOf(selectedImage || product.image_url || '');
                         const prevIdx = (currentIdx - 1 + allImages.length) % allImages.length;
                         setSelectedImage(allImages[prevIdx]);
@@ -258,7 +270,7 @@ const ProductDetails = () => {
                       <ArrowLeft className="h-4 w-4 md:h-5 md:w-5" />
                     </button>
                     <button
-                      onClick={() => {
+                      onClick={(e) => { e.stopPropagation();
                         const currentIdx = allImages.indexOf(selectedImage || product.image_url || '');
                         const nextIdx = (currentIdx + 1) % allImages.length;
                         setSelectedImage(allImages[nextIdx]);
@@ -366,6 +378,86 @@ const ProductDetails = () => {
                 >
                   <ChevronRight className="h-4 w-4" />
                 </button>
+              </div>
+            )}
+
+            {/* Lightbox Gallery */}
+            {lightboxOpen && (
+              <div
+                className="fixed inset-0 z-50 bg-black/95 backdrop-blur-sm flex items-center justify-center"
+                onClick={() => setLightboxOpen(false)}
+              >
+                {/* Close */}
+                <button
+                  onClick={() => setLightboxOpen(false)}
+                  className="absolute top-4 right-4 z-50 text-white hover:bg-white/20 rounded-full p-2 transition-colors"
+                >
+                  <X className="h-6 w-6" />
+                </button>
+
+                {/* Counter */}
+                <div className="absolute top-4 left-4 text-white/80 text-sm font-medium">
+                  {lightboxIndex + 1} / {allImages.length}
+                </div>
+
+                {/* Main Image */}
+                <div
+                  className="relative w-full h-[85vh] flex items-center justify-center px-16"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <img
+                    src={allImages[lightboxIndex]}
+                    alt={`${product.name} - ${lightboxIndex + 1}`}
+                    className="max-w-full max-h-full object-contain"
+                  />
+                </div>
+
+                {/* Nav arrows */}
+                {allImages.length > 1 && (
+                  <>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setLightboxIndex((lightboxIndex - 1 + allImages.length) % allImages.length);
+                      }}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-white hover:bg-white/20 rounded-full p-3 transition-colors"
+                    >
+                      <ChevronLeft className="h-8 w-8" />
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setLightboxIndex((lightboxIndex + 1) % allImages.length);
+                      }}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-white hover:bg-white/20 rounded-full p-3 transition-colors"
+                    >
+                      <ChevronRight className="h-8 w-8" />
+                    </button>
+                  </>
+                )}
+
+                {/* Thumbnails */}
+                {allImages.length > 1 && (
+                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 bg-black/50 backdrop-blur-sm rounded-lg p-2 max-w-[90vw] overflow-x-auto no-scrollbar">
+                    {allImages.map((img, idx) => (
+                      <button
+                        key={idx}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setLightboxIndex(idx);
+                        }}
+                        className={cn(
+                          "w-12 h-12 md:w-14 md:h-14 rounded-md overflow-hidden border-2 shrink-0 transition-all",
+                          idx === lightboxIndex
+                            ? "border-white"
+                            : "border-transparent opacity-60 hover:opacity-100"
+                        )}
+                      >
+                        <img src={img} alt={`Miniatura ${idx + 1}`} className="w-full h-full object-cover" />
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>
