@@ -285,6 +285,21 @@ const Products = () => {
     }
   };
 
+  const handleToggleVisibility = async (product: Product, field: 'is_active' | 'visible_in_pos' | 'visible_in_catalog', value: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('products')
+        .update({ [field]: value } as never)
+        .eq('id', product.id);
+      if (error) throw error;
+      const labels = { is_active: 'Site', visible_in_pos: 'PDV', visible_in_catalog: 'Catálogo' };
+      toast.success(`${labels[field]}: ${value ? 'Ativado' : 'Desativado'}`);
+      loadData();
+    } catch (error) {
+      toast.error('Erro ao atualizar visibilidade');
+    }
+  };
+
   // Bulk selection handlers
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
@@ -729,7 +744,7 @@ const Products = () => {
                           {getSortIcon('stock')}
                         </div>
                       </TableHead>
-                      <TableHead>Status</TableHead>
+                      <TableHead>Visibilidade</TableHead>
                       <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -744,6 +759,7 @@ const Products = () => {
                         onEdit={() => handleEdit(product)}
                         onDelete={() => handleDelete(product.id)}
                         onToggleActive={() => handleToggleActive(product)}
+                        onToggleVisibility={(field, value) => handleToggleVisibility(product, field, value)}
                         getCategoryName={getCategoryName}
                         formatCurrency={formatCurrency}
                         highlightBarcode={barcodeSearch}
