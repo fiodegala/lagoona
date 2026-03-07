@@ -335,12 +335,12 @@ const ProductDetails = () => {
                     const el = document.getElementById('detail-thumb-carousel');
                     if (el) el.scrollBy({ left: -160, behavior: 'smooth' });
                   }}
-                  className="absolute -left-1 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full bg-background/90 backdrop-blur-sm shadow-md flex items-center justify-center opacity-0 group-hover/gallery:opacity-100 transition-opacity border"
+                  className="absolute -left-1 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full bg-background/90 backdrop-blur-sm shadow-md flex items-center justify-center opacity-100 md:opacity-0 md:group-hover/gallery:opacity-100 transition-opacity border"
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </button>
 
-                <div id="detail-thumb-carousel" className="flex flex-nowrap gap-2 overflow-x-auto no-scrollbar scroll-smooth px-1">
+                <div id="detail-thumb-carousel" className="flex flex-nowrap gap-2 overflow-x-auto no-scrollbar scroll-smooth px-1 touch-pan-x">
                   {galleryImages.map((img, idx) => (
                     <button
                       key={idx}
@@ -362,7 +362,7 @@ const ProductDetails = () => {
                     const el = document.getElementById('detail-thumb-carousel');
                     if (el) el.scrollBy({ left: 160, behavior: 'smooth' });
                   }}
-                  className="absolute -right-1 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full bg-background/90 backdrop-blur-sm shadow-md flex items-center justify-center opacity-0 group-hover/gallery:opacity-100 transition-opacity border"
+                  className="absolute -right-1 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full bg-background/90 backdrop-blur-sm shadow-md flex items-center justify-center opacity-100 md:opacity-0 md:group-hover/gallery:opacity-100 transition-opacity border"
                 >
                   <ChevronRight className="h-4 w-4" />
                 </button>
