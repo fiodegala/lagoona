@@ -305,3 +305,72 @@ async function getPayment(paymentId: string | number, accessToken: string) {
     { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
   );
 }
+
+// Priority order for stock deduction: Hyper Modas 44 first, then Bernardo Sayão
+const STORE_PRIORITY = [
+  '351fbca7-44d9-42eb-8a77-76fa9fc3227c', // Hyper Modas 44
+  'ad756bb1-e8ff-43a7-ac5c-c600ba7bd0e3', // Bernardo Sayão
+];
+
+async function deductStockForOrder(supabase: any, orderId: string) {
+  try {
+    const { data: order } = await supabase
+      .from('orders')
+      .select('items')
+      .eq('id', orderId)
+      .single();
+
+    if (!order?.items || !Array.isArray(order.items)) {
+      console.error(`No items found for order ${orderId}`);
+      return;
+    }
+
+    for (const item of order.items) {
+      const productId = item.product_id;
+      const variationId = item.variation_id || null;
+      let remainingQty = item.quantity || 1;
+
+      if (!productId) continue;
+
+      for (const storeId of STORE_PRIORITY) {
+        if (remainingQty <= 0) break;
+
+        // Get current stock for this store
+        let query = supabase
+          .from('store_stock')
+          .select('id, quantity')
+          .eq('store_id', storeId)
+          .eq('product_id', productId);
+
+        if (variationId) {
+          query = query.eq('variation_id', variationId);
+        } else {
+          query = query.is('variation_id', null);
+        }
+
+        const { data: stockRow } = await query.single();
+
+        if (!stockRow || stockRow.quantity <= 0) continue;
+
+        const deduct = Math.min(remainingQty, stockRow.quantity);
+        const newQty = stockRow.quantity - deduct;
+
+        await supabase
+          .from('store_stock')
+          .update({ quantity: newQty, updated_at: new Date().toISOString() })
+          .eq('id', stockRow.id);
+
+        remainingQty -= deduct;
+        console.log(`Stock deducted: product=${productId}, variation=${variationId}, store=${storeId}, qty=-${deduct}, remaining=${newQty}`);
+      }
+
+      if (remainingQty > 0) {
+        console.warn(`Insufficient stock for product ${productId}, variation ${variationId}: ${remainingQty} units not deducted`);
+      }
+    }
+
+    console.log(`Stock deduction completed for order ${orderId}`);
+  } catch (err) {
+    console.error(`Error deducting stock for order ${orderId}:`, err);
+  }
+}
