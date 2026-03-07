@@ -79,8 +79,15 @@ const ExchangePanel = ({
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card' | 'pix' | null>(null);
   const [cashReceived, setCashReceived] = useState('');
 
-  const returnTotal = returnedItems.reduce((sum, item) => sum + item.unit_price * item.quantity, 0);
-  const newTotal = newItems.reduce((sum, item) => sum + item.unit_price * item.quantity, 0);
+  const calcItemTotal = (item: ExchangeItem) => {
+    const gross = item.unit_price * item.quantity;
+    if (!item.discount_type || !item.discount_value) return gross;
+    if (item.discount_type === 'percentage') return gross * (1 - item.discount_value / 100);
+    return Math.max(0, gross - item.discount_value);
+  };
+
+  const returnTotal = returnedItems.reduce((sum, item) => sum + calcItemTotal(item), 0);
+  const newTotal = newItems.reduce((sum, item) => sum + calcItemTotal(item), 0);
   const difference = newTotal - returnTotal;
 
   // If difference > 0 → customer pays. If < 0 → customer gets credit.
