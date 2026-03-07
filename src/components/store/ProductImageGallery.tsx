@@ -339,8 +339,7 @@ const ProductImageGallery = ({
 
           <div
             id="thumb-carousel"
-            className="flex gap-2 overflow-x-auto scrollbar-hide scroll-smooth"
-            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            className="flex flex-nowrap gap-2 overflow-x-auto scroll-smooth no-scrollbar"
           >
             {mediaItems.map((item, index) => (
               <button
