@@ -269,16 +269,16 @@ async function createPayment(body: any, accessToken: string) {
   );
 }
 
-async function getPayment(paymentId: string, accessToken: string) {
-  // Validate paymentId format
-  if (!paymentId || typeof paymentId !== 'string' || !/^\d{1,20}$/.test(paymentId)) {
+async function getPayment(paymentId: string | number, accessToken: string) {
+  const id = String(paymentId);
+  if (!id || !/^\d{1,20}$/.test(id)) {
     return new Response(
       JSON.stringify({ error: 'Invalid payment_id' }),
       { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 
-  const response = await fetch(`${MP_API}/v1/payments/${paymentId}`, {
+  const response = await fetch(`${MP_API}/v1/payments/${id}`, {
     headers: {
       'Authorization': `Bearer ${accessToken}`,
     },
