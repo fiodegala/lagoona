@@ -330,7 +330,9 @@ const HomePage = () => {
               >
                 {newProducts.slice(0, 15).map((product) => (
                   <div key={product.id} className="shrink-0 w-[160px] sm:w-[200px] md:w-[220px] lg:w-[240px]">
-                    <ProductCard product={product} />
+                    <ProductCard product={product} meta={productsMeta[product.id]} />
+                  </div>
+                ))}
                   </div>
                 ))}
               </div>
