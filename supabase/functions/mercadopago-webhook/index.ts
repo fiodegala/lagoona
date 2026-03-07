@@ -173,6 +173,11 @@ Deno.serve(async (req) => {
       await deductStockForOrder(supabase, orderId);
     }
 
+    // Restore stock if order was confirmed but now cancelled/refunded
+    if (wasAlreadyConfirmed && ['cancelled'].includes(orderStatus) && !updateError) {
+      await restoreStockForOrder(supabase, orderId);
+    }
+
     // Log the webhook
     await supabase.from('payment_webhooks').insert({
       provider: 'mercadopago',
@@ -261,5 +266,59 @@ async function deductStockForOrder(supabase: any, orderId: string) {
     console.log(`Stock deduction completed for order ${orderId}`);
   } catch (err) {
     console.error(`Error deducting stock for order ${orderId}:`, err);
+  }
+}
+
+async function restoreStockForOrder(supabase: any, orderId: string) {
+  try {
+    const { data: order } = await supabase
+      .from('orders')
+      .select('items')
+      .eq('id', orderId)
+      .single();
+
+    if (!order?.items || !Array.isArray(order.items)) {
+      console.error(`No items to restore for order ${orderId}`);
+      return;
+    }
+
+    for (const item of order.items) {
+      const productId = item.product_id;
+      const variationId = item.variation_id || null;
+      const quantity = item.quantity || 1;
+
+      if (!productId) continue;
+
+      for (const storeId of STORE_PRIORITY) {
+        let query = supabase
+          .from('store_stock')
+          .select('id, quantity')
+          .eq('store_id', storeId)
+          .eq('product_id', productId);
+
+        if (variationId) {
+          query = query.eq('variation_id', variationId);
+        } else {
+          query = query.is('variation_id', null);
+        }
+
+        const { data: stockRow } = await query.single();
+
+        if (stockRow) {
+          const newQty = stockRow.quantity + quantity;
+          await supabase
+            .from('store_stock')
+            .update({ quantity: newQty, updated_at: new Date().toISOString() })
+            .eq('id', stockRow.id);
+
+          console.log(`Stock restored: product=${productId}, variation=${variationId}, store=${storeId}, qty=+${quantity}, new_total=${newQty}`);
+          break;
+        }
+      }
+    }
+
+    console.log(`Stock restoration completed for order ${orderId}`);
+  } catch (err) {
+    console.error(`Error restoring stock for order ${orderId}:`, err);
   }
 }
