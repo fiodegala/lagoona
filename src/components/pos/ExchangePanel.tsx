@@ -108,6 +108,7 @@ const ExchangePanel = ({
   }, []);
 
   const handleAddReturnedProduct = useCallback((product: ProductResult) => {
+    const unitPrice = resolvePrice(product, returnedItemsPriceType);
     const existing = returnedItems.find(i => i.product_id === product.id && !i.variation_id);
     if (existing) {
       setReturnedItems(items =>
@@ -118,12 +119,12 @@ const ExchangePanel = ({
         id: crypto.randomUUID(),
         product_id: product.id,
         name: product.name,
-        unit_price: product.price, // Always retail price for returns
+        unit_price: unitPrice,
         quantity: 1,
-        max_stock: 999, // No stock limit for returns
+        max_stock: 999,
       }]);
     }
-  }, [returnedItems]);
+  }, [returnedItems, returnedItemsPriceType, resolvePrice]);
 
   const handleAddNewProduct = useCallback((product: ProductResult) => {
     const unitPrice = resolvePrice(product, newItemsPriceType);
