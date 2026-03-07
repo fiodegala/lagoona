@@ -19,6 +19,7 @@ import ProductReviews from '@/components/store/ProductReviews';
 import SizeGuideModal from '@/components/store/SizeGuideModal';
 import ProductImageGallery from '@/components/store/ProductImageGallery';
 import RelatedProducts from '@/components/store/RelatedProducts';
+import ProductAITryOn from '@/components/store/ProductAITryOn';
 import UpsellSection from '@/components/store/UpsellSection';
 import { useCart } from '@/contexts/CartContext';
 import { toast } from 'sonner';
