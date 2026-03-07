@@ -210,6 +210,42 @@ async function createPayment(body: any, accessToken: string) {
     external_reference: data.external_reference,
   };
 
+  // Update order status server-side immediately (for instant approvals like credit card)
+  if (order_id) {
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    );
+
+    let orderStatus = 'pending';
+    let paymentStatus = 'pending';
+
+    if (data.status === 'approved') {
+      orderStatus = 'confirmed';
+      paymentStatus = 'paid';
+    } else if (data.status === 'rejected' || data.status === 'cancelled') {
+      orderStatus = 'cancelled';
+      paymentStatus = 'failed';
+    }
+
+    await supabase
+      .from('orders')
+      .update({
+        status: orderStatus,
+        payment_status: paymentStatus,
+        payment_method: data.payment_method_id,
+        metadata: {
+          mercadopago_payment_id: data.id,
+          payment_status: data.status,
+          payment_status_detail: data.status_detail,
+          payment_type_id: data.payment_type_id,
+          installments: data.installments || 1,
+          transaction_amount: data.transaction_amount,
+        },
+      })
+      .eq('id', order_id);
+  }
+
   // PIX: return QR code data
   if (data.point_of_interaction?.transaction_data) {
     result.pix_qr_code = data.point_of_interaction.transaction_data.qr_code;
