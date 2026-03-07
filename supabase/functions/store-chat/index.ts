@@ -112,7 +112,9 @@ Camisetas, Camisas, Calças, Blazers, e outras peças de moda masculina.
 - Responda de forma concisa e objetiva
 - Use emojis com moderação para tornar a conversa mais agradável
 - Responda sempre em português brasileiro
-- Para dúvidas que não conseguir resolver, sugira contato pelo WhatsApp: https://wa.me/5562994165785`;
+- Se após 2-3 trocas de mensagem o cliente ainda parecer com dúvida ou insatisfeito, ou se a dúvida for complexa demais, ofereça proativamente o contato humano pelo WhatsApp
+- Para dúvidas que não conseguir resolver, SEMPRE sugira contato pelo WhatsApp com esta frase exata: "Se preferir, fale diretamente com nossa equipe pelo WhatsApp: [Clique aqui para falar no WhatsApp](https://wa.me/5562994165785?text=Ol%C3%A1!%20Vim%20pelo%20chat%20da%20Clara%20e%20preciso%20de%20ajuda.) 📱"
+- Ao final de respostas sobre trocas, devoluções, problemas com pedido ou qualquer assunto que possa precisar de atendimento humano, adicione a sugestão de WhatsApp`;
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {

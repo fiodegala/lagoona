@@ -141,6 +141,8 @@ const AIChatWidget = () => {
     }
   }, [input, isLoading, messages]);
 
+  const WHATSAPP_URL = 'https://wa.me/5562994165785?text=Ol%C3%A1!%20Vim%20pelo%20chat%20da%20Clara%20e%20preciso%20de%20ajuda.';
+
   const quickQuestions = [
     'Qual o prazo de entrega?',
     'Como faço uma troca?',
@@ -249,6 +251,21 @@ const AIChatWidget = () => {
                   {q}
                 </button>
               ))}
+            </div>
+          )}
+
+          {/* WhatsApp fallback - show after 4+ messages */}
+          {messages.length >= 4 && !isLoading && (
+            <div className="px-4 pb-2 shrink-0">
+              <a
+                href={WHATSAPP_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 w-full py-2 px-3 bg-[#25D366]/10 hover:bg-[#25D366]/20 text-[#25D366] rounded-full text-xs font-medium transition-colors border border-[#25D366]/20"
+              >
+                <MessageCircle className="h-3.5 w-3.5" />
+                Não encontrou a solução? Fale pelo WhatsApp
+              </a>
             </div>
           )}
 
