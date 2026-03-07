@@ -37,6 +37,8 @@ export interface ExchangeItem {
   unit_price: number;
   quantity: number;
   max_stock: number;
+  discount_type?: 'percentage' | 'fixed';
+  discount_value?: number;
 }
 
 interface ExchangePanelProps {
