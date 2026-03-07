@@ -7,9 +7,9 @@ serve(async (req) => {
   }
 
   try {
-    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
-    if (!OPENAI_API_KEY) {
-      return new Response(JSON.stringify({ error: "OPENAI_API_KEY is not configured" }), {
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) {
+      return new Response(JSON.stringify({ error: "LOVABLE_API_KEY is not configured" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -27,54 +27,99 @@ serve(async (req) => {
     const colorInfo = selectedColor ? `, na cor ${selectedColor}` : "";
     const sizeInfo = selectedSize ? `, tamanho ${selectedSize}` : "";
 
-    const prompt = `You are a virtual fitting room. Generate a realistic image of the person in the first photo wearing the clothing item "${productName}"${colorInfo}${sizeInfo} shown in the second photo. Keep the person's face, body type, pose and background exactly the same. Only change their clothing to match the product shown. Make it photorealistic and natural.`;
+    // Build the detailed try-on prompt
+    const prompt = `Use the first image as the person reference and the second image as the clothing reference.
 
-    // Build content array with images
+Create a highly realistic fashion try-on preview.
+
+The person in the first image must remain the same person:
+- preserve the exact face
+- preserve the skin tone
+- preserve the body proportions
+- preserve the pose and camera angle as much as possible
+
+Apply the clothing "${productName}"${colorInfo}${sizeInfo} from the second image naturally onto the person's body.
+
+The garment must remain visually identical to the original product:
+- same color
+- same fabric texture
+- same collar
+- same sleeves
+- same fit and structure
+- same details and stitching if visible
+
+The result must look like a real photograph from a professional fashion photoshoot.
+
+Lighting:
+Use natural studio lighting consistent with the original image.
+
+Fabric behavior:
+Create realistic fabric folds, shadows and natural draping of the garment on the body.
+
+Style rules:
+- photorealistic
+- realistic skin
+- realistic fabric texture
+- no artistic style
+- no illustration
+- no CGI look
+- no cartoon style
+- no stylization
+
+Do not change:
+- gender
+- body shape
+- ethnicity
+- facial features
+- background drastically
+
+The final result should look like a real e-commerce fashion photo of the person wearing the garment.
+
+Avoid: cartoon, illustration, cgi, 3d render, unrealistic skin, deformed body, extra arms, extra fingers, wrong clothing, incorrect fabric, wrong color, blurry face, low resolution, distorted clothing, incorrect proportions, fashion fantasy, artistic style, anime, painting.`;
+
+    // Build content array with both images
     const content: any[] = [
       { type: "text", text: prompt },
       {
         type: "image_url",
-        image_url: { url: userPhoto, detail: "high" },
+        image_url: { url: userPhoto },
       },
     ];
 
     if (productImage) {
-      // If productImage is a relative path, make it absolute
       let fullProductImage = productImage;
       if (productImage.startsWith("/")) {
-        const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
-        // Use the project's published URL or a placeholder
         fullProductImage = `https://fiodegalafdg.lovable.app${productImage}`;
       }
       content.push({
         type: "image_url",
-        image_url: { url: fullProductImage, detail: "high" },
+        image_url: { url: fullProductImage },
       });
     }
 
-    console.log("Calling OpenAI API for try-on generation...");
+    console.log("Calling Lovable AI Gateway for try-on generation...");
 
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${OPENAI_API_KEY}`,
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "gpt-4o",
+        model: "google/gemini-3-pro-image-preview",
         messages: [
           {
             role: "user",
             content,
           },
         ],
-        modalities: ["text"],
+        modalities: ["image", "text"],
       }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("OpenAI API error:", response.status, errorText);
+      console.error("AI Gateway error:", response.status, errorText);
 
       if (response.status === 429) {
         return new Response(JSON.stringify({ error: "Muitas requisições. Tente novamente em alguns instantes." }), {
@@ -82,9 +127,9 @@ serve(async (req) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      if (response.status === 402 || response.status === 401) {
-        return new Response(JSON.stringify({ error: "Erro de autenticação ou créditos insuficientes na OpenAI." }), {
-          status: response.status,
+      if (response.status === 402) {
+        return new Response(JSON.stringify({ error: "Créditos insuficientes no Lovable AI. Adicione créditos para continuar." }), {
+          status: 402,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
@@ -95,56 +140,21 @@ serve(async (req) => {
       });
     }
 
-    // GPT-4o can analyze images but cannot generate them directly
-    // We need to use DALL-E 3 for image generation
-    // First, get GPT-4o to create a detailed description, then generate with DALL-E
-    const analysisData = await response.json();
-    const description = analysisData.choices?.[0]?.message?.content;
+    const data = await response.json();
+    console.log("AI Gateway response received");
 
-    console.log("GPT-4o analysis complete, generating image with DALL-E 3...");
+    // Extract the generated image from the response
+    const generatedImage = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
 
-    // Now generate with DALL-E 3
-    const dallePrompt = `Photorealistic image of a person wearing ${productName}${colorInfo}${sizeInfo}. ${description ? `Details: ${description.substring(0, 500)}` : ""}. The image should look like a real photo from an online clothing store. Professional lighting, clean background.`;
-
-    const dalleResponse = await fetch("https://api.openai.com/v1/images/generations", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${OPENAI_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "dall-e-3",
-        prompt: dallePrompt.substring(0, 4000),
-        n: 1,
-        size: "1024x1792",
-        quality: "hd",
-        response_format: "b64_json",
-      }),
-    });
-
-    if (!dalleResponse.ok) {
-      const dalleError = await dalleResponse.text();
-      console.error("DALL-E error:", dalleResponse.status, dalleError);
-      return new Response(JSON.stringify({ error: "Não foi possível gerar a imagem. Tente novamente." }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const dalleData = await dalleResponse.json();
-    const b64Image = dalleData.data?.[0]?.b64_json;
-
-    if (!b64Image) {
-      console.error("No image in DALL-E response");
+    if (!generatedImage) {
+      console.error("No image in AI Gateway response:", JSON.stringify(data).substring(0, 500));
       return new Response(JSON.stringify({ error: "A IA não retornou uma imagem. Tente novamente." }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const imageDataUrl = `data:image/png;base64,${b64Image}`;
-
-    return new Response(JSON.stringify({ image: imageDataUrl }), {
+    return new Response(JSON.stringify({ image: generatedImage }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
