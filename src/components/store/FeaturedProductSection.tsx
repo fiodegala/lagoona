@@ -164,9 +164,9 @@ const FeaturedProductSection = ({ product }: FeaturedProductSectionProps) => {
               </Button>
             </div>
 
-            {currentStock > 0 && currentStock <= 5 && (
-              <p className="text-xs text-store-deal font-medium">
-                Apenas {currentStock} unidade{currentStock > 1 ? 's' : ''} restante{currentStock > 1 ? 's' : ''}!
+            {currentStock > 0 && currentStock <= 3 && (
+              <p className="text-xs text-store-deal font-medium animate-pulse">
+                🔥 Apenas {currentStock} unidade{currentStock > 1 ? 's' : ''} restante{currentStock > 1 ? 's' : ''}!
               </p>
             )}
 

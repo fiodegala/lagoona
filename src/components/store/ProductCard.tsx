@@ -175,8 +175,8 @@ const ProductCard = forwardRef<HTMLAnchorElement, ProductCardProps>(({ product, 
                 -{discountPercent}%
               </Badge>
             )}
-            {product.stock > 0 && product.stock <= 5 && (
-              <Badge variant="secondary" className="bg-warning text-warning-foreground text-xs">
+            {product.stock > 0 && product.stock <= 3 && (
+              <Badge variant="secondary" className="bg-warning text-warning-foreground text-xs animate-pulse">
                 Últimas unidades!
               </Badge>
             )}
