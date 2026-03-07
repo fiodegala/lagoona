@@ -134,6 +134,15 @@ Deno.serve(async (req) => {
         paymentStatus = 'pending';
     }
 
+    // Check current order status before updating (avoid double stock deduction)
+    const { data: currentOrder } = await supabase
+      .from('orders')
+      .select('status')
+      .eq('id', orderId)
+      .single();
+
+    const wasAlreadyConfirmed = currentOrder?.status === 'confirmed';
+
     // Update the order
     const { error: updateError } = await supabase
       .from('orders')
@@ -157,6 +166,11 @@ Deno.serve(async (req) => {
       console.error(`Error updating order ${orderId}:`, updateError);
     } else {
       console.log(`Order ${orderId} updated: status=${orderStatus}, payment=${paymentStatus}`);
+    }
+
+    // Deduct stock only if newly confirmed (not already confirmed by mercadopago-payment)
+    if (orderStatus === 'confirmed' && !wasAlreadyConfirmed && !updateError) {
+      await deductStockForOrder(supabase, orderId);
     }
 
     // Log the webhook

@@ -243,6 +243,11 @@ async function createPayment(body: any, accessToken: string) {
         },
       })
       .eq('id', order_id);
+
+    // Deduct stock when payment is approved
+    if (data.status === 'approved') {
+      await deductStockForOrder(supabase, order_id);
+    }
   }
 
   // PIX: return QR code data
