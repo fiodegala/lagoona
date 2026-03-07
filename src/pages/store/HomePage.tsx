@@ -333,8 +333,6 @@ const HomePage = () => {
                     <ProductCard product={product} meta={productsMeta[product.id]} />
                   </div>
                 ))}
-                  </div>
-                ))}
               </div>
               <Button
                 variant="outline"
