@@ -134,6 +134,15 @@ const MercadoPagoPayment = ({
     // Small delay to ensure DOM elements exist
     const timeout = setTimeout(() => {
       try {
+        // Verify DOM elements exist before mounting
+        const requiredIds = ['mp-card-form', 'mp-card-number', 'mp-expiration-date', 'mp-security-code', 'mp-cardholder-name', 'mp-installments', 'mp-identification-number', 'mp-identification-type', 'mp-issuer'];
+        for (const id of requiredIds) {
+          if (!document.getElementById(id)) {
+            console.warn(`MP CardForm: element #${id} not found, skipping mount`);
+            return;
+          }
+        }
+
         const cardForm = mpInstanceRef.current.cardForm({
           amount: String(amount),
           iframe: true,
@@ -166,14 +175,11 @@ const MercadoPagoPayment = ({
               }
 
               // Flip card on CVV focus, flip back on other fields
-              // Since SDK fields are iframes, we can't capture focus inside them directly.
-              // Use a global focus/blur listener + interval to detect which field has focus.
               const detectFocusInterval = setInterval(() => {
                 try {
                   const activeEl = document.activeElement;
                   if (!activeEl) return;
                   
-                  // Check if focus is inside the CVV container's iframe
                   const cvvContainer = document.getElementById('mp-security-code');
                   if (cvvContainer) {
                     const cvvIframe = cvvContainer.querySelector('iframe');
@@ -183,7 +189,6 @@ const MercadoPagoPayment = ({
                     }
                   }
                   
-                  // Check if focus is on other card fields - flip back
                   const otherContainers = ['mp-card-number', 'mp-expiration-date'];
                   for (const id of otherContainers) {
                     const container = document.getElementById(id);
@@ -196,7 +201,6 @@ const MercadoPagoPayment = ({
                     }
                   }
                   
-                  // Check cardholder name
                   const nameInput = document.getElementById('mp-cardholder-name');
                   if (activeEl === nameInput) {
                     setIsCardFlipped(false);
@@ -206,7 +210,6 @@ const MercadoPagoPayment = ({
                 }
               }, 300);
 
-              // Also add mousedown listeners on containers as backup
               const cvvContainer = document.getElementById('mp-security-code');
               if (cvvContainer) {
                 cvvContainer.addEventListener('mousedown', () => setIsCardFlipped(true));
@@ -218,7 +221,6 @@ const MercadoPagoPayment = ({
                 }
               });
 
-              // Cleanup interval on unmount via a custom attribute
               (window as any).__cardFocusInterval = detectFocusInterval;
             },
             onSubmit: async (event: Event) => {
@@ -238,9 +240,7 @@ const MercadoPagoPayment = ({
             },
             onBinChange: (bin: string) => {
               if (bin) {
-                // Show first 6-8 digits, mask the rest
                 setCardDisplayNumber(bin.padEnd(16, '•').replace(/(.{4})/g, '$1 ').trim());
-                // Detect brand from BIN
                 if (bin.startsWith('4')) setCardBrand('visa');
                 else if (bin.startsWith('5') || bin.startsWith('2')) setCardBrand('mastercard');
                 else if (bin.startsWith('34') || bin.startsWith('37')) setCardBrand('amex');
@@ -251,13 +251,16 @@ const MercadoPagoPayment = ({
                 setCardBrand('');
               }
             },
+            onError: (error: any) => {
+              console.error('CardForm error callback:', error);
+            },
           },
         });
         cardFormRef.current = cardForm;
       } catch (err) {
         console.error('CardForm init error:', err);
       }
-    }, 500);
+    }, 600);
 
     return () => {
       clearTimeout(timeout);
