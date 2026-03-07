@@ -217,30 +217,10 @@ const CheckoutPage = () => {
   };
 
   const handlePaymentSuccess = async (paymentData: any) => {
-    try {
-      // Update order with payment info
-      if (orderId) {
-        await supabase
-          .from('orders')
-           .update({
-            status: paymentData.status === 'approved' ? 'confirmed' : 'pending',
-            payment_status: paymentData.status === 'approved' ? 'paid' : 'pending',
-            payment_method: paymentData.payment_method_id,
-            metadata: {
-              mercadopago_payment_id: paymentData.id,
-              payment_status: paymentData.status,
-              payment_status_detail: paymentData.status_detail,
-              payment_type_id: paymentData.payment_type_id,
-              installments: paymentData.installments || 1,
-              transaction_amount: paymentData.transaction_amount || null,
-            },
-          })
-          .eq('id', orderId);
-      }
-    } catch (err) {
-      console.error('Error updating order:', err);
-    }
-
+    // Order status is updated server-side by the edge function (mercadopago-payment)
+    // and asynchronously by the webhook (mercadopago-webhook).
+    // No client-side update needed (anonymous users lack UPDATE permission).
+    console.log('Payment success:', paymentData.status, paymentData.id);
     setOrderComplete(true);
     clearCart();
   };
