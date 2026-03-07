@@ -177,9 +177,12 @@ const CheckoutPage = () => {
         image_url: item.imageUrl || null,
       }));
 
-      const { data, error } = await supabase
+      const newOrderId = crypto.randomUUID();
+
+      const { error } = await supabase
         .from('orders')
         .insert({
+          id: newOrderId,
           customer_email: formData.email,
           customer_name: formData.name,
           shipping_address: {
@@ -197,13 +200,11 @@ const CheckoutPage = () => {
           status: 'pending',
           payment_status: 'pending',
           store_id: 'e0b8ebbc-1b3b-4aec-b5f7-6925762e6ea1', // Site store
-        })
-        .select('id')
-        .single();
+        });
 
       if (error) throw error;
 
-      setOrderId(data.id);
+      setOrderId(newOrderId);
       setStep('payment');
       markCartRecovered();
       toast.success('Pedido criado! Agora escolha a forma de pagamento.');
