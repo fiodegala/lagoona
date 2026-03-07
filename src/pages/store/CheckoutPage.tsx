@@ -326,7 +326,7 @@ const CheckoutPage = () => {
         <div className="grid lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-6">
             {step === 'info' ? (
-              <form onSubmit={handleCreateOrder}>
+              <form id="checkout-form" onSubmit={handleCreateOrder}>
                 {/* Personal data */}
                 <Card className="mb-6">
                   <CardHeader>
@@ -481,7 +481,6 @@ const CheckoutPage = () => {
                     className="w-full hidden lg:flex"
                     size="lg"
                     disabled={isSubmitting}
-                    onClick={handleCreateOrder}
                   >
                     {isSubmitting ? (
                       <>
