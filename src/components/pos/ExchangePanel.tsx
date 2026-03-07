@@ -210,37 +210,96 @@ const ExchangePanel = ({
               <Badge variant="secondary" className="text-xs">{returnedItems.length}</Badge>
             </div>
             <p className="text-xs text-muted-foreground mb-2">
-              Produtos que voltam ao estoque (preço de varejo)
+              Produtos que voltam ao estoque
             </p>
+            {/* Price type for returned items */}
+            <div className="flex gap-1 mb-2">
+              {([
+                { value: 'varejo' as SaleType, label: 'Varejo', icon: ShoppingBag },
+                { value: 'atacado' as SaleType, label: 'Atacado', icon: Package },
+                { value: 'exclusivo' as SaleType, label: 'Exclusivo', icon: Star },
+              ]).map(({ value, label, icon: Icon }) => (
+                <Button
+                  key={value}
+                  variant={returnedItemsPriceType === value ? 'default' : 'outline'}
+                  size="sm"
+                  className="flex-1 gap-1 text-xs"
+                  onClick={() => {
+                    if (returnedItems.length > 0) {
+                      setReturnedItems([]);
+                    }
+                    setReturnedItemsPriceType(value);
+                  }}
+                >
+                  <Icon className="h-3 w-3" />
+                  {label}
+                </Button>
+              ))}
+            </div>
             <ProductSearch
               onProductSelect={handleAddReturnedProduct}
               isOnline={isOnline}
             />
             {returnedItems.length > 0 && (
               <div className="mt-2 space-y-1.5">
-                {returnedItems.map(item => (
-                  <div key={item.id} className="flex items-center gap-2 p-2 rounded-md border bg-green-500/5 border-green-500/20">
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium truncate">{item.name}</div>
-                      <div className="text-xs text-muted-foreground">{formatCurrency(item.unit_price)} un.</div>
+                {returnedItems.map(item => {
+                  const itemTotal = calcItemTotal(item);
+                  const grossTotal = item.unit_price * item.quantity;
+                  const hasDiscount = item.discount_type && item.discount_value && item.discount_value > 0;
+                  return (
+                    <div key={item.id} className="p-2 rounded-md border bg-green-500/5 border-green-500/20 space-y-1.5">
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium truncate">{item.name}</div>
+                          <div className="text-xs text-muted-foreground">{formatCurrency(item.unit_price)} un.</div>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => updateReturnedQty(item.id, item.quantity - 1)}>
+                            <Minus className="h-3 w-3" />
+                          </Button>
+                          <span className="w-6 text-center text-sm font-medium">{item.quantity}</span>
+                          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => updateReturnedQty(item.id, item.quantity + 1)}>
+                            <Plus className="h-3 w-3" />
+                          </Button>
+                        </div>
+                        <span className="text-sm font-semibold w-20 text-right text-green-600">
+                          {formatCurrency(itemTotal)}
+                        </span>
+                        <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => removeReturned(item.id)}>
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                      {/* Per-item discount */}
+                      <div className="flex items-center gap-1.5">
+                        <Select
+                          value={item.discount_type || 'none'}
+                          onValueChange={(v) => updateItemDiscount(setReturnedItems, item.id, v === 'none' ? undefined : v as 'percentage' | 'fixed', item.discount_value || 0)}
+                        >
+                          <SelectTrigger className="h-7 w-24 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">Sem desc.</SelectItem>
+                            <SelectItem value="percentage">%</SelectItem>
+                            <SelectItem value="fixed">R$</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        {item.discount_type && (
+                          <Input
+                            type="number"
+                            className="h-7 w-20 text-xs"
+                            placeholder="0"
+                            value={item.discount_value || ''}
+                            onChange={e => updateItemDiscount(setReturnedItems, item.id, item.discount_type, parseFloat(e.target.value) || 0)}
+                          />
+                        )}
+                        {hasDiscount && (
+                          <span className="text-xs text-muted-foreground line-through">{formatCurrency(grossTotal)}</span>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => updateReturnedQty(item.id, item.quantity - 1)}>
-                        <Minus className="h-3 w-3" />
-                      </Button>
-                      <span className="w-6 text-center text-sm font-medium">{item.quantity}</span>
-                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => updateReturnedQty(item.id, item.quantity + 1)}>
-                        <Plus className="h-3 w-3" />
-                      </Button>
-                    </div>
-                    <span className="text-sm font-semibold w-20 text-right text-green-600">
-                      {formatCurrency(item.unit_price * item.quantity)}
-                    </span>
-                    <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => removeReturned(item.id)}>
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
-                  </div>
-                ))}
+                  );
+                })}
                 <div className="text-right text-sm font-semibold text-green-600">
                   Crédito: {formatCurrency(returnTotal)}
                 </div>
