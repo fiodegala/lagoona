@@ -515,6 +515,18 @@ const ProductDetails = () => {
           </div>
         </div>
 
+        {/* AI Try-On Section */}
+        <ProductAITryOn
+          productName={product.name}
+          productImage={selectedImage || product.image_url}
+          selectedColor={selectedVariation?.attribute_values?.find(av => 
+            av.attribute_name?.toLowerCase().includes('cor')
+          )?.value}
+          selectedSize={selectedVariation?.attribute_values?.find(av => 
+            av.attribute_name?.toLowerCase().includes('tamanho') || av.attribute_name?.toLowerCase().includes('tam')
+          )?.value}
+        />
+
         {/* Product Details Tabs */}
         <div className="mt-12">
           <Tabs defaultValue="description" className="w-full">
