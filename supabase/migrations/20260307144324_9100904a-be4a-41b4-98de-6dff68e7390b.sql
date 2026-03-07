@@ -1,0 +1,1 @@
+UPDATE orders SET status = 'confirmed' WHERE id = '8ad82830-3631-43d5-98f9-7aa189b6f566' AND payment_status = 'paid';
