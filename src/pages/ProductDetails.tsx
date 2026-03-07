@@ -6,8 +6,9 @@ import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   ArrowLeft, Package, Loader2, ShoppingCart, Heart, Share2, 
-  Minus, Plus, Star, Truck, ShieldCheck, RotateCcw 
+  Minus, Plus, Star, Truck, ShieldCheck, RotateCcw, Sparkles 
 } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { productsService, Product } from '@/services/products';
 import { categoriesService, Category } from '@/services/categories';
 import { ProductVariation } from '@/services/variations';
@@ -39,6 +40,7 @@ const ProductDetails = () => {
   const [productHasVariations, setProductHasVariations] = useState(false);
   const [upsellHasSelection, setUpsellHasSelection] = useState(false);
   const [upsellBuyTogether, setUpsellBuyTogether] = useState<(() => void) | null>(null);
+  const [tryOnOpen, setTryOnOpen] = useState(false);
   const { addItem } = useCart();
 
   useEffect(() => {
