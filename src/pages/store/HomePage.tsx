@@ -1,4 +1,4 @@
-import { useEffect, useState, lazy, Suspense, useCallback, useRef } from 'react';
+import { useEffect, useState, lazy, Suspense, useCallback, useRef, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Loader2, ShoppingBag, Truck, RefreshCw, Shield, MessageCircle, TrendingUp, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,7 @@ import { categoriesService, Category } from '@/services/categories';
 import { bannersService, Banner } from '@/services/banners';
 import { enrichProductsWithStock } from '@/services/stockService';
 import { supabase } from '@/integrations/supabase/client';
+import { useProductCardsMeta } from '@/hooks/useProductCardsMeta';
 
 // Lazy load below-fold sections
 const DealsCountdownSection = lazy(() => import('@/components/store/DealsCountdownSection'));
@@ -101,12 +102,27 @@ const HomePage = () => {
     return () => clearInterval(interval);
   }, [midBanners.length]);
 
-  const newProducts = [...products].sort((a, b) =>
-    new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  const newProducts = useMemo(() => 
+    [...products].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()),
+    [products]
   );
 
   // Produtos com preço promocional (ofertas)
-  const dealProducts = products.filter(p => (p as any).promotional_price && (p as any).promotional_price < p.price);
+  const dealProducts = useMemo(() => 
+    products.filter(p => (p as any).promotional_price && (p as any).promotional_price < p.price),
+    [products]
+  );
+
+  // Batch-fetch meta for all products shown on the page
+  const allDisplayedProductIds = useMemo(() => {
+    const ids = new Set<string>();
+    newProducts.slice(0, 15).forEach(p => ids.add(p.id));
+    products.slice(0, 10).forEach(p => ids.add(p.id));
+    dealProducts.forEach(p => ids.add(p.id));
+    return Array.from(ids);
+  }, [newProducts, products, dealProducts]);
+
+  const { meta: productsMeta } = useProductCardsMeta(allDisplayedProductIds);
 
   const categoryIcons = ['👕', '👖', '👟', '👜', '💍', '🎮', '📱', '🏠'];
 
