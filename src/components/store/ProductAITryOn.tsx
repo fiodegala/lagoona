@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 type TryOnState = 'idle' | 'photo_uploaded' | 'generating' | 'success' | 'error';
 
@@ -78,17 +79,37 @@ const ProductAITryOn = ({
     }
     setState('generating');
 
-    // TODO: integrate with AI backend
-    // Simulating API call for now
-    await new Promise((r) => setTimeout(r, 3000));
+    try {
+      const { data, error } = await supabase.functions.invoke('ai-tryon', {
+        body: {
+          userPhoto,
+          productImage,
+          productName,
+          selectedColor,
+          selectedSize,
+        },
+      });
 
-    // For now, show error state to demonstrate the flow
-    // Replace with real API call when backend is ready
-    setState('error');
-    // On success, would do:
-    // setGeneratedImage(resultUrl);
-    // setState('success');
-  }, [userPhoto]);
+      if (error) {
+        console.error('AI try-on error:', error);
+        setState('error');
+        toast.error('Não foi possível gerar sua imagem agora.');
+        return;
+      }
+
+      if (data?.image) {
+        setGeneratedImage(data.image);
+        setState('success');
+      } else {
+        setState('error');
+        toast.error(data?.error || 'Não foi possível gerar sua imagem agora.');
+      }
+    } catch (err) {
+      console.error('AI try-on error:', err);
+      setState('error');
+      toast.error('Não foi possível gerar sua imagem agora.');
+    }
+  }, [userPhoto, productImage, productName, selectedColor, selectedSize]);
 
   const handleRetry = useCallback(() => {
     setState('photo_uploaded');

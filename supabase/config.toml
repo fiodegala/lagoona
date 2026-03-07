@@ -32,3 +32,6 @@ verify_jwt = false
 
 [functions.low-stock-alert]
 verify_jwt = false
+
+[functions.ai-tryon]
+verify_jwt = false
