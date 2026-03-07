@@ -380,6 +380,86 @@ const ProductDetails = () => {
                 </button>
               </div>
             )}
+
+            {/* Lightbox Gallery */}
+            {lightboxOpen && (
+              <div
+                className="fixed inset-0 z-50 bg-black/95 backdrop-blur-sm flex items-center justify-center"
+                onClick={() => setLightboxOpen(false)}
+              >
+                {/* Close */}
+                <button
+                  onClick={() => setLightboxOpen(false)}
+                  className="absolute top-4 right-4 z-50 text-white hover:bg-white/20 rounded-full p-2 transition-colors"
+                >
+                  <X className="h-6 w-6" />
+                </button>
+
+                {/* Counter */}
+                <div className="absolute top-4 left-4 text-white/80 text-sm font-medium">
+                  {lightboxIndex + 1} / {allImages.length}
+                </div>
+
+                {/* Main Image */}
+                <div
+                  className="relative w-full h-[85vh] flex items-center justify-center px-16"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <img
+                    src={allImages[lightboxIndex]}
+                    alt={`${product.name} - ${lightboxIndex + 1}`}
+                    className="max-w-full max-h-full object-contain"
+                  />
+                </div>
+
+                {/* Nav arrows */}
+                {allImages.length > 1 && (
+                  <>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setLightboxIndex((lightboxIndex - 1 + allImages.length) % allImages.length);
+                      }}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-white hover:bg-white/20 rounded-full p-3 transition-colors"
+                    >
+                      <ChevronLeft className="h-8 w-8" />
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setLightboxIndex((lightboxIndex + 1) % allImages.length);
+                      }}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-white hover:bg-white/20 rounded-full p-3 transition-colors"
+                    >
+                      <ChevronRight className="h-8 w-8" />
+                    </button>
+                  </>
+                )}
+
+                {/* Thumbnails */}
+                {allImages.length > 1 && (
+                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 bg-black/50 backdrop-blur-sm rounded-lg p-2 max-w-[90vw] overflow-x-auto no-scrollbar">
+                    {allImages.map((img, idx) => (
+                      <button
+                        key={idx}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setLightboxIndex(idx);
+                        }}
+                        className={cn(
+                          "w-12 h-12 md:w-14 md:h-14 rounded-md overflow-hidden border-2 shrink-0 transition-all",
+                          idx === lightboxIndex
+                            ? "border-white"
+                            : "border-transparent opacity-60 hover:opacity-100"
+                        )}
+                      >
+                        <img src={img} alt={`Miniatura ${idx + 1}`} className="w-full h-full object-cover" />
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Product Info */}
