@@ -8,6 +8,7 @@ import ProductCard from '@/components/store/ProductCard';
 import { productsService, Product } from '@/services/products';
 import { categoriesService, Category } from '@/services/categories';
 import { enrichProductsWithStock } from '@/services/stockService';
+import { useProductCardsMeta } from '@/hooks/useProductCardsMeta';
 
 const ITEMS_PER_PAGE = 12;
 
@@ -82,6 +83,9 @@ const CategoryPage = () => {
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
+
+  const pageProductIds = useMemo(() => paginatedProducts.map(p => p.id), [paginatedProducts]);
+  const { meta: productsMeta } = useProductCardsMeta(pageProductIds);
 
   if (isLoading) {
     return (
@@ -158,7 +162,7 @@ const CategoryPage = () => {
           <>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
               {paginatedProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
+                <ProductCard key={product.id} product={product} meta={productsMeta[product.id]} />
               ))}
             </div>
 

@@ -15,6 +15,7 @@ import { productsService, Product } from '@/services/products';
 import DealsCountdownSection from '@/components/store/DealsCountdownSection';
 import { categoriesService, Category } from '@/services/categories';
 import { enrichProductsWithStock } from '@/services/stockService';
+import { useProductCardsMeta } from '@/hooks/useProductCardsMeta';
 
 const ITEMS_PER_PAGE = 12;
 
@@ -168,6 +169,10 @@ const StorePage = () => {
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
+
+  // Batch-fetch meta for current page products
+  const pageProductIds = useMemo(() => paginatedProducts.map(p => p.id), [paginatedProducts]);
+  const { meta: productsMeta } = useProductCardsMeta(pageProductIds);
 
   const toggleCategory = useCallback((categoryId: string) => {
     setSearchParams(prev => {
@@ -402,7 +407,7 @@ const StorePage = () => {
                     : "flex flex-col gap-4"
                 }>
                   {paginatedProducts.map((product) => (
-                    <ProductCard key={product.id} product={product} />
+                    <ProductCard key={product.id} product={product} meta={productsMeta[product.id]} />
                   ))}
                 </div>
 
