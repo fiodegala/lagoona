@@ -27,13 +27,13 @@ const CARRIERS = [
   { value: 'outro', label: 'Outra transportadora', urlTemplate: '' },
 ];
 
-const statusMap: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
-  pending: { label: 'Pendente', variant: 'outline' },
-  confirmed: { label: 'Confirmado', variant: 'secondary' },
-  processing: { label: 'Em preparo', variant: 'secondary' },
-  shipped: { label: 'Enviado', variant: 'default' },
-  delivered: { label: 'Entregue', variant: 'default' },
-  cancelled: { label: 'Cancelado', variant: 'destructive' },
+const statusMap: Record<string, { label: string; variant: 'outline'; className: string }> = {
+  pending: { label: 'Pendente', variant: 'outline', className: 'border-yellow-500 bg-yellow-50 text-yellow-700 dark:bg-yellow-950 dark:text-yellow-400' },
+  confirmed: { label: 'Confirmado', variant: 'outline', className: 'border-green-500 bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-400' },
+  processing: { label: 'Em preparo', variant: 'outline', className: 'border-sky-400 bg-sky-50 text-sky-700 dark:bg-sky-950 dark:text-sky-400' },
+  shipped: { label: 'Enviado', variant: 'outline', className: 'border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-400' },
+  delivered: { label: 'Entregue', variant: 'outline', className: 'border-purple-500 bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-400' },
+  cancelled: { label: 'Cancelado', variant: 'outline', className: 'border-red-500 bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-400' },
 };
 
 const paymentStatusMap: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline'; icon: typeof CheckCircle2 }> = {
@@ -296,7 +296,7 @@ const Orders = () => {
                 </TableHeader>
                 <TableBody>
                   {filteredOrders.map(order => {
-                    const status = statusMap[order.status] || { label: order.status, variant: 'outline' as const };
+                    const status = statusMap[order.status] || { label: order.status, variant: 'outline' as const, className: '' };
                     return (
                       <TableRow key={order.id}>
                         <TableCell className="font-mono text-xs">{order.id.slice(0, 8)}...</TableCell>
@@ -310,7 +310,7 @@ const Orders = () => {
                         <TableCell>
                           <Select value={order.status} onValueChange={s => updateStatusMutation.mutate({ orderId: order.id, status: s })}>
                             <SelectTrigger className="w-[130px] h-8">
-                              <Badge variant={status.variant} className="text-xs">{status.label}</Badge>
+                              <Badge variant={status.variant} className={`text-xs ${status.className}`}>{status.label}</Badge>
                             </SelectTrigger>
                             <SelectContent>
                               {Object.entries(statusMap).map(([key, val]) => (

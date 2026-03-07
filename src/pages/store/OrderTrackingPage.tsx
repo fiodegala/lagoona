@@ -14,11 +14,11 @@ import { ptBR } from 'date-fns/locale';
 
 const statusConfig: Record<string, { label: string; icon: any; color: string; step: number }> = {
   pending: { label: 'Pendente', icon: Clock, color: 'text-yellow-500', step: 0 },
-  confirmed: { label: 'Confirmado', icon: CheckCircle, color: 'text-blue-500', step: 1 },
-  processing: { label: 'Em preparo', icon: Package, color: 'text-orange-500', step: 2 },
-  shipped: { label: 'Enviado', icon: Truck, color: 'text-primary', step: 3 },
-  delivered: { label: 'Entregue', icon: CheckCircle, color: 'text-green-500', step: 4 },
-  cancelled: { label: 'Cancelado', icon: XCircle, color: 'text-destructive', step: -1 },
+  confirmed: { label: 'Confirmado', icon: CheckCircle, color: 'text-green-500', step: 1 },
+  processing: { label: 'Em preparo', icon: Package, color: 'text-sky-400', step: 2 },
+  shipped: { label: 'Enviado', icon: Truck, color: 'text-blue-500', step: 3 },
+  delivered: { label: 'Entregue', icon: CheckCircle, color: 'text-purple-500', step: 4 },
+  cancelled: { label: 'Cancelado', icon: XCircle, color: 'text-red-500', step: -1 },
 };
 
 const steps = [
