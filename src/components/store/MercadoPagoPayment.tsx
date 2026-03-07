@@ -232,7 +232,20 @@ const MercadoPagoPayment = ({
               return () => {};
             },
             onCardTokenReceived: (error: any, token: any) => {
-              // noop
+              if (error) {
+                console.warn('CardToken error (callback):', error);
+                if (tokenRejectRef.current) {
+                  tokenRejectRef.current(error);
+                  tokenRejectRef.current = null;
+                  tokenResolveRef.current = null;
+                }
+              } else if (token) {
+                if (tokenResolveRef.current) {
+                  tokenResolveRef.current(token);
+                  tokenResolveRef.current = null;
+                  tokenRejectRef.current = null;
+                }
+              }
             },
             onPaymentMethodsReceived: (error: any, data: any) => {
               if (!error && data && data.length > 0) {
