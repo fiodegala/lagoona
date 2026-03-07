@@ -38,13 +38,13 @@ interface Order {
   payment_method: string | null;
 }
 
-const statusMap: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
-  pending: { label: 'Pendente', variant: 'secondary' },
-  confirmed: { label: 'Confirmado', variant: 'default' },
-  processing: { label: 'Processando', variant: 'default' },
-  shipped: { label: 'Enviado', variant: 'default' },
-  delivered: { label: 'Entregue', variant: 'default' },
-  cancelled: { label: 'Cancelado', variant: 'destructive' },
+const statusMap: Record<string, { label: string; variant: 'outline'; className: string }> = {
+  pending: { label: 'Pendente', variant: 'outline', className: 'border-yellow-500 bg-yellow-50 text-yellow-700 dark:bg-yellow-950 dark:text-yellow-400' },
+  confirmed: { label: 'Confirmado', variant: 'outline', className: 'border-green-500 bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-400' },
+  processing: { label: 'Processando', variant: 'outline', className: 'border-sky-400 bg-sky-50 text-sky-700 dark:bg-sky-950 dark:text-sky-400' },
+  shipped: { label: 'Enviado', variant: 'outline', className: 'border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-400' },
+  delivered: { label: 'Entregue', variant: 'outline', className: 'border-purple-500 bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-400' },
+  cancelled: { label: 'Cancelado', variant: 'outline', className: 'border-red-500 bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-400' },
 };
 
 const MyAccountPage = () => {
@@ -403,7 +403,7 @@ const MyAccountPage = () => {
                 ) : (
                   <div className="space-y-4">
                     {orders.map((order) => {
-                      const status = statusMap[order.status] || { label: order.status, variant: 'secondary' as const };
+                      const status = statusMap[order.status] || { label: order.status, variant: 'outline' as const, className: '' };
                       const items = Array.isArray(order.items) ? order.items : [];
                       return (
                         <div key={order.id} className="border rounded-lg p-4">
@@ -412,7 +412,7 @@ const MyAccountPage = () => {
                               <span className="text-sm text-muted-foreground">Pedido #{order.id.slice(0, 8)}</span>
                               <span className="text-sm text-muted-foreground ml-3">{formatDate(order.created_at)}</span>
                             </div>
-                            <Badge variant={status.variant}>{status.label}</Badge>
+                            <Badge variant={status.variant} className={status.className}>{status.label}</Badge>
                           </div>
                           <Separator className="my-2" />
                           <div className="space-y-1">
