@@ -449,7 +449,7 @@ const MercadoPagoPayment = ({
           // If createCardToken didn't set the token, wait for the callback
           if (!cardFormData.token) {
             const token = await tokenPromise;
-            cardFormData.token = typeof token === 'string' ? token : token?.id;
+            cardFormData.token = typeof token === 'string' ? token : (token as any)?.id;
           }
 
           if (!cardFormData.token) {
