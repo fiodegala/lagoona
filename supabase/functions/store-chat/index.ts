@@ -51,6 +51,7 @@ Camisetas, Camisas, Calças, Blazers, e outras peças de moda masculina.
 - Entrega em todo o Brasil via Correios e transportadoras parceiras
 - Código de rastreamento enviado por e-mail após postagem
 - Até 3 tentativas de entrega
+- Entrega por motoboy: disponível APENAS para Goiânia - GO e região metropolitana/entorno. Para outras cidades, a entrega é feita pelos Correios ou transportadoras.
 
 ## Formas de Pagamento
 - Cartões de crédito: Visa, Mastercard, Elo, American Express
