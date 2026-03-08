@@ -190,8 +190,8 @@ const StoreHeader = ({ categories }: StoreHeaderProps) => {
 
   return (
     <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-md border-b border-border/50">
-      <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
+      <div className="container mx-auto px-2 sm:px-4 max-w-full overflow-hidden">
+        <div className="flex items-center justify-between h-16 min-w-0">
           {/* Logo */}
           <Link to="/" className="flex items-center shrink-0">
             <img
@@ -207,12 +207,12 @@ const StoreHeader = ({ categories }: StoreHeaderProps) => {
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center gap-0.5">
+          <nav className="hidden lg:flex items-center gap-0.5 min-w-0 flex-shrink overflow-hidden">
             {navLinks.map((link) => (
               <Link
                 key={link.label}
                 to={link.to}
-                className="px-4 py-2 text-xs font-medium tracking-[0.1em] uppercase text-foreground/70 hover:text-store-gold transition-colors"
+                className="px-3 xl:px-4 py-2 text-xs font-medium tracking-[0.1em] uppercase text-foreground/70 hover:text-store-gold transition-colors whitespace-nowrap"
               >
                 {link.label}
               </Link>
@@ -220,7 +220,7 @@ const StoreHeader = ({ categories }: StoreHeaderProps) => {
           </nav>
 
           {/* Right Actions */}
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
             {/* Search */}
             <Button
               variant="ghost"
