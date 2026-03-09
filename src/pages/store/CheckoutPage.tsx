@@ -156,6 +156,14 @@ const CheckoutPage = () => {
 
     setIsSubmitting(true);
 
+    // Track checkout_start event
+    trackAnalyticsEvent('checkout_start', {
+      metadata: {
+        item_count: getItemCount(),
+        total: total,
+      },
+    });
+
     try {
       // Verify real-time stock availability before creating order
       const stockChecks = await Promise.all(
