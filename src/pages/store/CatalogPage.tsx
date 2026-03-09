@@ -6,7 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Search, Share2, MessageCircle, Loader2, ChevronLeft, ChevronRight, Download } from 'lucide-react';
+import { Search, Share2, MessageCircle, Loader2, ChevronLeft, ChevronRight, Download, X } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
