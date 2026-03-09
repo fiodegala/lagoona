@@ -68,6 +68,170 @@ export type Database = {
         }
         Relationships: []
       }
+      affiliate_sales: {
+        Row: {
+          affiliate_id: string
+          commission_amount: number
+          commission_percent: number
+          created_at: string
+          id: string
+          order_id: string | null
+          sale_amount: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          affiliate_id: string
+          commission_amount?: number
+          commission_percent?: number
+          created_at?: string
+          id?: string
+          order_id?: string | null
+          sale_amount?: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          affiliate_id?: string
+          commission_amount?: number
+          commission_percent?: number
+          created_at?: string
+          id?: string
+          order_id?: string | null
+          sale_amount?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_sales_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "affiliate_sales_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      affiliate_withdrawals: {
+        Row: {
+          admin_notes: string | null
+          affiliate_id: string
+          amount: number
+          bank_info: Json | null
+          created_at: string
+          id: string
+          pix_key: string | null
+          processed_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          affiliate_id: string
+          amount: number
+          bank_info?: Json | null
+          created_at?: string
+          id?: string
+          pix_key?: string | null
+          processed_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          affiliate_id?: string
+          amount?: number
+          bank_info?: Json | null
+          created_at?: string
+          id?: string
+          pix_key?: string | null
+          processed_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_withdrawals_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      affiliates: {
+        Row: {
+          balance_available: number
+          balance_pending: number
+          bank_account: string | null
+          bank_agency: string | null
+          bank_name: string | null
+          clicks: number
+          commission_percent: number
+          created_at: string
+          document: string | null
+          email: string
+          id: string
+          name: string
+          notes: string | null
+          phone: string | null
+          pix_key: string | null
+          referral_code: string
+          status: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          balance_available?: number
+          balance_pending?: number
+          bank_account?: string | null
+          bank_agency?: string | null
+          bank_name?: string | null
+          clicks?: number
+          commission_percent?: number
+          created_at?: string
+          document?: string | null
+          email: string
+          id?: string
+          name: string
+          notes?: string | null
+          phone?: string | null
+          pix_key?: string | null
+          referral_code: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          balance_available?: number
+          balance_pending?: number
+          bank_account?: string | null
+          bank_agency?: string | null
+          bank_name?: string | null
+          clicks?: number
+          commission_percent?: number
+          created_at?: string
+          document?: string | null
+          email?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          pix_key?: string | null
+          referral_code?: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       api_key_logs: {
         Row: {
           api_key_id: string
@@ -2285,6 +2449,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      increment_affiliate_clicks: {
+        Args: { ref_code: string }
+        Returns: undefined
       }
       is_admin_or_manager: { Args: { _user_id: string }; Returns: boolean }
       is_online_store_user: { Args: { _user_id: string }; Returns: boolean }

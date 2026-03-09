@@ -41,6 +41,7 @@ const AuditLogs = lazy(() => import("./pages/AuditLogs"));
 const Upsells = lazy(() => import("./pages/Upsells"));
 const AdminAssistant = lazy(() => import("./pages/AdminAssistant"));
 const Quotes = lazy(() => import("./pages/Quotes"));
+const Affiliates = lazy(() => import("./pages/Affiliates"));
 
 // Lazy-loaded Store Pages
 const HomePage = lazy(() => import("./pages/store/HomePage"));
@@ -64,6 +65,9 @@ const WorkWithUsPage = lazy(() => import("./pages/store/WorkWithUsPage"));
 const CombosPage = lazy(() => import("./pages/store/CombosPage"));
 const QuoteViewPage = lazy(() => import("./pages/store/QuoteViewPage"));
 const CatalogPage = lazy(() => import("./pages/store/CatalogPage"));
+const AffiliateSignupPage = lazy(() => import("./pages/store/AffiliateSignupPage"));
+const AffiliateDashboardPage = lazy(() => import("./pages/store/AffiliateDashboardPage"));
+const AffiliateRedirectPage = lazy(() => import("./pages/store/AffiliateRedirectPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -117,6 +121,9 @@ const App = () => (
               <Route path="/trabalhe-conosco" element={<WorkWithUsPage />} />
               <Route path="/orcamento/:id" element={<QuoteViewPage />} />
               <Route path="/catalogo" element={<CatalogPage />} />
+              <Route path="/afiliados" element={<AffiliateSignupPage />} />
+              <Route path="/afiliados/painel" element={<AffiliateDashboardPage />} />
+              <Route path="/r/:code" element={<AffiliateRedirectPage />} />
 
               {/* Admin Routes */}
               <Route path="/login" element={<Login />} />
@@ -330,6 +337,15 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <Quotes />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/admin/afiliados"
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <Affiliates />
                   </ProtectedRoute>
                 }
               />

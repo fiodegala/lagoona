@@ -21,6 +21,7 @@ import {
   History,
   Sparkles,
   FileText,
+  Handshake,
 } from 'lucide-react';
 
 export interface MenuItem {
@@ -53,6 +54,7 @@ export const navItems: MenuItem[] = [
   { icon: BrainCircuit, label: 'Analytics IA', path: '/admin/analytics', menuKey: 'analytics', requireAdmin: true },
   { icon: Users, label: 'Usuários', path: '/admin/users', menuKey: 'users', requireAdmin: true },
   { icon: History, label: 'Histórico', path: '/admin/audit-logs', menuKey: 'audit-logs', requireAdmin: true },
+  { icon: Handshake, label: 'Afiliados', path: '/admin/afiliados', menuKey: 'affiliates', requireAdmin: true },
   { icon: Upload, label: 'Importar CSV', path: '/admin/importar-csv', menuKey: 'import-csv', requireAdmin: true },
   { icon: Upload, label: 'Importar Legado', path: '/admin/importar-legado', menuKey: 'import-legacy', requireAdmin: true },
 ];

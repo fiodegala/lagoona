@@ -13,6 +13,7 @@ import StoreLayout from '@/components/store/StoreLayout';
 import { useCart } from '@/contexts/CartContext';
 import { supabase } from '@/integrations/supabase/client';
 import { trackAnalyticsEvent } from '@/hooks/useAnalyticsTracker';
+import { getAffiliateCode, clearAffiliateCode } from '@/lib/affiliateUtils';
 
 const ABANDONED_CART_SESSION_KEY = 'abandoned-cart-session';
 
@@ -233,7 +234,10 @@ const CheckoutPage = () => {
           status: 'pending',
           payment_status: 'pending',
           store_id: 'e0b8ebbc-1b3b-4aec-b5f7-6925762e6ea1', // Site store
-          metadata: sessionId ? { abandoned_cart_session_id: sessionId } : {},
+          metadata: {
+            ...(sessionId ? { abandoned_cart_session_id: sessionId } : {}),
+            ...(getAffiliateCode() ? { affiliate_code: getAffiliateCode() } : {}),
+          },
         });
 
       if (error) throw error;
