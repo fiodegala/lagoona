@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { Eye, EyeOff, Loader2, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -47,9 +47,20 @@ const StoreLoginPage = () => {
   };
 
   // Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      checkAffiliateAndRedirect(user.id);
+    }
+  }, [user]);
+
   if (user) {
-    checkAffiliateAndRedirect(user.id);
-    return null;
+    return (
+      <StoreLayout>
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </StoreLayout>
+    );
   }
 
   const handleLogin = async (e: React.FormEvent) => {
