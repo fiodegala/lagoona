@@ -30,7 +30,7 @@ serve(async (req) => {
     const since = new Date(Date.now() - daysBack * 86400000).toISOString();
 
     // Fetch analytics data
-    const [pageViews, clicks, productViews, funnelData] = await Promise.all([
+    const [pageViews, clicks, productViews, productPageViews, funnelData] = await Promise.all([
       supabase
         .from("site_analytics_events")
         .select("page_path, page_title, duration_ms, created_at")
@@ -50,9 +50,17 @@ serve(async (req) => {
         .eq("event_type", "product_view")
         .gte("created_at", since)
         .limit(1000),
+      // Also get page_view events on product pages to catch views even without product_view event
       supabase
         .from("site_analytics_events")
-        .select("event_type, session_id")
+        .select("page_path, session_id, created_at")
+        .eq("event_type", "page_view")
+        .like("page_path", "/produto/%")
+        .gte("created_at", since)
+        .limit(2000),
+      supabase
+        .from("site_analytics_events")
+        .select("event_type, session_id, page_path")
         .in("event_type", ["page_view", "product_view", "add_to_cart", "checkout_start", "checkout_complete"])
         .gte("created_at", since)
         .limit(5000),
@@ -88,13 +96,33 @@ serve(async (req) => {
       .map(([area, count]) => ({ area, count }))
       .sort((a, b) => b.count - a.count);
 
-    // Process product views with product names
+    // Process product views - combine product_view events AND page_view on /produto/ URLs
     const productViewMap: Record<string, number> = {};
+    
+    // From explicit product_view events (with product_id)
     (productViews.data || []).forEach((pv: any) => {
       if (pv.product_id) {
         productViewMap[pv.product_id] = (productViewMap[pv.product_id] || 0) + 1;
       }
     });
+    
+    // From page_view events on /produto/ URLs (extract UUID from path)
+    const productPageIds = new Set<string>();
+    (productPageViews.data || []).forEach((pv: any) => {
+      const match = pv.page_path?.match(/\/produto\/([0-9a-f-]{36})/);
+      if (match) {
+        const pid = match[1];
+        productPageIds.add(pid);
+        // Only count if not already counted via product_view event
+        if (!productViewMap[pid]) {
+          productViewMap[pid] = 0;
+        }
+        productViewMap[pid] = (productViewMap[pid] || 0) + 1;
+      }
+    });
+    
+    // Deduplicate: if both product_view and page_view exist for same product, 
+    // use the higher count (page_view is more reliable for historical data)
 
     const topProductIds = Object.entries(productViewMap)
       .sort(([, a], [, b]) => b - a)
@@ -117,11 +145,15 @@ serve(async (req) => {
       }));
     }
 
-    // Process funnel
+    // Process funnel - also detect product_view from page_path
     const sessionEvents: Record<string, Set<string>> = {};
     (funnelData.data || []).forEach((e: any) => {
       if (!sessionEvents[e.session_id]) sessionEvents[e.session_id] = new Set();
       sessionEvents[e.session_id].add(e.event_type);
+      // If page_path matches /produto/, count as product_view too
+      if (e.event_type === "page_view" && e.page_path?.startsWith("/produto/")) {
+        sessionEvents[e.session_id].add("product_view");
+      }
     });
 
     const totalSessions = Object.keys(sessionEvents).length;
