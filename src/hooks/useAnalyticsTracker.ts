@@ -198,6 +198,7 @@ function buildBaseEvent(eventType: string, extra: Record<string, unknown> = {}) 
   const device = getDeviceInfo();
   const location = getLocationInfo();
   const traffic = getTrafficSource();
+  const affiliateCode = getAffiliateCode();
 
   return {
     session_id: getSessionId(),
@@ -216,6 +217,7 @@ function buildBaseEvent(eventType: string, extra: Record<string, unknown> = {}) 
       traffic_campaign: traffic.campaign,
       is_new_visitor: isNewVisitor(),
       visit_count: getVisitCount(),
+      ...(affiliateCode ? { affiliate_code: affiliateCode } : {}),
       ...getUtmParams(),
       ...(extra.metadata as Record<string, unknown> || {}),
     },
