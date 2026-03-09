@@ -341,20 +341,43 @@ const AffiliateDashboardPage = () => {
           </TabsList>
 
           <TabsContent value="analytics">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
               <h3 className="font-semibold text-lg flex items-center gap-2"><BarChart3 className="h-5 w-5" /> Desempenho do seu Link</h3>
-              <Select value={analyticsDays} onValueChange={setAnalyticsDays}>
-                <SelectTrigger className="w-[140px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="7">7 dias</SelectItem>
-                  <SelectItem value="15">15 dias</SelectItem>
-                  <SelectItem value="30">30 dias</SelectItem>
-                  <SelectItem value="60">60 dias</SelectItem>
-                  <SelectItem value="90">90 dias</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="flex items-center gap-2 flex-wrap">
+                <Select value={analyticsPeriod} onValueChange={setAnalyticsPeriod}>
+                  <SelectTrigger className="w-[160px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="today">Hoje</SelectItem>
+                    <SelectItem value="yesterday">Ontem</SelectItem>
+                    <SelectItem value="this_week">Esta Semana</SelectItem>
+                    <SelectItem value="this_month">Este Mês</SelectItem>
+                    <SelectItem value="last_month">Mês Passado</SelectItem>
+                    <SelectItem value="custom">Personalizado</SelectItem>
+                  </SelectContent>
+                </Select>
+                {analyticsPeriod === 'custom' && (
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="date"
+                      value={customStart}
+                      onChange={(e) => setCustomStart(e.target.value)}
+                      className="w-[140px]"
+                    />
+                    <span className="text-muted-foreground text-sm">até</span>
+                    <Input
+                      type="date"
+                      value={customEnd}
+                      onChange={(e) => setCustomEnd(e.target.value)}
+                      className="w-[140px]"
+                    />
+                    <Button size="sm" onClick={loadAnalytics} disabled={!customStart || !customEnd}>
+                      <Calendar className="h-4 w-4 mr-1" /> Filtrar
+                    </Button>
+                  </div>
+                )}
+              </div>
             </div>
 
             {analyticsLoading ? (
