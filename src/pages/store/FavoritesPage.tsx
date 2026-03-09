@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Heart, ShoppingBag, Trash2 } from 'lucide-react';
 import StoreLayout from '@/components/store/StoreLayout';
@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { useFavorites } from '@/contexts/FavoritesContext';
 import { productsService, Product } from '@/services/products';
 import { enrichProductsWithStock } from '@/services/stockService';
+import { useProductCardsMeta } from '@/hooks/useProductCardsMeta';
 
 const FavoritesPage = () => {
   const { favorites, clearFavorites } = useFavorites();
