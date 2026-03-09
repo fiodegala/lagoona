@@ -35,6 +35,9 @@ const AffiliateDashboardPage = () => {
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [pixKey, setPixKey] = useState('');
   const [submittingWithdraw, setSubmittingWithdraw] = useState(false);
+  const [analytics, setAnalytics] = useState<any>(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
+  const [analyticsDays, setAnalyticsDays] = useState('30');
 
   useEffect(() => {
     if (authLoading) return;
