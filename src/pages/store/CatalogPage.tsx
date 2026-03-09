@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Search, Share2, MessageCircle, Loader2, ChevronLeft, ChevronRight, Download, X } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { getOptimizedImageUrl } from '@/lib/imageUtils';
 
 const WHATSAPP_NUMBER = '556299416578';
 
