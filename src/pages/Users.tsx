@@ -725,7 +725,8 @@ const UsersPage = () => {
                 </div>
               </div>
             </div>
-            <DialogFooter>
+            </ScrollArea>
+            <DialogFooter className="shrink-0 pt-4">
               <Button type="button" variant="outline" onClick={handleCloseForm}>
                 Cancelar
               </Button>
