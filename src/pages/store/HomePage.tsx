@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import StoreLayout from '@/components/store/StoreLayout';
 import { useSwipe } from '@/hooks/useSwipe';
 import ProductCard from '@/components/store/ProductCard';
+import { getOptimizedImageUrl } from '@/lib/imageUtils';
 import { productsService, Product } from '@/services/products';
 import { categoriesService, Category } from '@/services/categories';
 import { bannersService, Banner } from '@/services/banners';
