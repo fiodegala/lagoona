@@ -410,6 +410,7 @@ const UsersPage = () => {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Usuário</TableHead>
+                      <TableHead>E-mail</TableHead>
                       <TableHead>Loja</TableHead>
                       <TableHead>Permissão</TableHead>
                       <TableHead>Acesso desde</TableHead>
@@ -419,11 +420,6 @@ const UsersPage = () => {
                   <TableBody>
                     {usersWithRoles.map((userRole) => (
                       <TableRow key={userRole.id}>
-                        <TableCell>
-                          <span className="text-sm">
-                            {userRole.store_name || 'Todas'}
-                          </span>
-                        </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-3">
                             <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
@@ -438,6 +434,17 @@ const UsersPage = () => {
                               </div>
                             </div>
                           </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                            <Mail className="h-3.5 w-3.5" />
+                            {userRole.email || '—'}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <span className="text-sm">
+                            {userRole.store_name || 'Todas'}
+                          </span>
                         </TableCell>
                         <TableCell>
                           <Badge className={roleColors[userRole.role]}>
