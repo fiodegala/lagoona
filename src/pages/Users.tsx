@@ -137,6 +137,19 @@ const UsersPage = () => {
 
       if (profilesError) throw profilesError;
 
+      // Fetch emails via edge function
+      let emailsMap: Record<string, string> = {};
+      try {
+        const { data: emailData } = await supabase.functions.invoke('list-users', {
+          body: { user_ids: userIds },
+        });
+        if (emailData?.emails) {
+          emailsMap = emailData.emails;
+        }
+      } catch (e) {
+        console.error('Error fetching emails:', e);
+      }
+
       // Merge data
       const usersMap = new Map<string, UserWithRole>();
       
@@ -154,6 +167,7 @@ const UsersPage = () => {
             full_name: profile.full_name,
             avatar_url: profile.avatar_url,
           } : undefined,
+          email: emailsMap[role.user_id] || undefined,
         });
       });
 
