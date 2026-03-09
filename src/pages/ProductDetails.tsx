@@ -408,7 +408,7 @@ const ProductDetails = () => {
                   onClick={(e) => e.stopPropagation()}
                 >
                   <img
-                    src={allImages[lightboxIndex]}
+                    src={getOptimizedImageUrl(allImages[lightboxIndex], { width: 1200, quality: 85 })}
                     alt={`${product.name} - ${lightboxIndex + 1}`}
                     className="max-w-full max-h-full object-contain"
                   />
