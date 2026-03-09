@@ -267,6 +267,38 @@ const Orders = () => {
     return matchesSearch && matchesStatus;
   });
 
+  const handleDeleteOrders = async () => {
+    if (!deleteConfirm) return;
+    try {
+      const idsToDelete = deleteConfirm.type === 'single' ? [deleteConfirm.id!] : selectedIds;
+      const { error } = await supabase
+        .from('orders')
+        .delete()
+        .in('id', idsToDelete);
+      if (error) throw error;
+      toast.success(`${idsToDelete.length} pedido(s) excluído(s)`);
+      setDeleteConfirm(null);
+      setSelectedIds([]);
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+    } catch {
+      toast.error('Erro ao excluir pedido(s)');
+    }
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.length === filteredOrders.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(filteredOrders.map((o) => o.id));
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
+
   return (
     <AdminLayout>
       <div className="space-y-6 animate-fade-in">
