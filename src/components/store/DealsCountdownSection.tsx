@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Flame, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import ProductCard from '@/components/store/ProductCard';
 import { Product } from '@/services/products';
 import { supabase } from '@/integrations/supabase/client';
+import { useProductCardsMeta, ProductCardMeta } from '@/hooks/useProductCardsMeta';
 
 interface DealsCountdownSectionProps {
   products: Product[];
@@ -49,6 +50,9 @@ const DealsCountdownSection = ({ products, hideProducts = false }: DealsCountdow
   const [config, setConfig] = useState<DealsConfig>({ enabled: true, end_date: null });
   const [timeLeft, setTimeLeft] = useState(0);
   const [loaded, setLoaded] = useState(false);
+
+  const productIds = useMemo(() => products.slice(0, 10).map(p => p.id), [products]);
+  const { meta: productsMeta } = useProductCardsMeta(productIds);
 
   useEffect(() => {
     const load = async () => {
@@ -131,7 +135,7 @@ const DealsCountdownSection = ({ products, hideProducts = false }: DealsCountdow
         {!hideProducts && (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
             {products.slice(0, 10).map((product) => (
-              <ProductCard key={product.id} product={product} showDiscount />
+              <ProductCard key={product.id} product={product} showDiscount meta={productsMeta[product.id]} />
             ))}
           </div>
         )}

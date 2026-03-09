@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Heart, ShoppingBag, Trash2 } from 'lucide-react';
 import StoreLayout from '@/components/store/StoreLayout';
@@ -7,11 +7,14 @@ import { Button } from '@/components/ui/button';
 import { useFavorites } from '@/contexts/FavoritesContext';
 import { productsService, Product } from '@/services/products';
 import { enrichProductsWithStock } from '@/services/stockService';
+import { useProductCardsMeta } from '@/hooks/useProductCardsMeta';
 
 const FavoritesPage = () => {
   const { favorites, clearFavorites } = useFavorites();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const productIds = useMemo(() => products.map(p => p.id), [products]);
+  const { meta: productsMeta } = useProductCardsMeta(productIds);
 
   useEffect(() => {
     const loadFavoriteProducts = async () => {
@@ -97,7 +100,7 @@ const FavoritesPage = () => {
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {products.map((product) => (
-              <ProductCard key={product.id} product={product} />
+              <ProductCard key={product.id} product={product} meta={productsMeta[product.id]} />
             ))}
           </div>
         )}

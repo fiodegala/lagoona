@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo } from 'react';
+import { getOptimizedImageUrl } from '@/lib/imageUtils';
 import { Link } from 'react-router-dom';
 import { ShoppingCart, Minus, Plus, Eye, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -83,7 +84,7 @@ const FeaturedProductSection = ({ product }: FeaturedProductSectionProps) => {
               <div className="aspect-[3/4] rounded-xl overflow-hidden bg-muted">
                 {currentImage ? (
                   <img
-                    src={currentImage}
+                    src={getOptimizedImageUrl(currentImage, { width: 800, quality: 80 })}
                     alt={product.name}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
