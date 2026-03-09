@@ -165,7 +165,7 @@ const RelatedProducts = ({
                 <div className="relative aspect-square overflow-hidden bg-muted">
                   {product.image_url ? (
                     <img
-                      src={product.image_url}
+                      src={getOptimizedImageUrl(product.image_url, { width: 400, quality: 75 })}
                       alt={product.name}
                       className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                     />
