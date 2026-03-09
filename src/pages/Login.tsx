@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Shield, Loader2, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -29,22 +30,24 @@ const Login = () => {
       setError(error.message);
       setIsLoading(false);
     } else {
-      // Check if user has admin roles — if not, redirect to home (e.g. affiliate)
-      const { data: rolesData } = await (await import('@/integrations/supabase/client')).supabase
+      // Check if user has admin roles — if not, redirect appropriately
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      const userId = currentUser?.id || '';
+
+      const { data: rolesData } = await supabase
         .from('user_roles')
         .select('role')
-        .eq('user_id', (await (await import('@/integrations/supabase/client')).supabase.auth.getUser()).data.user?.id || '');
+        .eq('user_id', userId);
 
       if (rolesData && rolesData.length > 0) {
         toast.success('Login realizado com sucesso!');
         navigate('/admin');
       } else {
         // Check if affiliate
-        const userId = (await (await import('@/integrations/supabase/client')).supabase.auth.getUser()).data.user?.id;
-        const { data: aff } = await (await import('@/integrations/supabase/client')).supabase
+        const { data: aff } = await supabase
           .from('affiliates')
           .select('id')
-          .eq('user_id', userId || '')
+          .eq('user_id', userId)
           .maybeSingle();
 
         if (aff) {
@@ -52,7 +55,7 @@ const Login = () => {
           navigate('/afiliados/painel');
         } else {
           toast.error('Você não tem permissão para acessar o painel administrativo.');
-          await (await import('@/integrations/supabase/client')).supabase.auth.signOut();
+          await supabase.auth.signOut();
         }
       }
       setIsLoading(false);
