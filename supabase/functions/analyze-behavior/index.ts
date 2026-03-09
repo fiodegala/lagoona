@@ -30,7 +30,7 @@ serve(async (req) => {
     const since = new Date(Date.now() - daysBack * 86400000).toISOString();
 
     // Fetch analytics data
-    const [pageViews, clicks, productViews, funnelData] = await Promise.all([
+    const [pageViews, clicks, productViews, productPageViews, funnelData] = await Promise.all([
       supabase
         .from("site_analytics_events")
         .select("page_path, page_title, duration_ms, created_at")
@@ -50,9 +50,17 @@ serve(async (req) => {
         .eq("event_type", "product_view")
         .gte("created_at", since)
         .limit(1000),
+      // Also get page_view events on product pages to catch views even without product_view event
       supabase
         .from("site_analytics_events")
-        .select("event_type, session_id")
+        .select("page_path, session_id, created_at")
+        .eq("event_type", "page_view")
+        .like("page_path", "/produto/%")
+        .gte("created_at", since)
+        .limit(2000),
+      supabase
+        .from("site_analytics_events")
+        .select("event_type, session_id, page_path")
         .in("event_type", ["page_view", "product_view", "add_to_cart", "checkout_start", "checkout_complete"])
         .gte("created_at", since)
         .limit(5000),
