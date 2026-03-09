@@ -1,13 +1,16 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Copy, DollarSign, TrendingUp, MousePointerClick, ArrowDownToLine, Loader2, LogIn } from 'lucide-react';
+import { Copy, DollarSign, TrendingUp, MousePointerClick, ArrowDownToLine, Loader2, LogIn, BarChart3, Monitor, Smartphone, Tablet, Globe, ShoppingCart, CreditCard, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Progress } from '@/components/ui/progress';
 import { toast } from 'sonner';
 import StoreLayout from '@/components/store/StoreLayout';
 import { supabase } from '@/integrations/supabase/client';
@@ -32,6 +35,9 @@ const AffiliateDashboardPage = () => {
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [pixKey, setPixKey] = useState('');
   const [submittingWithdraw, setSubmittingWithdraw] = useState(false);
+  const [analytics, setAnalytics] = useState<any>(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
+  const [analyticsDays, setAnalyticsDays] = useState('30');
 
   useEffect(() => {
     if (authLoading) return;
@@ -67,6 +73,27 @@ const AffiliateDashboardPage = () => {
       setLoading(false);
     }
   };
+
+  const loadAnalytics = async () => {
+    setAnalyticsLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('affiliate-analytics', {
+        body: { days: parseInt(analyticsDays) },
+      });
+      if (error) throw error;
+      setAnalytics(data);
+    } catch (err) {
+      console.error('Analytics error:', err);
+    } finally {
+      setAnalyticsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (affiliate && affiliate.status === 'active') {
+      loadAnalytics();
+    }
+  }, [affiliate, analyticsDays]);
 
   const handleCopyLink = () => {
     if (!affiliate) return;
@@ -255,10 +282,186 @@ const AffiliateDashboardPage = () => {
           </div>
         )}
 
-        {/* Sales history */}
-        <Card className="mb-6">
-          <CardHeader><CardTitle className="text-lg">Histórico de Vendas</CardTitle></CardHeader>
-          <CardContent>
+        {/* Tabs: Analytics, Sales, Withdrawals */}
+        <Tabs defaultValue="analytics" className="mb-6">
+          <TabsList className="mb-4">
+            <TabsTrigger value="analytics"><BarChart3 className="h-4 w-4 mr-1" /> Analytics</TabsTrigger>
+            <TabsTrigger value="sales">Vendas ({sales.length})</TabsTrigger>
+            <TabsTrigger value="withdrawals">Saques ({withdrawals.length})</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="analytics">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold text-lg flex items-center gap-2"><BarChart3 className="h-5 w-5" /> Desempenho do seu Link</h3>
+              <Select value={analyticsDays} onValueChange={setAnalyticsDays}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="7">7 dias</SelectItem>
+                  <SelectItem value="15">15 dias</SelectItem>
+                  <SelectItem value="30">30 dias</SelectItem>
+                  <SelectItem value="60">60 dias</SelectItem>
+                  <SelectItem value="90">90 dias</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {analyticsLoading ? (
+              <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin" /></div>
+            ) : analytics ? (
+              <div className="space-y-6">
+                {/* Summary cards */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <Card>
+                    <CardContent className="pt-4 text-center">
+                      <Eye className="h-5 w-5 mx-auto mb-1 text-muted-foreground" />
+                      <p className="text-2xl font-bold">{analytics.summary?.unique_visitors || 0}</p>
+                      <p className="text-xs text-muted-foreground">Visitantes Únicos</p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="pt-4 text-center">
+                      <Globe className="h-5 w-5 mx-auto mb-1 text-muted-foreground" />
+                      <p className="text-2xl font-bold">{analytics.summary?.total_page_views || 0}</p>
+                      <p className="text-xs text-muted-foreground">Páginas Vistas</p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="pt-4 text-center">
+                      <ShoppingCart className="h-5 w-5 mx-auto mb-1 text-muted-foreground" />
+                      <p className="text-2xl font-bold">{analytics.summary?.add_to_cart || 0}</p>
+                      <p className="text-xs text-muted-foreground">Add ao Carrinho</p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="pt-4 text-center">
+                      <CreditCard className="h-5 w-5 mx-auto mb-1 text-primary" />
+                      <p className="text-2xl font-bold text-primary">{analytics.summary?.checkout_complete || 0}</p>
+                      <p className="text-xs text-muted-foreground">Compras</p>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Funnel */}
+                {analytics.summary?.total_page_views > 0 && (
+                  <Card>
+                    <CardHeader><CardTitle className="text-sm">Funil de Conversão</CardTitle></CardHeader>
+                    <CardContent className="space-y-3">
+                      {[
+                        { label: 'Visitantes', value: analytics.summary.unique_visitors },
+                        { label: 'Add ao Carrinho', value: analytics.summary.add_to_cart },
+                        { label: 'Checkout Iniciado', value: analytics.summary.checkout_start },
+                        { label: 'Compra Finalizada', value: analytics.summary.checkout_complete },
+                      ].map((step, i) => {
+                        const max = analytics.summary.unique_visitors || 1;
+                        const pct = Math.round((step.value / max) * 100);
+                        return (
+                          <div key={i}>
+                            <div className="flex justify-between text-sm mb-1">
+                              <span>{step.label}</span>
+                              <span className="font-medium">{step.value} ({pct}%)</span>
+                            </div>
+                            <Progress value={pct} className="h-2" />
+                          </div>
+                        );
+                      })}
+                    </CardContent>
+                  </Card>
+                )}
+
+                <div className="grid md:grid-cols-2 gap-4">
+                  {/* Devices */}
+                  {analytics.devices && Object.keys(analytics.devices).length > 0 && (
+                    <Card>
+                      <CardHeader><CardTitle className="text-sm">Dispositivos</CardTitle></CardHeader>
+                      <CardContent>
+                        <div className="space-y-3">
+                          {Object.entries(analytics.devices as Record<string, number>).sort((a, b) => b[1] - a[1]).map(([device, count]) => {
+                            const Icon = device === 'mobile' ? Smartphone : device === 'tablet' ? Tablet : Monitor;
+                            const total = Object.values(analytics.devices as Record<string, number>).reduce((s, v) => s + v, 0);
+                            const pct = Math.round((count / total) * 100);
+                            return (
+                              <div key={device} className="flex items-center gap-3">
+                                <Icon className="h-4 w-4 text-muted-foreground" />
+                                <span className="text-sm capitalize flex-1">{device}</span>
+                                <span className="text-sm font-medium">{count} ({pct}%)</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Sources */}
+                  {analytics.sources && Object.keys(analytics.sources).length > 0 && (
+                    <Card>
+                      <CardHeader><CardTitle className="text-sm">Origem do Tráfego</CardTitle></CardHeader>
+                      <CardContent>
+                        <div className="space-y-3">
+                          {Object.entries(analytics.sources as Record<string, number>).sort((a, b) => b[1] - a[1]).map(([source, count]) => {
+                            const total = Object.values(analytics.sources as Record<string, number>).reduce((s, v) => s + v, 0);
+                            const pct = Math.round((count / total) * 100);
+                            return (
+                              <div key={source} className="flex items-center gap-3">
+                                <Globe className="h-4 w-4 text-muted-foreground" />
+                                <span className="text-sm capitalize flex-1">{source}</span>
+                                <span className="text-sm font-medium">{count} ({pct}%)</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
+
+                {/* Top Pages */}
+                {analytics.top_pages && analytics.top_pages.length > 0 && (
+                  <Card>
+                    <CardHeader><CardTitle className="text-sm">Páginas Mais Visitadas</CardTitle></CardHeader>
+                    <CardContent>
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Página</TableHead>
+                            <TableHead className="text-right">Visitas</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {analytics.top_pages.map((p: any, i: number) => (
+                            <TableRow key={i}>
+                              <TableCell className="font-mono text-xs">{p.path}</TableCell>
+                              <TableCell className="text-right">{p.count}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {analytics.summary?.total_events === 0 && (
+                  <Card>
+                    <CardContent className="pt-6 text-center">
+                      <BarChart3 className="h-10 w-10 mx-auto mb-2 text-muted-foreground" />
+                      <p className="text-muted-foreground">Nenhum acesso registrado via seu link neste período.</p>
+                      <p className="text-xs text-muted-foreground mt-1">Compartilhe seu link para começar a receber visitantes!</p>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            ) : (
+              <Card>
+                <CardContent className="pt-6 text-center">
+                  <p className="text-muted-foreground">Não foi possível carregar os dados de analytics.</p>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
+          <TabsContent value="sales">
             {sales.length === 0 ? (
               <p className="text-muted-foreground text-sm">Nenhuma venda registrada ainda.</p>
             ) : (
@@ -283,14 +486,12 @@ const AffiliateDashboardPage = () => {
                 </TableBody>
               </Table>
             )}
-          </CardContent>
-        </Card>
+          </TabsContent>
 
-        {/* Withdrawals */}
-        {withdrawals.length > 0 && (
-          <Card>
-            <CardHeader><CardTitle className="text-lg">Saques</CardTitle></CardHeader>
-            <CardContent>
+          <TabsContent value="withdrawals">
+            {withdrawals.length === 0 ? (
+              <p className="text-muted-foreground text-sm">Nenhum saque solicitado.</p>
+            ) : (
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -309,9 +510,9 @@ const AffiliateDashboardPage = () => {
                   ))}
                 </TableBody>
               </Table>
-            </CardContent>
-          </Card>
-        )}
+            )}
+          </TabsContent>
+        </Tabs>
       </div>
     </StoreLayout>
   );

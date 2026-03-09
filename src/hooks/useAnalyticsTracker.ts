@@ -1,6 +1,7 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { getAffiliateCode } from '@/lib/affiliateUtils';
 
 const SESSION_KEY = 'analytics_session_id';
 const VISITOR_KEY = 'analytics_visitor_id';
@@ -197,6 +198,7 @@ function buildBaseEvent(eventType: string, extra: Record<string, unknown> = {}) 
   const device = getDeviceInfo();
   const location = getLocationInfo();
   const traffic = getTrafficSource();
+  const affiliateCode = getAffiliateCode();
 
   return {
     session_id: getSessionId(),
@@ -215,6 +217,7 @@ function buildBaseEvent(eventType: string, extra: Record<string, unknown> = {}) 
       traffic_campaign: traffic.campaign,
       is_new_visitor: isNewVisitor(),
       visit_count: getVisitCount(),
+      ...(affiliateCode ? { affiliate_code: affiliateCode } : {}),
       ...getUtmParams(),
       ...(extra.metadata as Record<string, unknown> || {}),
     },
