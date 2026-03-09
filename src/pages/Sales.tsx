@@ -496,7 +496,50 @@ const Sales = () => {
                 </div>
                 <div>
                   <p className="text-muted-foreground text-xs">Data</p>
-                  <p>{format(new Date(detailSale.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}</p>
+                  {isEditingDate ? (
+                    <div className="space-y-2 mt-1">
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button variant="outline" size="sm" className="w-full justify-start text-left font-normal text-xs h-8">
+                            <CalendarIcon className="h-3 w-3 mr-1.5" />
+                            {editDate ? format(editDate, 'dd/MM/yyyy') : 'Selecionar data'}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={editDate}
+                            onSelect={setEditDate}
+                            initialFocus
+                            className="p-3 pointer-events-auto"
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <Input
+                        type="time"
+                        value={editTime}
+                        onChange={e => setEditTime(e.target.value)}
+                        className="h-8 text-xs"
+                      />
+                      <div className="flex gap-1">
+                        <Button size="sm" className="h-7 text-xs gap-1" onClick={handleSaveDate} disabled={isSavingDate}>
+                          <Check className="h-3 w-3" /> {isSavingDate ? 'Salvando...' : 'Salvar'}
+                        </Button>
+                        <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" onClick={() => setIsEditingDate(false)}>
+                          <X className="h-3 w-3" /> Cancelar
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1">
+                      <p>{format(new Date(detailSale.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}</p>
+                      {canCancel && (
+                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleEditDate} title="Editar data">
+                          <Pencil className="h-3 w-3" />
+                        </Button>
+                      )}
+                    </div>
+                  )}
                 </div>
                 <div>
                   <p className="text-muted-foreground text-xs">Pagamento</p>
