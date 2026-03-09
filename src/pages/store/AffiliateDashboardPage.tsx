@@ -74,7 +74,27 @@ const AffiliateDashboardPage = () => {
     }
   };
 
-  const handleCopyLink = () => {
+  const loadAnalytics = async () => {
+    setAnalyticsLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('affiliate-analytics', {
+        body: { days: parseInt(analyticsDays) },
+      });
+      if (error) throw error;
+      setAnalytics(data);
+    } catch (err) {
+      console.error('Analytics error:', err);
+    } finally {
+      setAnalyticsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (affiliate && affiliate.status === 'active') {
+      loadAnalytics();
+    }
+  }, [affiliate, analyticsDays]);
+
     if (!affiliate) return;
     const link = `${window.location.origin}/r/${affiliate.referral_code}`;
     navigator.clipboard.writeText(link);
