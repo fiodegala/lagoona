@@ -53,6 +53,7 @@ const StoreFooter = () => {
               <Link to="/contato" className="text-white/50 hover:text-store-gold transition-colors">Contato</Link>
               <Link to="/atacado" className="text-white/50 hover:text-store-gold transition-colors">Atacado</Link>
               <Link to="/trabalhe-conosco" className="text-white/50 hover:text-store-gold transition-colors">Trabalhe Conosco</Link>
+              <Link to="/afiliados" className="text-white/50 hover:text-store-gold transition-colors">Programa de Afiliados</Link>
             </nav>
           </div>
 
