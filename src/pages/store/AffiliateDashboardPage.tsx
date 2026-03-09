@@ -222,7 +222,7 @@ const AffiliateDashboardPage = () => {
         </div>
 
         {/* Withdraw button */}
-        {affiliate.status === 'active' && affiliate.balance_available > 0 && (
+        {affiliate.status === 'active' && (
           <div className="mb-6">
             <Dialog open={withdrawOpen} onOpenChange={setWithdrawOpen}>
               <DialogTrigger asChild>
@@ -232,17 +232,23 @@ const AffiliateDashboardPage = () => {
                 <DialogHeader><DialogTitle>Solicitar Saque</DialogTitle></DialogHeader>
                 <div className="space-y-4">
                   <p className="text-sm text-muted-foreground">Saldo disponível: <strong>R$ {Number(affiliate.balance_available).toFixed(2)}</strong></p>
-                  <div>
-                    <Label>Valor do Saque (R$)</Label>
-                    <Input type="number" value={withdrawAmount} onChange={(e) => setWithdrawAmount(e.target.value)} max={affiliate.balance_available} step="0.01" />
-                  </div>
-                  <div>
-                    <Label>Chave PIX</Label>
-                    <Input value={pixKey} onChange={(e) => setPixKey(e.target.value)} placeholder="CPF, e-mail ou chave aleatória" />
-                  </div>
-                  <Button onClick={handleWithdraw} disabled={submittingWithdraw} className="w-full">
-                    {submittingWithdraw ? 'Enviando...' : 'Confirmar Saque'}
-                  </Button>
+                  {affiliate.balance_available <= 0 ? (
+                    <p className="text-sm text-destructive">Você não possui saldo disponível para saque no momento.</p>
+                  ) : (
+                    <>
+                      <div>
+                        <Label>Valor do Saque (R$)</Label>
+                        <Input type="number" value={withdrawAmount} onChange={(e) => setWithdrawAmount(e.target.value)} max={affiliate.balance_available} step="0.01" />
+                      </div>
+                      <div>
+                        <Label>Chave PIX</Label>
+                        <Input value={pixKey} onChange={(e) => setPixKey(e.target.value)} placeholder="CPF, e-mail ou chave aleatória" />
+                      </div>
+                      <Button onClick={handleWithdraw} disabled={submittingWithdraw} className="w-full">
+                        {submittingWithdraw ? 'Enviando...' : 'Confirmar Saque'}
+                      </Button>
+                    </>
+                  )}
                 </div>
               </DialogContent>
             </Dialog>
