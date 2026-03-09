@@ -77,6 +77,8 @@ const Orders = () => {
   const [sendWhatsapp, setSendWhatsapp] = useState(true);
   const [labelOrder, setLabelOrder] = useState<any>(null);
   const [detailOrder, setDetailOrder] = useState<any>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ type: 'single' | 'bulk'; id?: string } | null>(null);
 
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ['orders'],
