@@ -95,6 +95,7 @@ const AffiliateDashboardPage = () => {
     }
   }, [affiliate, analyticsDays]);
 
+  const handleCopyLink = () => {
     if (!affiliate) return;
     const link = `${window.location.origin}/r/${affiliate.referral_code}`;
     navigator.clipboard.writeText(link);
