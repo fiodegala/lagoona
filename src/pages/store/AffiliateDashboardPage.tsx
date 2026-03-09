@@ -174,9 +174,18 @@ const AffiliateDashboardPage = () => {
           <p className="text-muted-foreground mb-6">
             Não encontramos um cadastro de afiliado vinculado à sua conta. Cadastre-se para começar a ganhar comissões!
           </p>
-          <Link to="/afiliados">
-            <Button>Cadastrar como Afiliado</Button>
-          </Link>
+          <div className="flex flex-col gap-3">
+            <Link to="/afiliados">
+              <Button className="w-full">Cadastrar como Afiliado</Button>
+            </Link>
+            <Button variant="outline" className="w-full" onClick={async () => {
+              const { signOut } = await import('@/integrations/supabase/client').then(m => ({ signOut: () => m.supabase.auth.signOut() }));
+              await signOut();
+              navigate('/conta/login');
+            }}>
+              Entrar com outra conta
+            </Button>
+          </div>
         </div>
       </StoreLayout>
     );
