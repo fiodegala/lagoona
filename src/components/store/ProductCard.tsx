@@ -1,4 +1,5 @@
-import { useState, useEffect, forwardRef, memo } from 'react';
+import { useState, useEffect, forwardRef, memo, useMemo } from 'react';
+import { getOptimizedImageUrl } from '@/lib/imageUtils';
 import { Link, useNavigate } from 'react-router-dom';
 import { Package, ShoppingCart, Heart, Star, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
