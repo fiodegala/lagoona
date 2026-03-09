@@ -173,6 +173,8 @@ Deno.serve(async (req) => {
       await deductStockForOrder(supabase, orderId);
       // Mark abandoned cart as recovered
       await recoverAbandonedCart(supabase, orderId);
+      // Register affiliate commission if applicable
+      await registerAffiliateCommission(supabase, orderId);
     }
 
     // Restore stock if order was confirmed but now cancelled/refunded
@@ -364,5 +366,72 @@ async function recoverAbandonedCart(supabase: any, orderId: string) {
     console.log(`Abandoned cart recovery attempted for order ${orderId}`);
   } catch (err) {
     console.error(`Error recovering abandoned cart for order ${orderId}:`, err);
+  }
+}
+
+async function registerAffiliateCommission(supabase: any, orderId: string) {
+  try {
+    const { data: order } = await supabase
+      .from('orders')
+      .select('id, total, metadata')
+      .eq('id', orderId)
+      .single();
+
+    if (!order) return;
+
+    const affiliateCode = order.metadata?.affiliate_code;
+    if (!affiliateCode) return;
+
+    // Find active affiliate by referral code
+    const { data: affiliate } = await supabase
+      .from('affiliates')
+      .select('id, commission_percent')
+      .eq('referral_code', affiliateCode)
+      .eq('status', 'active')
+      .single();
+
+    if (!affiliate) {
+      console.log(`No active affiliate found for code ${affiliateCode}`);
+      return;
+    }
+
+    // Check if commission already registered for this order
+    const { data: existing } = await supabase
+      .from('affiliate_sales')
+      .select('id')
+      .eq('order_id', orderId)
+      .eq('affiliate_id', affiliate.id)
+      .maybeSingle();
+
+    if (existing) {
+      console.log(`Commission already registered for order ${orderId}, affiliate ${affiliate.id}`);
+      return;
+    }
+
+    const commissionAmount = Number(order.total) * (Number(affiliate.commission_percent) / 100);
+
+    // Insert affiliate sale
+    await supabase.from('affiliate_sales').insert({
+      affiliate_id: affiliate.id,
+      order_id: orderId,
+      sale_amount: order.total,
+      commission_percent: affiliate.commission_percent,
+      commission_amount: commissionAmount,
+      status: 'pending',
+    });
+
+    // Update affiliate pending balance
+    await supabase
+      .from('affiliates')
+      .update({
+        balance_pending: affiliate.balance_pending
+          ? Number(affiliate.balance_pending) + commissionAmount
+          : commissionAmount,
+      })
+      .eq('id', affiliate.id);
+
+    console.log(`Affiliate commission registered: affiliate=${affiliate.id}, order=${orderId}, amount=${commissionAmount.toFixed(2)}`);
+  } catch (err) {
+    console.error(`Error registering affiliate commission for order ${orderId}:`, err);
   }
 }
