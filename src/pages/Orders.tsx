@@ -444,6 +444,14 @@ const Orders = () => {
                             <Printer className="h-3 w-3 mr-1" />
                             Etiqueta
                           </Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-8 w-8 text-destructive hover:text-destructive"
+                            onClick={() => setDeleteConfirm({ type: 'single', id: order.id })}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </TableCell>
                       </TableRow>
                     );
