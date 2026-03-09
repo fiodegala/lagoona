@@ -856,10 +856,11 @@ const Dashboard = () => {
                       <div>
                         <p className="text-sm font-medium text-muted-foreground">Meta Diária</p>
                         <p className="text-2xl font-bold">{formatCurrency(goalProgress.daily.current)}</p>
+                        <p className="text-[10px] text-muted-foreground">{goalProgress.daily.remainingDays} dias úteis restantes</p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm text-muted-foreground">Meta</p>
+                      <p className="text-sm text-muted-foreground">Meta de hoje</p>
                       <p className="text-lg font-semibold">{formatCurrency(goalProgress.daily.target)}</p>
                     </div>
                   </div>
