@@ -389,7 +389,7 @@ const HomePage = () => {
                   style={{ opacity: index === currentMidBanner ? 1 : 0, pointerEvents: index === currentMidBanner ? 'auto' : 'none' }}
                 >
                   <img
-                    src={banner.image_url}
+                    src={getOptimizedImageUrl(banner.image_url, { width: 1920, quality: 80 })}
                     alt={banner.title || 'Banner'}
                     className="w-full h-full object-cover"
                     loading="lazy"
