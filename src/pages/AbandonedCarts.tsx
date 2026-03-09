@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Table,
   TableBody,
@@ -19,6 +20,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
@@ -33,6 +44,7 @@ import {
   ExternalLink,
   MessageCircle,
   BarChart3,
+  Trash2,
 } from 'lucide-react';
 import { format, subDays, startOfDay, startOfWeek, endOfWeek, eachDayOfInterval, eachWeekOfInterval } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -66,8 +78,12 @@ const AbandonedCarts = () => {
   const [search, setSearch] = useState('');
   const [selectedCart, setSelectedCart] = useState<AbandonedCart | null>(null);
 
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ type: 'single' | 'bulk'; id?: string } | null>(null);
+
   const fetchCarts = async () => {
     setLoading(true);
+    setSelectedIds([]);
     try {
       const { data, error } = await supabase
         .from('abandoned_carts')
@@ -165,6 +181,38 @@ const AbandonedCarts = () => {
     } catch {
       toast.error('Erro ao atualizar status');
     }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteConfirm) return;
+    try {
+      const idsToDelete = deleteConfirm.type === 'single' ? [deleteConfirm.id!] : selectedIds;
+      const { error } = await supabase
+        .from('abandoned_carts')
+        .delete()
+        .in('id', idsToDelete);
+      if (error) throw error;
+      toast.success(`${idsToDelete.length} carrinho(s) excluído(s)`);
+      setDeleteConfirm(null);
+      setSelectedCart(null);
+      fetchCarts();
+    } catch {
+      toast.error('Erro ao excluir carrinho(s)');
+    }
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.length === filteredCarts.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(filteredCarts.map((c) => c.id));
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
   };
 
   return (
@@ -332,7 +380,7 @@ const AbandonedCarts = () => {
         </Card>
 
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -345,14 +393,30 @@ const AbandonedCarts = () => {
           <Button variant="outline" size="icon" onClick={fetchCarts}>
             <RefreshCw className="h-4 w-4" />
           </Button>
+          {selectedIds.length > 0 && (
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => setDeleteConfirm({ type: 'bulk' })}
+            >
+              <Trash2 className="h-4 w-4 mr-1" />
+              Excluir ({selectedIds.length})
+            </Button>
+          )}
         </div>
 
         {/* Table */}
         <Card>
           <CardContent className="p-0 overflow-x-auto">
-            <Table className="min-w-[700px]">
+            <Table className="min-w-[750px]">
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-10">
+                    <Checkbox
+                      checked={filteredCarts.length > 0 && selectedIds.length === filteredCarts.length}
+                      onCheckedChange={toggleSelectAll}
+                    />
+                  </TableHead>
                   <TableHead>Cliente</TableHead>
                   <TableHead>Produtos</TableHead>
                   <TableHead>Valor</TableHead>
@@ -364,13 +428,13 @@ const AbandonedCarts = () => {
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-12 text-muted-foreground">
+                    <TableCell colSpan={7} className="text-center py-12 text-muted-foreground">
                       Carregando...
                     </TableCell>
                   </TableRow>
                 ) : filteredCarts.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-12 text-muted-foreground">
+                    <TableCell colSpan={7} className="text-center py-12 text-muted-foreground">
                       <ShoppingCart className="h-10 w-10 mx-auto mb-2 opacity-30" />
                       Nenhum carrinho abandonado encontrado
                     </TableCell>
@@ -378,6 +442,12 @@ const AbandonedCarts = () => {
                 ) : (
                   filteredCarts.map((cart) => (
                     <TableRow key={cart.id}>
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedIds.includes(cart.id)}
+                          onCheckedChange={() => toggleSelect(cart.id)}
+                        />
+                      </TableCell>
                       <TableCell>
                         <div>
                           <p className="font-medium text-sm">
@@ -427,10 +497,20 @@ const AbandonedCarts = () => {
                         </div>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button size="sm" variant="ghost" onClick={() => setSelectedCart(cart)}>
-                          <Eye className="h-4 w-4 mr-1" />
-                          Ver
-                        </Button>
+                        <div className="flex items-center justify-end gap-1">
+                          <Button size="sm" variant="ghost" onClick={() => setSelectedCart(cart)}>
+                            <Eye className="h-4 w-4 mr-1" />
+                            Ver
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-8 w-8 text-destructive hover:text-destructive"
+                            onClick={() => setDeleteConfirm({ type: 'single', id: cart.id })}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))
@@ -547,7 +627,15 @@ const AbandonedCarts = () => {
                   <p className="text-sm text-muted-foreground">Valor total</p>
                   <p className="text-xl font-bold">{formatPrice(selectedCart.subtotal)}</p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => setDeleteConfirm({ type: 'single', id: selectedCart.id })}
+                  >
+                    <Trash2 className="h-4 w-4 mr-1" />
+                    Excluir
+                  </Button>
                   {selectedCart.customer_phone && (
                     <Button size="sm" variant="outline" asChild>
                       <a
@@ -572,6 +660,26 @@ const AbandonedCarts = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteConfirm?.type === 'bulk'
+                ? `Tem certeza que deseja excluir ${selectedIds.length} carrinho(s) abandonado(s)? Esta ação não pode ser desfeita.`
+                : 'Tem certeza que deseja excluir este carrinho abandonado? Esta ação não pode ser desfeita.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AdminLayout>
   );
 };
