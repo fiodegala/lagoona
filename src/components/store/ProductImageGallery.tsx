@@ -206,7 +206,7 @@ const ProductImageGallery = ({
             isZoomed ? "opacity-100" : "opacity-0 pointer-events-none"
           )}
           style={{
-            backgroundImage: `url(${currentItem.url})`,
+            backgroundImage: `url(${getOptimizedImageUrl(currentItem.url, { width: 1600, quality: 85 })})`,
             backgroundSize: '200%',
             backgroundPosition: `${zoomPosition.x}% ${zoomPosition.y}%`,
           }}
