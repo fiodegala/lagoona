@@ -21,6 +21,7 @@ import {
   History,
   Sparkles,
   FileText,
+  Handshake,
 } from 'lucide-react';
 
 export interface MenuItem {
