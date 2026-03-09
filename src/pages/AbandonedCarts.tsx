@@ -627,7 +627,15 @@ const AbandonedCarts = () => {
                   <p className="text-sm text-muted-foreground">Valor total</p>
                   <p className="text-xl font-bold">{formatPrice(selectedCart.subtotal)}</p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => setDeleteConfirm({ type: 'single', id: selectedCart.id })}
+                  >
+                    <Trash2 className="h-4 w-4 mr-1" />
+                    Excluir
+                  </Button>
                   {selectedCart.customer_phone && (
                     <Button size="sm" variant="outline" asChild>
                       <a
@@ -652,6 +660,26 @@ const AbandonedCarts = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteConfirm?.type === 'bulk'
+                ? `Tem certeza que deseja excluir ${selectedIds.length} carrinho(s) abandonado(s)? Esta ação não pode ser desfeita.`
+                : 'Tem certeza que deseja excluir este carrinho abandonado? Esta ação não pode ser desfeita.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AdminLayout>
   );
 };
