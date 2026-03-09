@@ -312,6 +312,7 @@ const UsersPage = () => {
   const handleCloseForm = () => {
     setIsFormOpen(false);
     setSelectedUser(null);
+    setNewPassword('');
     setFormData({
       email: '',
       password: '',
