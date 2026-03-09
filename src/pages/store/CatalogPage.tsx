@@ -439,9 +439,10 @@ const CatalogPage = () => {
                           }}
                         >
                           <img
-                            src={getDisplayImage(product)}
+                            src={getDisplayImage(product, 'thumb')}
                             alt={product.name}
                             loading="lazy"
+                            decoding="async"
                             className="w-full h-full object-cover transition-transform duration-300 cursor-pointer"
                             onClick={() => openLightbox(product.id, imageIndex[product.id] || 0)}
                           />
