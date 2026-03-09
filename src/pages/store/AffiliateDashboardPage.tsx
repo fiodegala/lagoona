@@ -341,11 +341,11 @@ const AffiliateDashboardPage = () => {
           </TabsList>
 
           <TabsContent value="analytics">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
-              <h3 className="font-semibold text-lg flex items-center gap-2"><BarChart3 className="h-5 w-5" /> Desempenho do seu Link</h3>
-              <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex flex-col gap-3 mb-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <h3 className="font-semibold text-lg flex items-center gap-2"><BarChart3 className="h-5 w-5" /> Desempenho do seu Link</h3>
                 <Select value={analyticsPeriod} onValueChange={setAnalyticsPeriod}>
-                  <SelectTrigger className="w-[160px]">
+                  <SelectTrigger className="w-[180px]">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -357,27 +357,28 @@ const AffiliateDashboardPage = () => {
                     <SelectItem value="custom">Personalizado</SelectItem>
                   </SelectContent>
                 </Select>
-                {analyticsPeriod === 'custom' && (
-                  <div className="flex items-center gap-2">
-                    <Input
-                      type="date"
-                      value={customStart}
-                      onChange={(e) => setCustomStart(e.target.value)}
-                      className="w-[140px]"
-                    />
-                    <span className="text-muted-foreground text-sm">até</span>
-                    <Input
-                      type="date"
-                      value={customEnd}
-                      onChange={(e) => setCustomEnd(e.target.value)}
-                      className="w-[140px]"
-                    />
-                    <Button size="sm" onClick={loadAnalytics} disabled={!customStart || !customEnd}>
-                      <Calendar className="h-4 w-4 mr-1" /> Filtrar
-                    </Button>
-                  </div>
-                )}
               </div>
+              {analyticsPeriod === 'custom' && (
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 p-3 rounded-lg border bg-muted/30">
+                  <Label className="text-sm text-muted-foreground whitespace-nowrap">De:</Label>
+                  <Input
+                    type="date"
+                    value={customStart}
+                    onChange={(e) => setCustomStart(e.target.value)}
+                    className="w-full sm:w-[160px]"
+                  />
+                  <Label className="text-sm text-muted-foreground whitespace-nowrap">Até:</Label>
+                  <Input
+                    type="date"
+                    value={customEnd}
+                    onChange={(e) => setCustomEnd(e.target.value)}
+                    className="w-full sm:w-[160px]"
+                  />
+                  <Button size="sm" onClick={loadAnalytics} disabled={!customStart || !customEnd} className="w-full sm:w-auto">
+                    <Calendar className="h-4 w-4 mr-1" /> Filtrar
+                  </Button>
+                </div>
+              )}
             </div>
 
             {analyticsLoading ? (
