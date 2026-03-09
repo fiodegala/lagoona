@@ -572,6 +572,25 @@ const Orders = () => {
         onOpenChange={(open) => !open && setDetailOrder(null)}
         order={detailOrder}
       />
+      {/* Delete Confirmation */}
+      <AlertDialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteConfirm?.type === 'bulk'
+                ? `Tem certeza que deseja excluir ${selectedIds.length} pedido(s)? Esta ação não pode ser desfeita.`
+                : 'Tem certeza que deseja excluir este pedido? Esta ação não pode ser desfeita.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteOrders} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AdminLayout>
   );
 };
