@@ -289,6 +289,23 @@ const CatalogPage = () => {
   }, [products, variationsMap]);
 
   const [imageIndex, setImageIndex] = useState<Record<string, number>>({});
+  const [lightbox, setLightbox] = useState<{ productId: string; index: number } | null>(null);
+
+  const openLightbox = useCallback((productId: string, index: number) => {
+    setLightbox({ productId, index });
+  }, []);
+
+  const closeLightbox = useCallback(() => setLightbox(null), []);
+
+  const lightboxNavigate = useCallback((direction: 'prev' | 'next') => {
+    if (!lightbox) return;
+    const images = productImagesMap[lightbox.productId] || [];
+    if (images.length <= 1) return;
+    const next = direction === 'next'
+      ? (lightbox.index + 1) % images.length
+      : (lightbox.index - 1 + images.length) % images.length;
+    setLightbox({ ...lightbox, index: next });
+  }, [lightbox, productImagesMap]);
 
   const getDisplayImage = (product: Product) => {
     const images = productImagesMap[product.id] || ['/placeholder.svg'];
