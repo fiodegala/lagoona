@@ -45,6 +45,10 @@ const Sales = () => {
   const [cancelSale, setCancelSale] = useState<any>(null);
   const [cancelReason, setCancelReason] = useState('');
   const [isCancelling, setIsCancelling] = useState(false);
+  const [isEditingDate, setIsEditingDate] = useState(false);
+  const [editDate, setEditDate] = useState<Date | undefined>(undefined);
+  const [editTime, setEditTime] = useState('');
+  const [isSavingDate, setIsSavingDate] = useState(false);
 
   // Fetch full customer data when opening detail
   const openSaleDetail = async (sale: any) => {
