@@ -256,6 +256,16 @@ const CheckoutPage = () => {
     // and asynchronously by the webhook (mercadopago-webhook).
     // No client-side update needed (anonymous users lack UPDATE permission).
     console.log('Payment success:', paymentData.status, paymentData.id);
+    
+    // Track checkout_complete event
+    trackAnalyticsEvent('checkout_complete', {
+      metadata: {
+        order_id: orderId,
+        payment_status: paymentData.status,
+        total: total,
+      },
+    });
+    
     setOrderComplete(true);
     clearCart();
   };

@@ -207,6 +207,18 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       }
       return [...current, { ...newItem, quantity: newItem.quantity || 1 }];
     });
+
+    // Track add_to_cart event for analytics funnel
+    trackAnalyticsEvent('add_to_cart', {
+      product_id: newItem.productId || undefined,
+      metadata: {
+        product_name: newItem.name,
+        variation_id: newItem.variationId || null,
+        variation_label: newItem.variationLabel || null,
+        price: newItem.price,
+        quantity: newItem.quantity || 1,
+      },
+    });
   };
 
   const removeItem = (id: string) => {
