@@ -312,7 +312,7 @@ const CatalogPage = () => {
     const images = productImagesMap[product.id] || ['/placeholder.svg'];
     const idx = imageIndex[product.id] || 0;
     const url = images[idx] || images[0];
-    return size === 'thumb' ? getOptimizedImageUrl(url, { width: 400, quality: 70 }) : url;
+    return size === 'thumb' ? getOptimizedImageUrl(url, { width: 800, quality: 85 }) : url;
   }, [productImagesMap, imageIndex]);
 
   const navigateImage = useCallback((productId: string, direction: 'prev' | 'next') => {
