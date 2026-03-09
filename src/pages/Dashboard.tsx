@@ -395,7 +395,6 @@ const Dashboard = () => {
       return globalGoal?.target_amount || 0;
     };
 
-    const dailyTarget = findGoalTarget('daily');
     const monthlyTarget = findGoalTarget('monthly');
 
     // Get today's sales (online + POS)
@@ -440,12 +439,33 @@ const Dashboard = () => {
 
     const monthTotal = monthOnlineSales + monthPOSSales;
 
+    // Dynamic daily goal: (monthly target - sold so far) / remaining business days
+    const getRemainingWorkingDays = (): number => {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = now.getMonth();
+      const lastDay = new Date(year, month + 1, 0).getDate();
+      const currentDay = now.getDate();
+      let count = 0;
+      // Count from today to end of month (Mon-Sat = business days)
+      for (let d = currentDay; d <= lastDay; d++) {
+        const dayOfWeek = new Date(year, month, d).getDay();
+        if (dayOfWeek >= 1 && dayOfWeek <= 6) count++;
+      }
+      return Math.max(count, 1); // At least 1 to avoid division by zero
+    };
+
+    const remainingDays = getRemainingWorkingDays();
+    const remainingTarget = Math.max(monthlyTarget - monthTotal, 0);
+    const dynamicDailyTarget = monthlyTarget > 0 ? Math.ceil(remainingTarget / remainingDays) : 0;
+
     return {
       daily: {
-        target: dailyTarget,
+        target: dynamicDailyTarget,
         current: todayTotal,
-        percentage: dailyTarget ? Math.min((todayTotal / dailyTarget) * 100, 100) : 0,
-        isComplete: dailyTarget ? todayTotal >= dailyTarget : false,
+        percentage: dynamicDailyTarget ? Math.min((todayTotal / dynamicDailyTarget) * 100, 100) : 0,
+        isComplete: dynamicDailyTarget ? todayTotal >= dynamicDailyTarget : false,
+        remainingDays,
       },
       monthly: {
         target: monthlyTarget,
