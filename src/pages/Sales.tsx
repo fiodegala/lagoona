@@ -14,7 +14,9 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Receipt, Search, Eye, Calendar, DollarSign, TrendingUp, ShoppingBag, Printer, User, Phone, Mail, MapPin, FileText, Building2, Ban } from 'lucide-react';
+import { Receipt, Search, Eye, Calendar as CalendarIcon, DollarSign, TrendingUp, ShoppingBag, Printer, User, Phone, Mail, MapPin, FileText, Building2, Ban, Pencil, Check, X } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { format, startOfDay, endOfDay, startOfWeek, startOfMonth, subDays } from 'date-fns';
