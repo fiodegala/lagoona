@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import StoreLayout from '@/components/store/StoreLayout';
 
 const StoreLoginPage = () => {
@@ -25,9 +26,23 @@ const StoreLoginPage = () => {
   const [registerPassword, setRegisterPassword] = useState('');
   const [registerConfirmPassword, setRegisterConfirmPassword] = useState('');
 
+  const checkAffiliateAndRedirect = async (userId: string) => {
+    const { data: aff } = await supabase
+      .from('affiliates')
+      .select('id')
+      .eq('user_id', userId)
+      .maybeSingle();
+    
+    if (aff) {
+      navigate('/afiliados/painel');
+    } else {
+      navigate('/minha-conta');
+    }
+  };
+
   // Redirect if already logged in
   if (user) {
-    navigate('/minha-conta');
+    checkAffiliateAndRedirect(user.id);
     return null;
   }
 
@@ -44,7 +59,12 @@ const StoreLoginPage = () => {
         toast.error('Email ou senha incorretos');
       } else {
         toast.success('Login realizado com sucesso!');
-        navigate('/minha-conta');
+        const { data: { user: currentUser } } = await supabase.auth.getUser();
+        if (currentUser) {
+          await checkAffiliateAndRedirect(currentUser.id);
+        } else {
+          navigate('/minha-conta');
+        }
       }
     } catch {
       toast.error('Erro ao fazer login');
