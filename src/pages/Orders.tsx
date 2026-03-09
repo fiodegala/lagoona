@@ -323,6 +323,16 @@ const Orders = () => {
               ))}
             </SelectContent>
           </Select>
+          {selectedIds.length > 0 && (
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => setDeleteConfirm({ type: 'bulk' })}
+            >
+              <Trash2 className="h-4 w-4 mr-1" />
+              Excluir ({selectedIds.length})
+            </Button>
+          )}
         </div>
 
         {isLoading ? (
