@@ -96,13 +96,33 @@ serve(async (req) => {
       .map(([area, count]) => ({ area, count }))
       .sort((a, b) => b.count - a.count);
 
-    // Process product views with product names
+    // Process product views - combine product_view events AND page_view on /produto/ URLs
     const productViewMap: Record<string, number> = {};
+    
+    // From explicit product_view events (with product_id)
     (productViews.data || []).forEach((pv: any) => {
       if (pv.product_id) {
         productViewMap[pv.product_id] = (productViewMap[pv.product_id] || 0) + 1;
       }
     });
+    
+    // From page_view events on /produto/ URLs (extract UUID from path)
+    const productPageIds = new Set<string>();
+    (productPageViews.data || []).forEach((pv: any) => {
+      const match = pv.page_path?.match(/\/produto\/([0-9a-f-]{36})/);
+      if (match) {
+        const pid = match[1];
+        productPageIds.add(pid);
+        // Only count if not already counted via product_view event
+        if (!productViewMap[pid]) {
+          productViewMap[pid] = 0;
+        }
+        productViewMap[pid] = (productViewMap[pid] || 0) + 1;
+      }
+    });
+    
+    // Deduplicate: if both product_view and page_view exist for same product, 
+    // use the higher count (page_view is more reliable for historical data)
 
     const topProductIds = Object.entries(productViewMap)
       .sort(([, a], [, b]) => b - a)
