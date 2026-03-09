@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { Eye, EyeOff, Loader2, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,6 +12,8 @@ import StoreLayout from '@/components/store/StoreLayout';
 
 const StoreLoginPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const redirectTo = (location.state as any)?.from || null;
   const { signIn, signUp, user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -27,6 +29,10 @@ const StoreLoginPage = () => {
   const [registerConfirmPassword, setRegisterConfirmPassword] = useState('');
 
   const checkAffiliateAndRedirect = async (userId: string) => {
+    if (redirectTo) {
+      navigate(redirectTo);
+      return;
+    }
     const { data: aff } = await supabase
       .from('affiliates')
       .select('id')
