@@ -52,6 +52,9 @@ const DealsCountdownSection = ({ products, hideProducts = false }: DealsCountdow
   const [timeLeft, setTimeLeft] = useState(0);
   const [loaded, setLoaded] = useState(false);
 
+  const productIds = useMemo(() => products.slice(0, 10).map(p => p.id), [products]);
+  const { meta: productsMeta } = useProductCardsMeta(productIds);
+
   useEffect(() => {
     const load = async () => {
       try {
