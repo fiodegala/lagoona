@@ -65,6 +65,9 @@ const WorkWithUsPage = lazy(() => import("./pages/store/WorkWithUsPage"));
 const CombosPage = lazy(() => import("./pages/store/CombosPage"));
 const QuoteViewPage = lazy(() => import("./pages/store/QuoteViewPage"));
 const CatalogPage = lazy(() => import("./pages/store/CatalogPage"));
+const AffiliateSignupPage = lazy(() => import("./pages/store/AffiliateSignupPage"));
+const AffiliateDashboardPage = lazy(() => import("./pages/store/AffiliateDashboardPage"));
+const AffiliateRedirectPage = lazy(() => import("./pages/store/AffiliateRedirectPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
