@@ -490,8 +490,8 @@ const UsersPage = () => {
 
       {/* Create/Edit User Dialog */}
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <DialogContent>
-          <DialogHeader>
+        <DialogContent className="max-h-[90vh] flex flex-col">
+          <DialogHeader className="shrink-0">
             <DialogTitle>
               {selectedUser ? 'Editar Permissão' : 'Novo Usuário'}
             </DialogTitle>
@@ -501,7 +501,8 @@ const UsersPage = () => {
                 : 'Crie um novo usuário e defina suas permissões'}
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} className="flex flex-col min-h-0 flex-1">
+            <ScrollArea className="flex-1 min-h-0 pr-3">
             <div className="grid gap-4 py-4">
               {!selectedUser && (
                 <>
@@ -724,7 +725,8 @@ const UsersPage = () => {
                 </div>
               </div>
             </div>
-            <DialogFooter>
+            </ScrollArea>
+            <DialogFooter className="shrink-0 pt-4">
               <Button type="button" variant="outline" onClick={handleCloseForm}>
                 Cancelar
               </Button>
