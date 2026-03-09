@@ -366,7 +366,7 @@ const ProductImageGallery = ({
                   </div>
                 ) : (
                   <img
-                    src={item.url}
+                    src={getOptimizedImageUrl(item.url, { width: 100, quality: 60 })}
                     alt={`${productName} - Miniatura ${index + 1}`}
                     className="w-full h-full object-cover"
                   />
