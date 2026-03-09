@@ -595,7 +595,7 @@ const CatalogPage = () => {
 
               {/* Image */}
               <img
-                src={getOptimizedImageUrl(currentImage, { width: 1200, quality: 85 })}
+                src={getOptimizedImageUrl(currentImage, { width: 1600, quality: 90 })}
                 alt={product?.name || ''}
                 className="max-w-[90vw] max-h-[85vh] object-contain select-none"
                 decoding="async"
