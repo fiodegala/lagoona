@@ -55,6 +55,7 @@ const StoreHeader = ({ categories }: StoreHeaderProps) => {
         .limit(8);
       setSuggestions(data || []);
       setShowSuggestions(true);
+      trackSearchEvent(query.trim(), (data || []).length);
     } catch (err) {
       console.error('Search error:', err);
     } finally {
