@@ -138,7 +138,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(newSession?.user ?? null);
 
         if (newSession?.user) {
-          // Use setTimeout to avoid Supabase auth deadlock, but keep loading until data is fetched
+          // Set loading true so ProtectedRoute waits for roles
+          setIsLoading(true);
+          // Use setTimeout to avoid Supabase auth deadlock
           setTimeout(async () => {
             await fetchUserData(newSession.user.id);
             setIsLoading(false);
