@@ -493,7 +493,7 @@ const HomePage = () => {
                   className="group relative overflow-hidden rounded-xl aspect-[2/1] block"
                 >
                   <img
-                    src={banner.image_url}
+                    src={getOptimizedImageUrl(banner.image_url, { width: 800, quality: 75 })}
                     alt={banner.title || 'Promoção'}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     loading="lazy"
