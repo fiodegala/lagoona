@@ -193,7 +193,7 @@ const ProductImageGallery = ({
     return (
       <>
         <img
-          src={currentItem.url}
+          src={getOptimizedImageUrl(currentItem.url, { width: 800, quality: 80 })}
           alt={`${productName} - Imagem ${currentIndex + 1}`}
           className={cn(
             "w-full h-full object-cover transition-opacity duration-200",
