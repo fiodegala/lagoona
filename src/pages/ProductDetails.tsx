@@ -250,9 +250,10 @@ const ProductDetails = () => {
                 }}
               >
                 <img
-                  src={selectedImage || product.image_url}
+                  src={getOptimizedImageUrl(selectedImage || product.image_url, { width: 800, quality: 80 })}
                   alt={product.name}
                   className="w-full aspect-[4/5] object-cover"
+                  loading="eager"
                 />
                 {/* Zoom indicator */}
                 <div className="absolute bottom-3 right-3 bg-background/80 backdrop-blur-sm rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity">
