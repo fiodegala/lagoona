@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { couponsService, Coupon, CouponValidationResult } from '@/services/coupons';
 import { combosService, Combo } from '@/services/combos';
-import { trackAnalyticsEvent } from '@/hooks/useAnalyticsTracker';
+import { trackAnalyticsEvent, trackCartRemoveEvent } from '@/hooks/useAnalyticsTracker';
 
 export interface CartItem {
   id: string;
@@ -222,6 +222,10 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const removeItem = (id: string) => {
+    const item = items.find(i => i.id === id);
+    if (item) {
+      trackCartRemoveEvent(item.productId, item.name);
+    }
     setItems(current => current.filter(item => item.id !== id));
   };
 

@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import CartDrawer from '@/components/store/CartDrawer';
 import logoLagoona from '@/assets/logo-lagoona.png';
 import logoLagoonaDark from '@/assets/logo-lagoona-dark.png';
+import { trackSearchEvent } from '@/hooks/useAnalyticsTracker';
 
 interface SearchResult {
   id: string;
@@ -54,6 +55,7 @@ const StoreHeader = ({ categories }: StoreHeaderProps) => {
         .limit(8);
       setSuggestions(data || []);
       setShowSuggestions(true);
+      trackSearchEvent(query.trim(), (data || []).length);
     } catch (err) {
       console.error('Search error:', err);
     } finally {

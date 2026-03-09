@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { trackFavoriteEvent } from '@/hooks/useAnalyticsTracker';
 import { User } from '@supabase/supabase-js';
 
 interface FavoritesContextType {
@@ -118,6 +119,7 @@ export const FavoritesProvider = ({ children }: { children: ReactNode }) => {
 
     // Optimistic update
     setFavorites(prev => [...prev, productId]);
+    trackFavoriteEvent('add', productId);
 
     if (user) {
       // Save to database
@@ -140,6 +142,7 @@ export const FavoritesProvider = ({ children }: { children: ReactNode }) => {
   const removeFavorite = useCallback(async (productId: string) => {
     // Optimistic update
     setFavorites(prev => prev.filter(id => id !== productId));
+    trackFavoriteEvent('remove', productId);
 
     if (user) {
       // Remove from database
