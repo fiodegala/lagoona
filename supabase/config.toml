@@ -35,3 +35,6 @@ verify_jwt = false
 
 [functions.ai-tryon]
 verify_jwt = false
+
+[functions.affiliate-analytics]
+verify_jwt = false
