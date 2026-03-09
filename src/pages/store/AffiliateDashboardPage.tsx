@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Copy, DollarSign, TrendingUp, MousePointerClick, ArrowDownToLine, Loader2, LogIn, BarChart3, Monitor, Smartphone, Tablet, Globe, ShoppingCart, CreditCard, Eye } from 'lucide-react';
+import { Copy, DollarSign, TrendingUp, MousePointerClick, ArrowDownToLine, Loader2, LogIn, BarChart3, Monitor, Smartphone, Tablet, Globe, ShoppingCart, CreditCard, Eye, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -37,7 +37,44 @@ const AffiliateDashboardPage = () => {
   const [submittingWithdraw, setSubmittingWithdraw] = useState(false);
   const [analytics, setAnalytics] = useState<any>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
-  const [analyticsDays, setAnalyticsDays] = useState('30');
+  const [analyticsPeriod, setAnalyticsPeriod] = useState('this_month');
+  const [customStart, setCustomStart] = useState('');
+  const [customEnd, setCustomEnd] = useState('');
+
+  const getDateRange = (period: string): { start_date: string; end_date: string } => {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const fmt = (d: Date) => d.toISOString().substring(0, 10);
+
+    switch (period) {
+      case 'today':
+        return { start_date: fmt(today), end_date: fmt(now) };
+      case 'yesterday': {
+        const y = new Date(today);
+        y.setDate(y.getDate() - 1);
+        return { start_date: fmt(y), end_date: fmt(today) };
+      }
+      case 'this_week': {
+        const d = new Date(today);
+        const day = d.getDay();
+        d.setDate(d.getDate() - (day === 0 ? 6 : day - 1));
+        return { start_date: fmt(d), end_date: fmt(now) };
+      }
+      case 'this_month': {
+        const d = new Date(now.getFullYear(), now.getMonth(), 1);
+        return { start_date: fmt(d), end_date: fmt(now) };
+      }
+      case 'last_month': {
+        const d = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const e = new Date(now.getFullYear(), now.getMonth(), 0);
+        return { start_date: fmt(d), end_date: fmt(e) };
+      }
+      case 'custom':
+        return { start_date: customStart, end_date: customEnd };
+      default:
+        return { start_date: fmt(new Date(today.getTime() - 30 * 86400000)), end_date: fmt(now) };
+    }
+  };
 
   useEffect(() => {
     if (authLoading) return;
@@ -75,10 +112,12 @@ const AffiliateDashboardPage = () => {
   };
 
   const loadAnalytics = async () => {
+    const range = getDateRange(analyticsPeriod);
+    if (analyticsPeriod === 'custom' && (!range.start_date || !range.end_date)) return;
     setAnalyticsLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('affiliate-analytics', {
-        body: { days: parseInt(analyticsDays) },
+        body: { start_date: range.start_date, end_date: range.end_date },
       });
       if (error) throw error;
       setAnalytics(data);
@@ -91,9 +130,11 @@ const AffiliateDashboardPage = () => {
 
   useEffect(() => {
     if (affiliate && affiliate.status === 'active') {
-      loadAnalytics();
+      if (analyticsPeriod !== 'custom') {
+        loadAnalytics();
+      }
     }
-  }, [affiliate, analyticsDays]);
+  }, [affiliate, analyticsPeriod]);
 
   const handleCopyLink = () => {
     if (!affiliate) return;
@@ -300,20 +341,43 @@ const AffiliateDashboardPage = () => {
           </TabsList>
 
           <TabsContent value="analytics">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
               <h3 className="font-semibold text-lg flex items-center gap-2"><BarChart3 className="h-5 w-5" /> Desempenho do seu Link</h3>
-              <Select value={analyticsDays} onValueChange={setAnalyticsDays}>
-                <SelectTrigger className="w-[140px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="7">7 dias</SelectItem>
-                  <SelectItem value="15">15 dias</SelectItem>
-                  <SelectItem value="30">30 dias</SelectItem>
-                  <SelectItem value="60">60 dias</SelectItem>
-                  <SelectItem value="90">90 dias</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="flex items-center gap-2 flex-wrap">
+                <Select value={analyticsPeriod} onValueChange={setAnalyticsPeriod}>
+                  <SelectTrigger className="w-[160px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="today">Hoje</SelectItem>
+                    <SelectItem value="yesterday">Ontem</SelectItem>
+                    <SelectItem value="this_week">Esta Semana</SelectItem>
+                    <SelectItem value="this_month">Este Mês</SelectItem>
+                    <SelectItem value="last_month">Mês Passado</SelectItem>
+                    <SelectItem value="custom">Personalizado</SelectItem>
+                  </SelectContent>
+                </Select>
+                {analyticsPeriod === 'custom' && (
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="date"
+                      value={customStart}
+                      onChange={(e) => setCustomStart(e.target.value)}
+                      className="w-[140px]"
+                    />
+                    <span className="text-muted-foreground text-sm">até</span>
+                    <Input
+                      type="date"
+                      value={customEnd}
+                      onChange={(e) => setCustomEnd(e.target.value)}
+                      className="w-[140px]"
+                    />
+                    <Button size="sm" onClick={loadAnalytics} disabled={!customStart || !customEnd}>
+                      <Calendar className="h-4 w-4 mr-1" /> Filtrar
+                    </Button>
+                  </div>
+                )}
+              </div>
             </div>
 
             {analyticsLoading ? (

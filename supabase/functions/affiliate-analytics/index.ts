@@ -44,21 +44,31 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json().catch(() => ({}));
-    const days = body.days || 30;
+    
+    let since: Date;
+    let until: Date;
+    
+    if (body.start_date && body.end_date) {
+      since = new Date(body.start_date + 'T00:00:00Z');
+      until = new Date(body.end_date + 'T23:59:59Z');
+    } else {
+      const days = body.days || 30;
+      since = new Date();
+      since.setDate(since.getDate() - days);
+      until = new Date();
+    }
 
     const adminClient = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    const since = new Date();
-    since.setDate(since.getDate() - days);
-
     // Query analytics events that have this affiliate's referral code in metadata
     const { data: events, error: eventsError } = await adminClient
       .from("site_analytics_events")
       .select("event_type, page_path, metadata, screen_width, created_at")
       .gte("created_at", since.toISOString())
+      .lte("created_at", until.toISOString())
       .filter("metadata->>affiliate_code", "eq", affiliate.referral_code)
       .order("created_at", { ascending: false })
       .limit(5000);
