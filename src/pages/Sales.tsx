@@ -170,6 +170,49 @@ const Sales = () => {
     }
   };
 
+  const handleEditDate = () => {
+    if (!detailSale) return;
+    const d = new Date(detailSale.created_at);
+    setEditDate(d);
+    setEditTime(format(d, 'HH:mm'));
+    setIsEditingDate(true);
+  };
+
+  const handleSaveDate = async () => {
+    if (!detailSale || !editDate || !user) return;
+    setIsSavingDate(true);
+    try {
+      const [hours, minutes] = editTime.split(':').map(Number);
+      const newDate = new Date(editDate);
+      newDate.setHours(hours || 0, minutes || 0, 0, 0);
+      
+      const { error } = await supabase
+        .from('pos_sales')
+        .update({ created_at: newDate.toISOString() } as any)
+        .eq('id', detailSale.id);
+      if (error) throw error;
+
+      auditService.log({
+        action: 'update_date',
+        entity_type: 'pos_sale',
+        entity_id: detailSale.id,
+        details: {
+          old_date: detailSale.created_at,
+          new_date: newDate.toISOString(),
+        },
+      });
+
+      setDetailSale({ ...detailSale, created_at: newDate.toISOString() });
+      queryClient.invalidateQueries({ queryKey: ['pos-sales'] });
+      toast.success('Data da venda atualizada');
+      setIsEditingDate(false);
+    } catch (e: any) {
+      toast.error('Erro ao atualizar data: ' + (e.message || ''));
+    } finally {
+      setIsSavingDate(false);
+    }
+  };
+
   const dateRange = useMemo(() => {
     const now = new Date();
     switch (periodFilter) {
