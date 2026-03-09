@@ -97,16 +97,19 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
             <img src={logoLagoona} alt="Fio de Gala" className="h-8 w-auto" />
           </div>
         )}
-        {!isMobile && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setCollapsed(!collapsed)}
-            className="text-sidebar-foreground hover:bg-sidebar-accent h-8 w-8"
-          >
-            {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-          </Button>
-        )}
+        <div className="flex items-center gap-1">
+          <AdminNotificationBell />
+          {!isMobile && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setCollapsed(!collapsed)}
+              className="text-sidebar-foreground hover:bg-sidebar-accent h-8 w-8"
+            >
+              {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Visit Website Button */}
