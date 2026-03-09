@@ -6,7 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Search, Share2, MessageCircle, Loader2, ChevronLeft, ChevronRight, Download } from 'lucide-react';
+import { Search, Share2, MessageCircle, Loader2, ChevronLeft, ChevronRight, Download, X } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
@@ -289,6 +289,23 @@ const CatalogPage = () => {
   }, [products, variationsMap]);
 
   const [imageIndex, setImageIndex] = useState<Record<string, number>>({});
+  const [lightbox, setLightbox] = useState<{ productId: string; index: number } | null>(null);
+
+  const openLightbox = useCallback((productId: string, index: number) => {
+    setLightbox({ productId, index });
+  }, []);
+
+  const closeLightbox = useCallback(() => setLightbox(null), []);
+
+  const lightboxNavigate = useCallback((direction: 'prev' | 'next') => {
+    if (!lightbox) return;
+    const images = productImagesMap[lightbox.productId] || [];
+    if (images.length <= 1) return;
+    const next = direction === 'next'
+      ? (lightbox.index + 1) % images.length
+      : (lightbox.index - 1 + images.length) % images.length;
+    setLightbox({ ...lightbox, index: next });
+  }, [lightbox, productImagesMap]);
 
   const getDisplayImage = (product: Product) => {
     const images = productImagesMap[product.id] || ['/placeholder.svg'];
@@ -423,7 +440,8 @@ const CatalogPage = () => {
                             src={getDisplayImage(product)}
                             alt={product.name}
                             loading="lazy"
-                            className="w-full h-full object-cover transition-transform duration-300"
+                            className="w-full h-full object-cover transition-transform duration-300 cursor-pointer"
+                            onClick={() => openLightbox(product.id, imageIndex[product.id] || 0)}
                           />
                           {hasMultiple && (
                             <>
@@ -510,6 +528,95 @@ const CatalogPage = () => {
             </div>
           )}
         </div>
+
+        {/* Lightbox Modal */}
+        {lightbox && (() => {
+          const images = productImagesMap[lightbox.productId] || [];
+          const currentImage = images[lightbox.index] || images[0];
+          const product = products.find(p => p.id === lightbox.productId);
+          return (
+            <div
+              className="fixed inset-0 z-[200] bg-black/90 flex items-center justify-center"
+              onClick={closeLightbox}
+              onTouchStart={(e) => {
+                (e.currentTarget as any)._touchX = e.touches[0].clientX;
+              }}
+              onTouchEnd={(e) => {
+                const startX = (e.currentTarget as any)._touchX || 0;
+                const dx = e.changedTouches[0].clientX - startX;
+                if (Math.abs(dx) > 50) {
+                  e.stopPropagation();
+                  lightboxNavigate(dx < 0 ? 'next' : 'prev');
+                }
+              }}
+            >
+              {/* Close button */}
+              <button
+                onClick={closeLightbox}
+                className="absolute top-4 right-4 z-10 bg-background/20 backdrop-blur-sm rounded-full p-2 text-white hover:bg-background/40 transition-colors"
+              >
+                <X className="h-6 w-6" />
+              </button>
+
+              {/* Counter */}
+              {images.length > 1 && (
+                <div className="absolute top-4 left-4 z-10 bg-background/20 backdrop-blur-sm rounded-full px-3 py-1 text-white text-sm font-medium">
+                  {lightbox.index + 1} / {images.length}
+                </div>
+              )}
+
+              {/* Product name */}
+              {product && (
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 bg-background/20 backdrop-blur-sm rounded-lg px-4 py-2 text-white text-sm font-medium max-w-[80%] text-center truncate">
+                  {product.name}
+                </div>
+              )}
+
+              {/* Navigation arrows */}
+              {images.length > 1 && (
+                <>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); lightboxNavigate('prev'); }}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 z-10 bg-background/20 backdrop-blur-sm rounded-full p-2 text-white hover:bg-background/40 transition-colors"
+                  >
+                    <ChevronLeft className="h-6 w-6" />
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); lightboxNavigate('next'); }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 z-10 bg-background/20 backdrop-blur-sm rounded-full p-2 text-white hover:bg-background/40 transition-colors"
+                  >
+                    <ChevronRight className="h-6 w-6" />
+                  </button>
+                </>
+              )}
+
+              {/* Image */}
+              <img
+                src={currentImage}
+                alt={product?.name || ''}
+                className="max-w-[90vw] max-h-[85vh] object-contain select-none"
+                onClick={(e) => e.stopPropagation()}
+              />
+
+              {/* Thumbnail strip */}
+              {images.length > 1 && (
+                <div className="absolute bottom-14 left-1/2 -translate-x-1/2 flex gap-2 max-w-[90vw] overflow-x-auto no-scrollbar px-2">
+                  {images.map((img, i) => (
+                    <button
+                      key={i}
+                      onClick={(e) => { e.stopPropagation(); setLightbox({ ...lightbox, index: i }); }}
+                      className={`flex-shrink-0 w-12 h-12 rounded-md overflow-hidden border-2 transition-all ${
+                        i === lightbox.index ? 'border-white scale-110' : 'border-transparent opacity-60 hover:opacity-100'
+                      }`}
+                    >
+                      <img src={img} alt="" className="w-full h-full object-cover" />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })()}
       </div>
     </StoreLayout>
   );
