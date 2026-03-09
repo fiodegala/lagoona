@@ -159,7 +159,34 @@ const Analytics = () => {
         body: { period },
       });
       if (error) throw error;
-      setData(result);
+      // Normalize: ensure all array fields have defaults to prevent undefined.length errors
+      setData({
+        period: result?.period || '30 dias',
+        totalSessions: result?.totalSessions || 0,
+        avgTimeByPage: result?.avgTimeByPage || [],
+        clickMap: result?.clickMap || [],
+        heatmapPages: result?.heatmapPages || [],
+        topProducts: result?.topProducts || [],
+        funnel: result?.funnel || {},
+        bounceRate: result?.bounceRate || 0,
+        totalBounces: result?.totalBounces || 0,
+        devices: result?.devices || [],
+        browsers: result?.browsers || [],
+        operatingSystems: result?.operatingSystems || [],
+        trafficSources: result?.trafficSources || [],
+        trafficMediums: result?.trafficMediums || [],
+        newVisitors: result?.newVisitors || 0,
+        returningVisitors: result?.returningVisitors || 0,
+        topSearches: result?.topSearches || [],
+        totalSearches: result?.totalSearches || 0,
+        searchesWithNoResults: result?.searchesWithNoResults || 0,
+        topFavorites: result?.topFavorites || [],
+        totalFavoriteAdds: result?.totalFavoriteAdds || 0,
+        totalFavoriteRemoves: result?.totalFavoriteRemoves || 0,
+        topCartRemoves: result?.topCartRemoves || [],
+        totalCartRemoves: result?.totalCartRemoves || 0,
+        aiRecommendations: result?.aiRecommendations || null,
+      });
     } catch (error) {
       console.error('Error loading analytics:', error);
       toast.error('Erro ao carregar analytics');
