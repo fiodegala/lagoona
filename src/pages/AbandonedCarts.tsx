@@ -380,7 +380,7 @@ const AbandonedCarts = () => {
         </Card>
 
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -393,6 +393,16 @@ const AbandonedCarts = () => {
           <Button variant="outline" size="icon" onClick={fetchCarts}>
             <RefreshCw className="h-4 w-4" />
           </Button>
+          {selectedIds.length > 0 && (
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => setDeleteConfirm({ type: 'bulk' })}
+            >
+              <Trash2 className="h-4 w-4 mr-1" />
+              Excluir ({selectedIds.length})
+            </Button>
+          )}
         </div>
 
         {/* Table */}
