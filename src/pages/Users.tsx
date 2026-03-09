@@ -544,8 +544,55 @@ const UsersPage = () => {
                 <div className="p-4 bg-muted rounded-lg">
                   <div className="font-medium">{selectedUser.profile?.full_name}</div>
                   <div className="text-sm text-muted-foreground">
+                    {selectedUser.email && <span className="block">{selectedUser.email}</span>}
                     Usuário desde {new Date(selectedUser.created_at).toLocaleDateString('pt-BR')}
                   </div>
+                </div>
+              )}
+
+              {selectedUser && (
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-1.5">
+                    <KeyRound className="h-3.5 w-3.5" />
+                    Nova Senha
+                  </Label>
+                  <div className="flex gap-2">
+                    <Input
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="Deixe vazio para manter a atual"
+                      minLength={6}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={!newPassword || newPassword.length < 6 || isChangingPassword}
+                      onClick={async () => {
+                        if (!selectedUser || !newPassword || newPassword.length < 6) return;
+                        setIsChangingPassword(true);
+                        try {
+                          const { data, error } = await supabase.functions.invoke('create-user', {
+                            body: { action: 'update-password', user_id: selectedUser.user_id, new_password: newPassword },
+                          });
+                          if (error) throw error;
+                          if (data?.error) throw new Error(data.error);
+                          toast({ title: 'Senha atualizada com sucesso!' });
+                          setNewPassword('');
+                        } catch (err: any) {
+                          toast({ title: 'Erro ao atualizar senha', description: err.message, variant: 'destructive' });
+                        } finally {
+                          setIsChangingPassword(false);
+                        }
+                      }}
+                    >
+                      {isChangingPassword ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Alterar'}
+                    </Button>
+                  </div>
+                  {newPassword && newPassword.length < 6 && (
+                    <p className="text-xs text-destructive">Mínimo 6 caracteres</p>
+                  )}
                 </div>
               )}
 
