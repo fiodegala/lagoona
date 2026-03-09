@@ -11,7 +11,7 @@ const AffiliateRedirectPage = () => {
     if (code) {
       saveAffiliateCode(code);
       // Increment clicks (fire-and-forget)
-      supabase.rpc('increment_affiliate_clicks', { ref_code: code }).then(() => {});
+      supabase.rpc('increment_affiliate_clicks' as any, { ref_code: code }).then(() => {});
     }
     navigate('/', { replace: true });
   }, [code, navigate]);

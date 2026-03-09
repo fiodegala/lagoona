@@ -2450,6 +2450,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_affiliate_clicks: {
+        Args: { ref_code: string }
+        Returns: undefined
+      }
       is_admin_or_manager: { Args: { _user_id: string }; Returns: boolean }
       is_online_store_user: { Args: { _user_id: string }; Returns: boolean }
       user_accessible_store_ids: {
