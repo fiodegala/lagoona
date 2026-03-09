@@ -100,18 +100,9 @@ const CheckoutPage = () => {
     return () => clearTimeout(saveTimeout);
   }, [formData, items, orderComplete]);
 
-  // Mark cart as recovered when order is completed
-  const markCartRecovered = async () => {
-    const sessionId = localStorage.getItem(ABANDONED_CART_SESSION_KEY);
-    if (!sessionId) return;
-    try {
-      await supabase.functions.invoke('abandoned-cart', {
-        body: { action: 'recover', session_id: sessionId },
-      });
-      localStorage.removeItem(ABANDONED_CART_SESSION_KEY);
-    } catch (err) {
-      console.error('Error marking cart as recovered:', err);
-    }
+  // Get session ID to save with order for later cart recovery
+  const getSessionId = () => {
+    return localStorage.getItem(ABANDONED_CART_SESSION_KEY) || null;
   };
 
   const total = getTotal();
