@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import StoreLayout from '@/components/store/StoreLayout';
 import { useCart } from '@/contexts/CartContext';
 import { supabase } from '@/integrations/supabase/client';
+import { trackAnalyticsEvent } from '@/hooks/useAnalyticsTracker';
 
 const ABANDONED_CART_SESSION_KEY = 'abandoned-cart-session';
 
@@ -155,6 +156,14 @@ const CheckoutPage = () => {
 
     setIsSubmitting(true);
 
+    // Track checkout_start event
+    trackAnalyticsEvent('checkout_start', {
+      metadata: {
+        item_count: getItemCount(),
+        total: total,
+      },
+    });
+
     try {
       // Verify real-time stock availability before creating order
       const stockChecks = await Promise.all(
@@ -247,6 +256,16 @@ const CheckoutPage = () => {
     // and asynchronously by the webhook (mercadopago-webhook).
     // No client-side update needed (anonymous users lack UPDATE permission).
     console.log('Payment success:', paymentData.status, paymentData.id);
+    
+    // Track checkout_complete event
+    trackAnalyticsEvent('checkout_complete', {
+      metadata: {
+        order_id: orderId,
+        payment_status: paymentData.status,
+        total: total,
+      },
+    });
+    
     setOrderComplete(true);
     clearCart();
   };

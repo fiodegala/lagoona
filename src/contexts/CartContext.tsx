@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { couponsService, Coupon, CouponValidationResult } from '@/services/coupons';
 import { combosService, Combo } from '@/services/combos';
+import { trackAnalyticsEvent } from '@/hooks/useAnalyticsTracker';
 
 export interface CartItem {
   id: string;
@@ -205,6 +206,18 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         return updated;
       }
       return [...current, { ...newItem, quantity: newItem.quantity || 1 }];
+    });
+
+    // Track add_to_cart event for analytics funnel
+    trackAnalyticsEvent('add_to_cart', {
+      product_id: newItem.productId || undefined,
+      metadata: {
+        product_name: newItem.name,
+        variation_id: newItem.variationId || null,
+        variation_label: newItem.variationLabel || null,
+        price: newItem.price,
+        quantity: newItem.quantity || 1,
+      },
     });
   };
 
