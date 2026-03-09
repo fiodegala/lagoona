@@ -181,7 +181,7 @@ const AffiliateDashboardPage = () => {
             <Button variant="outline" className="w-full" onClick={async () => {
               const { signOut } = await import('@/integrations/supabase/client').then(m => ({ signOut: () => m.supabase.auth.signOut() }));
               await signOut();
-              navigate('/conta/login');
+              navigate('/conta/login', { state: { from: '/afiliados/painel' } });
             }}>
               Entrar com outra conta
             </Button>
