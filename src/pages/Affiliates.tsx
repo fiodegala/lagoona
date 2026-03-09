@@ -171,6 +171,38 @@ const Affiliates = () => {
     }
   };
 
+  const handleCreateAccount = async () => {
+    if (!editingId || !newPassword || !editForm.email) {
+      toast.error('Informe a senha.');
+      return;
+    }
+    if (newPassword.length < 6) {
+      toast.error('A senha deve ter pelo menos 6 caracteres.');
+      return;
+    }
+    setResettingPassword(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('create-user', {
+        body: { email: editForm.email, password: newPassword, fullName: editForm.name, role: 'seller' },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      const userId = data?.user?.id;
+      if (userId) {
+        await supabase.from('affiliates').update({ user_id: userId }).eq('id', editingId);
+        setEditUserId(userId);
+      }
+      toast.success('Conta criada com sucesso!');
+      setNewPassword('');
+      loadAll();
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err?.message || 'Erro ao criar conta.');
+    } finally {
+      setResettingPassword(false);
+    }
+  };
+
   // --- Delete ---
   const confirmDelete = (aff: any) => {
     setDeletingId(aff.id);
