@@ -29,6 +29,10 @@ const StoreLoginPage = () => {
   const [registerConfirmPassword, setRegisterConfirmPassword] = useState('');
 
   const checkAffiliateAndRedirect = async (userId: string) => {
+    if (redirectTo) {
+      navigate(redirectTo);
+      return;
+    }
     const { data: aff } = await supabase
       .from('affiliates')
       .select('id')
