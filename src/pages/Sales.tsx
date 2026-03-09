@@ -14,7 +14,9 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Receipt, Search, Eye, Calendar, DollarSign, TrendingUp, ShoppingBag, Printer, User, Phone, Mail, MapPin, FileText, Building2, Ban } from 'lucide-react';
+import { Receipt, Search, Eye, Calendar as CalendarIcon, DollarSign, TrendingUp, ShoppingBag, Printer, User, Phone, Mail, MapPin, FileText, Building2, Ban, Pencil, Check, X } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { format, startOfDay, endOfDay, startOfWeek, startOfMonth, subDays } from 'date-fns';
@@ -43,6 +45,10 @@ const Sales = () => {
   const [cancelSale, setCancelSale] = useState<any>(null);
   const [cancelReason, setCancelReason] = useState('');
   const [isCancelling, setIsCancelling] = useState(false);
+  const [isEditingDate, setIsEditingDate] = useState(false);
+  const [editDate, setEditDate] = useState<Date | undefined>(undefined);
+  const [editTime, setEditTime] = useState('');
+  const [isSavingDate, setIsSavingDate] = useState(false);
 
   // Fetch full customer data when opening detail
   const openSaleDetail = async (sale: any) => {
@@ -164,6 +170,49 @@ const Sales = () => {
     }
   };
 
+  const handleEditDate = () => {
+    if (!detailSale) return;
+    const d = new Date(detailSale.created_at);
+    setEditDate(d);
+    setEditTime(format(d, 'HH:mm'));
+    setIsEditingDate(true);
+  };
+
+  const handleSaveDate = async () => {
+    if (!detailSale || !editDate || !user) return;
+    setIsSavingDate(true);
+    try {
+      const [hours, minutes] = editTime.split(':').map(Number);
+      const newDate = new Date(editDate);
+      newDate.setHours(hours || 0, minutes || 0, 0, 0);
+      
+      const { error } = await supabase
+        .from('pos_sales')
+        .update({ created_at: newDate.toISOString() } as any)
+        .eq('id', detailSale.id);
+      if (error) throw error;
+
+      auditService.log({
+        action: 'update_date',
+        entity_type: 'pos_sale',
+        entity_id: detailSale.id,
+        details: {
+          old_date: detailSale.created_at,
+          new_date: newDate.toISOString(),
+        },
+      });
+
+      setDetailSale({ ...detailSale, created_at: newDate.toISOString() });
+      queryClient.invalidateQueries({ queryKey: ['pos-sales'] });
+      toast.success('Data da venda atualizada');
+      setIsEditingDate(false);
+    } catch (e: any) {
+      toast.error('Erro ao atualizar data: ' + (e.message || ''));
+    } finally {
+      setIsSavingDate(false);
+    }
+  };
+
   const dateRange = useMemo(() => {
     const now = new Date();
     switch (periodFilter) {
@@ -281,7 +330,7 @@ const Sales = () => {
           </div>
           <Select value={periodFilter} onValueChange={setPeriodFilter}>
             <SelectTrigger className="w-[180px]">
-              <Calendar className="h-4 w-4 mr-2" />
+              <CalendarIcon className="h-4 w-4 mr-2" />
               <SelectValue placeholder="Período" />
             </SelectTrigger>
             <SelectContent>
@@ -447,7 +496,50 @@ const Sales = () => {
                 </div>
                 <div>
                   <p className="text-muted-foreground text-xs">Data</p>
-                  <p>{format(new Date(detailSale.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}</p>
+                  {isEditingDate ? (
+                    <div className="space-y-2 mt-1">
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button variant="outline" size="sm" className="w-full justify-start text-left font-normal text-xs h-8">
+                            <CalendarIcon className="h-3 w-3 mr-1.5" />
+                            {editDate ? format(editDate, 'dd/MM/yyyy') : 'Selecionar data'}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={editDate}
+                            onSelect={setEditDate}
+                            initialFocus
+                            className="p-3 pointer-events-auto"
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <Input
+                        type="time"
+                        value={editTime}
+                        onChange={e => setEditTime(e.target.value)}
+                        className="h-8 text-xs"
+                      />
+                      <div className="flex gap-1">
+                        <Button size="sm" className="h-7 text-xs gap-1" onClick={handleSaveDate} disabled={isSavingDate}>
+                          <Check className="h-3 w-3" /> {isSavingDate ? 'Salvando...' : 'Salvar'}
+                        </Button>
+                        <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" onClick={() => setIsEditingDate(false)}>
+                          <X className="h-3 w-3" /> Cancelar
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1">
+                      <p>{format(new Date(detailSale.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}</p>
+                      {canCancel && (
+                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleEditDate} title="Editar data">
+                          <Pencil className="h-3 w-3" />
+                        </Button>
+                      )}
+                    </div>
+                  )}
                 </div>
                 <div>
                   <p className="text-muted-foreground text-xs">Pagamento</p>
