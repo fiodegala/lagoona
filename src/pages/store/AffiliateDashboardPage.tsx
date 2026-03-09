@@ -143,7 +143,7 @@ const AffiliateDashboardPage = () => {
             Faça login com o e-mail que você usou no cadastro de afiliado para acessar seu painel.
           </p>
           <div className="flex flex-col gap-3">
-            <Link to="/conta/login">
+            <Link to="/conta/login" state={{ from: '/afiliados/painel' }}>
               <Button className="w-full">Fazer Login</Button>
             </Link>
             <Link to="/afiliados">
