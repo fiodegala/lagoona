@@ -137,7 +137,8 @@ Deno.serve(async (req) => {
 
     return new Response(JSON.stringify({
       referral_code: affiliate.referral_code,
-      period_days: days,
+      period_start: since.toISOString(),
+      period_end: until.toISOString(),
       summary: {
         unique_visitors: uniqueVisitors,
         total_page_views: totalPageViews,
