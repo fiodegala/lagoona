@@ -171,6 +171,38 @@ const Affiliates = () => {
     }
   };
 
+  const handleCreateAccount = async () => {
+    if (!editingId || !newPassword || !editForm.email) {
+      toast.error('Informe a senha.');
+      return;
+    }
+    if (newPassword.length < 6) {
+      toast.error('A senha deve ter pelo menos 6 caracteres.');
+      return;
+    }
+    setResettingPassword(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('create-user', {
+        body: { email: editForm.email, password: newPassword, fullName: editForm.name, role: 'seller' },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      const userId = data?.user?.id;
+      if (userId) {
+        await supabase.from('affiliates').update({ user_id: userId }).eq('id', editingId);
+        setEditUserId(userId);
+      }
+      toast.success('Conta criada com sucesso!');
+      setNewPassword('');
+      loadAll();
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err?.message || 'Erro ao criar conta.');
+    } finally {
+      setResettingPassword(false);
+    }
+  };
+
   // --- Delete ---
   const confirmDelete = (aff: any) => {
     setDeletingId(aff.id);
@@ -421,22 +453,26 @@ const Affiliates = () => {
                 {savingEdit ? 'Salvando...' : 'Salvar Alterações'}
               </Button>
 
-              {/* Password reset section */}
-              {editUserId && (
-                <>
-                  <Separator />
-                  <div className="space-y-3">
-                    <h4 className="font-semibold text-sm flex items-center gap-2"><KeyRound className="h-4 w-4" /> Alterar Senha do Afiliado</h4>
-                    <div>
-                      <Label>Nova Senha</Label>
-                      <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Mínimo 6 caracteres" minLength={6} />
-                    </div>
-                    <Button variant="outline" onClick={handleResetPassword} disabled={resettingPassword || !newPassword} className="w-full">
-                      {resettingPassword ? 'Alterando...' : 'Alterar Senha'}
-                    </Button>
-                  </div>
-                </>
-              )}
+              {/* Password section */}
+              <Separator />
+              <div className="space-y-3">
+                <h4 className="font-semibold text-sm flex items-center gap-2">
+                  <KeyRound className="h-4 w-4" /> 
+                  {editUserId ? 'Alterar Senha do Afiliado' : 'Criar Conta de Acesso'}
+                </h4>
+                {!editUserId && (
+                  <p className="text-xs text-muted-foreground">
+                    Este afiliado ainda não possui conta de acesso. Crie uma senha para que ele possa acessar o painel.
+                  </p>
+                )}
+                <div>
+                  <Label>{editUserId ? 'Nova Senha' : 'Senha'}</Label>
+                  <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Mínimo 6 caracteres" minLength={6} />
+                </div>
+                <Button variant="outline" onClick={editUserId ? handleResetPassword : handleCreateAccount} disabled={resettingPassword || !newPassword} className="w-full">
+                  {resettingPassword ? (editUserId ? 'Alterando...' : 'Criando...') : (editUserId ? 'Alterar Senha' : 'Criar Conta')}
+                </Button>
+              </div>
             </div>
           </DialogContent>
         </Dialog>
