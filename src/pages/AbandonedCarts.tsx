@@ -78,8 +78,12 @@ const AbandonedCarts = () => {
   const [search, setSearch] = useState('');
   const [selectedCart, setSelectedCart] = useState<AbandonedCart | null>(null);
 
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ type: 'single' | 'bulk'; id?: string } | null>(null);
+
   const fetchCarts = async () => {
     setLoading(true);
+    setSelectedIds([]);
     try {
       const { data, error } = await supabase
         .from('abandoned_carts')
