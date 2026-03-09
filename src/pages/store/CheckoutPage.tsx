@@ -201,6 +201,8 @@ const CheckoutPage = () => {
 
       const newOrderId = crypto.randomUUID();
 
+      const sessionId = getSessionId();
+
       const { error } = await supabase
         .from('orders')
         .insert({
@@ -222,13 +224,15 @@ const CheckoutPage = () => {
           status: 'pending',
           payment_status: 'pending',
           store_id: 'e0b8ebbc-1b3b-4aec-b5f7-6925762e6ea1', // Site store
+          metadata: sessionId ? { abandoned_cart_session_id: sessionId } : {},
         });
 
       if (error) throw error;
 
       setOrderId(newOrderId);
       setStep('payment');
-      markCartRecovered();
+      // Cart recovery now happens server-side when payment is confirmed
+      localStorage.removeItem(ABANDONED_CART_SESSION_KEY);
       toast.success('Pedido criado! Agora escolha a forma de pagamento.');
     } catch (error) {
       console.error('Error creating order:', error);
