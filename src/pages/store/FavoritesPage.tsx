@@ -13,6 +13,8 @@ const FavoritesPage = () => {
   const { favorites, clearFavorites } = useFavorites();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const productIds = useMemo(() => products.map(p => p.id), [products]);
+  const { meta: productsMeta } = useProductCardsMeta(productIds);
 
   useEffect(() => {
     const loadFavoriteProducts = async () => {
