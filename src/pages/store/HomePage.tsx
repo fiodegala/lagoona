@@ -154,7 +154,7 @@ const HomePage = () => {
                 <>
                   <div
                     className="absolute inset-0 bg-cover bg-center"
-                    style={{ backgroundImage: `url('${banner.image_url}')` }}
+                    style={{ backgroundImage: `url('${getOptimizedImageUrl(banner.image_url, { width: 1920, quality: 80 })}')` }}
                   />
                   <div className="absolute inset-0 bg-store-dark/60" />
                   <div className="relative h-full flex items-center">
