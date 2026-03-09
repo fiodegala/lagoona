@@ -158,7 +158,7 @@ const Affiliates = () => {
     setResettingPassword(true);
     try {
       const { error } = await supabase.functions.invoke('create-user', {
-        body: { action: 'reset-password', userId: editUserId, password: newPassword },
+        body: { action: 'update-password', user_id: editUserId, new_password: newPassword },
       });
       if (error) throw error;
       toast.success('Senha alterada com sucesso.');
