@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { couponsService, Coupon, CouponValidationResult } from '@/services/coupons';
 import { combosService, Combo } from '@/services/combos';
+import { trackAnalyticsEvent } from '@/hooks/useAnalyticsTracker';
 
 export interface CartItem {
   id: string;
