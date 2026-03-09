@@ -440,7 +440,8 @@ const CatalogPage = () => {
                             src={getDisplayImage(product)}
                             alt={product.name}
                             loading="lazy"
-                            className="w-full h-full object-cover transition-transform duration-300"
+                            className="w-full h-full object-cover transition-transform duration-300 cursor-pointer"
+                            onClick={() => openLightbox(product.id, imageIndex[product.id] || 0)}
                           />
                           {hasMultiple && (
                             <>
