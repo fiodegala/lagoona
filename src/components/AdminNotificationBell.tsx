@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Bell, ShoppingBag, ShoppingCart, Check, X } from 'lucide-react';
+import { Bell, ShoppingBag, ShoppingCart, Check, X, DollarSign, PackageCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Popover,
@@ -8,23 +8,36 @@ import {
 } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
-import { AdminNotification, useAdminNotifications } from '@/hooks/useAdminNotifications';
+import { AdminNotification, NotificationType, useAdminNotifications } from '@/hooks/useAdminNotifications';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 
-// Toast-style pop-up for new notifications
+const iconMap: Record<NotificationType, { icon: typeof Bell; bg: string; text: string }> = {
+  new_order: { icon: ShoppingBag, bg: 'bg-green-100', text: 'text-green-600' },
+  abandoned_cart: { icon: ShoppingCart, bg: 'bg-amber-100', text: 'text-amber-600' },
+  pos_sale: { icon: DollarSign, bg: 'bg-blue-100', text: 'text-blue-600' },
+  stock_transfer: { icon: PackageCheck, bg: 'bg-purple-100', text: 'text-purple-600' },
+};
+
+const routeMap: Record<NotificationType, string> = {
+  new_order: '/admin/orders',
+  abandoned_cart: '/admin/abandoned-carts',
+  pos_sale: '/admin/sales',
+  stock_transfer: '/admin/stock',
+};
+
 function NotificationToast({ notification, onDismiss }: { notification: AdminNotification; onDismiss: () => void }) {
   useEffect(() => {
     const timer = setTimeout(onDismiss, 5000);
     return () => clearTimeout(timer);
   }, [onDismiss]);
 
+  const { icon: Icon, bg, text } = iconMap[notification.type];
+
   return (
     <div className="animate-in slide-in-from-right-full fade-in duration-300 bg-card border border-border shadow-lg rounded-lg p-4 max-w-xs w-full flex gap-3 items-start">
-      <div className={cn(
-        'flex-shrink-0 rounded-full p-2',
-        notification.type === 'new_order' ? 'bg-green-100 text-green-600' : 'bg-amber-100 text-amber-600'
-      )}>
-        {notification.type === 'new_order' ? <ShoppingBag className="h-4 w-4" /> : <ShoppingCart className="h-4 w-4" />}
+      <div className={cn('flex-shrink-0 rounded-full p-2', bg, text)}>
+        <Icon className="h-4 w-4" />
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-foreground">{notification.title}</p>
@@ -38,12 +51,12 @@ function NotificationToast({ notification, onDismiss }: { notification: AdminNot
 }
 
 export default function AdminNotificationBell() {
-  const { notifications, unreadCount, markAsRead, markAllAsRead, clearAll } = useAdminNotifications();
+  const { isAdmin, isOnlineStore } = useAuth();
+  const { notifications, unreadCount, markAsRead, markAllAsRead, clearAll } = useAdminNotifications({ isAdmin, isOnlineStore });
   const [toasts, setToasts] = useState<AdminNotification[]>([]);
   const [prevCount, setPrevCount] = useState(0);
   const navigate = useNavigate();
 
-  // Show toast when new unread notifications arrive
   useEffect(() => {
     if (notifications.length > prevCount && notifications.length > 0) {
       const newest = notifications[0];
@@ -60,11 +73,8 @@ export default function AdminNotificationBell() {
 
   const handleClick = (notif: AdminNotification) => {
     markAsRead(notif.id);
-    if (notif.type === 'new_order') {
-      navigate('/admin/orders');
-    } else if (notif.type === 'abandoned_cart') {
-      navigate('/admin/abandoned-carts');
-    }
+    const route = routeMap[notif.type];
+    if (route) navigate(route);
   };
 
   const timeAgo = (date: Date) => {
@@ -123,33 +133,33 @@ export default function AdminNotificationBell() {
               </div>
             ) : (
               <div className="divide-y">
-                {notifications.map(notif => (
-                  <button
-                    key={notif.id}
-                    onClick={() => handleClick(notif)}
-                    className={cn(
-                      'w-full flex items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/50',
-                      !notif.read && 'bg-primary/5'
-                    )}
-                  >
-                    <div className={cn(
-                      'flex-shrink-0 rounded-full p-1.5 mt-0.5',
-                      notif.type === 'new_order' ? 'bg-green-100 text-green-600' : 'bg-amber-100 text-amber-600'
-                    )}>
-                      {notif.type === 'new_order' ? <ShoppingBag className="h-3.5 w-3.5" /> : <ShoppingCart className="h-3.5 w-3.5" />}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className={cn('text-sm', !notif.read && 'font-semibold')}>{notif.title}</p>
-                      <p className="text-xs text-muted-foreground truncate">{notif.message}</p>
-                    </div>
-                    <span className="text-[10px] text-muted-foreground flex-shrink-0 mt-0.5">
-                      {timeAgo(notif.createdAt)}
-                    </span>
-                    {!notif.read && (
-                      <span className="h-2 w-2 rounded-full bg-primary flex-shrink-0 mt-1.5" />
-                    )}
-                  </button>
-                ))}
+                {notifications.map(notif => {
+                  const { icon: Icon, bg, text } = iconMap[notif.type];
+                  return (
+                    <button
+                      key={notif.id}
+                      onClick={() => handleClick(notif)}
+                      className={cn(
+                        'w-full flex items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/50',
+                        !notif.read && 'bg-primary/5'
+                      )}
+                    >
+                      <div className={cn('flex-shrink-0 rounded-full p-1.5 mt-0.5', bg, text)}>
+                        <Icon className="h-3.5 w-3.5" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className={cn('text-sm', !notif.read && 'font-semibold')}>{notif.title}</p>
+                        <p className="text-xs text-muted-foreground truncate">{notif.message}</p>
+                      </div>
+                      <span className="text-[10px] text-muted-foreground flex-shrink-0 mt-0.5">
+                        {timeAgo(notif.createdAt)}
+                      </span>
+                      {!notif.read && (
+                        <span className="h-2 w-2 rounded-full bg-primary flex-shrink-0 mt-1.5" />
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             )}
           </ScrollArea>

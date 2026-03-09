@@ -1,9 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
+export type NotificationType = 'new_order' | 'abandoned_cart' | 'pos_sale' | 'stock_transfer';
+
 export interface AdminNotification {
   id: string;
-  type: 'new_order' | 'abandoned_cart';
+  type: NotificationType;
   title: string;
   message: string;
   createdAt: Date;
@@ -11,13 +13,16 @@ export interface AdminNotification {
   entityId?: string;
 }
 
-export function useAdminNotifications() {
+interface NotificationOptions {
+  isAdmin: boolean;
+  isOnlineStore: boolean;
+}
+
+export function useAdminNotifications({ isAdmin, isOnlineStore }: NotificationOptions) {
   const [notifications, setNotifications] = useState<AdminNotification[]>([]);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const playSound = useCallback(() => {
     try {
-      // Simple beep using Web Audio API
       const ctx = new AudioContext();
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
@@ -56,50 +61,78 @@ export function useAdminNotifications() {
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
+  const fmt = (v: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
+
   useEffect(() => {
-    // Listen to new orders
-    const ordersChannel = supabase
-      .channel('admin-orders-notifications')
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'orders' },
-        (payload) => {
-          const order = payload.new as any;
-          const total = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(order.total || 0);
+    const channels: ReturnType<typeof supabase.channel>[] = [];
+
+    // Orders & Abandoned Carts — only for online store users or admins
+    if (isAdmin || isOnlineStore) {
+      const ordersChannel = supabase
+        .channel('admin-orders-notifications')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, (payload) => {
+          const o = payload.new as any;
           addNotification({
             type: 'new_order',
             title: '🛍️ Novo Pedido!',
-            message: `${order.customer_name || order.customer_email || 'Cliente'} — ${total}`,
-            entityId: order.id,
+            message: `${o.customer_name || o.customer_email || 'Cliente'} — ${fmt(o.total)}`,
+            entityId: o.id,
           });
-        }
-      )
-      .subscribe();
+        })
+        .subscribe();
+      channels.push(ordersChannel);
 
-    // Listen to abandoned carts
-    const cartsChannel = supabase
-      .channel('admin-carts-notifications')
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'abandoned_carts' },
-        (payload) => {
-          const cart = payload.new as any;
-          const total = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(cart.subtotal || 0);
+      const cartsChannel = supabase
+        .channel('admin-carts-notifications')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'abandoned_carts' }, (payload) => {
+          const c = payload.new as any;
           addNotification({
             type: 'abandoned_cart',
             title: '🛒 Carrinho Abandonado',
-            message: `${cart.customer_name || 'Visitante'} — ${cart.item_count || 0} itens (${total})`,
-            entityId: cart.id,
+            message: `${c.customer_name || 'Visitante'} — ${c.item_count || 0} itens (${fmt(c.subtotal)})`,
+            entityId: c.id,
           });
-        }
-      )
+        })
+        .subscribe();
+      channels.push(cartsChannel);
+    }
+
+    // POS Sales — for all admin users
+    const posChannel = supabase
+      .channel('admin-pos-notifications')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'pos_sales' }, (payload) => {
+        const s = payload.new as any;
+        addNotification({
+          type: 'pos_sale',
+          title: '💰 Nova Venda PDV',
+          message: `${s.customer_name || 'Cliente'} — ${fmt(s.total)} (${s.payment_method || 'N/A'})`,
+          entityId: s.id,
+        });
+      })
       .subscribe();
+    channels.push(posChannel);
+
+    // Stock Transfers — for admins only
+    if (isAdmin) {
+      const transfersChannel = supabase
+        .channel('admin-transfers-notifications')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'stock_transfers' }, (payload) => {
+          const t = payload.new as any;
+          addNotification({
+            type: 'stock_transfer',
+            title: '📦 Transferência de Estoque',
+            message: `${t.quantity || 0} un. — Status: ${t.status || 'pendente'}`,
+            entityId: t.id,
+          });
+        })
+        .subscribe();
+      channels.push(transfersChannel);
+    }
 
     return () => {
-      supabase.removeChannel(ordersChannel);
-      supabase.removeChannel(cartsChannel);
+      channels.forEach(ch => supabase.removeChannel(ch));
     };
-  }, [addNotification]);
+  }, [addNotification, isAdmin, isOnlineStore]);
 
   return { notifications, unreadCount, markAsRead, markAllAsRead, clearAll };
 }
