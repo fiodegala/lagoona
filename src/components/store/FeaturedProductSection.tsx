@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo } from 'react';
+import { getOptimizedImageUrl } from '@/lib/imageUtils';
 import { Link } from 'react-router-dom';
 import { ShoppingCart, Minus, Plus, Eye, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
