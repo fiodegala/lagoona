@@ -112,10 +112,12 @@ const AffiliateDashboardPage = () => {
   };
 
   const loadAnalytics = async () => {
+    const range = getDateRange(analyticsPeriod);
+    if (analyticsPeriod === 'custom' && (!range.start_date || !range.end_date)) return;
     setAnalyticsLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('affiliate-analytics', {
-        body: { days: parseInt(analyticsDays) },
+        body: { start_date: range.start_date, end_date: range.end_date },
       });
       if (error) throw error;
       setAnalytics(data);
@@ -128,9 +130,11 @@ const AffiliateDashboardPage = () => {
 
   useEffect(() => {
     if (affiliate && affiliate.status === 'active') {
-      loadAnalytics();
+      if (analyticsPeriod !== 'custom') {
+        loadAnalytics();
+      }
     }
-  }, [affiliate, analyticsDays]);
+  }, [affiliate, analyticsPeriod]);
 
   const handleCopyLink = () => {
     if (!affiliate) return;
