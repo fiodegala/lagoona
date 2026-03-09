@@ -142,6 +142,7 @@ export const FavoritesProvider = ({ children }: { children: ReactNode }) => {
   const removeFavorite = useCallback(async (productId: string) => {
     // Optimistic update
     setFavorites(prev => prev.filter(id => id !== productId));
+    trackFavoriteEvent('remove', productId);
 
     if (user) {
       // Remove from database
