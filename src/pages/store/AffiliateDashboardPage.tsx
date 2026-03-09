@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Copy, DollarSign, TrendingUp, MousePointerClick, ArrowDownToLine, Loader2, LogIn, BarChart3, Monitor, Smartphone, Tablet, Globe, ShoppingCart, CreditCard, Eye } from 'lucide-react';
+import { Copy, DollarSign, TrendingUp, MousePointerClick, ArrowDownToLine, Loader2, LogIn, BarChart3, Monitor, Smartphone, Tablet, Globe, ShoppingCart, CreditCard, Eye, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
