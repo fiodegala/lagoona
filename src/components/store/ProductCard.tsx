@@ -1,4 +1,5 @@
-import { useState, useEffect, forwardRef, memo } from 'react';
+import { useState, useEffect, forwardRef, memo, useMemo } from 'react';
+import { getOptimizedImageUrl } from '@/lib/imageUtils';
 import { Link, useNavigate } from 'react-router-dom';
 import { Package, ShoppingCart, Heart, Star, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -165,7 +166,7 @@ const ProductCard = memo(forwardRef<HTMLAnchorElement, ProductCardProps>(({ prod
         <div className="relative aspect-[4/5] overflow-hidden bg-store-secondary/30">
           {product.image_url ? (
             <img
-              src={product.image_url}
+              src={getOptimizedImageUrl(product.image_url, { width: 480, quality: 75 })}
               alt={product.name}
               loading="lazy"
               decoding="async"

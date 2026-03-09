@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import StoreLayout from '@/components/store/StoreLayout';
 import { useSwipe } from '@/hooks/useSwipe';
 import ProductCard from '@/components/store/ProductCard';
+import { getOptimizedImageUrl } from '@/lib/imageUtils';
 import { productsService, Product } from '@/services/products';
 import { categoriesService, Category } from '@/services/categories';
 import { bannersService, Banner } from '@/services/banners';
@@ -153,7 +154,7 @@ const HomePage = () => {
                 <>
                   <div
                     className="absolute inset-0 bg-cover bg-center"
-                    style={{ backgroundImage: `url('${banner.image_url}')` }}
+                    style={{ backgroundImage: `url('${getOptimizedImageUrl(banner.image_url, { width: 1920, quality: 80 })}')` }}
                   />
                   <div className="absolute inset-0 bg-store-dark/60" />
                   <div className="relative h-full flex items-center">
@@ -388,7 +389,7 @@ const HomePage = () => {
                   style={{ opacity: index === currentMidBanner ? 1 : 0, pointerEvents: index === currentMidBanner ? 'auto' : 'none' }}
                 >
                   <img
-                    src={banner.image_url}
+                    src={getOptimizedImageUrl(banner.image_url, { width: 1920, quality: 80 })}
                     alt={banner.title || 'Banner'}
                     className="w-full h-full object-cover"
                     loading="lazy"
@@ -448,7 +449,7 @@ const HomePage = () => {
                 >
                   <div className="absolute inset-0 bg-muted flex items-center justify-center overflow-hidden">
                     {category.image_url ? (
-                      <img src={category.image_url} alt={category.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                      <img src={getOptimizedImageUrl(category.image_url, { width: 400, quality: 75 })} alt={category.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                     ) : (
                       <span className="text-5xl">{categoryIcons[index % categoryIcons.length]}</span>
                     )}
@@ -492,7 +493,7 @@ const HomePage = () => {
                   className="group relative overflow-hidden rounded-xl aspect-[2/1] block"
                 >
                   <img
-                    src={banner.image_url}
+                    src={getOptimizedImageUrl(banner.image_url, { width: 800, quality: 75 })}
                     alt={banner.title || 'Promoção'}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     loading="lazy"

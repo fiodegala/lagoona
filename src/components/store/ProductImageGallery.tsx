@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight, ZoomIn, X, Package, Play } from 'lucide-reac
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
+import { getOptimizedImageUrl } from '@/lib/imageUtils';
 import { useSwipe } from '@/hooks/useSwipe';
 
 interface MediaItem {
@@ -192,7 +193,7 @@ const ProductImageGallery = ({
     return (
       <>
         <img
-          src={currentItem.url}
+          src={getOptimizedImageUrl(currentItem.url, { width: 800, quality: 80 })}
           alt={`${productName} - Imagem ${currentIndex + 1}`}
           className={cn(
             "w-full h-full object-cover transition-opacity duration-200",
@@ -205,7 +206,7 @@ const ProductImageGallery = ({
             isZoomed ? "opacity-100" : "opacity-0 pointer-events-none"
           )}
           style={{
-            backgroundImage: `url(${currentItem.url})`,
+            backgroundImage: `url(${getOptimizedImageUrl(currentItem.url, { width: 1600, quality: 85 })})`,
             backgroundSize: '200%',
             backgroundPosition: `${zoomPosition.x}% ${zoomPosition.y}%`,
           }}
@@ -242,7 +243,7 @@ const ProductImageGallery = ({
 
     return (
       <img
-        src={currentItem.url}
+        src={getOptimizedImageUrl(currentItem.url, { width: 1200, quality: 85 })}
         alt={`${productName} - Imagem ${currentIndex + 1}`}
         className="max-w-full max-h-full object-contain"
       />
@@ -365,7 +366,7 @@ const ProductImageGallery = ({
                   </div>
                 ) : (
                   <img
-                    src={item.url}
+                    src={getOptimizedImageUrl(item.url, { width: 100, quality: 60 })}
                     alt={`${productName} - Miniatura ${index + 1}`}
                     className="w-full h-full object-cover"
                   />
@@ -459,7 +460,7 @@ const ProductImageGallery = ({
                       </div>
                     ) : (
                       <img
-                        src={item.url}
+                        src={getOptimizedImageUrl(item.url, { width: 100, quality: 60 })}
                         alt={`Miniatura ${index + 1}`}
                         className="w-full h-full object-cover"
                       />
