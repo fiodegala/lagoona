@@ -9,7 +9,17 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { ShoppingCart, Truck, ExternalLink, Package, Search, MessageCircle, Clock, CheckCircle2, XCircle, Printer, Eye } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { ShoppingCart, Truck, ExternalLink, Package, Search, MessageCircle, Clock, CheckCircle2, XCircle, Printer, Eye, Trash2 } from 'lucide-react';
 import ShippingLabelModal from '@/components/ShippingLabelModal';
 import OrderDetailModal from '@/components/OrderDetailModal';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -67,6 +77,8 @@ const Orders = () => {
   const [sendWhatsapp, setSendWhatsapp] = useState(true);
   const [labelOrder, setLabelOrder] = useState<any>(null);
   const [detailOrder, setDetailOrder] = useState<any>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ type: 'single' | 'bulk'; id?: string } | null>(null);
 
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ['orders'],
@@ -255,6 +267,38 @@ const Orders = () => {
     return matchesSearch && matchesStatus;
   });
 
+  const handleDeleteOrders = async () => {
+    if (!deleteConfirm) return;
+    try {
+      const idsToDelete = deleteConfirm.type === 'single' ? [deleteConfirm.id!] : selectedIds;
+      const { error } = await supabase
+        .from('orders')
+        .delete()
+        .in('id', idsToDelete);
+      if (error) throw error;
+      toast.success(`${idsToDelete.length} pedido(s) excluído(s)`);
+      setDeleteConfirm(null);
+      setSelectedIds([]);
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+    } catch {
+      toast.error('Erro ao excluir pedido(s)');
+    }
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.length === filteredOrders.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(filteredOrders.map((o) => o.id));
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
+
   return (
     <AdminLayout>
       <div className="space-y-6 animate-fade-in">
@@ -279,6 +323,16 @@ const Orders = () => {
               ))}
             </SelectContent>
           </Select>
+          {selectedIds.length > 0 && (
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => setDeleteConfirm({ type: 'bulk' })}
+            >
+              <Trash2 className="h-4 w-4 mr-1" />
+              Excluir ({selectedIds.length})
+            </Button>
+          )}
         </div>
 
         {isLoading ? (
@@ -297,6 +351,12 @@ const Orders = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
+                     <TableHead className="w-10">
+                       <Checkbox
+                         checked={filteredOrders.length > 0 && selectedIds.length === filteredOrders.length}
+                         onCheckedChange={toggleSelectAll}
+                       />
+                     </TableHead>
                      <TableHead>Pedido</TableHead>
                      <TableHead>Cliente</TableHead>
                      <TableHead>Total</TableHead>
@@ -312,6 +372,12 @@ const Orders = () => {
                     const status = statusMap[order.status] || { label: order.status, variant: 'outline' as const, className: '' };
                     return (
                       <TableRow key={order.id}>
+                        <TableCell>
+                          <Checkbox
+                            checked={selectedIds.includes(order.id)}
+                            onCheckedChange={() => toggleSelect(order.id)}
+                          />
+                        </TableCell>
                         <TableCell className="font-mono text-xs">{order.id.slice(0, 8)}...</TableCell>
                         <TableCell>
                           <div>
@@ -377,6 +443,14 @@ const Orders = () => {
                           <Button variant="outline" size="sm" onClick={() => setLabelOrder(order)}>
                             <Printer className="h-3 w-3 mr-1" />
                             Etiqueta
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-8 w-8 text-destructive hover:text-destructive"
+                            onClick={() => setDeleteConfirm({ type: 'single', id: order.id })}
+                          >
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </TableCell>
                       </TableRow>
@@ -498,6 +572,25 @@ const Orders = () => {
         onOpenChange={(open) => !open && setDetailOrder(null)}
         order={detailOrder}
       />
+      {/* Delete Confirmation */}
+      <AlertDialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteConfirm?.type === 'bulk'
+                ? `Tem certeza que deseja excluir ${selectedIds.length} pedido(s)? Esta ação não pode ser desfeita.`
+                : 'Tem certeza que deseja excluir este pedido? Esta ação não pode ser desfeita.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteOrders} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AdminLayout>
   );
 };
