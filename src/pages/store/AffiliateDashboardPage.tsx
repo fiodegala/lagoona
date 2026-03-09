@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Copy, DollarSign, TrendingUp, MousePointerClick, ArrowDownToLine, Loader2, LogOut } from 'lucide-react';
+import { Copy, DollarSign, TrendingUp, MousePointerClick, ArrowDownToLine, Loader2, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,7 +8,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import StoreLayout from '@/components/store/StoreLayout';
 import { supabase } from '@/integrations/supabase/client';
@@ -22,24 +21,26 @@ const statusMap: Record<string, { label: string; variant: 'default' | 'secondary
 };
 
 const AffiliateDashboardPage = () => {
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [affiliate, setAffiliate] = useState<any>(null);
   const [sales, setSales] = useState<any[]>([]);
   const [withdrawals, setWithdrawals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
   const [withdrawOpen, setWithdrawOpen] = useState(false);
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [pixKey, setPixKey] = useState('');
   const [submittingWithdraw, setSubmittingWithdraw] = useState(false);
 
   useEffect(() => {
+    if (authLoading) return;
     if (!user) {
-      navigate('/conta/login');
+      setLoading(false);
       return;
     }
     loadData();
-  }, [user]);
+  }, [user, authLoading]);
 
   const loadData = async () => {
     if (!user) return;
@@ -47,27 +48,18 @@ const AffiliateDashboardPage = () => {
     try {
       const { data: aff } = await supabase.from('affiliates').select('*').eq('user_id', user.id).maybeSingle();
       if (!aff) {
-        toast.error('Nenhum cadastro de afiliado encontrado para esta conta.');
-        navigate('/afiliados');
+        setNotFound(true);
+        setLoading(false);
         return;
       }
       setAffiliate(aff);
       setPixKey(aff.pix_key || '');
 
-      const { data: salesData } = await supabase
-        .from('affiliate_sales')
-        .select('*')
-        .eq('affiliate_id', aff.id)
-        .order('created_at', { ascending: false })
-        .limit(50);
+      const [{ data: salesData }, { data: wData }] = await Promise.all([
+        supabase.from('affiliate_sales').select('*').eq('affiliate_id', aff.id).order('created_at', { ascending: false }).limit(50),
+        supabase.from('affiliate_withdrawals').select('*').eq('affiliate_id', aff.id).order('created_at', { ascending: false }).limit(20),
+      ]);
       setSales(salesData || []);
-
-      const { data: wData } = await supabase
-        .from('affiliate_withdrawals')
-        .select('*')
-        .eq('affiliate_id', aff.id)
-        .order('created_at', { ascending: false })
-        .limit(20);
       setWithdrawals(wData || []);
     } catch (err) {
       console.error(err);
@@ -98,7 +90,6 @@ const AffiliateDashboardPage = () => {
         pix_key: pixKey || affiliate.pix_key,
       });
       if (error) throw error;
-      // Update pix_key if changed
       if (pixKey !== affiliate.pix_key) {
         await supabase.from('affiliates').update({ pix_key: pixKey }).eq('id', affiliate.id);
       }
@@ -114,7 +105,30 @@ const AffiliateDashboardPage = () => {
     }
   };
 
-  if (loading) {
+  // Not logged in
+  if (!authLoading && !user) {
+    return (
+      <StoreLayout>
+        <div className="container mx-auto px-4 py-16 text-center max-w-md">
+          <LogIn className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+          <h1 className="text-2xl font-bold mb-2">Acesse seu Painel</h1>
+          <p className="text-muted-foreground mb-6">
+            Faça login com o e-mail que você usou no cadastro de afiliado para acessar seu painel.
+          </p>
+          <div className="flex flex-col gap-3">
+            <Link to="/conta/login">
+              <Button className="w-full">Fazer Login</Button>
+            </Link>
+            <Link to="/afiliados">
+              <Button variant="outline" className="w-full">Quero ser Afiliado</Button>
+            </Link>
+          </div>
+        </div>
+      </StoreLayout>
+    );
+  }
+
+  if (loading || authLoading) {
     return (
       <StoreLayout>
         <div className="flex items-center justify-center py-20">
@@ -124,19 +138,45 @@ const AffiliateDashboardPage = () => {
     );
   }
 
+  // Logged in but no affiliate record
+  if (notFound) {
+    return (
+      <StoreLayout>
+        <div className="container mx-auto px-4 py-16 text-center max-w-md">
+          <h1 className="text-2xl font-bold mb-2">Cadastro não encontrado</h1>
+          <p className="text-muted-foreground mb-6">
+            Não encontramos um cadastro de afiliado vinculado à sua conta. Cadastre-se para começar a ganhar comissões!
+          </p>
+          <Link to="/afiliados">
+            <Button>Cadastrar como Afiliado</Button>
+          </Link>
+        </div>
+      </StoreLayout>
+    );
+  }
+
   if (!affiliate) return null;
 
   const referralLink = `${window.location.origin}/r/${affiliate.referral_code}`;
+  const isPending = affiliate.status === 'pending';
 
   return (
     <StoreLayout>
       <div className="container mx-auto px-4 py-8 max-w-5xl">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold">Painel do Afiliado</h1>
-          <Badge variant={affiliate.status === 'active' ? 'default' : 'outline'}>
-            {affiliate.status === 'active' ? 'Ativo' : affiliate.status === 'pending' ? 'Pendente' : 'Bloqueado'}
+          <Badge variant={affiliate.status === 'active' ? 'default' : affiliate.status === 'pending' ? 'outline' : 'destructive'}>
+            {affiliate.status === 'active' ? 'Ativo' : affiliate.status === 'pending' ? 'Aguardando Aprovação' : 'Bloqueado'}
           </Badge>
         </div>
+
+        {isPending && (
+          <Card className="mb-6 border-yellow-500/30 bg-yellow-500/5">
+            <CardContent className="pt-4">
+              <p className="text-sm">⏳ Seu cadastro está em análise. Assim que for aprovado, seu link de indicação será ativado e você poderá começar a ganhar comissões.</p>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Link de referência */}
         <Card className="mb-6">
