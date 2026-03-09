@@ -45,7 +45,43 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { email, password, fullName, role, store_id, allowed_menus } = await req.json();
+    const body = await req.json();
+    const { action, email, password, fullName, role, store_id, allowed_menus, user_id: targetUserId, new_password } = body;
+
+    // Use service role client for admin operations
+    const adminClient = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+
+    // Handle password update action
+    if (action === "update-password") {
+      if (!targetUserId || !new_password) {
+        return new Response(JSON.stringify({ error: "ID do usuário e nova senha são obrigatórios" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (new_password.length < 6) {
+        return new Response(JSON.stringify({ error: "A senha deve ter pelo menos 6 caracteres" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const { error: updateError } = await adminClient.auth.admin.updateUserById(targetUserId, {
+        password: new_password,
+      });
+      if (updateError) {
+        return new Response(JSON.stringify({ error: updateError.message }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      return new Response(JSON.stringify({ success: true }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     if (!email || !password || !fullName || !role) {
       return new Response(JSON.stringify({ error: "Campos obrigatórios faltando" }), {
@@ -53,12 +89,6 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
-    // Use service role client for admin operations
-    const adminClient = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
 
     // Create user via admin API (won't affect calling user's session)
     const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
