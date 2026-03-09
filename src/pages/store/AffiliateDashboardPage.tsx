@@ -37,7 +37,44 @@ const AffiliateDashboardPage = () => {
   const [submittingWithdraw, setSubmittingWithdraw] = useState(false);
   const [analytics, setAnalytics] = useState<any>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
-  const [analyticsDays, setAnalyticsDays] = useState('30');
+  const [analyticsPeriod, setAnalyticsPeriod] = useState('this_month');
+  const [customStart, setCustomStart] = useState('');
+  const [customEnd, setCustomEnd] = useState('');
+
+  const getDateRange = (period: string): { start_date: string; end_date: string } => {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const fmt = (d: Date) => d.toISOString().substring(0, 10);
+
+    switch (period) {
+      case 'today':
+        return { start_date: fmt(today), end_date: fmt(now) };
+      case 'yesterday': {
+        const y = new Date(today);
+        y.setDate(y.getDate() - 1);
+        return { start_date: fmt(y), end_date: fmt(today) };
+      }
+      case 'this_week': {
+        const d = new Date(today);
+        const day = d.getDay();
+        d.setDate(d.getDate() - (day === 0 ? 6 : day - 1));
+        return { start_date: fmt(d), end_date: fmt(now) };
+      }
+      case 'this_month': {
+        const d = new Date(now.getFullYear(), now.getMonth(), 1);
+        return { start_date: fmt(d), end_date: fmt(now) };
+      }
+      case 'last_month': {
+        const d = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const e = new Date(now.getFullYear(), now.getMonth(), 0);
+        return { start_date: fmt(d), end_date: fmt(e) };
+      }
+      case 'custom':
+        return { start_date: customStart, end_date: customEnd };
+      default:
+        return { start_date: fmt(new Date(today.getTime() - 30 * 86400000)), end_date: fmt(now) };
+    }
+  };
 
   useEffect(() => {
     if (authLoading) return;
