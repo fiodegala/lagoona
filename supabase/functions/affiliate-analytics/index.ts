@@ -86,9 +86,11 @@ Deno.serve(async (req) => {
       viewsByDay[day] = (viewsByDay[day] || 0) + 1;
     });
 
-    // Top pages
+    // Top pages (exclude account pages)
+    const excludedPaths = ['/minha-conta', '/conta/login', '/conta'];
+    const filteredPageViews = pageViews.filter(e => !excludedPaths.some(p => e.page_path.startsWith(p)));
     const pageCount: Record<string, number> = {};
-    pageViews.forEach(e => {
+    filteredPageViews.forEach(e => {
       pageCount[e.page_path] = (pageCount[e.page_path] || 0) + 1;
     });
     const topPages = Object.entries(pageCount)
