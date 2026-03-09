@@ -244,9 +244,10 @@ async function createPayment(body: any, accessToken: string) {
       })
       .eq('id', order_id);
 
-    // Deduct stock when payment is approved
+    // Deduct stock and recover abandoned cart when payment is approved
     if (data.status === 'approved') {
       await deductStockForOrder(supabase, order_id);
+      await recoverAbandonedCart(supabase, order_id);
     }
   }
 
@@ -372,5 +373,45 @@ async function deductStockForOrder(supabase: any, orderId: string) {
     console.log(`Stock deduction completed for order ${orderId}`);
   } catch (err) {
     console.error(`Error deducting stock for order ${orderId}:`, err);
+  }
+}
+
+async function recoverAbandonedCart(supabase: any, orderId: string) {
+  try {
+    const { data: order } = await supabase
+      .from('orders')
+      .select('metadata, customer_email, customer_phone')
+      .eq('id', orderId)
+      .single();
+
+    if (!order) return;
+
+    const sessionId = order.metadata?.abandoned_cart_session_id;
+
+    if (sessionId) {
+      const { error } = await supabase
+        .from('abandoned_carts')
+        .update({ status: 'recovered', recovered_at: new Date().toISOString() })
+        .eq('session_id', sessionId)
+        .eq('status', 'abandoned');
+
+      if (!error) {
+        console.log(`Abandoned cart recovered for session ${sessionId} (order ${orderId})`);
+        return;
+      }
+    }
+
+    // Fallback: match by email
+    if (order.customer_email) {
+      await supabase
+        .from('abandoned_carts')
+        .update({ status: 'recovered', recovered_at: new Date().toISOString() })
+        .eq('customer_email', order.customer_email)
+        .eq('status', 'abandoned');
+    }
+
+    console.log(`Abandoned cart recovery attempted for order ${orderId}`);
+  } catch (err) {
+    console.error(`Error recovering abandoned cart for order ${orderId}:`, err);
   }
 }

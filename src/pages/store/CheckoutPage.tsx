@@ -100,18 +100,9 @@ const CheckoutPage = () => {
     return () => clearTimeout(saveTimeout);
   }, [formData, items, orderComplete]);
 
-  // Mark cart as recovered when order is completed
-  const markCartRecovered = async () => {
-    const sessionId = localStorage.getItem(ABANDONED_CART_SESSION_KEY);
-    if (!sessionId) return;
-    try {
-      await supabase.functions.invoke('abandoned-cart', {
-        body: { action: 'recover', session_id: sessionId },
-      });
-      localStorage.removeItem(ABANDONED_CART_SESSION_KEY);
-    } catch (err) {
-      console.error('Error marking cart as recovered:', err);
-    }
+  // Get session ID to save with order for later cart recovery
+  const getSessionId = () => {
+    return localStorage.getItem(ABANDONED_CART_SESSION_KEY) || null;
   };
 
   const total = getTotal();
@@ -210,6 +201,8 @@ const CheckoutPage = () => {
 
       const newOrderId = crypto.randomUUID();
 
+      const sessionId = getSessionId();
+
       const { error } = await supabase
         .from('orders')
         .insert({
@@ -231,13 +224,15 @@ const CheckoutPage = () => {
           status: 'pending',
           payment_status: 'pending',
           store_id: 'e0b8ebbc-1b3b-4aec-b5f7-6925762e6ea1', // Site store
+          metadata: sessionId ? { abandoned_cart_session_id: sessionId } : {},
         });
 
       if (error) throw error;
 
       setOrderId(newOrderId);
       setStep('payment');
-      markCartRecovered();
+      // Cart recovery now happens server-side when payment is confirmed
+      localStorage.removeItem(ABANDONED_CART_SESSION_KEY);
       toast.success('Pedido criado! Agora escolha a forma de pagamento.');
     } catch (error) {
       console.error('Error creating order:', error);
