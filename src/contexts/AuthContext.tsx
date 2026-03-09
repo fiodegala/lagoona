@@ -154,12 +154,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     );
 
     // THEN get initial session
-    supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
+    supabase.auth.getSession().then(async ({ data: { session: initialSession } }) => {
       setSession(initialSession);
       setUser(initialSession?.user ?? null);
       
       if (initialSession?.user) {
-        fetchUserData(initialSession.user.id);
+        await fetchUserData(initialSession.user.id);
       }
       setIsLoading(false);
     });
