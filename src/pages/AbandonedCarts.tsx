@@ -477,14 +477,16 @@ const AbandonedCarts = () => {
               <Separator />
 
               {/* Timing */}
-              <div className="flex gap-4 text-sm">
-                <div>
-                  <span className="text-muted-foreground">Criado em:</span>{' '}
-                  {format(new Date(selectedCart.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Última atividade:</span>{' '}
-                  {format(new Date(selectedCart.updated_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+              <div className="space-y-2 text-sm">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div>
+                    <span className="text-muted-foreground">Criado em:</span>{' '}
+                    {format(new Date(selectedCart.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Última atividade:</span>{' '}
+                    {format(new Date(selectedCart.updated_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                  </div>
                 </div>
                 {selectedCart.notified_at && (
                   <div className="flex items-center gap-1 text-green-600">
