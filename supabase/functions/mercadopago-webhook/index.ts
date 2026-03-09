@@ -173,6 +173,8 @@ Deno.serve(async (req) => {
       await deductStockForOrder(supabase, orderId);
       // Mark abandoned cart as recovered
       await recoverAbandonedCart(supabase, orderId);
+      // Register affiliate commission if applicable
+      await registerAffiliateCommission(supabase, orderId);
     }
 
     // Restore stock if order was confirmed but now cancelled/refunded
