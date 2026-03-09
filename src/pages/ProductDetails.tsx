@@ -26,6 +26,7 @@ import UpsellSection from '@/components/store/UpsellSection';
 import { useCart } from '@/contexts/CartContext';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { getOptimizedImageUrl } from '@/lib/imageUtils';
 
 const ProductDetails = () => {
   const { id } = useParams<{ id: string }>();
