@@ -145,11 +145,15 @@ serve(async (req) => {
       }));
     }
 
-    // Process funnel
+    // Process funnel - also detect product_view from page_path
     const sessionEvents: Record<string, Set<string>> = {};
     (funnelData.data || []).forEach((e: any) => {
       if (!sessionEvents[e.session_id]) sessionEvents[e.session_id] = new Set();
       sessionEvents[e.session_id].add(e.event_type);
+      // If page_path matches /produto/, count as product_view too
+      if (e.event_type === "page_view" && e.page_path?.startsWith("/produto/")) {
+        sessionEvents[e.session_id].add("product_view");
+      }
     });
 
     const totalSessions = Object.keys(sessionEvents).length;
