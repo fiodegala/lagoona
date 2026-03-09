@@ -1,6 +1,7 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { getAffiliateCode } from '@/lib/affiliateUtils';
 
 const SESSION_KEY = 'analytics_session_id';
 const VISITOR_KEY = 'analytics_visitor_id';
