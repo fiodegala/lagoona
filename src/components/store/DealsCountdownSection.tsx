@@ -6,7 +6,6 @@ import ProductCard from '@/components/store/ProductCard';
 import { Product } from '@/services/products';
 import { supabase } from '@/integrations/supabase/client';
 import { useProductCardsMeta, ProductCardMeta } from '@/hooks/useProductCardsMeta';
-import { supabase } from '@/integrations/supabase/client';
 
 interface DealsCountdownSectionProps {
   products: Product[];
