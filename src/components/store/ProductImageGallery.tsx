@@ -243,7 +243,7 @@ const ProductImageGallery = ({
 
     return (
       <img
-        src={currentItem.url}
+        src={getOptimizedImageUrl(currentItem.url, { width: 1200, quality: 85 })}
         alt={`${productName} - Imagem ${currentIndex + 1}`}
         className="max-w-full max-h-full object-contain"
       />
