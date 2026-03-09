@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import CartDrawer from '@/components/store/CartDrawer';
 import logoLagoona from '@/assets/logo-lagoona.png';
 import logoLagoonaDark from '@/assets/logo-lagoona-dark.png';
+import { trackSearchEvent } from '@/hooks/useAnalyticsTracker';
 
 interface SearchResult {
   id: string;
