@@ -613,7 +613,7 @@ const CatalogPage = () => {
                         i === lightbox.index ? 'border-white scale-110' : 'border-transparent opacity-60 hover:opacity-100'
                       }`}
                     >
-                      <img src={getOptimizedImageUrl(img, { width: 96, quality: 60 })} alt="" className="w-full h-full object-cover" loading="lazy" />
+                      <img src={getOptimizedImageUrl(img, { width: 120, quality: 75 })} alt="" className="w-full h-full object-cover" loading="lazy" />
                     </button>
                   ))}
                 </div>
