@@ -26,6 +26,7 @@ import UpsellSection from '@/components/store/UpsellSection';
 import { useCart } from '@/contexts/CartContext';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { getOptimizedImageUrl } from '@/lib/imageUtils';
 
 const ProductDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -249,9 +250,10 @@ const ProductDetails = () => {
                 }}
               >
                 <img
-                  src={selectedImage || product.image_url}
+                  src={getOptimizedImageUrl(selectedImage || product.image_url, { width: 800, quality: 80 })}
                   alt={product.name}
                   className="w-full aspect-[4/5] object-cover"
+                  loading="eager"
                 />
                 {/* Zoom indicator */}
                 <div className="absolute bottom-3 right-3 bg-background/80 backdrop-blur-sm rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -364,7 +366,7 @@ const ProductDetails = () => {
                           : "border-transparent hover:border-muted-foreground/30"
                       )}
                     >
-                      <img src={img} alt={`${product.name} ${idx + 2}`} className="w-full h-full object-cover" />
+                      <img src={getOptimizedImageUrl(img, { width: 100, quality: 60 })} alt={`${product.name} ${idx + 2}`} className="w-full h-full object-cover" loading="lazy" />
                     </button>
                   ))}
                 </div>
@@ -406,7 +408,7 @@ const ProductDetails = () => {
                   onClick={(e) => e.stopPropagation()}
                 >
                   <img
-                    src={allImages[lightboxIndex]}
+                    src={getOptimizedImageUrl(allImages[lightboxIndex], { width: 1200, quality: 85 })}
                     alt={`${product.name} - ${lightboxIndex + 1}`}
                     className="max-w-full max-h-full object-contain"
                   />
@@ -453,7 +455,7 @@ const ProductDetails = () => {
                             : "border-transparent opacity-60 hover:opacity-100"
                         )}
                       >
-                        <img src={img} alt={`Miniatura ${idx + 1}`} className="w-full h-full object-cover" />
+                        <img src={getOptimizedImageUrl(img, { width: 100, quality: 60 })} alt={`Miniatura ${idx + 1}`} className="w-full h-full object-cover" />
                       </button>
                     ))}
                   </div>
