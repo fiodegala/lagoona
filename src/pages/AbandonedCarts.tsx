@@ -408,9 +408,15 @@ const AbandonedCarts = () => {
         {/* Table */}
         <Card>
           <CardContent className="p-0 overflow-x-auto">
-            <Table className="min-w-[700px]">
+            <Table className="min-w-[750px]">
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-10">
+                    <Checkbox
+                      checked={filteredCarts.length > 0 && selectedIds.length === filteredCarts.length}
+                      onCheckedChange={toggleSelectAll}
+                    />
+                  </TableHead>
                   <TableHead>Cliente</TableHead>
                   <TableHead>Produtos</TableHead>
                   <TableHead>Valor</TableHead>
@@ -422,13 +428,13 @@ const AbandonedCarts = () => {
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-12 text-muted-foreground">
+                    <TableCell colSpan={7} className="text-center py-12 text-muted-foreground">
                       Carregando...
                     </TableCell>
                   </TableRow>
                 ) : filteredCarts.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-12 text-muted-foreground">
+                    <TableCell colSpan={7} className="text-center py-12 text-muted-foreground">
                       <ShoppingCart className="h-10 w-10 mx-auto mb-2 opacity-30" />
                       Nenhum carrinho abandonado encontrado
                     </TableCell>
@@ -436,6 +442,12 @@ const AbandonedCarts = () => {
                 ) : (
                   filteredCarts.map((cart) => (
                     <TableRow key={cart.id}>
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedIds.includes(cart.id)}
+                          onCheckedChange={() => toggleSelect(cart.id)}
+                        />
+                      </TableCell>
                       <TableCell>
                         <div>
                           <p className="font-medium text-sm">
@@ -485,10 +497,20 @@ const AbandonedCarts = () => {
                         </div>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button size="sm" variant="ghost" onClick={() => setSelectedCart(cart)}>
-                          <Eye className="h-4 w-4 mr-1" />
-                          Ver
-                        </Button>
+                        <div className="flex items-center justify-end gap-1">
+                          <Button size="sm" variant="ghost" onClick={() => setSelectedCart(cart)}>
+                            <Eye className="h-4 w-4 mr-1" />
+                            Ver
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-8 w-8 text-destructive hover:text-destructive"
+                            onClick={() => setDeleteConfirm({ type: 'single', id: cart.id })}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))
