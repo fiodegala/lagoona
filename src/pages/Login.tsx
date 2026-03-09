@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Shield, Loader2, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -29,8 +30,35 @@ const Login = () => {
       setError(error.message);
       setIsLoading(false);
     } else {
-      toast.success('Login realizado com sucesso!');
-      navigate('/admin');
+      // Check if user has admin roles — if not, redirect appropriately
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      const userId = currentUser?.id || '';
+
+      const { data: rolesData } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId);
+
+      if (rolesData && rolesData.length > 0) {
+        toast.success('Login realizado com sucesso!');
+        navigate('/admin');
+      } else {
+        // Check if affiliate
+        const { data: aff } = await supabase
+          .from('affiliates')
+          .select('id')
+          .eq('user_id', userId)
+          .maybeSingle();
+
+        if (aff) {
+          toast.info('Você é afiliado. Redirecionando para seu painel.');
+          navigate('/afiliados/painel');
+        } else {
+          toast.error('Você não tem permissão para acessar o painel administrativo.');
+          await supabase.auth.signOut();
+        }
+      }
+      setIsLoading(false);
     }
   };
 
