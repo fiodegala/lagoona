@@ -12,6 +12,8 @@ import StoreLayout from '@/components/store/StoreLayout';
 
 const StoreLoginPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const redirectTo = (location.state as any)?.from || null;
   const { signIn, signUp, user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
