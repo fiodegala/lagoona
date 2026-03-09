@@ -222,6 +222,10 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const removeItem = (id: string) => {
+    const item = items.find(i => i.id === id);
+    if (item) {
+      trackCartRemoveEvent(item.productId, item.name);
+    }
     setItems(current => current.filter(item => item.id !== id));
   };
 
