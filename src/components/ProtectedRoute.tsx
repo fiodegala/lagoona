@@ -23,13 +23,18 @@ const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
+  // Users without any admin role (e.g. affiliates) cannot access admin panel
+  if (roles.length === 0) {
+    return <Navigate to="/" replace />;
+  }
+
   // Check if user has required role
   if (requiredRole) {
     const hasRequiredRole = roles.includes(requiredRole) || 
       (requiredRole === 'manager' && roles.includes('admin')) ||
       (requiredRole === 'support' && (roles.includes('admin') || roles.includes('manager')));
 
-    if (!hasRequiredRole && roles.length > 0) {
+    if (!hasRequiredRole) {
       return <Navigate to="/unauthorized" replace />;
     }
   }
