@@ -119,6 +119,7 @@ export const FavoritesProvider = ({ children }: { children: ReactNode }) => {
 
     // Optimistic update
     setFavorites(prev => [...prev, productId]);
+    trackFavoriteEvent('add', productId);
 
     if (user) {
       // Save to database
