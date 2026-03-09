@@ -13,6 +13,7 @@ import StoreLayout from '@/components/store/StoreLayout';
 import { useCart } from '@/contexts/CartContext';
 import { supabase } from '@/integrations/supabase/client';
 import { trackAnalyticsEvent } from '@/hooks/useAnalyticsTracker';
+import { getAffiliateCode, clearAffiliateCode } from '@/lib/affiliateUtils';
 
 const ABANDONED_CART_SESSION_KEY = 'abandoned-cart-session';
 
