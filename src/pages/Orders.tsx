@@ -351,6 +351,12 @@ const Orders = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
+                     <TableHead className="w-10">
+                       <Checkbox
+                         checked={filteredOrders.length > 0 && selectedIds.length === filteredOrders.length}
+                         onCheckedChange={toggleSelectAll}
+                       />
+                     </TableHead>
                      <TableHead>Pedido</TableHead>
                      <TableHead>Cliente</TableHead>
                      <TableHead>Total</TableHead>
@@ -366,6 +372,12 @@ const Orders = () => {
                     const status = statusMap[order.status] || { label: order.status, variant: 'outline' as const, className: '' };
                     return (
                       <TableRow key={order.id}>
+                        <TableCell>
+                          <Checkbox
+                            checked={selectedIds.includes(order.id)}
+                            onCheckedChange={() => toggleSelect(order.id)}
+                          />
+                        </TableCell>
                         <TableCell className="font-mono text-xs">{order.id.slice(0, 8)}...</TableCell>
                         <TableCell>
                           <div>
