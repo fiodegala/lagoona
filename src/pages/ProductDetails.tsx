@@ -366,7 +366,7 @@ const ProductDetails = () => {
                           : "border-transparent hover:border-muted-foreground/30"
                       )}
                     >
-                      <img src={img} alt={`${product.name} ${idx + 2}`} className="w-full h-full object-cover" />
+                      <img src={getOptimizedImageUrl(img, { width: 100, quality: 60 })} alt={`${product.name} ${idx + 2}`} className="w-full h-full object-cover" loading="lazy" />
                     </button>
                   ))}
                 </div>
