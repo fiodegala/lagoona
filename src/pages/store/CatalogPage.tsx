@@ -308,11 +308,12 @@ const CatalogPage = () => {
     setLightbox({ ...lightbox, index: next });
   }, [lightbox, productImagesMap]);
 
-  const getDisplayImage = (product: Product) => {
+  const getDisplayImage = useCallback((product: Product, size: 'thumb' | 'full' = 'thumb') => {
     const images = productImagesMap[product.id] || ['/placeholder.svg'];
     const idx = imageIndex[product.id] || 0;
-    return images[idx] || images[0];
-  };
+    const url = images[idx] || images[0];
+    return size === 'thumb' ? getOptimizedImageUrl(url, { width: 400, quality: 70 }) : url;
+  }, [productImagesMap, imageIndex]);
 
   const navigateImage = useCallback((productId: string, direction: 'prev' | 'next') => {
     const images = productImagesMap[productId] || [];
