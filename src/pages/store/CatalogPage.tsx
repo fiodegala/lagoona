@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Search, Share2, MessageCircle, Loader2, ChevronLeft, ChevronRight, Download, X } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { getOptimizedImageUrl } from '@/lib/imageUtils';
 
 const WHATSAPP_NUMBER = '556299416578';
 
@@ -307,11 +308,12 @@ const CatalogPage = () => {
     setLightbox({ ...lightbox, index: next });
   }, [lightbox, productImagesMap]);
 
-  const getDisplayImage = (product: Product) => {
+  const getDisplayImage = useCallback((product: Product, size: 'thumb' | 'full' = 'thumb') => {
     const images = productImagesMap[product.id] || ['/placeholder.svg'];
     const idx = imageIndex[product.id] || 0;
-    return images[idx] || images[0];
-  };
+    const url = images[idx] || images[0];
+    return size === 'thumb' ? getOptimizedImageUrl(url, { width: 400, quality: 70 }) : url;
+  }, [productImagesMap, imageIndex]);
 
   const navigateImage = useCallback((productId: string, direction: 'prev' | 'next') => {
     const images = productImagesMap[productId] || [];
@@ -437,9 +439,10 @@ const CatalogPage = () => {
                           }}
                         >
                           <img
-                            src={getDisplayImage(product)}
+                            src={getDisplayImage(product, 'thumb')}
                             alt={product.name}
                             loading="lazy"
+                            decoding="async"
                             className="w-full h-full object-cover transition-transform duration-300 cursor-pointer"
                             onClick={() => openLightbox(product.id, imageIndex[product.id] || 0)}
                           />
@@ -592,9 +595,10 @@ const CatalogPage = () => {
 
               {/* Image */}
               <img
-                src={currentImage}
+                src={getOptimizedImageUrl(currentImage, { width: 1200, quality: 85 })}
                 alt={product?.name || ''}
                 className="max-w-[90vw] max-h-[85vh] object-contain select-none"
+                decoding="async"
                 onClick={(e) => e.stopPropagation()}
               />
 
@@ -609,7 +613,7 @@ const CatalogPage = () => {
                         i === lightbox.index ? 'border-white scale-110' : 'border-transparent opacity-60 hover:opacity-100'
                       }`}
                     >
-                      <img src={img} alt="" className="w-full h-full object-cover" />
+                      <img src={getOptimizedImageUrl(img, { width: 96, quality: 60 })} alt="" className="w-full h-full object-cover" loading="lazy" />
                     </button>
                   ))}
                 </div>
