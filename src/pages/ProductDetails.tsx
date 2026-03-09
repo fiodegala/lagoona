@@ -455,7 +455,7 @@ const ProductDetails = () => {
                             : "border-transparent opacity-60 hover:opacity-100"
                         )}
                       >
-                        <img src={img} alt={`Miniatura ${idx + 1}`} className="w-full h-full object-cover" />
+                        <img src={getOptimizedImageUrl(img, { width: 100, quality: 60 })} alt={`Miniatura ${idx + 1}`} className="w-full h-full object-cover" />
                       </button>
                     ))}
                   </div>
