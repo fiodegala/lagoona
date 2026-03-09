@@ -41,6 +41,7 @@ const AuditLogs = lazy(() => import("./pages/AuditLogs"));
 const Upsells = lazy(() => import("./pages/Upsells"));
 const AdminAssistant = lazy(() => import("./pages/AdminAssistant"));
 const Quotes = lazy(() => import("./pages/Quotes"));
+const Affiliates = lazy(() => import("./pages/Affiliates"));
 
 // Lazy-loaded Store Pages
 const HomePage = lazy(() => import("./pages/store/HomePage"));
