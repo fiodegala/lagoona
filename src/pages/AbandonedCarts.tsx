@@ -183,6 +183,38 @@ const AbandonedCarts = () => {
     }
   };
 
+  const handleDelete = async () => {
+    if (!deleteConfirm) return;
+    try {
+      const idsToDelete = deleteConfirm.type === 'single' ? [deleteConfirm.id!] : selectedIds;
+      const { error } = await supabase
+        .from('abandoned_carts')
+        .delete()
+        .in('id', idsToDelete);
+      if (error) throw error;
+      toast.success(`${idsToDelete.length} carrinho(s) excluído(s)`);
+      setDeleteConfirm(null);
+      setSelectedCart(null);
+      fetchCarts();
+    } catch {
+      toast.error('Erro ao excluir carrinho(s)');
+    }
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.length === filteredCarts.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(filteredCarts.map((c) => c.id));
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
+
   return (
     <AdminLayout>
       <div className="space-y-6">
