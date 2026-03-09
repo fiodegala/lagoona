@@ -10,6 +10,7 @@ import {
   ExternalLink,
   Settings,
 } from 'lucide-react';
+import AdminNotificationBell from '@/components/AdminNotificationBell';
 import { navItems, settingsItems } from '@/config/menuItems';
 import logoLagoona from '@/assets/logo-lagoona-white.png';
 import { Button } from '@/components/ui/button';
