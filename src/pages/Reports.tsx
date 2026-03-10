@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   BarChart3, TrendingUp, Users, ShoppingCart, Package,
   Calendar, CalendarRange, DollarSign, ArrowUpRight, ArrowDownRight,
-  Download, FileSpreadsheet, FileText, Tag
+  Download, FileSpreadsheet, FileText, Tag, Star
 } from 'lucide-react';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -48,6 +48,8 @@ interface RawPOSSale {
   discount_amount: number | null;
   payment_method: string;
   status: string;
+  sale_type: string | null;
+  notes: string | null;
   items: { name?: string; qty?: number; price?: number; product_id?: string }[];
   created_at: string;
 }
@@ -109,7 +111,7 @@ const Reports = () => {
     setIsLoading(true);
     const [ordersRes, posRes] = await Promise.all([
       supabase.from('orders').select('id, status, total, customer_name, customer_email, payment_method, payment_status, items, created_at, shipping_address'),
-      supabase.from('pos_sales').select('id, customer_name, total, subtotal, discount_amount, payment_method, status, items, created_at'),
+      supabase.from('pos_sales').select('id, customer_name, total, subtotal, discount_amount, payment_method, status, items, created_at, notes, sale_type'),
     ]);
     setOrders((ordersRes.data || []).map(o => ({
       ...o,
@@ -122,6 +124,8 @@ const Reports = () => {
       total: Number(s.total),
       subtotal: Number(s.subtotal),
       discount_amount: s.discount_amount ? Number(s.discount_amount) : null,
+      sale_type: (s as any).sale_type || null,
+      notes: s.notes || null,
     })));
     setIsLoading(false);
   };
@@ -371,6 +375,40 @@ const Reports = () => {
       payments: Object.entries(byPayment).map(([method, d]) => ({ method, ...d })).sort((a, b) => b.total - a.total),
     };
   }, [filteredPOS, filteredOrders]);
+
+  // Sales by Modality & Exchange metrics
+  const modalityStats = useMemo(() => {
+    const modalities: Record<string, { count: number; total: number }> = {
+      varejo: { count: 0, total: 0 },
+      atacado: { count: 0, total: 0 },
+      exclusivo: { count: 0, total: 0 },
+    };
+    const exchanges = { count: 0, creditGenerated: 0, cashReceived: 0 };
+
+    filteredPOS.forEach(sale => {
+      const saleType = sale.sale_type || (sale.notes?.startsWith('TROCA') ? 'troca' : 'varejo');
+
+      if (saleType === 'troca') {
+        exchanges.count++;
+        const discountAmt = Number(sale.discount_amount || 0);
+        const saleTotal = Number(sale.total);
+        if (saleTotal > 0) {
+          exchanges.cashReceived += saleTotal;
+        }
+        if (discountAmt > 0 && saleTotal === 0) {
+          exchanges.creditGenerated += discountAmt;
+        }
+      } else if (modalities[saleType]) {
+        modalities[saleType].count += 1;
+        modalities[saleType].total += Number(sale.total);
+      } else {
+        modalities.varejo.count += 1;
+        modalities.varejo.total += Number(sale.total);
+      }
+    });
+
+    return { modalities, exchanges };
+  }, [filteredPOS]);
 
   const exportToCSV = () => {
     const BOM = '\uFEFF';
@@ -696,6 +734,7 @@ const Reports = () => {
           <TabsList>
             <TabsTrigger value="products">Produtos</TabsTrigger>
             <TabsTrigger value="customers">Clientes</TabsTrigger>
+            <TabsTrigger value="modality">Modalidades</TabsTrigger>
             <TabsTrigger value="promotional">Promoções</TabsTrigger>
             <TabsTrigger value="analysis">Análise</TabsTrigger>
           </TabsList>
@@ -822,6 +861,121 @@ const Reports = () => {
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+
+          {/* Modality Sales */}
+          <TabsContent value="modality" className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Varejo */}
+              <Card className="card-elevated border-l-4 border-l-primary">
+                <CardContent className="pt-6">
+                  <div className="flex items-center gap-2 mb-2">
+                    <ShoppingCart className="h-4 w-4 text-primary" />
+                    <span className="text-sm font-medium">Varejo</span>
+                  </div>
+                  <p className="text-2xl font-bold">{formatCurrency(modalityStats.modalities.varejo.total)}</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {modalityStats.modalities.varejo.count} vendas
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Ticket: {formatCurrency(modalityStats.modalities.varejo.count > 0 ? modalityStats.modalities.varejo.total / modalityStats.modalities.varejo.count : 0)}
+                  </p>
+                </CardContent>
+              </Card>
+
+              {/* Atacado */}
+              <Card className="card-elevated border-l-4" style={{ borderLeftColor: 'hsl(var(--chart-2, 160 60% 45%))' }}>
+                <CardContent className="pt-6">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Package className="h-4 w-4 text-success" />
+                    <span className="text-sm font-medium">Atacado</span>
+                  </div>
+                  <p className="text-2xl font-bold">{formatCurrency(modalityStats.modalities.atacado.total)}</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {modalityStats.modalities.atacado.count} vendas
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Ticket: {formatCurrency(modalityStats.modalities.atacado.count > 0 ? modalityStats.modalities.atacado.total / modalityStats.modalities.atacado.count : 0)}
+                  </p>
+                </CardContent>
+              </Card>
+
+              {/* Exclusivo */}
+              <Card className="card-elevated border-l-4 border-l-warning">
+                <CardContent className="pt-6">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Star className="h-4 w-4 text-warning" />
+                    <span className="text-sm font-medium">Exclusivo</span>
+                  </div>
+                  <p className="text-2xl font-bold">{formatCurrency(modalityStats.modalities.exclusivo.total)}</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {modalityStats.modalities.exclusivo.count} vendas
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Ticket: {formatCurrency(modalityStats.modalities.exclusivo.count > 0 ? modalityStats.modalities.exclusivo.total / modalityStats.modalities.exclusivo.count : 0)}
+                  </p>
+                </CardContent>
+              </Card>
+
+              {/* Trocas */}
+              <Card className="card-elevated border-l-4 border-l-destructive">
+                <CardContent className="pt-6">
+                  <div className="flex items-center gap-2 mb-2">
+                    <ArrowDownRight className="h-4 w-4 text-destructive" />
+                    <span className="text-sm font-medium">Trocas</span>
+                  </div>
+                  <p className="text-2xl font-bold">{modalityStats.exchanges.count}</p>
+                  <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
+                    <p>Crédito gerado: {formatCurrency(modalityStats.exchanges.creditGenerated)}</p>
+                    <p>Diferença no caixa: {formatCurrency(modalityStats.exchanges.cashReceived)}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Modality Pie Chart */}
+            <Card className="card-elevated">
+              <CardHeader>
+                <CardTitle className="text-lg">Distribuição por Modalidade</CardTitle>
+                <CardDescription>Proporção de receita por tipo de venda</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {(modalityStats.modalities.varejo.total + modalityStats.modalities.atacado.total + modalityStats.modalities.exclusivo.total) === 0 ? (
+                  <p className="text-muted-foreground text-center py-8">Sem dados no período</p>
+                ) : (
+                  <ResponsiveContainer width="100%" height={280}>
+                    <PieChart>
+                      <Pie
+                        data={[
+                          { name: 'Varejo', value: modalityStats.modalities.varejo.total, fill: 'hsl(var(--primary))' },
+                          { name: 'Atacado', value: modalityStats.modalities.atacado.total, fill: 'hsl(var(--chart-2, 160 60% 45%))' },
+                          { name: 'Exclusivo', value: modalityStats.modalities.exclusivo.total, fill: 'hsl(var(--chart-3, 30 80% 55%))' },
+                        ].filter(d => d.value > 0)}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={100}
+                        paddingAngle={3}
+                        dataKey="value"
+                      >
+                        {[
+                          { name: 'Varejo', value: modalityStats.modalities.varejo.total, fill: 'hsl(var(--primary))' },
+                          { name: 'Atacado', value: modalityStats.modalities.atacado.total, fill: 'hsl(var(--chart-2, 160 60% 45%))' },
+                          { name: 'Exclusivo', value: modalityStats.modalities.exclusivo.total, fill: 'hsl(var(--chart-3, 30 80% 55%))' },
+                        ].filter(d => d.value > 0).map((entry, i) => (
+                          <Cell key={i} fill={entry.fill} />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
+                        formatter={(value: number, name: string) => [formatCurrency(value), name]}
+                      />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
 
           {/* Analysis */}

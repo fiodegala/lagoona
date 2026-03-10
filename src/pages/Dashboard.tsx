@@ -98,6 +98,8 @@ interface RawPOSSale {
   payment_details: Record<string, unknown> | null;
   discount_amount: number | null;
   status: string;
+  sale_type: string | null;
+  notes: string | null;
   items: { name?: string; qty?: number; quantity?: number; unit_price?: number; price?: number; is_promotional?: boolean; original_price?: number; total?: number }[];
   created_at: string;
 }
@@ -243,6 +245,8 @@ const Dashboard = () => {
         payment_details: sale.payment_details as Record<string, unknown> | null,
         discount_amount: sale.discount_amount ? Number(sale.discount_amount) : null,
         status: sale.status,
+        sale_type: (sale as any).sale_type || null,
+        notes: sale.notes || null,
         items: (sale.items as any[] || []),
         created_at: sale.created_at,
       })));
@@ -693,6 +697,42 @@ const Dashboard = () => {
         .sort((a, b) => b.total - a.total),
     };
   }, [filteredPOSSales, filteredOrders]);
+
+  // Sales by Modality (Varejo, Atacado, Exclusivo) and Exchange metrics
+  const modalityStats = useMemo(() => {
+    const modalities: Record<string, { count: number; total: number }> = {
+      varejo: { count: 0, total: 0 },
+      atacado: { count: 0, total: 0 },
+      exclusivo: { count: 0, total: 0 },
+    };
+    const exchanges = { count: 0, creditGenerated: 0, cashReceived: 0 };
+
+    filteredPOSSales.forEach(sale => {
+      const saleType = sale.sale_type || (sale.notes?.startsWith('TROCA') ? 'troca' : 'varejo');
+
+      if (saleType === 'troca') {
+        exchanges.count++;
+        // discount_amount in exchanges = value of returned items + credit used
+        const discountAmt = Number(sale.discount_amount || 0);
+        const saleTotal = Number(sale.total);
+        if (saleTotal > 0) {
+          exchanges.cashReceived += saleTotal;
+        }
+        // Credit generated = returned value that exceeded new items value
+        if (discountAmt > 0 && saleTotal === 0) {
+          exchanges.creditGenerated += discountAmt;
+        }
+      } else if (modalities[saleType]) {
+        modalities[saleType].count += 1;
+        modalities[saleType].total += Number(sale.total);
+      } else {
+        modalities.varejo.count += 1;
+        modalities.varejo.total += Number(sale.total);
+      }
+    });
+
+    return { modalities, exchanges };
+  }, [filteredPOSSales]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
@@ -1660,6 +1700,73 @@ const Dashboard = () => {
                         </div>
                       </div>
                     ))}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Sales by Modality & Exchange Metrics */}
+        {!isSiteStoreSelected && (
+          <Card className="card-elevated border-l-4 border-l-primary">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Store className="h-5 w-5 text-primary" />
+                Vendas por Modalidade
+              </CardTitle>
+              <CardDescription>
+                Desempenho por tipo de venda — {getPeriodLabel(periodFilter)}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                {/* Varejo */}
+                <div className="p-4 rounded-lg border bg-card">
+                  <div className="flex items-center gap-2 mb-2">
+                    <ShoppingCart className="h-4 w-4 text-primary" />
+                    <span className="text-sm font-medium">Varejo</span>
+                  </div>
+                  <p className="text-2xl font-bold">{formatCurrency(modalityStats.modalities.varejo.total)}</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {modalityStats.modalities.varejo.count} vendas • Ticket: {formatCurrency(modalityStats.modalities.varejo.count > 0 ? modalityStats.modalities.varejo.total / modalityStats.modalities.varejo.count : 0)}
+                  </p>
+                </div>
+
+                {/* Atacado */}
+                <div className="p-4 rounded-lg border bg-card">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Package className="h-4 w-4 text-success" />
+                    <span className="text-sm font-medium">Atacado</span>
+                  </div>
+                  <p className="text-2xl font-bold">{formatCurrency(modalityStats.modalities.atacado.total)}</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {modalityStats.modalities.atacado.count} vendas • Ticket: {formatCurrency(modalityStats.modalities.atacado.count > 0 ? modalityStats.modalities.atacado.total / modalityStats.modalities.atacado.count : 0)}
+                  </p>
+                </div>
+
+                {/* Exclusivo */}
+                <div className="p-4 rounded-lg border bg-card">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Star className="h-4 w-4 text-warning" />
+                    <span className="text-sm font-medium">Exclusivo</span>
+                  </div>
+                  <p className="text-2xl font-bold">{formatCurrency(modalityStats.modalities.exclusivo.total)}</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {modalityStats.modalities.exclusivo.count} vendas • Ticket: {formatCurrency(modalityStats.modalities.exclusivo.count > 0 ? modalityStats.modalities.exclusivo.total / modalityStats.modalities.exclusivo.count : 0)}
+                  </p>
+                </div>
+
+                {/* Trocas */}
+                <div className="p-4 rounded-lg border bg-card border-destructive/30">
+                  <div className="flex items-center gap-2 mb-2">
+                    <ArrowDownRight className="h-4 w-4 text-destructive" />
+                    <span className="text-sm font-medium">Trocas</span>
+                  </div>
+                  <p className="text-2xl font-bold">{modalityStats.exchanges.count}</p>
+                  <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
+                    <p>Crédito gerado: {formatCurrency(modalityStats.exchanges.creditGenerated)}</p>
+                    <p>Diferença recebida: {formatCurrency(modalityStats.exchanges.cashReceived)}</p>
                   </div>
                 </div>
               </div>

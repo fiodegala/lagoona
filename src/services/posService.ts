@@ -86,6 +86,7 @@ export interface CreateSaleData {
   coupon_code?: string;
   notes?: string;
   sale_date?: string; // ISO date string for backdating sales
+  sale_type?: 'varejo' | 'atacado' | 'exclusivo' | 'troca';
 }
 
 export const posService = {
@@ -284,6 +285,7 @@ export const posService = {
       coupon_code: saleData.coupon_code || null,
       notes: saleData.notes || null,
       synced: true,
+      sale_type: saleData.sale_type || 'varejo',
       ...(saleData.sale_date ? { created_at: saleData.sale_date } : {}),
     };
 

@@ -356,6 +356,7 @@ const POSPage = () => {
       change_amount: amountReceived ? Math.max(0, amountReceived - total) : 0,
       notes: selectedSeller ? `Vendedor: ${selectedSeller.full_name}` : undefined,
       sale_date: saleDate,
+      sale_type: saleType as 'varejo' | 'atacado' | 'exclusivo' | 'troca',
     };
 
     try {
@@ -424,6 +425,7 @@ const POSPage = () => {
           amount_received: data.amountToPay > 0 ? data.amountReceived : 0,
           change_amount: data.amountToPay > 0 && data.amountReceived ? Math.max(0, data.amountReceived - data.amountToPay) : 0,
           notes: `TROCA - Devolvidos: ${data.returnedItems.map(i => `${i.quantity}x ${i.name}`).join(', ')}${selectedSeller ? ` | Vendedor: ${selectedSeller.full_name}` : ''}`,
+          sale_type: 'troca',
         };
         await posService.createSale(saleData);
       }
