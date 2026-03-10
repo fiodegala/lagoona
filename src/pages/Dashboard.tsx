@@ -698,6 +698,42 @@ const Dashboard = () => {
     };
   }, [filteredPOSSales, filteredOrders]);
 
+  // Sales by Modality (Varejo, Atacado, Exclusivo) and Exchange metrics
+  const modalityStats = useMemo(() => {
+    const modalities: Record<string, { count: number; total: number }> = {
+      varejo: { count: 0, total: 0 },
+      atacado: { count: 0, total: 0 },
+      exclusivo: { count: 0, total: 0 },
+    };
+    const exchanges = { count: 0, creditGenerated: 0, cashReceived: 0 };
+
+    filteredPOSSales.forEach(sale => {
+      const saleType = sale.sale_type || (sale.notes?.startsWith('TROCA') ? 'troca' : 'varejo');
+
+      if (saleType === 'troca') {
+        exchanges.count++;
+        // discount_amount in exchanges = value of returned items + credit used
+        const discountAmt = Number(sale.discount_amount || 0);
+        const saleTotal = Number(sale.total);
+        if (saleTotal > 0) {
+          exchanges.cashReceived += saleTotal;
+        }
+        // Credit generated = returned value that exceeded new items value
+        if (discountAmt > 0 && saleTotal === 0) {
+          exchanges.creditGenerated += discountAmt;
+        }
+      } else if (modalities[saleType]) {
+        modalities[saleType].count += 1;
+        modalities[saleType].total += Number(sale.total);
+      } else {
+        modalities.varejo.count += 1;
+        modalities.varejo.total += Number(sale.total);
+      }
+    });
+
+    return { modalities, exchanges };
+  }, [filteredPOSSales]);
+
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
   };
