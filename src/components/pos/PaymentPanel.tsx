@@ -112,6 +112,8 @@ const PaymentPanel = ({
         cash: parseCurrency(mixedAmounts.cash),
         card: parseCurrency(mixedAmounts.card),
         pix: parseCurrency(mixedAmounts.pix),
+        mixedCardType,
+        mixedInstallments: mixedCardType === 'credit' ? parseInt(mixedInstallments) : 1,
       });
     } else {
       onPayment(selectedMethod, undefined, channelInfo);
