@@ -17,8 +17,23 @@ import {
   QrCode,
   Split,
   Loader2,
+  Globe,
+  Instagram,
+  Users,
+  Crown,
+  MessageCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+export type SaleChannel = 'site' | 'instagram' | 'indicacao' | 'grupo_vip' | 'whatsapp';
+
+const channelOptions: { value: SaleChannel; label: string; icon: React.ReactNode }[] = [
+  { value: 'site', label: 'Site', icon: <Globe className="h-4 w-4" /> },
+  { value: 'instagram', label: 'Instagram', icon: <Instagram className="h-4 w-4" /> },
+  { value: 'indicacao', label: 'Indicação', icon: <Users className="h-4 w-4" /> },
+  { value: 'grupo_vip', label: 'Grupo VIP', icon: <Crown className="h-4 w-4" /> },
+  { value: 'whatsapp', label: 'WhatsApp', icon: <MessageCircle className="h-4 w-4" /> },
+];
 
 interface PaymentPanelProps {
   total: number;
@@ -37,6 +52,7 @@ const PaymentPanel = ({
   isProcessing,
   disabled,
 }: PaymentPanelProps) => {
+  const [selectedChannel, setSelectedChannel] = useState<SaleChannel | null>(null);
   const [selectedMethod, setSelectedMethod] = useState<'cash' | 'card' | 'pix' | 'mixed' | null>(null);
   const [cashReceived, setCashReceived] = useState('');
   const [cardType, setCardType] = useState<'credit' | 'debit'>('credit');
