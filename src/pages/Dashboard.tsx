@@ -1424,6 +1424,45 @@ const Dashboard = () => {
             )}
           </div>
 
+          {/* Individual vs Store Sales */}
+          {!isLoading && selectedSellerId === 'all' && (
+            <div className="grid gap-4 md:grid-cols-2">
+              <Card className="card-elevated border-l-4 border-l-primary">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Minhas Vendas</p>
+                      <p className="text-2xl font-bold mt-1">{formatCurrency(individualStats.myRevenue)}</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {individualStats.mySales} vendas • Ticket: {formatCurrency(individualStats.myTicket)}
+                      </p>
+                    </div>
+                    <div className="bg-primary/10 p-3 rounded-xl">
+                      <Users className="h-6 w-6 text-primary" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="card-elevated border-l-4 border-l-success">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Total da Loja</p>
+                      <p className="text-2xl font-bold mt-1">{formatCurrency(individualStats.storeRevenue)}</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {individualStats.storeSales} vendas • Ticket: {formatCurrency(individualStats.storeTicket)}
+                      </p>
+                    </div>
+                    <div className="bg-success/10 p-3 rounded-xl">
+                      <Store className="h-6 w-6 text-success" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
           {/* POS Charts and Details */}
           <div className="grid gap-6 lg:grid-cols-3">
             {/* POS Sales Chart */}
