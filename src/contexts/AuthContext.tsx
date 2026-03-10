@@ -139,17 +139,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Skip INITIAL_SESSION event — handled by getSession below
         if (event === 'INITIAL_SESSION') return;
 
-        setSession(newSession);
-        setUser(newSession?.user ?? null);
-
         if (newSession?.user) {
           setIsLoading(true);
+          setSession(newSession);
+          setUser(newSession.user);
           // Use setTimeout to avoid Supabase auth deadlock
           setTimeout(async () => {
             await fetchUserData(newSession.user.id);
             setIsLoading(false);
           }, 0);
         } else {
+          setSession(null);
+          setUser(null);
           setProfile(null);
           setRoles([]);
           setUserStore(null);
