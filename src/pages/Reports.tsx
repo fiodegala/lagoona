@@ -376,6 +376,40 @@ const Reports = () => {
     };
   }, [filteredPOS, filteredOrders]);
 
+  // Sales by Modality & Exchange metrics
+  const modalityStats = useMemo(() => {
+    const modalities: Record<string, { count: number; total: number }> = {
+      varejo: { count: 0, total: 0 },
+      atacado: { count: 0, total: 0 },
+      exclusivo: { count: 0, total: 0 },
+    };
+    const exchanges = { count: 0, creditGenerated: 0, cashReceived: 0 };
+
+    filteredPOS.forEach(sale => {
+      const saleType = sale.sale_type || (sale.notes?.startsWith('TROCA') ? 'troca' : 'varejo');
+
+      if (saleType === 'troca') {
+        exchanges.count++;
+        const discountAmt = Number(sale.discount_amount || 0);
+        const saleTotal = Number(sale.total);
+        if (saleTotal > 0) {
+          exchanges.cashReceived += saleTotal;
+        }
+        if (discountAmt > 0 && saleTotal === 0) {
+          exchanges.creditGenerated += discountAmt;
+        }
+      } else if (modalities[saleType]) {
+        modalities[saleType].count += 1;
+        modalities[saleType].total += Number(sale.total);
+      } else {
+        modalities.varejo.count += 1;
+        modalities.varejo.total += Number(sale.total);
+      }
+    });
+
+    return { modalities, exchanges };
+  }, [filteredPOS]);
+
   const exportToCSV = () => {
     const BOM = '\uFEFF';
     let csv = BOM + 'Relatório de Vendas\n';
