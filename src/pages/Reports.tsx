@@ -104,6 +104,7 @@ const formatCurrency = (value: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 
 const Reports = () => {
+  const { user } = useAuth();
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('30d');
   const [customDateRange, setCustomDateRange] = useState<DateRange | undefined>();
   const [selectedSellerId, setSelectedSellerId] = useState<string>('all');
