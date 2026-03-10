@@ -323,7 +323,10 @@ const Dashboard = () => {
   }, [rawOrders, periodStartDate, periodEndDate]);
 
   const filteredPOSSales = useMemo(() => {
-    const activeSales = rawPOSSales.filter(s => s.status !== 'cancelled');
+    let activeSales = rawPOSSales.filter(s => s.status !== 'cancelled');
+    if (selectedSellerId !== 'all') {
+      activeSales = activeSales.filter(s => s.user_id === selectedSellerId);
+    }
     if (!periodStartDate) return activeSales;
     return activeSales.filter(s => {
       const saleDate = new Date(s.created_at);
@@ -331,7 +334,7 @@ const Dashboard = () => {
       const beforeEnd = !periodEndDate || saleDate <= periodEndDate;
       return afterStart && beforeEnd;
     });
-  }, [rawPOSSales, periodStartDate, periodEndDate]);
+  }, [rawPOSSales, periodStartDate, periodEndDate, selectedSellerId]);
 
   // Calculate online stats based on filtered data
   const stats: DashboardStats | null = useMemo(() => {

@@ -174,9 +174,10 @@ const Reports = () => {
   const filteredPOS = useMemo(() =>
     posSales.filter(s => {
       if (s.status === 'cancelled') return false;
+      if (selectedSellerId !== 'all' && s.user_id !== selectedSellerId) return false;
       const d = new Date(s.created_at);
       return d >= dateRange.start && d <= dateRange.end;
-    }), [posSales, dateRange]);
+    }), [posSales, dateRange, selectedSellerId]);
 
   // === KPI Cards ===
   const kpis = useMemo(() => {
