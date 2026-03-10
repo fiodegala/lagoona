@@ -22,10 +22,11 @@ import {
   Users,
   Crown,
   MessageCircle,
+  Store,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export type SaleChannel = 'site' | 'instagram' | 'indicacao' | 'grupo_vip' | 'whatsapp';
+export type SaleChannel = 'site' | 'instagram' | 'indicacao' | 'grupo_vip' | 'whatsapp' | 'loja_bs' | 'loja_hm44';
 
 const channelOptions: { value: SaleChannel; label: string; icon: React.ReactNode }[] = [
   { value: 'site', label: 'Site', icon: <Globe className="h-4 w-4" /> },
@@ -33,6 +34,8 @@ const channelOptions: { value: SaleChannel; label: string; icon: React.ReactNode
   { value: 'indicacao', label: 'Indicação', icon: <Users className="h-4 w-4" /> },
   { value: 'grupo_vip', label: 'Grupo VIP', icon: <Crown className="h-4 w-4" /> },
   { value: 'whatsapp', label: 'WhatsApp', icon: <MessageCircle className="h-4 w-4" /> },
+  { value: 'loja_bs', label: 'Loja BS', icon: <Store className="h-4 w-4" /> },
+  { value: 'loja_hm44', label: 'Loja HM 44', icon: <Store className="h-4 w-4" /> },
 ];
 
 interface PaymentPanelProps {
