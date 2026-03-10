@@ -27,15 +27,16 @@ const SellerStep = ({ selectedSeller, onSelect, onNext, onBack }: SellerStepProp
     const fetchSellers = async () => {
       setIsLoading(true);
       try {
-        let query = supabase
+        const { data: allRolesData } = await supabase
           .from('user_roles')
           .select('user_id, role, store_id');
 
-        if (userStoreId) {
-          query = query.eq('store_id', userStoreId);
-        }
-
-        const { data: rolesData } = await query;
+        const rolesData = (allRolesData || []).filter(r => {
+          if (r.role === 'admin') return true;
+          if (userStoreId && r.store_id === userStoreId) return true;
+          if (!userStoreId) return true;
+          return false;
+        });
 
         if (rolesData && rolesData.length > 0) {
           const userIds = rolesData.map(r => r.user_id);
