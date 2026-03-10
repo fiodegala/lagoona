@@ -722,6 +722,23 @@ const Dashboard = () => {
     };
   }, [filteredPOSSales, filteredOrders]);
 
+  // Individual sales (current user only) vs store total
+  const individualStats = useMemo(() => {
+    if (!user) return { mySales: 0, myRevenue: 0, myTicket: 0, storeSales: 0, storeRevenue: 0, storeTicket: 0 };
+    const mySales = filteredPOSSales.filter(s => s.user_id === user.id);
+    const myRevenue = mySales.reduce((sum, s) => sum + s.total, 0);
+    const storeSales = filteredPOSSales.length;
+    const storeRevenue = filteredPOSSales.reduce((sum, s) => sum + s.total, 0);
+    return {
+      mySales: mySales.length,
+      myRevenue,
+      myTicket: mySales.length > 0 ? myRevenue / mySales.length : 0,
+      storeSales,
+      storeRevenue,
+      storeTicket: storeSales > 0 ? storeRevenue / storeSales : 0,
+    };
+  }, [filteredPOSSales, user]);
+
   // Sales by Modality (Varejo, Atacado, Exclusivo) and Exchange metrics
   const modalityStats = useMemo(() => {
     const modalities: Record<string, { count: number; total: number }> = {
@@ -736,13 +753,11 @@ const Dashboard = () => {
 
       if (saleType === 'troca') {
         exchanges.count++;
-        // discount_amount in exchanges = value of returned items + credit used
         const discountAmt = Number(sale.discount_amount || 0);
         const saleTotal = Number(sale.total);
         if (saleTotal > 0) {
           exchanges.cashReceived += saleTotal;
         }
-        // Credit generated = returned value that exceeded new items value
         if (discountAmt > 0 && saleTotal === 0) {
           exchanges.creditGenerated += discountAmt;
         }
