@@ -285,6 +285,7 @@ export const posService = {
       coupon_code: saleData.coupon_code || null,
       notes: saleData.notes || null,
       synced: true,
+      sale_type: saleData.sale_type || 'varejo',
       ...(saleData.sale_date ? { created_at: saleData.sale_date } : {}),
     };
 
