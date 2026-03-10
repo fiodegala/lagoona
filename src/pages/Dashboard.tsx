@@ -1707,6 +1707,73 @@ const Dashboard = () => {
           </Card>
         )}
 
+        {/* Sales by Modality & Exchange Metrics */}
+        {!isSiteStoreSelected && (
+          <Card className="card-elevated border-l-4 border-l-primary">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Store className="h-5 w-5 text-primary" />
+                Vendas por Modalidade
+              </CardTitle>
+              <CardDescription>
+                Desempenho por tipo de venda — {getPeriodLabel(periodFilter)}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                {/* Varejo */}
+                <div className="p-4 rounded-lg border bg-card">
+                  <div className="flex items-center gap-2 mb-2">
+                    <ShoppingCart className="h-4 w-4 text-primary" />
+                    <span className="text-sm font-medium">Varejo</span>
+                  </div>
+                  <p className="text-2xl font-bold">{formatCurrency(modalityStats.modalities.varejo.total)}</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {modalityStats.modalities.varejo.count} vendas • Ticket: {formatCurrency(modalityStats.modalities.varejo.count > 0 ? modalityStats.modalities.varejo.total / modalityStats.modalities.varejo.count : 0)}
+                  </p>
+                </div>
+
+                {/* Atacado */}
+                <div className="p-4 rounded-lg border bg-card">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Package className="h-4 w-4 text-success" />
+                    <span className="text-sm font-medium">Atacado</span>
+                  </div>
+                  <p className="text-2xl font-bold">{formatCurrency(modalityStats.modalities.atacado.total)}</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {modalityStats.modalities.atacado.count} vendas • Ticket: {formatCurrency(modalityStats.modalities.atacado.count > 0 ? modalityStats.modalities.atacado.total / modalityStats.modalities.atacado.count : 0)}
+                  </p>
+                </div>
+
+                {/* Exclusivo */}
+                <div className="p-4 rounded-lg border bg-card">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Star className="h-4 w-4 text-warning" />
+                    <span className="text-sm font-medium">Exclusivo</span>
+                  </div>
+                  <p className="text-2xl font-bold">{formatCurrency(modalityStats.modalities.exclusivo.total)}</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {modalityStats.modalities.exclusivo.count} vendas • Ticket: {formatCurrency(modalityStats.modalities.exclusivo.count > 0 ? modalityStats.modalities.exclusivo.total / modalityStats.modalities.exclusivo.count : 0)}
+                  </p>
+                </div>
+
+                {/* Trocas */}
+                <div className="p-4 rounded-lg border bg-card border-destructive/30">
+                  <div className="flex items-center gap-2 mb-2">
+                    <ArrowDownRight className="h-4 w-4 text-destructive" />
+                    <span className="text-sm font-medium">Trocas</span>
+                  </div>
+                  <p className="text-2xl font-bold">{modalityStats.exchanges.count}</p>
+                  <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
+                    <p>Crédito gerado: {formatCurrency(modalityStats.exchanges.creditGenerated)}</p>
+                    <p>Diferença recebida: {formatCurrency(modalityStats.exchanges.cashReceived)}</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Sales by Region Map - All stores */}
         <BrazilSalesMap salesByState={salesByState} isLoading={isLoading} />
 
