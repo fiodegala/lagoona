@@ -143,7 +143,9 @@ const Dashboard = () => {
   const { profile, roles, isAdmin, userStoreId, userStore, accessibleStoreIds } = useAuth();
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('all');
   const [selectedStoreId, setSelectedStoreId] = useState<string>('all');
+  const [selectedSellerId, setSelectedSellerId] = useState<string>('all');
   const [stores, setStores] = useState<{ id: string; name: string; type: string }[]>([]);
+  const [sellers, setSellers] = useState<SellerOption[]>([]);
   const [customDateRange, setCustomDateRange] = useState<DateRange | undefined>(undefined);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [rawOrders, setRawOrders] = useState<RawOrder[]>([]);
