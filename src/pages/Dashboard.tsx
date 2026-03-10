@@ -169,6 +169,18 @@ const Dashboard = () => {
         setStores(data || []);
       });
     }
+    // Fetch sellers for the filter
+    const fetchSellers = async () => {
+      const { data: rolesData } = await supabase.from('user_roles').select('user_id, store_id');
+      if (rolesData && rolesData.length > 0) {
+        const userIds = [...new Set(rolesData.map(r => r.user_id))];
+        const { data: profiles } = await supabase.from('profiles').select('user_id, full_name').in('user_id', userIds);
+        if (profiles) {
+          setSellers(profiles.map(p => ({ user_id: p.user_id, full_name: p.full_name })));
+        }
+      }
+    };
+    fetchSellers();
   }, [isAdmin, accessibleStoreIds]);
 
   // Set default store for non-admin users with multiple stores
