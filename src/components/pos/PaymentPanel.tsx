@@ -143,6 +143,28 @@ const PaymentPanel = ({
 
   return (
     <div className="p-4 space-y-4">
+      {/* Channel selector */}
+      <div>
+        <h3 className="font-semibold mb-3">Canal do Cliente</h3>
+        <div className="flex flex-wrap gap-2">
+          {channelOptions.map((ch) => (
+            <Button
+              key={ch.value}
+              variant={selectedChannel === ch.value ? 'default' : 'outline'}
+              size="sm"
+              className="gap-1.5"
+              onClick={() => setSelectedChannel(ch.value)}
+              disabled={disabled}
+            >
+              {ch.icon}
+              {ch.label}
+            </Button>
+          ))}
+        </div>
+      </div>
+
+      <Separator />
+
       <div>
         <h3 className="font-semibold mb-3">Forma de Pagamento</h3>
         <div className="grid grid-cols-2 gap-2">
