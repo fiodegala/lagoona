@@ -111,7 +111,7 @@ const Reports = () => {
     setIsLoading(true);
     const [ordersRes, posRes] = await Promise.all([
       supabase.from('orders').select('id, status, total, customer_name, customer_email, payment_method, payment_status, items, created_at, shipping_address'),
-      supabase.from('pos_sales').select('id, customer_name, total, subtotal, discount_amount, payment_method, status, items, created_at'),
+      supabase.from('pos_sales').select('id, customer_name, total, subtotal, discount_amount, payment_method, status, items, created_at, notes, sale_type'),
     ]);
     setOrders((ordersRes.data || []).map(o => ({
       ...o,
