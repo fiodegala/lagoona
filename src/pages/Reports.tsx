@@ -431,6 +431,23 @@ const Reports = () => {
     return { modalities, exchanges };
   }, [filteredPOS]);
 
+  // Individual sales (current user only) vs store total
+  const individualStats = useMemo(() => {
+    if (!user) return { mySales: 0, myRevenue: 0, myTicket: 0, storeSales: 0, storeRevenue: 0, storeTicket: 0 };
+    const mySales = filteredPOS.filter(s => s.user_id === user.id);
+    const myRevenue = mySales.reduce((sum, s) => sum + s.total, 0);
+    const storeSales = filteredPOS.length;
+    const storeRevenue = filteredPOS.reduce((sum, s) => sum + s.total, 0);
+    return {
+      mySales: mySales.length,
+      myRevenue,
+      myTicket: mySales.length > 0 ? myRevenue / mySales.length : 0,
+      storeSales,
+      storeRevenue,
+      storeTicket: storeSales > 0 ? storeRevenue / storeSales : 0,
+    };
+  }, [filteredPOS, user]);
+
   const exportToCSV = () => {
     const BOM = '\uFEFF';
     let csv = BOM + 'Relatório de Vendas\n';
