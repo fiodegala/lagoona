@@ -124,6 +124,8 @@ const Reports = () => {
       total: Number(s.total),
       subtotal: Number(s.subtotal),
       discount_amount: s.discount_amount ? Number(s.discount_amount) : null,
+      sale_type: (s as any).sale_type || null,
+      notes: s.notes || null,
     })));
     setIsLoading(false);
   };
