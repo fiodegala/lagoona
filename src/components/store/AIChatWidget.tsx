@@ -224,9 +224,7 @@ const AIChatWidget = () => {
 
             {isLoading && messages[messages.length - 1]?.role === 'user' && (
               <div className="flex gap-2 justify-start">
-                <div className="w-7 h-7 rounded-full bg-store-gold/10 flex items-center justify-center shrink-0">
-                  <Bot className="h-4 w-4 text-store-gold" />
-                </div>
+                <img src={claraAvatar} alt="Clara" className="w-7 h-7 rounded-full object-cover shrink-0" />
                 <div className="bg-muted px-4 py-3 rounded-2xl rounded-bl-md">
                   <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                 </div>
