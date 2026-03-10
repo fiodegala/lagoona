@@ -398,7 +398,8 @@ const POSPage = () => {
     setIsProcessing(true);
 
     try {
-      if (data.newItems.length > 0 && data.amountToPay > 0) {
+      // Always create a sale record when there are new items (for stock deduction and history)
+      if (data.newItems.length > 0) {
         const saleData: CreateSaleData = {
           local_id: offlineService.generateLocalId(),
           session_id: session?.id,
@@ -418,10 +419,10 @@ const POSPage = () => {
           })),
           subtotal: data.newTotal,
           discount_amount: data.returnTotal + data.creditUsed,
-          total: data.amountToPay,
-          payment_method: data.paymentMethod || 'cash',
-          amount_received: data.amountReceived,
-          change_amount: data.amountReceived ? Math.max(0, data.amountReceived - data.amountToPay) : 0,
+          total: Math.max(0, data.amountToPay),
+          payment_method: data.amountToPay > 0 ? (data.paymentMethod || 'cash') : 'cash',
+          amount_received: data.amountToPay > 0 ? data.amountReceived : 0,
+          change_amount: data.amountToPay > 0 && data.amountReceived ? Math.max(0, data.amountReceived - data.amountToPay) : 0,
           notes: `TROCA - Devolvidos: ${data.returnedItems.map(i => `${i.quantity}x ${i.name}`).join(', ')}${selectedSeller ? ` | Vendedor: ${selectedSeller.full_name}` : ''}`,
         };
         await posService.createSale(saleData);
