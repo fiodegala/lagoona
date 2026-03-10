@@ -48,6 +48,8 @@ interface RawPOSSale {
   discount_amount: number | null;
   payment_method: string;
   status: string;
+  sale_type: string | null;
+  notes: string | null;
   items: { name?: string; qty?: number; price?: number; product_id?: string }[];
   created_at: string;
 }
