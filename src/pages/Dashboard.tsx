@@ -93,6 +93,7 @@ interface RawPOSSale {
   id: string;
   customer_name: string | null;
   customer_id: string | null;
+  user_id: string;
   total: number;
   payment_method: string;
   payment_details: Record<string, unknown> | null;
@@ -102,6 +103,11 @@ interface RawPOSSale {
   notes: string | null;
   items: { name?: string; qty?: number; quantity?: number; unit_price?: number; price?: number; is_promotional?: boolean; original_price?: number; total?: number }[];
   created_at: string;
+}
+
+interface SellerOption {
+  user_id: string;
+  full_name: string;
 }
 
 interface CustomerWithLocation {
@@ -137,7 +143,9 @@ const Dashboard = () => {
   const { profile, roles, isAdmin, userStoreId, userStore, accessibleStoreIds } = useAuth();
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('all');
   const [selectedStoreId, setSelectedStoreId] = useState<string>('all');
+  const [selectedSellerId, setSelectedSellerId] = useState<string>('all');
   const [stores, setStores] = useState<{ id: string; name: string; type: string }[]>([]);
+  const [sellers, setSellers] = useState<SellerOption[]>([]);
   const [customDateRange, setCustomDateRange] = useState<DateRange | undefined>(undefined);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [rawOrders, setRawOrders] = useState<RawOrder[]>([]);
@@ -161,6 +169,18 @@ const Dashboard = () => {
         setStores(data || []);
       });
     }
+    // Fetch sellers for the filter
+    const fetchSellers = async () => {
+      const { data: rolesData } = await supabase.from('user_roles').select('user_id, store_id');
+      if (rolesData && rolesData.length > 0) {
+        const userIds = [...new Set(rolesData.map(r => r.user_id))];
+        const { data: profiles } = await supabase.from('profiles').select('user_id, full_name').in('user_id', userIds);
+        if (profiles) {
+          setSellers(profiles.map(p => ({ user_id: p.user_id, full_name: p.full_name })));
+        }
+      }
+    };
+    fetchSellers();
   }, [isAdmin, accessibleStoreIds]);
 
   // Set default store for non-admin users with multiple stores
@@ -240,6 +260,7 @@ const Dashboard = () => {
         id: sale.id,
         customer_name: sale.customer_name,
         customer_id: sale.customer_id,
+        user_id: sale.user_id,
         total: Number(sale.total),
         payment_method: sale.payment_method,
         payment_details: sale.payment_details as Record<string, unknown> | null,
@@ -302,7 +323,10 @@ const Dashboard = () => {
   }, [rawOrders, periodStartDate, periodEndDate]);
 
   const filteredPOSSales = useMemo(() => {
-    const activeSales = rawPOSSales.filter(s => s.status !== 'cancelled');
+    let activeSales = rawPOSSales.filter(s => s.status !== 'cancelled');
+    if (selectedSellerId !== 'all') {
+      activeSales = activeSales.filter(s => s.user_id === selectedSellerId);
+    }
     if (!periodStartDate) return activeSales;
     return activeSales.filter(s => {
       const saleDate = new Date(s.created_at);
@@ -310,7 +334,7 @@ const Dashboard = () => {
       const beforeEnd = !periodEndDate || saleDate <= periodEndDate;
       return afterStart && beforeEnd;
     });
-  }, [rawPOSSales, periodStartDate, periodEndDate]);
+  }, [rawPOSSales, periodStartDate, periodEndDate, selectedSellerId]);
 
   // Calculate online stats based on filtered data
   const stats: DashboardStats | null = useMemo(() => {
@@ -813,6 +837,22 @@ const Dashboard = () => {
                   {isAdmin && <SelectItem value="all">Todas as lojas</SelectItem>}
                   {stores.map((store) => (
                     <SelectItem key={store.id} value={store.id}>{store.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+
+            {/* Seller Filter */}
+            {sellers.length > 0 && (
+              <Select value={selectedSellerId} onValueChange={setSelectedSellerId}>
+                <SelectTrigger className="w-[180px] h-9 text-xs">
+                  <Users className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
+                  <SelectValue placeholder="Todos vendedores" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos vendedores</SelectItem>
+                  {sellers.map((seller) => (
+                    <SelectItem key={seller.user_id} value={seller.user_id}>{seller.full_name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>

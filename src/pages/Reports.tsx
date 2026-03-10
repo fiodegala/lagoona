@@ -43,6 +43,7 @@ interface RawOrder {
 interface RawPOSSale {
   id: string;
   customer_name: string | null;
+  user_id: string;
   total: number;
   subtotal: number;
   discount_amount: number | null;
@@ -52,6 +53,11 @@ interface RawPOSSale {
   notes: string | null;
   items: { name?: string; qty?: number; price?: number; product_id?: string }[];
   created_at: string;
+}
+
+interface SellerOption {
+  user_id: string;
+  full_name: string;
 }
 
 const CHART_COLORS = [
@@ -99,8 +105,10 @@ const formatCurrency = (value: number) =>
 const Reports = () => {
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('30d');
   const [customDateRange, setCustomDateRange] = useState<DateRange | undefined>();
+  const [selectedSellerId, setSelectedSellerId] = useState<string>('all');
   const [orders, setOrders] = useState<RawOrder[]>([]);
   const [posSales, setPOSSales] = useState<RawPOSSale[]>([]);
+  const [sellers, setSellers] = useState<SellerOption[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -109,9 +117,10 @@ const Reports = () => {
 
   const loadData = async () => {
     setIsLoading(true);
-    const [ordersRes, posRes] = await Promise.all([
+    const [ordersRes, posRes, rolesRes] = await Promise.all([
       supabase.from('orders').select('id, status, total, customer_name, customer_email, payment_method, payment_status, items, created_at, shipping_address'),
-      supabase.from('pos_sales').select('id, customer_name, total, subtotal, discount_amount, payment_method, status, items, created_at, notes, sale_type'),
+      supabase.from('pos_sales').select('id, customer_name, user_id, total, subtotal, discount_amount, payment_method, status, items, created_at, notes, sale_type'),
+      supabase.from('user_roles').select('user_id'),
     ]);
     setOrders((ordersRes.data || []).map(o => ({
       ...o,
@@ -121,12 +130,21 @@ const Reports = () => {
     setPOSSales((posRes.data || []).map(s => ({
       ...s,
       items: (s.items as any) || [],
+      user_id: s.user_id,
       total: Number(s.total),
       subtotal: Number(s.subtotal),
       discount_amount: s.discount_amount ? Number(s.discount_amount) : null,
       sale_type: (s as any).sale_type || null,
       notes: s.notes || null,
     })));
+    // Fetch seller profiles
+    if (rolesRes.data && rolesRes.data.length > 0) {
+      const userIds = [...new Set(rolesRes.data.map(r => r.user_id))];
+      const { data: profiles } = await supabase.from('profiles').select('user_id, full_name').in('user_id', userIds);
+      if (profiles) {
+        setSellers(profiles.map(p => ({ user_id: p.user_id, full_name: p.full_name })));
+      }
+    }
     setIsLoading(false);
   };
 
@@ -156,9 +174,10 @@ const Reports = () => {
   const filteredPOS = useMemo(() =>
     posSales.filter(s => {
       if (s.status === 'cancelled') return false;
+      if (selectedSellerId !== 'all' && s.user_id !== selectedSellerId) return false;
       const d = new Date(s.created_at);
       return d >= dateRange.start && d <= dateRange.end;
-    }), [posSales, dateRange]);
+    }), [posSales, dateRange, selectedSellerId]);
 
   // === KPI Cards ===
   const kpis = useMemo(() => {
@@ -583,6 +602,23 @@ const Reports = () => {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+
+            {/* Seller Filter */}
+            {sellers.length > 0 && (
+              <Select value={selectedSellerId} onValueChange={setSelectedSellerId}>
+                <SelectTrigger className="w-[170px]">
+                  <Users className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="Todos vendedores" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos vendedores</SelectItem>
+                  {sellers.map((seller) => (
+                    <SelectItem key={seller.user_id} value={seller.user_id}>{seller.full_name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+
             <Select value={periodFilter} onValueChange={(v) => setPeriodFilter(v as PeriodFilter)}>
               <SelectTrigger className="w-[160px]">
                 <Calendar className="h-4 w-4 mr-2" />
