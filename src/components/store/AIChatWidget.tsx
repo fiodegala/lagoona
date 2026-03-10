@@ -188,9 +188,7 @@ const AIChatWidget = () => {
             {messages.map((msg, i) => (
               <div key={i} className={`flex gap-2 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                 {msg.role === 'assistant' && (
-                  <div className="w-7 h-7 rounded-full bg-store-gold/10 flex items-center justify-center shrink-0 mt-0.5">
-                    <Bot className="h-4 w-4 text-store-gold" />
-                  </div>
+                  <img src={claraAvatar} alt="Clara" className="w-7 h-7 rounded-full object-cover shrink-0 mt-0.5" />
                 )}
                 <div className={`max-w-[80%] px-3 py-2 rounded-2xl text-sm leading-relaxed ${
                   msg.role === 'user'
