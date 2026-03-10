@@ -17,8 +17,23 @@ import {
   QrCode,
   Split,
   Loader2,
+  Globe,
+  Instagram,
+  Users,
+  Crown,
+  MessageCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+export type SaleChannel = 'site' | 'instagram' | 'indicacao' | 'grupo_vip' | 'whatsapp';
+
+const channelOptions: { value: SaleChannel; label: string; icon: React.ReactNode }[] = [
+  { value: 'site', label: 'Site', icon: <Globe className="h-4 w-4" /> },
+  { value: 'instagram', label: 'Instagram', icon: <Instagram className="h-4 w-4" /> },
+  { value: 'indicacao', label: 'Indicação', icon: <Users className="h-4 w-4" /> },
+  { value: 'grupo_vip', label: 'Grupo VIP', icon: <Crown className="h-4 w-4" /> },
+  { value: 'whatsapp', label: 'WhatsApp', icon: <MessageCircle className="h-4 w-4" /> },
+];
 
 interface PaymentPanelProps {
   total: number;
@@ -37,6 +52,7 @@ const PaymentPanel = ({
   isProcessing,
   disabled,
 }: PaymentPanelProps) => {
+  const [selectedChannel, setSelectedChannel] = useState<SaleChannel | null>(null);
   const [selectedMethod, setSelectedMethod] = useState<'cash' | 'card' | 'pix' | 'mixed' | null>(null);
   const [cashReceived, setCashReceived] = useState('');
   const [cardType, setCardType] = useState<'credit' | 'debit'>('credit');
@@ -72,29 +88,33 @@ const PaymentPanel = ({
   const installmentValue = total / parseInt(installments);
 
   const handlePayment = () => {
-    if (!selectedMethod) return;
+    if (!selectedMethod || !selectedChannel) return;
+
+    const channelInfo = { channel: selectedChannel };
 
     if (selectedMethod === 'cash') {
-      onPayment('cash', parseCurrency(cashReceived));
+      onPayment('cash', parseCurrency(cashReceived), channelInfo);
     } else if (selectedMethod === 'card') {
       onPayment('card', undefined, {
+        ...channelInfo,
         cardType,
         installments: cardType === 'credit' ? parseInt(installments) : 1,
         installmentValue: cardType === 'credit' ? installmentValue : total,
       });
     } else if (selectedMethod === 'mixed') {
       onPayment('mixed', undefined, {
+        ...channelInfo,
         cash: parseCurrency(mixedAmounts.cash),
         card: parseCurrency(mixedAmounts.card),
         pix: parseCurrency(mixedAmounts.pix),
       });
     } else {
-      onPayment(selectedMethod);
+      onPayment(selectedMethod, undefined, channelInfo);
     }
   };
 
   const canPay = () => {
-    if (disabled || isProcessing || !selectedMethod) return false;
+    if (disabled || isProcessing || !selectedMethod || !selectedChannel) return false;
     
     if (selectedMethod === 'cash') {
       return parseCurrency(cashReceived) >= total;
@@ -123,6 +143,28 @@ const PaymentPanel = ({
 
   return (
     <div className="p-4 space-y-4">
+      {/* Channel selector */}
+      <div>
+        <h3 className="font-semibold mb-3">Canal do Cliente</h3>
+        <div className="flex flex-wrap gap-2">
+          {channelOptions.map((ch) => (
+            <Button
+              key={ch.value}
+              variant={selectedChannel === ch.value ? 'default' : 'outline'}
+              size="sm"
+              className="gap-1.5"
+              onClick={() => setSelectedChannel(ch.value)}
+              disabled={disabled}
+            >
+              {ch.icon}
+              {ch.label}
+            </Button>
+          ))}
+        </div>
+      </div>
+
+      <Separator />
+
       <div>
         <h3 className="font-semibold mb-3">Forma de Pagamento</h3>
         <div className="grid grid-cols-2 gap-2">
