@@ -863,6 +863,121 @@ const Reports = () => {
             </div>
           </TabsContent>
 
+          {/* Modality Sales */}
+          <TabsContent value="modality" className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Varejo */}
+              <Card className="card-elevated border-l-4 border-l-primary">
+                <CardContent className="pt-6">
+                  <div className="flex items-center gap-2 mb-2">
+                    <ShoppingCart className="h-4 w-4 text-primary" />
+                    <span className="text-sm font-medium">Varejo</span>
+                  </div>
+                  <p className="text-2xl font-bold">{formatCurrency(modalityStats.modalities.varejo.total)}</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {modalityStats.modalities.varejo.count} vendas
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Ticket: {formatCurrency(modalityStats.modalities.varejo.count > 0 ? modalityStats.modalities.varejo.total / modalityStats.modalities.varejo.count : 0)}
+                  </p>
+                </CardContent>
+              </Card>
+
+              {/* Atacado */}
+              <Card className="card-elevated border-l-4" style={{ borderLeftColor: 'hsl(var(--chart-2, 160 60% 45%))' }}>
+                <CardContent className="pt-6">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Package className="h-4 w-4 text-success" />
+                    <span className="text-sm font-medium">Atacado</span>
+                  </div>
+                  <p className="text-2xl font-bold">{formatCurrency(modalityStats.modalities.atacado.total)}</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {modalityStats.modalities.atacado.count} vendas
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Ticket: {formatCurrency(modalityStats.modalities.atacado.count > 0 ? modalityStats.modalities.atacado.total / modalityStats.modalities.atacado.count : 0)}
+                  </p>
+                </CardContent>
+              </Card>
+
+              {/* Exclusivo */}
+              <Card className="card-elevated border-l-4 border-l-warning">
+                <CardContent className="pt-6">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Star className="h-4 w-4 text-warning" />
+                    <span className="text-sm font-medium">Exclusivo</span>
+                  </div>
+                  <p className="text-2xl font-bold">{formatCurrency(modalityStats.modalities.exclusivo.total)}</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {modalityStats.modalities.exclusivo.count} vendas
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Ticket: {formatCurrency(modalityStats.modalities.exclusivo.count > 0 ? modalityStats.modalities.exclusivo.total / modalityStats.modalities.exclusivo.count : 0)}
+                  </p>
+                </CardContent>
+              </Card>
+
+              {/* Trocas */}
+              <Card className="card-elevated border-l-4 border-l-destructive">
+                <CardContent className="pt-6">
+                  <div className="flex items-center gap-2 mb-2">
+                    <ArrowDownRight className="h-4 w-4 text-destructive" />
+                    <span className="text-sm font-medium">Trocas</span>
+                  </div>
+                  <p className="text-2xl font-bold">{modalityStats.exchanges.count}</p>
+                  <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
+                    <p>Crédito gerado: {formatCurrency(modalityStats.exchanges.creditGenerated)}</p>
+                    <p>Diferença no caixa: {formatCurrency(modalityStats.exchanges.cashReceived)}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Modality Pie Chart */}
+            <Card className="card-elevated">
+              <CardHeader>
+                <CardTitle className="text-lg">Distribuição por Modalidade</CardTitle>
+                <CardDescription>Proporção de receita por tipo de venda</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {(modalityStats.modalities.varejo.total + modalityStats.modalities.atacado.total + modalityStats.modalities.exclusivo.total) === 0 ? (
+                  <p className="text-muted-foreground text-center py-8">Sem dados no período</p>
+                ) : (
+                  <ResponsiveContainer width="100%" height={280}>
+                    <PieChart>
+                      <Pie
+                        data={[
+                          { name: 'Varejo', value: modalityStats.modalities.varejo.total, fill: 'hsl(var(--primary))' },
+                          { name: 'Atacado', value: modalityStats.modalities.atacado.total, fill: 'hsl(var(--chart-2, 160 60% 45%))' },
+                          { name: 'Exclusivo', value: modalityStats.modalities.exclusivo.total, fill: 'hsl(var(--chart-3, 30 80% 55%))' },
+                        ].filter(d => d.value > 0)}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={100}
+                        paddingAngle={3}
+                        dataKey="value"
+                      >
+                        {[
+                          { name: 'Varejo', value: modalityStats.modalities.varejo.total, fill: 'hsl(var(--primary))' },
+                          { name: 'Atacado', value: modalityStats.modalities.atacado.total, fill: 'hsl(var(--chart-2, 160 60% 45%))' },
+                          { name: 'Exclusivo', value: modalityStats.modalities.exclusivo.total, fill: 'hsl(var(--chart-3, 30 80% 55%))' },
+                        ].filter(d => d.value > 0).map((entry, i) => (
+                          <Cell key={i} fill={entry.fill} />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
+                        formatter={(value: number, name: string) => [formatCurrency(value), name]}
+                      />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           {/* Analysis */}
           {/* Promotional Sales */}
           <TabsContent value="promotional" className="space-y-4">
