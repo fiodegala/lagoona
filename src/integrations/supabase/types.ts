@@ -1006,6 +1006,7 @@ export type Database = {
           notes: string | null
           payment_details: Json | null
           payment_method: string
+          sale_type: string | null
           session_id: string | null
           status: string
           store_id: string | null
@@ -1036,6 +1037,7 @@ export type Database = {
           notes?: string | null
           payment_details?: Json | null
           payment_method: string
+          sale_type?: string | null
           session_id?: string | null
           status?: string
           store_id?: string | null
@@ -1066,6 +1068,7 @@ export type Database = {
           notes?: string | null
           payment_details?: Json | null
           payment_method?: string
+          sale_type?: string | null
           session_id?: string | null
           status?: string
           store_id?: string | null
