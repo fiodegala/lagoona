@@ -841,6 +841,22 @@ const Dashboard = () => {
                 </SelectContent>
               </Select>
             )}
+
+            {/* Seller Filter */}
+            {sellers.length > 0 && (
+              <Select value={selectedSellerId} onValueChange={setSelectedSellerId}>
+                <SelectTrigger className="w-[180px] h-9 text-xs">
+                  <Users className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
+                  <SelectValue placeholder="Todos vendedores" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos vendedores</SelectItem>
+                  {sellers.map((seller) => (
+                    <SelectItem key={seller.user_id} value={seller.user_id}>{seller.full_name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )
           
             {/* Period Filter */}
           <div className="flex items-center gap-2 flex-wrap">
