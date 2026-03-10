@@ -856,7 +856,7 @@ const Dashboard = () => {
                   ))}
                 </SelectContent>
               </Select>
-            )
+            )}
           
             {/* Period Filter */}
           <div className="flex items-center gap-2 flex-wrap">
