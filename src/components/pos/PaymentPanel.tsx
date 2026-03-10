@@ -60,6 +60,8 @@ const PaymentPanel = ({
   const [cashReceived, setCashReceived] = useState('');
   const [cardType, setCardType] = useState<'credit' | 'debit'>('credit');
   const [installments, setInstallments] = useState('1');
+  const [mixedCardType, setMixedCardType] = useState<'credit' | 'debit'>('credit');
+  const [mixedInstallments, setMixedInstallments] = useState('1');
   const [mixedAmounts, setMixedAmounts] = useState({
     cash: '',
     card: '',
