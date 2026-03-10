@@ -140,7 +140,7 @@ interface SalesGoal {
 const SITE_STORE_ID = 'e0b8ebbc-1b3b-4aec-b5f7-6925762e6ea1';
 
 const Dashboard = () => {
-  const { profile, roles, isAdmin, userStoreId, userStore, accessibleStoreIds } = useAuth();
+  const { user, profile, roles, isAdmin, userStoreId, userStore, accessibleStoreIds } = useAuth();
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('all');
   const [selectedStoreId, setSelectedStoreId] = useState<string>('all');
   const [selectedSellerId, setSelectedSellerId] = useState<string>('all');
@@ -722,6 +722,23 @@ const Dashboard = () => {
     };
   }, [filteredPOSSales, filteredOrders]);
 
+  // Individual sales (current user only) vs store total
+  const individualStats = useMemo(() => {
+    if (!user) return { mySales: 0, myRevenue: 0, myTicket: 0, storeSales: 0, storeRevenue: 0, storeTicket: 0 };
+    const mySales = filteredPOSSales.filter(s => s.user_id === user.id);
+    const myRevenue = mySales.reduce((sum, s) => sum + s.total, 0);
+    const storeSales = filteredPOSSales.length;
+    const storeRevenue = filteredPOSSales.reduce((sum, s) => sum + s.total, 0);
+    return {
+      mySales: mySales.length,
+      myRevenue,
+      myTicket: mySales.length > 0 ? myRevenue / mySales.length : 0,
+      storeSales,
+      storeRevenue,
+      storeTicket: storeSales > 0 ? storeRevenue / storeSales : 0,
+    };
+  }, [filteredPOSSales, user]);
+
   // Sales by Modality (Varejo, Atacado, Exclusivo) and Exchange metrics
   const modalityStats = useMemo(() => {
     const modalities: Record<string, { count: number; total: number }> = {
@@ -736,13 +753,11 @@ const Dashboard = () => {
 
       if (saleType === 'troca') {
         exchanges.count++;
-        // discount_amount in exchanges = value of returned items + credit used
         const discountAmt = Number(sale.discount_amount || 0);
         const saleTotal = Number(sale.total);
         if (saleTotal > 0) {
           exchanges.cashReceived += saleTotal;
         }
-        // Credit generated = returned value that exceeded new items value
         if (discountAmt > 0 && saleTotal === 0) {
           exchanges.creditGenerated += discountAmt;
         }
@@ -1408,6 +1423,45 @@ const Dashboard = () => {
               </>
             )}
           </div>
+
+          {/* Individual vs Store Sales */}
+          {!isLoading && selectedSellerId === 'all' && (
+            <div className="grid gap-4 md:grid-cols-2">
+              <Card className="card-elevated border-l-4 border-l-primary">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Minhas Vendas</p>
+                      <p className="text-2xl font-bold mt-1">{formatCurrency(individualStats.myRevenue)}</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {individualStats.mySales} vendas • Ticket: {formatCurrency(individualStats.myTicket)}
+                      </p>
+                    </div>
+                    <div className="bg-primary/10 p-3 rounded-xl">
+                      <Users className="h-6 w-6 text-primary" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="card-elevated border-l-4 border-l-success">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Total da Loja</p>
+                      <p className="text-2xl font-bold mt-1">{formatCurrency(individualStats.storeRevenue)}</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {individualStats.storeSales} vendas • Ticket: {formatCurrency(individualStats.storeTicket)}
+                      </p>
+                    </div>
+                    <div className="bg-success/10 p-3 rounded-xl">
+                      <Store className="h-6 w-6 text-success" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
 
           {/* POS Charts and Details */}
           <div className="grid gap-6 lg:grid-cols-3">

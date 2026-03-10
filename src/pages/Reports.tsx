@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import AdminLayout from '@/components/AdminLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -103,6 +104,7 @@ const formatCurrency = (value: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 
 const Reports = () => {
+  const { user } = useAuth();
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('30d');
   const [customDateRange, setCustomDateRange] = useState<DateRange | undefined>();
   const [selectedSellerId, setSelectedSellerId] = useState<string>('all');
@@ -428,6 +430,23 @@ const Reports = () => {
 
     return { modalities, exchanges };
   }, [filteredPOS]);
+
+  // Individual sales (current user only) vs store total
+  const individualStats = useMemo(() => {
+    if (!user) return { mySales: 0, myRevenue: 0, myTicket: 0, storeSales: 0, storeRevenue: 0, storeTicket: 0 };
+    const mySales = filteredPOS.filter(s => s.user_id === user.id);
+    const myRevenue = mySales.reduce((sum, s) => sum + s.total, 0);
+    const storeSales = filteredPOS.length;
+    const storeRevenue = filteredPOS.reduce((sum, s) => sum + s.total, 0);
+    return {
+      mySales: mySales.length,
+      myRevenue,
+      myTicket: mySales.length > 0 ? myRevenue / mySales.length : 0,
+      storeSales,
+      storeRevenue,
+      storeTicket: storeSales > 0 ? storeRevenue / storeSales : 0,
+    };
+  }, [filteredPOS, user]);
 
   const exportToCSV = () => {
     const BOM = '\uFEFF';
@@ -901,6 +920,36 @@ const Reports = () => {
 
           {/* Modality Sales */}
           <TabsContent value="modality" className="space-y-4">
+            {/* Individual vs Store Sales */}
+            {selectedSellerId === 'all' && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Card className="card-elevated border-l-4 border-l-primary">
+                  <CardContent className="pt-6">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Users className="h-4 w-4 text-primary" />
+                      <span className="text-sm font-medium">Minhas Vendas</span>
+                    </div>
+                    <p className="text-2xl font-bold">{formatCurrency(individualStats.myRevenue)}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {individualStats.mySales} vendas • Ticket: {formatCurrency(individualStats.myTicket)}
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card className="card-elevated border-l-4 border-l-success">
+                  <CardContent className="pt-6">
+                    <div className="flex items-center gap-2 mb-2">
+                      <BarChart3 className="h-4 w-4 text-success" />
+                      <span className="text-sm font-medium">Total da Loja</span>
+                    </div>
+                    <p className="text-2xl font-bold">{formatCurrency(individualStats.storeRevenue)}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {individualStats.storeSales} vendas • Ticket: {formatCurrency(individualStats.storeTicket)}
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {/* Varejo */}
               <Card className="card-elevated border-l-4 border-l-primary">
