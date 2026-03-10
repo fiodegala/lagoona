@@ -93,6 +93,7 @@ interface RawPOSSale {
   id: string;
   customer_name: string | null;
   customer_id: string | null;
+  user_id: string;
   total: number;
   payment_method: string;
   payment_details: Record<string, unknown> | null;
@@ -102,6 +103,11 @@ interface RawPOSSale {
   notes: string | null;
   items: { name?: string; qty?: number; quantity?: number; unit_price?: number; price?: number; is_promotional?: boolean; original_price?: number; total?: number }[];
   created_at: string;
+}
+
+interface SellerOption {
+  user_id: string;
+  full_name: string;
 }
 
 interface CustomerWithLocation {

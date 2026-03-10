@@ -43,6 +43,7 @@ interface RawOrder {
 interface RawPOSSale {
   id: string;
   customer_name: string | null;
+  user_id: string;
   total: number;
   subtotal: number;
   discount_amount: number | null;
@@ -52,6 +53,11 @@ interface RawPOSSale {
   notes: string | null;
   items: { name?: string; qty?: number; price?: number; product_id?: string }[];
   created_at: string;
+}
+
+interface SellerOption {
+  user_id: string;
+  full_name: string;
 }
 
 const CHART_COLORS = [
