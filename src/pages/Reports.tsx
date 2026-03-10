@@ -602,6 +602,23 @@ const Reports = () => {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+
+            {/* Seller Filter */}
+            {sellers.length > 0 && (
+              <Select value={selectedSellerId} onValueChange={setSelectedSellerId}>
+                <SelectTrigger className="w-[170px]">
+                  <Users className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="Todos vendedores" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos vendedores</SelectItem>
+                  {sellers.map((seller) => (
+                    <SelectItem key={seller.user_id} value={seller.user_id}>{seller.full_name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+
             <Select value={periodFilter} onValueChange={(v) => setPeriodFilter(v as PeriodFilter)}>
               <SelectTrigger className="w-[160px]">
                 <Calendar className="h-4 w-4 mr-2" />
