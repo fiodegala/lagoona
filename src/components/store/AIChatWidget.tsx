@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { MessageCircle, X, Send, Bot, User, Loader2 } from 'lucide-react';
+import { MessageCircle, X, Send, User, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import ReactMarkdown from 'react-markdown';
+import claraAvatar from '@/assets/clara-avatar.jpg';
 
 type Message = { role: 'user' | 'assistant'; content: string };
 
@@ -171,9 +172,7 @@ const AIChatWidget = () => {
           {/* Header */}
           <div className="bg-store-dark px-4 py-3 flex items-center justify-between shrink-0">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-store-gold/20 flex items-center justify-center">
-                <Bot className="h-5 w-5 text-store-gold" />
-              </div>
+              <img src={claraAvatar} alt="Clara" className="w-9 h-9 rounded-full object-cover" />
               <div>
                 <h3 className="text-white font-semibold text-sm">Clara - Assistente FDG</h3>
                 <p className="text-white/50 text-xs">Online agora</p>
@@ -189,9 +188,7 @@ const AIChatWidget = () => {
             {messages.map((msg, i) => (
               <div key={i} className={`flex gap-2 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                 {msg.role === 'assistant' && (
-                  <div className="w-7 h-7 rounded-full bg-store-gold/10 flex items-center justify-center shrink-0 mt-0.5">
-                    <Bot className="h-4 w-4 text-store-gold" />
-                  </div>
+                  <img src={claraAvatar} alt="Clara" className="w-7 h-7 rounded-full object-cover shrink-0 mt-0.5" />
                 )}
                 <div className={`max-w-[80%] px-3 py-2 rounded-2xl text-sm leading-relaxed ${
                   msg.role === 'user'
@@ -227,9 +224,7 @@ const AIChatWidget = () => {
 
             {isLoading && messages[messages.length - 1]?.role === 'user' && (
               <div className="flex gap-2 justify-start">
-                <div className="w-7 h-7 rounded-full bg-store-gold/10 flex items-center justify-center shrink-0">
-                  <Bot className="h-4 w-4 text-store-gold" />
-                </div>
+                <img src={claraAvatar} alt="Clara" className="w-7 h-7 rounded-full object-cover shrink-0" />
                 <div className="bg-muted px-4 py-3 rounded-2xl rounded-bl-md">
                   <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                 </div>
