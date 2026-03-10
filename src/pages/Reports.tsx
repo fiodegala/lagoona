@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import AdminLayout from '@/components/AdminLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
