@@ -350,7 +350,7 @@ const PaymentPanel = ({
                 className="mt-1"
               />
             </div>
-            <div>
+            <div className="space-y-2">
               <Label className="flex items-center gap-2">
                 <CreditCard className="h-4 w-4" /> Cartão
               </Label>
@@ -363,6 +363,46 @@ const PaymentPanel = ({
                 }
                 className="mt-1"
               />
+              {parseCurrency(mixedAmounts.card) > 0 && (
+                <div className="pl-2 border-l-2 border-primary/20 space-y-2">
+                  <RadioGroup
+                    value={mixedCardType}
+                    onValueChange={(v) => {
+                      setMixedCardType(v as 'credit' | 'debit');
+                      if (v === 'debit') setMixedInstallments('1');
+                    }}
+                    className="flex gap-4"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="credit" id="mixed-credit" />
+                      <Label htmlFor="mixed-credit" className="cursor-pointer font-normal text-sm">Crédito</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="debit" id="mixed-debit" />
+                      <Label htmlFor="mixed-debit" className="cursor-pointer font-normal text-sm">Débito</Label>
+                    </div>
+                  </RadioGroup>
+                  {mixedCardType === 'credit' && (
+                    <Select value={mixedInstallments} onValueChange={setMixedInstallments}>
+                      <SelectTrigger className="w-full h-9 text-sm">
+                        <SelectValue placeholder="Parcelas" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover">
+                        {Array.from({ length: 6 }, (_, i) => i + 1).map((num) => {
+                          const cardVal = parseCurrency(mixedAmounts.card);
+                          const instVal = cardVal / num;
+                          return (
+                            <SelectItem key={num} value={num.toString()}>
+                              {num}x de {formatCurrency(instVal)}
+                              {num === 1 && ' (à vista)'}
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </div>
+              )}
             </div>
             <div>
               <Label className="flex items-center gap-2">
