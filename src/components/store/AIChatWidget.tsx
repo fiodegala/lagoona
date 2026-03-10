@@ -172,9 +172,7 @@ const AIChatWidget = () => {
           {/* Header */}
           <div className="bg-store-dark px-4 py-3 flex items-center justify-between shrink-0">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-store-gold/20 flex items-center justify-center">
-                <Bot className="h-5 w-5 text-store-gold" />
-              </div>
+              <img src={claraAvatar} alt="Clara" className="w-9 h-9 rounded-full object-cover" />
               <div>
                 <h3 className="text-white font-semibold text-sm">Clara - Assistente FDG</h3>
                 <p className="text-white/50 text-xs">Online agora</p>
