@@ -88,24 +88,28 @@ const PaymentPanel = ({
   const installmentValue = total / parseInt(installments);
 
   const handlePayment = () => {
-    if (!selectedMethod) return;
+    if (!selectedMethod || !selectedChannel) return;
+
+    const channelInfo = { channel: selectedChannel };
 
     if (selectedMethod === 'cash') {
-      onPayment('cash', parseCurrency(cashReceived));
+      onPayment('cash', parseCurrency(cashReceived), channelInfo);
     } else if (selectedMethod === 'card') {
       onPayment('card', undefined, {
+        ...channelInfo,
         cardType,
         installments: cardType === 'credit' ? parseInt(installments) : 1,
         installmentValue: cardType === 'credit' ? installmentValue : total,
       });
     } else if (selectedMethod === 'mixed') {
       onPayment('mixed', undefined, {
+        ...channelInfo,
         cash: parseCurrency(mixedAmounts.cash),
         card: parseCurrency(mixedAmounts.card),
         pix: parseCurrency(mixedAmounts.pix),
       });
     } else {
-      onPayment(selectedMethod);
+      onPayment(selectedMethod, undefined, channelInfo);
     }
   };
 
