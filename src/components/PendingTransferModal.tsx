@@ -71,7 +71,7 @@ const PendingTransferModal: React.FC = () => {
       .order('created_at', { ascending: true });
 
     if (!isAdmin && !isManager && userStoreId) {
-      query = query.eq('to_store_id', userStoreId);
+      query = query.eq('from_store_id', userStoreId);
     }
 
     const { data } = await query;
