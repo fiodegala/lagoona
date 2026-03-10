@@ -131,14 +131,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
+    let initialLoadDone = false;
+
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
+        // Skip INITIAL_SESSION event — handled by getSession below
+        if (event === 'INITIAL_SESSION') return;
+
         setSession(newSession);
         setUser(newSession?.user ?? null);
 
         if (newSession?.user) {
-          // Set loading true so ProtectedRoute waits for roles
           setIsLoading(true);
           // Use setTimeout to avoid Supabase auth deadlock
           setTimeout(async () => {
@@ -150,13 +154,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setRoles([]);
           setUserStore(null);
           setAllowedMenus([]);
+          setAccessibleStoreIds([]);
           setIsLoading(false);
         }
       }
     );
 
-    // THEN get initial session
+    // THEN get initial session (single source of truth for first load)
     supabase.auth.getSession().then(async ({ data: { session: initialSession } }) => {
+      if (initialLoadDone) return;
+      initialLoadDone = true;
+
       setSession(initialSession);
       setUser(initialSession?.user ?? null);
       
