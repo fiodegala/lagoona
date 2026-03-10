@@ -114,7 +114,7 @@ const PaymentPanel = ({
   };
 
   const canPay = () => {
-    if (disabled || isProcessing || !selectedMethod) return false;
+    if (disabled || isProcessing || !selectedMethod || !selectedChannel) return false;
     
     if (selectedMethod === 'cash') {
       return parseCurrency(cashReceived) >= total;
