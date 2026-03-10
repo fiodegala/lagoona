@@ -140,7 +140,7 @@ interface SalesGoal {
 const SITE_STORE_ID = 'e0b8ebbc-1b3b-4aec-b5f7-6925762e6ea1';
 
 const Dashboard = () => {
-  const { profile, roles, isAdmin, userStoreId, userStore, accessibleStoreIds } = useAuth();
+  const { user, profile, roles, isAdmin, userStoreId, userStore, accessibleStoreIds } = useAuth();
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('all');
   const [selectedStoreId, setSelectedStoreId] = useState<string>('all');
   const [selectedSellerId, setSelectedSellerId] = useState<string>('all');
