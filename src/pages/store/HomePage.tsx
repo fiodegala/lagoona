@@ -59,6 +59,28 @@ const HomePage = () => {
         ]);
         const activeProducts = productsData.filter(p => p.is_active);
         const enrichedProducts = await enrichProductsWithStock(activeProducts);
+
+        // Sort by most viewed (analytics page_view/product_view events)
+        try {
+          const { data: viewCounts } = await supabase
+            .from('site_analytics_events')
+            .select('product_id')
+            .in('event_type', ['page_view', 'product_view'])
+            .not('product_id', 'is', null);
+
+          if (viewCounts && viewCounts.length > 0) {
+            const countMap = new Map<string, number>();
+            viewCounts.forEach((ev) => {
+              if (ev.product_id) {
+                countMap.set(ev.product_id, (countMap.get(ev.product_id) || 0) + 1);
+              }
+            });
+            enrichedProducts.sort((a, b) => (countMap.get(b.id) || 0) - (countMap.get(a.id) || 0));
+          }
+        } catch (e) {
+          console.error('Error loading product view counts:', e);
+        }
+
         setProducts(enrichedProducts);
         setCategories(categoriesData.filter(c => c.is_active));
         setHeroBanners(bannersData);
