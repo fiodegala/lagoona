@@ -277,6 +277,14 @@ const CheckoutPage = () => {
         total: total,
       },
     });
+
+    // Meta Pixel: Purchase
+    trackMetaPurchase({
+      content_ids: items.map(i => i.productId),
+      num_items: getItemCount(),
+      value: total,
+      order_id: orderId || undefined,
+    });
     
     setOrderComplete(true);
     clearCart();
