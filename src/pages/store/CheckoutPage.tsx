@@ -14,6 +14,7 @@ import { useCart } from '@/contexts/CartContext';
 import { supabase } from '@/integrations/supabase/client';
 import { trackAnalyticsEvent } from '@/hooks/useAnalyticsTracker';
 import { getAffiliateCode, clearAffiliateCode } from '@/lib/affiliateUtils';
+import { trackMetaInitiateCheckout, trackMetaPurchase } from '@/lib/metaPixel';
 
 const ABANDONED_CART_SESSION_KEY = 'abandoned-cart-session';
 
@@ -165,6 +166,13 @@ const CheckoutPage = () => {
       },
     });
 
+    // Meta Pixel: InitiateCheckout
+    trackMetaInitiateCheckout({
+      content_ids: items.map(i => i.productId),
+      num_items: getItemCount(),
+      value: total,
+    });
+
     try {
       // Verify real-time stock availability before creating order
       const stockChecks = await Promise.all(
@@ -268,6 +276,14 @@ const CheckoutPage = () => {
         payment_status: paymentData.status,
         total: total,
       },
+    });
+
+    // Meta Pixel: Purchase
+    trackMetaPurchase({
+      content_ids: items.map(i => i.productId),
+      num_items: getItemCount(),
+      value: total,
+      order_id: orderId || undefined,
     });
     
     setOrderComplete(true);

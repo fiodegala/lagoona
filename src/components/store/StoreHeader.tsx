@@ -12,6 +12,7 @@ import CartDrawer from '@/components/store/CartDrawer';
 import logoLagoona from '@/assets/logo-lagoona.png';
 import logoLagoonaDark from '@/assets/logo-lagoona-dark.png';
 import { trackSearchEvent } from '@/hooks/useAnalyticsTracker';
+import { trackMetaSearch } from '@/lib/metaPixel';
 
 interface SearchResult {
   id: string;
@@ -56,6 +57,11 @@ const StoreHeader = ({ categories }: StoreHeaderProps) => {
       setSuggestions(data || []);
       setShowSuggestions(true);
       trackSearchEvent(query.trim(), (data || []).length);
+      // Meta Pixel: Search
+      trackMetaSearch({
+        search_string: query.trim(),
+        content_ids: (data || []).map((p: SearchResult) => p.id),
+      });
     } catch (err) {
       console.error('Search error:', err);
     } finally {

@@ -27,6 +27,7 @@ import { useCart } from '@/contexts/CartContext';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { getOptimizedImageUrl } from '@/lib/imageUtils';
+import { trackMetaViewContent } from '@/lib/metaPixel';
 
 const ProductDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -67,6 +68,15 @@ const ProductDetails = () => {
         const realStock = await getProductRealStock(productData.id);
         setProduct({ ...productData, stock: realStock });
         setSelectedImage(productData.image_url);
+
+        // Meta Pixel: ViewContent
+        trackMetaViewContent({
+          content_ids: [productData.id],
+          content_name: productData.name,
+          value: productData.promotional_price && productData.promotional_price < productData.price
+            ? productData.promotional_price
+            : productData.price,
+        });
 
         if (productData.category_id) {
           const categories = await categoriesService.getAll();

@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, useCallback, ReactNode 
 import { couponsService, Coupon, CouponValidationResult } from '@/services/coupons';
 import { combosService, Combo } from '@/services/combos';
 import { trackAnalyticsEvent, trackCartRemoveEvent } from '@/hooks/useAnalyticsTracker';
+import { trackMetaAddToCart } from '@/lib/metaPixel';
 
 export interface CartItem {
   id: string;
@@ -218,6 +219,14 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         price: newItem.price,
         quantity: newItem.quantity || 1,
       },
+    });
+
+    // Meta Pixel: AddToCart
+    trackMetaAddToCart({
+      content_ids: [newItem.productId],
+      content_name: newItem.name,
+      value: newItem.price * (newItem.quantity || 1),
+      quantity: newItem.quantity || 1,
     });
   };
 
