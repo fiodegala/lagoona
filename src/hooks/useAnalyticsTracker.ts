@@ -2,6 +2,7 @@ import { useEffect, useRef, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { getAffiliateCode } from '@/lib/affiliateUtils';
+import { trackMetaPageView } from '@/lib/metaPixel';
 
 const SESSION_KEY = 'analytics_session_id';
 const VISITOR_KEY = 'analytics_visitor_id';
@@ -326,14 +327,17 @@ export function useAnalyticsTracker() {
       ? requestIdleCallback
       : (cb: () => void) => setTimeout(cb, 100);
 
-    idleCallback(() => trackEvent('page_view', {
-      metadata: {
-        visitor_id: getVisitorId(),
-        referrer: getReferrer(),
-        pages_in_session: sessionPagesViewed.current.size,
-        ...getUtmParams(),
-      },
-    }));
+    idleCallback(() => {
+      trackMetaPageView();
+      trackEvent('page_view', {
+        metadata: {
+          visitor_id: getVisitorId(),
+          referrer: getReferrer(),
+          pages_in_session: sessionPagesViewed.current.size,
+          ...getUtmParams(),
+        },
+      });
+    });
 
     return () => {
       const duration = Date.now() - pageEntryTime.current;
