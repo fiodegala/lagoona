@@ -27,6 +27,7 @@ import { useCart } from '@/contexts/CartContext';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { getOptimizedImageUrl } from '@/lib/imageUtils';
+import { trackMetaViewContent } from '@/lib/metaPixel';
 
 const ProductDetails = () => {
   const { id } = useParams<{ id: string }>();

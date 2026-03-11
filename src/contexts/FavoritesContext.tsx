@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { trackFavoriteEvent } from '@/hooks/useAnalyticsTracker';
+import { trackMetaAddToWishlist } from '@/lib/metaPixel';
 import { User } from '@supabase/supabase-js';
 
 interface FavoritesContextType {

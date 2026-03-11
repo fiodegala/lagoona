@@ -14,6 +14,7 @@ import { useCart } from '@/contexts/CartContext';
 import { supabase } from '@/integrations/supabase/client';
 import { trackAnalyticsEvent } from '@/hooks/useAnalyticsTracker';
 import { getAffiliateCode, clearAffiliateCode } from '@/lib/affiliateUtils';
+import { trackMetaInitiateCheckout, trackMetaPurchase } from '@/lib/metaPixel';
 
 const ABANDONED_CART_SESSION_KEY = 'abandoned-cart-session';
 

@@ -220,6 +220,14 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         quantity: newItem.quantity || 1,
       },
     });
+
+    // Meta Pixel: AddToCart
+    trackMetaAddToCart({
+      content_ids: [newItem.productId],
+      content_name: newItem.name,
+      value: newItem.price * (newItem.quantity || 1),
+      quantity: newItem.quantity || 1,
+    });
   };
 
   const removeItem = (id: string) => {
