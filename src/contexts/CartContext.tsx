@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, useCallback, ReactNode 
 import { couponsService, Coupon, CouponValidationResult } from '@/services/coupons';
 import { combosService, Combo } from '@/services/combos';
 import { trackAnalyticsEvent, trackCartRemoveEvent } from '@/hooks/useAnalyticsTracker';
+import { trackMetaAddToCart } from '@/lib/metaPixel';
 
 export interface CartItem {
   id: string;
