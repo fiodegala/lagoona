@@ -166,6 +166,13 @@ const CheckoutPage = () => {
       },
     });
 
+    // Meta Pixel: InitiateCheckout
+    trackMetaInitiateCheckout({
+      content_ids: items.map(i => i.productId),
+      num_items: getItemCount(),
+      value: total,
+    });
+
     try {
       // Verify real-time stock availability before creating order
       const stockChecks = await Promise.all(
