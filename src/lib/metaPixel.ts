@@ -22,27 +22,30 @@ function ensureMetaPixelInitialized() {
   if (!window.fbq && !scriptRequested) {
     scriptRequested = true;
 
-    ((f, b, e, v, n, t, s) => {
-      if ((f as Window).fbq) return;
-      n = function (...args: unknown[]) {
-        if ((n as { callMethod?: (...innerArgs: unknown[]) => void }).callMethod) {
-          (n as { callMethod: (...innerArgs: unknown[]) => void }).callMethod(...args);
+    ((f: Window & typeof globalThis, b: Document, e: 'script', v: string) => {
+      if (f.fbq) return;
+
+      const n: any = function (...args: unknown[]) {
+        if (n.callMethod) {
+          n.callMethod.apply(n, args);
         } else {
-          ((n as { queue?: unknown[][] }).queue ||= []).push(args);
+          n.queue.push(args);
         }
       };
-      if (!(f as Window)._fbq) (f as Window)._fbq = n as (...innerArgs: unknown[]) => void;
-      (f as Window).fbq = n as (...innerArgs: unknown[]) => void;
-      (n as { push?: unknown; loaded?: boolean; version?: string; queue?: unknown[][] }).push = n;
-      (n as { push?: unknown; loaded?: boolean; version?: string; queue?: unknown[][] }).loaded = true;
-      (n as { push?: unknown; loaded?: boolean; version?: string; queue?: unknown[][] }).version = '2.0';
-      (n as { push?: unknown; loaded?: boolean; version?: string; queue?: unknown[][] }).queue = [];
-      t = b.createElement(e) as HTMLScriptElement;
+
+      if (!f._fbq) f._fbq = n;
+      f.fbq = n;
+      n.push = n;
+      n.loaded = true;
+      n.version = '2.0';
+      n.queue = [];
+
+      const t = b.createElement(e);
       t.async = true;
       t.src = v;
-      s = b.getElementsByTagName(e)[0];
+      const s = b.getElementsByTagName(e)[0];
       s.parentNode?.insertBefore(t, s);
-    })(window, document, 'script', 'https://connect.facebook.net/en_US/fbevents.js', null as unknown as Function, null as unknown as HTMLScriptElement, null as unknown as Element);
+    })(window, document, 'script', 'https://connect.facebook.net/en_US/fbevents.js');
   }
 
   if (window.fbq && !window.__metaPixelInitialized) {
