@@ -69,6 +69,15 @@ const ProductDetails = () => {
         setProduct({ ...productData, stock: realStock });
         setSelectedImage(productData.image_url);
 
+        // Meta Pixel: ViewContent
+        trackMetaViewContent({
+          content_ids: [productData.id],
+          content_name: productData.name,
+          value: productData.promotional_price && productData.promotional_price < productData.price
+            ? productData.promotional_price
+            : productData.price,
+        });
+
         if (productData.category_id) {
           const categories = await categoriesService.getAll();
           const productCategory = categories.find(c => c.id === productData.category_id);

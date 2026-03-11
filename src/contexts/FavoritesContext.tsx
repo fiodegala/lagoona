@@ -121,6 +121,8 @@ export const FavoritesProvider = ({ children }: { children: ReactNode }) => {
     // Optimistic update
     setFavorites(prev => [...prev, productId]);
     trackFavoriteEvent('add', productId);
+    // Meta Pixel: AddToWishlist
+    trackMetaAddToWishlist({ content_ids: [productId] });
 
     if (user) {
       // Save to database
