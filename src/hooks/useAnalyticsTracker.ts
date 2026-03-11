@@ -327,14 +327,17 @@ export function useAnalyticsTracker() {
       ? requestIdleCallback
       : (cb: () => void) => setTimeout(cb, 100);
 
-    idleCallback(() => trackEvent('page_view', {
-      metadata: {
-        visitor_id: getVisitorId(),
-        referrer: getReferrer(),
-        pages_in_session: sessionPagesViewed.current.size,
-        ...getUtmParams(),
-      },
-    }));
+    idleCallback(() => {
+      trackMetaPageView();
+      trackEvent('page_view', {
+        metadata: {
+          visitor_id: getVisitorId(),
+          referrer: getReferrer(),
+          pages_in_session: sessionPagesViewed.current.size,
+          ...getUtmParams(),
+        },
+      });
+    });
 
     return () => {
       const duration = Date.now() - pageEntryTime.current;

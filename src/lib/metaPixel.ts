@@ -1,25 +1,74 @@
 /**
  * Meta Pixel (fbq) helper utilities.
- * The pixel script is loaded globally via index.html.
- * These helpers provide type-safe wrappers around the fbq() calls.
+ * Includes resilient runtime initialization to avoid missing events
+ * when inline scripts are blocked/delayed.
  */
+
+const META_PIXEL_ID = '1707142150464689';
 
 declare global {
   interface Window {
     fbq?: (...args: unknown[]) => void;
+    _fbq?: (...args: unknown[]) => void;
+    __metaPixelInitialized?: boolean;
   }
 }
 
-function fbq(...args: unknown[]) {
-  if (typeof window !== 'undefined' && window.fbq) {
-    window.fbq(...args);
+let scriptRequested = false;
+
+function ensureMetaPixelInitialized() {
+  if (typeof window === 'undefined') return;
+
+  if (!window.fbq && !scriptRequested) {
+    scriptRequested = true;
+
+    ((f, b, e, v, n, t, s) => {
+      if ((f as Window).fbq) return;
+      n = function (...args: unknown[]) {
+        if ((n as { callMethod?: (...innerArgs: unknown[]) => void }).callMethod) {
+          (n as { callMethod: (...innerArgs: unknown[]) => void }).callMethod(...args);
+        } else {
+          ((n as { queue?: unknown[][] }).queue ||= []).push(args);
+        }
+      };
+      if (!(f as Window)._fbq) (f as Window)._fbq = n as (...innerArgs: unknown[]) => void;
+      (f as Window).fbq = n as (...innerArgs: unknown[]) => void;
+      (n as { push?: unknown; loaded?: boolean; version?: string; queue?: unknown[][] }).push = n;
+      (n as { push?: unknown; loaded?: boolean; version?: string; queue?: unknown[][] }).loaded = true;
+      (n as { push?: unknown; loaded?: boolean; version?: string; queue?: unknown[][] }).version = '2.0';
+      (n as { push?: unknown; loaded?: boolean; version?: string; queue?: unknown[][] }).queue = [];
+      t = b.createElement(e) as HTMLScriptElement;
+      t.async = true;
+      t.src = v;
+      s = b.getElementsByTagName(e)[0];
+      s.parentNode?.insertBefore(t, s);
+    })(window, document, 'script', 'https://connect.facebook.net/en_US/fbevents.js', null as unknown as Function, null as unknown as HTMLScriptElement, null as unknown as Element);
   }
+
+  if (window.fbq && !window.__metaPixelInitialized) {
+    window.fbq('init', META_PIXEL_ID);
+    window.__metaPixelInitialized = true;
+  }
+}
+
+function fbqTrack(method: 'track' | 'trackCustom', eventName: string, params?: Record<string, unknown>) {
+  ensureMetaPixelInitialized();
+  if (!window.fbq) return;
+  if (params) {
+    window.fbq(method, eventName, params);
+  } else {
+    window.fbq(method, eventName);
+  }
+}
+
+export function initMetaPixel() {
+  ensureMetaPixelInitialized();
 }
 
 // ─── Standard Events ───────────────────────────────────────
 
 export function trackMetaPageView() {
-  fbq('track', 'PageView');
+  fbqTrack('track', 'PageView');
 }
 
 export function trackMetaViewContent(params: {
@@ -29,7 +78,7 @@ export function trackMetaViewContent(params: {
   value?: number;
   currency?: string;
 }) {
-  fbq('track', 'ViewContent', {
+  fbqTrack('track', 'ViewContent', {
     content_type: 'product',
     currency: 'BRL',
     ...params,
@@ -44,7 +93,7 @@ export function trackMetaAddToCart(params: {
   currency?: string;
   quantity?: number;
 }) {
-  fbq('track', 'AddToCart', {
+  fbqTrack('track', 'AddToCart', {
     content_type: 'product',
     currency: 'BRL',
     ...params,
@@ -57,7 +106,7 @@ export function trackMetaAddToWishlist(params: {
   value?: number;
   currency?: string;
 }) {
-  fbq('track', 'AddToWishlist', {
+  fbqTrack('track', 'AddToWishlist', {
     content_type: 'product',
     currency: 'BRL',
     ...params,
@@ -70,7 +119,7 @@ export function trackMetaInitiateCheckout(params: {
   value?: number;
   currency?: string;
 }) {
-  fbq('track', 'InitiateCheckout', {
+  fbqTrack('track', 'InitiateCheckout', {
     currency: 'BRL',
     ...params,
   });
@@ -84,7 +133,7 @@ export function trackMetaPurchase(params: {
   currency?: string;
   order_id?: string;
 }) {
-  fbq('track', 'Purchase', {
+  fbqTrack('track', 'Purchase', {
     content_type: 'product',
     currency: 'BRL',
     ...params,
@@ -95,7 +144,7 @@ export function trackMetaSearch(params: {
   search_string: string;
   content_ids?: string[];
 }) {
-  fbq('track', 'Search', params);
+  fbqTrack('track', 'Search', params);
 }
 
 export function trackMetaCompleteRegistration(params?: {
@@ -103,18 +152,18 @@ export function trackMetaCompleteRegistration(params?: {
   value?: number;
   currency?: string;
 }) {
-  fbq('track', 'CompleteRegistration', {
+  fbqTrack('track', 'CompleteRegistration', {
     currency: 'BRL',
     ...params,
   });
 }
 
 export function trackMetaContact() {
-  fbq('track', 'Contact');
+  fbqTrack('track', 'Contact');
 }
 
 // ─── Custom Events ─────────────────────────────────────────
 
 export function trackMetaCustomEvent(eventName: string, params?: Record<string, unknown>) {
-  fbq('trackCustom', eventName, params);
+  fbqTrack('trackCustom', eventName, params);
 }
