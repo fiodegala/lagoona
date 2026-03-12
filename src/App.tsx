@@ -65,6 +65,7 @@ const WorkWithUsPage = lazy(() => import("./pages/store/WorkWithUsPage"));
 const CombosPage = lazy(() => import("./pages/store/CombosPage"));
 const QuoteViewPage = lazy(() => import("./pages/store/QuoteViewPage"));
 const CatalogPage = lazy(() => import("./pages/store/CatalogPage"));
+const ResellerCatalogPage = lazy(() => import("./pages/store/ResellerCatalogPage"));
 const AffiliateSignupPage = lazy(() => import("./pages/store/AffiliateSignupPage"));
 const AffiliateDashboardPage = lazy(() => import("./pages/store/AffiliateDashboardPage"));
 const AffiliateRedirectPage = lazy(() => import("./pages/store/AffiliateRedirectPage"));
@@ -121,6 +122,7 @@ const App = () => (
               <Route path="/trabalhe-conosco" element={<WorkWithUsPage />} />
               <Route path="/orcamento/:id" element={<QuoteViewPage />} />
               <Route path="/catalogo" element={<CatalogPage />} />
+              <Route path="/catalogo-revendedor" element={<ResellerCatalogPage />} />
               <Route path="/afiliados" element={<AffiliateSignupPage />} />
               <Route path="/afiliados/painel" element={<AffiliateDashboardPage />} />
               <Route path="/r/:code" element={<AffiliateRedirectPage />} />
