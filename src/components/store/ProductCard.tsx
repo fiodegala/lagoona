@@ -250,19 +250,21 @@ const ProductCard = memo(forwardRef<HTMLAnchorElement, ProductCardProps>(({ prod
 
         {/* Content */}
         <div className="p-4">
-          {/* Rating */}
-          <div className="flex items-center gap-1 mb-2">
-            {[1, 2, 3, 4, 5].map((star) => (
-              <Star
-                key={star}
-                className={cn(
-                  "h-3 w-3",
-                  star <= 4 ? "fill-warning text-warning" : "text-muted-foreground/30"
-                )}
-              />
-            ))}
-            <span className="text-xs text-muted-foreground ml-1">(128)</span>
-          </div>
+          {/* Rating - real data */}
+          {reviewCount > 0 && (
+            <div className="flex items-center gap-1 mb-2">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <Star
+                  key={star}
+                  className={cn(
+                    "h-3 w-3",
+                    star <= Math.round(avgRating) ? "fill-warning text-warning" : "text-muted-foreground/30"
+                  )}
+                />
+              ))}
+              <span className="text-xs text-muted-foreground ml-1">({reviewCount})</span>
+            </div>
+          )}
 
           {/* Title */}
           <h3 className="font-medium text-sm line-clamp-2 min-h-[2.5rem] group-hover:text-store-gold transition-colors">
