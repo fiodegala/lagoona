@@ -78,6 +78,7 @@ const POSPage = () => {
     address?: string; city?: string; state?: string; zip_code?: string;
   } | null>(null);
 
+  const hasRestoredDraftRef = useRef(false);
   const isExchangeMode = saleType === 'troca';
   const isQuoteMode = isQuoteType(saleType);
 
