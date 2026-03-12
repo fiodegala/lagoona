@@ -39,7 +39,72 @@ const normalizeBannerUrl = (url: string | null): string | null => {
   return url;
 };
 
-const HomePage = () => {
+const NewsletterSection = () => {
+  const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [subscribed, setSubscribed] = useState(false);
+
+  const handleSubscribe = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim() || !/\S+@\S+\.\S+/.test(email)) {
+      toast.error('Digite um e-mail válido');
+      return;
+    }
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from('newsletter_subscribers')
+        .insert({ email: email.trim().toLowerCase() });
+      if (error) {
+        if (error.code === '23505') {
+          toast.info('Este e-mail já está cadastrado!');
+        } else {
+          throw error;
+        }
+      } else {
+        toast.success('Cadastrado com sucesso! 🎉');
+      }
+      setSubscribed(true);
+    } catch (err) {
+      console.error('Newsletter error:', err);
+      toast.error('Erro ao cadastrar. Tente novamente.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <section className="py-14 md:py-20 bg-store-accent">
+      <div className="container mx-auto px-4 text-center">
+        <h2 className="text-3xl font-display font-bold text-white mb-2 italic">
+          Ganhe 10% OFF na primeira compra!
+        </h2>
+        <p className="text-white/50 mb-8 max-w-xl mx-auto font-light tracking-wide">
+          Cadastre seu e-mail e receba ofertas exclusivas, novidades e promoções.
+        </p>
+        {subscribed ? (
+          <p className="text-white font-semibold text-lg">✅ Obrigado! Fique de olho no seu e-mail.</p>
+        ) : (
+          <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row gap-3 justify-center max-w-md mx-auto">
+            <input
+              type="email"
+              placeholder="Seu melhor e-mail"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="flex-1 px-4 py-3 bg-white/5 border border-white/20 text-white placeholder:text-white/40 focus:outline-none focus:border-store-gold transition-colors rounded-md"
+              required
+            />
+            <Button type="submit" size="lg" disabled={loading} className="font-semibold bg-store-gold text-store-dark hover:bg-store-gold/90 tracking-wide">
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Quero meu cupom!'}
+            </Button>
+          </form>
+        )}
+      </div>
+    </section>
+  );
+};
+
+
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [heroBanners, setHeroBanners] = useState<Banner[]>([]);
