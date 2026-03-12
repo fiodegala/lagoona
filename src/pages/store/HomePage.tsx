@@ -262,7 +262,7 @@ const HomePage = () => {
               <div className="container mx-auto px-4">
                 <div className="max-w-2xl">
                   <span className="inline-block px-5 py-1.5 text-store-gold text-xs font-semibold tracking-[0.25em] uppercase mb-6 border border-store-gold/40">
-                    Nova Coleção 2024
+                    Nova Coleção 2025
                   </span>
                   <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold text-white mb-6 leading-tight italic">
                     Elegância que define o estilo moderno
