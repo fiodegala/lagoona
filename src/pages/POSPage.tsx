@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import POSLayout from '@/components/pos/POSLayout';
@@ -33,6 +33,18 @@ const STEPS: { key: WizardStep; label: string }[] = [
   { key: 'products', label: 'Produtos' },
   { key: 'payment', label: 'Pagamento' },
 ];
+
+const POS_DRAFT_STORAGE_KEY = 'pos_wizard_draft_v1';
+
+interface POSDraftState {
+  sessionId: string;
+  currentStep: WizardStep;
+  saleType: SaleType;
+  selectedSeller: Seller | null;
+  selectedCustomer: Customer | null;
+  cartItems: CartItem[];
+  generalDiscount: { type: 'percentage' | 'fixed'; value: number };
+}
 
 const POSPage = () => {
   const navigate = useNavigate();
