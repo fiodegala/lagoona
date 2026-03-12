@@ -598,6 +598,7 @@ const POSPage = () => {
   const handleOpenSession = async (openingBalance: number, notes?: string) => {
     const newSession = await posService.openSession(openingBalance, notes, userStoreId || undefined);
     setSession(newSession);
+    resetWizard();
     await offlineService.saveCurrentSession({ id: newSession.id, user_id: newSession.user_id, opened_at: newSession.opened_at, opening_balance: newSession.opening_balance, status: 'open' });
     toast({ title: 'Caixa aberto!' });
   };
@@ -606,6 +607,7 @@ const POSPage = () => {
     if (!session) return;
     await posService.closeSession(session.id, closingBalance, notes);
     setSession(null);
+    resetWizard();
     await offlineService.clearCurrentSession();
     if (typeof window !== 'undefined') {
       window.sessionStorage.removeItem(POS_DRAFT_STORAGE_KEY);
