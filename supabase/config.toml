@@ -41,3 +41,6 @@ verify_jwt = false
 
 [functions.import-data]
 verify_jwt = false
+
+[functions.api-import]
+verify_jwt = false
