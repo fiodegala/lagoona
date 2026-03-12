@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -60,6 +60,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [accessibleStoreIds, setAccessibleStoreIds] = useState<string[]>([]);
   const [allowedMenus, setAllowedMenus] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Refs prevent stale-closure behavior inside onAuthStateChange
+  const currentUserIdRef = useRef<string | null>(null);
+  const authBootstrappedRef = useRef(false);
 
   const fetchUserData = async (userId: string): Promise<void> => {
     try {
@@ -135,28 +139,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, newSession) => {
+      (event, newSession) => {
         // Skip INITIAL_SESSION event — handled by getSession below
         if (event === 'INITIAL_SESSION') return;
 
         if (newSession?.user) {
+          const nextUserId = newSession.user.id;
+          const sameUser = currentUserIdRef.current === nextUserId;
+          const shouldBlockUI = !authBootstrappedRef.current || !sameUser;
+          const shouldRefetchUserData = !sameUser || event === 'SIGNED_IN' || event === 'USER_UPDATED';
+
           setSession(newSession);
           setUser(newSession.user);
-          
-          // Only show loading on sign-in, not on token refresh
-          const isNewSignIn = event === 'SIGNED_IN';
-          if (isNewSignIn) {
+          currentUserIdRef.current = nextUserId;
+
+          if (shouldBlockUI) {
             setIsLoading(true);
           }
-          
-          // Use setTimeout to avoid Supabase auth deadlock
-          setTimeout(async () => {
-            await fetchUserData(newSession.user.id);
-            if (isNewSignIn) {
-              setIsLoading(false);
-            }
-          }, 0);
+
+          // Fire-and-forget to avoid blocking auth event processing
+          if (shouldRefetchUserData) {
+            setTimeout(() => {
+              void fetchUserData(nextUserId).finally(() => {
+                if (shouldBlockUI) {
+                  setIsLoading(false);
+                }
+              });
+            }, 0);
+          } else if (shouldBlockUI) {
+            setIsLoading(false);
+          }
         } else {
+          currentUserIdRef.current = null;
           setSession(null);
           setUser(null);
           setProfile(null);
@@ -176,10 +190,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       setSession(initialSession);
       setUser(initialSession?.user ?? null);
+      currentUserIdRef.current = initialSession?.user?.id ?? null;
       
       if (initialSession?.user) {
         await fetchUserData(initialSession.user.id);
       }
+
+      authBootstrappedRef.current = true;
       setIsLoading(false);
     });
 
@@ -205,6 +222,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = async () => {
     await supabase.auth.signOut();
+    currentUserIdRef.current = null;
+    authBootstrappedRef.current = true;
     setUser(null);
     setSession(null);
     setProfile(null);
