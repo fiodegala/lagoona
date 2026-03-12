@@ -344,6 +344,43 @@ const CheckoutPage = () => {
   return (
     <StoreLayout>
       <div className="container mx-auto px-4 py-8">
+        {/* Progress Stepper */}
+        <div className="flex items-center justify-center gap-0 mb-8 max-w-md mx-auto">
+          {[
+            { label: 'Carrinho', step: 0 },
+            { label: 'Dados', step: 1 },
+            { label: 'Pagamento', step: 2 },
+          ].map((s, i) => {
+            const currentStep = step === 'info' ? 1 : 2;
+            const isActive = i <= currentStep;
+            const isCurrent = i === currentStep;
+            return (
+              <div key={s.label} className="flex items-center flex-1">
+                <div className="flex flex-col items-center flex-1">
+                  <div className={cn(
+                    "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors",
+                    isCurrent ? "bg-store-gold text-store-dark" :
+                    isActive ? "bg-store-gold/80 text-store-dark" :
+                    "bg-muted text-muted-foreground"
+                  )}>
+                    {isActive && i < currentStep ? <CheckCircle className="h-4 w-4" /> : i + 1}
+                  </div>
+                  <span className={cn(
+                    "text-xs mt-1 font-medium",
+                    isCurrent ? "text-foreground" : "text-muted-foreground"
+                  )}>{s.label}</span>
+                </div>
+                {i < 2 && (
+                  <div className={cn(
+                    "h-0.5 flex-1 mx-1 -mt-4",
+                    i < currentStep ? "bg-store-gold" : "bg-muted"
+                  )} />
+                )}
+              </div>
+            );
+          })}
+        </div>
+
         <Button variant="ghost" asChild className="mb-6">
           <Link to={step === 'payment' ? '#' : '/carrinho'} onClick={step === 'payment' ? (e) => { e.preventDefault(); setStep('info'); } : undefined}>
             <ArrowLeft className="h-4 w-4 mr-2" />
@@ -351,9 +388,13 @@ const CheckoutPage = () => {
           </Link>
         </Button>
 
-        <h1 className="text-3xl font-bold mb-8">
+        <h1 className="text-3xl font-bold mb-2">
           {step === 'info' ? 'Finalizar Compra' : 'Pagamento'}
         </h1>
+        <div className="flex items-center gap-2 mb-8 text-sm text-muted-foreground">
+          <Lock className="h-3.5 w-3.5" />
+          <span>Compra 100% segura · Dados protegidos</span>
+        </div>
 
         <div className="grid lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-6">
