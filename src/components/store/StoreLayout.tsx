@@ -1,6 +1,7 @@
 import { ReactNode, useEffect, useState, lazy, Suspense } from 'react';
 import StoreHeader from './StoreHeader';
 import StoreFooter from './StoreFooter';
+import WhatsAppButton from './WhatsAppButton';
 import { categoriesService, Category } from '@/services/categories';
 import { useAnalyticsTracker } from '@/hooks/useAnalyticsTracker';
 
