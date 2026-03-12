@@ -421,7 +421,7 @@ const DataImport = () => {
                               <TableRow key={idx} className={!record.isValid ? 'bg-destructive/5' : ''}>
                                 <TableCell>
                                   {record.isValid ? (
-                                    <CheckCircle2 className="h-4 w-4 text-green-500" />
+                                    <CheckCircle2 className="h-4 w-4 text-success" />
                                   ) : (
                                     <AlertCircle className="h-4 w-4 text-destructive" />
                                   )}
