@@ -40,6 +40,7 @@ const CheckoutPage = () => {
     name: '',
     email: '',
     phone: '',
+    document: '',
     zipCode: '',
     address: '',
     number: '',
