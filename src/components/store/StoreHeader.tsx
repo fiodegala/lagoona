@@ -232,25 +232,36 @@ const StoreHeader = ({ categories }: StoreHeaderProps) => {
                       )}
                     </Link>
                     {activeCategories.length > 0 && (
-                      <div className="absolute top-full left-0 invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-all duration-200 z-50">
+                      <div className="fixed left-0 right-0 invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-all duration-200 z-50" style={{ top: '64px' }}>
                         <div className="pt-2">
-                          <div className="bg-background border rounded-lg shadow-xl p-3 min-w-[220px] space-y-0.5">
-                            {activeCategories.map((cat) => (
-                              <Link
-                                key={cat.id}
-                                to={`/loja/categoria/${cat.slug}`}
-                                className="block px-3 py-2 text-sm rounded-md hover:bg-muted transition-colors"
-                              >
-                                {cat.name}
-                              </Link>
-                            ))}
-                            <div className="border-t mt-2 pt-2">
-                              <Link
-                                to="/categorias"
-                                className="block px-3 py-2 text-sm rounded-md hover:bg-muted transition-colors font-medium text-store-primary"
-                              >
-                                Ver todas →
-                              </Link>
+                          <div className="bg-background border-b shadow-xl">
+                            <div className="container mx-auto px-4 py-6">
+                              <div className="grid grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3">
+                                {activeCategories.map((cat) => (
+                                  <Link
+                                    key={cat.id}
+                                    to={`/loja/categoria/${cat.slug}`}
+                                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted transition-colors group/item"
+                                  >
+                                    <div className="w-10 h-10 rounded-lg overflow-hidden bg-muted shrink-0 border">
+                                      {cat.image_url ? (
+                                        <img src={cat.image_url} alt={cat.name} className="w-full h-full object-cover" />
+                                      ) : (
+                                        <div className="w-full h-full flex items-center justify-center text-muted-foreground text-[10px]">📦</div>
+                                      )}
+                                    </div>
+                                    <span className="text-sm font-medium truncate group-hover/item:text-store-gold transition-colors">{cat.name}</span>
+                                  </Link>
+                                ))}
+                              </div>
+                              <div className="border-t mt-4 pt-3 flex justify-center">
+                                <Link
+                                  to="/categorias"
+                                  className="text-sm font-medium text-store-primary hover:underline"
+                                >
+                                  Ver todas as categorias →
+                                </Link>
+                              </div>
                             </div>
                           </div>
                         </div>
