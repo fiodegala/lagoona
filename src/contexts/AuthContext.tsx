@@ -147,7 +147,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const nextUserId = newSession.user.id;
           const sameUser = currentUserIdRef.current === nextUserId;
           const shouldBlockUI = !authBootstrappedRef.current || !sameUser;
-          const shouldRefetchUserData = !sameUser || event === 'SIGNED_IN' || event === 'USER_UPDATED';
+          const isRepeatedSignIn = sameUser && event === 'SIGNED_IN';
+          const shouldRefetchUserData = !isRepeatedSignIn && (!sameUser || event === 'USER_UPDATED');
 
           setSession(newSession);
           setUser(newSession.user);

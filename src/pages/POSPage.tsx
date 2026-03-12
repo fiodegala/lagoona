@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import POSLayout from '@/components/pos/POSLayout';
@@ -34,6 +34,18 @@ const STEPS: { key: WizardStep; label: string }[] = [
   { key: 'payment', label: 'Pagamento' },
 ];
 
+const POS_DRAFT_STORAGE_KEY = 'pos_wizard_draft_v1';
+
+interface POSDraftState {
+  sessionId: string;
+  currentStep: WizardStep;
+  saleType: SaleType;
+  selectedSeller: Seller | null;
+  selectedCustomer: Customer | null;
+  cartItems: CartItem[];
+  generalDiscount: { type: 'percentage' | 'fixed'; value: number };
+}
+
 const POSPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -66,6 +78,7 @@ const POSPage = () => {
     address?: string; city?: string; state?: string; zip_code?: string;
   } | null>(null);
 
+  const hasRestoredDraftRef = useRef(false);
   const isExchangeMode = saleType === 'troca';
   const isQuoteMode = isQuoteType(saleType);
 
@@ -113,6 +126,63 @@ const POSPage = () => {
     };
     loadSession();
   }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || isLoading || !session || hasRestoredDraftRef.current) return;
+
+    try {
+      const rawDraft = window.sessionStorage.getItem(POS_DRAFT_STORAGE_KEY);
+      if (!rawDraft) return;
+
+      const draft = JSON.parse(rawDraft) as POSDraftState;
+      if (!draft || draft.sessionId !== session.id) {
+        window.sessionStorage.removeItem(POS_DRAFT_STORAGE_KEY);
+        return;
+      }
+
+      const isValidStep = STEPS.some((step) => step.key === draft.currentStep);
+      setCurrentStep(isValidStep ? draft.currentStep : 'sale-type');
+      setSaleType(draft.saleType || 'varejo');
+      setSelectedSeller(draft.selectedSeller ?? null);
+      setSelectedCustomer(draft.selectedCustomer ?? null);
+      setCartItems(Array.isArray(draft.cartItems) ? draft.cartItems : []);
+      setGeneralDiscount(
+        draft.generalDiscount?.type
+          ? draft.generalDiscount
+          : { type: 'percentage', value: 0 }
+      );
+    } catch (error) {
+      console.error('Error restoring POS draft:', error);
+      window.sessionStorage.removeItem(POS_DRAFT_STORAGE_KEY);
+    } finally {
+      hasRestoredDraftRef.current = true;
+    }
+  }, [isLoading, session]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || isLoading || !session || !hasRestoredDraftRef.current) return;
+
+    const draft: POSDraftState = {
+      sessionId: session.id,
+      currentStep,
+      saleType,
+      selectedSeller,
+      selectedCustomer,
+      cartItems,
+      generalDiscount,
+    };
+
+    window.sessionStorage.setItem(POS_DRAFT_STORAGE_KEY, JSON.stringify(draft));
+  }, [
+    isLoading,
+    session,
+    currentStep,
+    saleType,
+    selectedSeller,
+    selectedCustomer,
+    cartItems,
+    generalDiscount,
+  ]);
 
   // Calculate totals
   const subtotal = cartItems.reduce((sum, item) => sum + item.unit_price * item.quantity, 0);
@@ -519,11 +589,16 @@ const POSPage = () => {
     setCustomerCreditBalance(0);
     setCartItems([]);
     setGeneralDiscount({ type: 'percentage', value: 0 });
+
+    if (typeof window !== 'undefined') {
+      window.sessionStorage.removeItem(POS_DRAFT_STORAGE_KEY);
+    }
   };
 
   const handleOpenSession = async (openingBalance: number, notes?: string) => {
     const newSession = await posService.openSession(openingBalance, notes, userStoreId || undefined);
     setSession(newSession);
+    resetWizard();
     await offlineService.saveCurrentSession({ id: newSession.id, user_id: newSession.user_id, opened_at: newSession.opened_at, opening_balance: newSession.opening_balance, status: 'open' });
     toast({ title: 'Caixa aberto!' });
   };
@@ -532,7 +607,11 @@ const POSPage = () => {
     if (!session) return;
     await posService.closeSession(session.id, closingBalance, notes);
     setSession(null);
+    resetWizard();
     await offlineService.clearCurrentSession();
+    if (typeof window !== 'undefined') {
+      window.sessionStorage.removeItem(POS_DRAFT_STORAGE_KEY);
+    }
     toast({ title: 'Caixa fechado!' });
   };
 
