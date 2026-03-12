@@ -4,6 +4,8 @@ import { supabase } from '@/integrations/supabase/client';
 export interface ProductCardMeta {
   colorValues: string[];
   hasVariations: boolean;
+  avgRating: number;
+  reviewCount: number;
 }
 
 /**
