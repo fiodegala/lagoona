@@ -174,7 +174,7 @@ const PaymentStep = ({
       </div>
 
       {/* Right - Payment */}
-      <div className="w-full lg:w-96 border-t lg:border-t-0 lg:border-l flex flex-col">
+      <div className="w-full lg:w-96 border-t lg:border-t-0 lg:border-l flex flex-col overflow-y-auto">
         <PaymentPanel
           total={total}
           onPayment={handlePaymentWithDate}
