@@ -1,6 +1,6 @@
 import { useEffect, useState, lazy, Suspense, useCallback, useRef, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Loader2, ShoppingBag, Truck, RefreshCw, Shield, MessageCircle, TrendingUp, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowRight, Loader2, ShoppingBag, Truck, RefreshCw, Shield, MessageCircle, TrendingUp, ChevronLeft, ChevronRight, Instagram } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import StoreLayout from '@/components/store/StoreLayout';
 import { useSwipe } from '@/hooks/useSwipe';
@@ -12,6 +12,13 @@ import { bannersService, Banner } from '@/services/banners';
 import { enrichProductsWithStock } from '@/services/stockService';
 import { supabase } from '@/integrations/supabase/client';
 import { useProductCardsMeta } from '@/hooks/useProductCardsMeta';
+import { toast } from 'sonner';
+import insta1 from '@/assets/insta-1.jpg';
+import insta2 from '@/assets/insta-2.jpg';
+import insta3 from '@/assets/insta-3.jpg';
+import insta4 from '@/assets/insta-4.jpg';
+import insta5 from '@/assets/insta-5.jpg';
+import insta6 from '@/assets/insta-6.jpg';
 
 // Lazy load below-fold sections
 const DealsCountdownSection = lazy(() => import('@/components/store/DealsCountdownSection'));
