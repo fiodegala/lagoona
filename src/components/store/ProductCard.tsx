@@ -55,6 +55,7 @@ const ProductCard = memo(forwardRef<HTMLAnchorElement, ProductCardProps>(({ prod
   const { isFavorite, toggleFavorite } = useFavorites();
   const navigate = useNavigate();
   const [isHovered, setIsHovered] = useState(false);
+  const isMobile = 'ontouchstart' in window;
   
   // Use pre-fetched meta if available, otherwise fall back to local fetch
   const [localColorValues, setLocalColorValues] = useState<string[]>([]);
@@ -63,6 +64,8 @@ const ProductCard = memo(forwardRef<HTMLAnchorElement, ProductCardProps>(({ prod
 
   const colorValues = meta ? meta.colorValues : localColorValues;
   const hasVariations = meta ? meta.hasVariations : localHasVariations;
+  const avgRating = meta?.avgRating || 0;
+  const reviewCount = meta?.reviewCount || 0;
   
   const isWishlisted = isFavorite(product.id);
 
