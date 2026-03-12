@@ -57,6 +57,7 @@ export const navItems: MenuItem[] = [
   { icon: Handshake, label: 'Afiliados', path: '/admin/afiliados', menuKey: 'affiliates', requireAdmin: true },
   { icon: Upload, label: 'Importar CSV', path: '/admin/importar-csv', menuKey: 'import-csv', requireAdmin: true },
   { icon: Upload, label: 'Importar Legado', path: '/admin/importar-legado', menuKey: 'import-legacy', requireAdmin: true },
+  { icon: Upload, label: 'Importar Dados (BI)', path: '/admin/importar-dados', menuKey: 'import-data', requireAdmin: true },
 ];
 
 export const settingsItems: MenuItem[] = [

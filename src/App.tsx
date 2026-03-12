@@ -42,6 +42,7 @@ const Upsells = lazy(() => import("./pages/Upsells"));
 const AdminAssistant = lazy(() => import("./pages/AdminAssistant"));
 const Quotes = lazy(() => import("./pages/Quotes"));
 const Affiliates = lazy(() => import("./pages/Affiliates"));
+const DataImport = lazy(() => import("./pages/DataImport"));
 
 // Lazy-loaded Store Pages
 const HomePage = lazy(() => import("./pages/store/HomePage"));
@@ -348,6 +349,15 @@ const App = () => (
                 element={
                   <ProtectedRoute requiredRole="admin">
                     <Affiliates />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/admin/importar-dados"
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <DataImport />
                   </ProtectedRoute>
                 }
               />
