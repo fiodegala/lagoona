@@ -140,13 +140,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (event === 'INITIAL_SESSION') return;
 
         if (newSession?.user) {
-          setIsLoading(true);
           setSession(newSession);
           setUser(newSession.user);
+          
+          // Only show loading on sign-in, not on token refresh
+          const isNewSignIn = event === 'SIGNED_IN';
+          if (isNewSignIn) {
+            setIsLoading(true);
+          }
+          
           // Use setTimeout to avoid Supabase auth deadlock
           setTimeout(async () => {
             await fetchUserData(newSession.user.id);
-            setIsLoading(false);
+            if (isNewSignIn) {
+              setIsLoading(false);
+            }
           }, 0);
         } else {
           setSession(null);
