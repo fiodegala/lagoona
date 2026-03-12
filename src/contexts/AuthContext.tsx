@@ -139,28 +139,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, newSession) => {
+      (event, newSession) => {
         // Skip INITIAL_SESSION event — handled by getSession below
         if (event === 'INITIAL_SESSION') return;
 
         if (newSession?.user) {
+          const nextUserId = newSession.user.id;
+          const sameUser = currentUserIdRef.current === nextUserId;
+          const shouldBlockUI = !authBootstrappedRef.current || !sameUser;
+          const shouldRefetchUserData = !sameUser || event === 'SIGNED_IN' || event === 'USER_UPDATED';
+
           setSession(newSession);
           setUser(newSession.user);
-          
-          // Only show loading on sign-in, not on token refresh
-          const isNewSignIn = event === 'SIGNED_IN';
-          if (isNewSignIn) {
+          currentUserIdRef.current = nextUserId;
+
+          if (shouldBlockUI) {
             setIsLoading(true);
           }
-          
-          // Use setTimeout to avoid Supabase auth deadlock
-          setTimeout(async () => {
-            await fetchUserData(newSession.user.id);
-            if (isNewSignIn) {
-              setIsLoading(false);
-            }
-          }, 0);
+
+          // Fire-and-forget to avoid blocking auth event processing
+          if (shouldRefetchUserData) {
+            setTimeout(() => {
+              void fetchUserData(nextUserId).finally(() => {
+                if (shouldBlockUI) {
+                  setIsLoading(false);
+                }
+              });
+            }, 0);
+          } else if (shouldBlockUI) {
+            setIsLoading(false);
+          }
         } else {
+          currentUserIdRef.current = null;
           setSession(null);
           setUser(null);
           setProfile(null);
@@ -180,10 +190,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       setSession(initialSession);
       setUser(initialSession?.user ?? null);
+      currentUserIdRef.current = initialSession?.user?.id ?? null;
       
       if (initialSession?.user) {
         await fetchUserData(initialSession.user.id);
       }
+
+      authBootstrappedRef.current = true;
       setIsLoading(false);
     });
 
