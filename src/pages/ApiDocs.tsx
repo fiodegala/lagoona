@@ -41,6 +41,13 @@ const ApiDocs = () => {
       description: 'Cria um novo pedido',
     },
     {
+      method: 'POST',
+      path: '/api-import',
+      scope: 'import:write',
+      description: 'Importa clientes, vendas ou pedidos em lote (máx 500/req)',
+      params: 'type (customers|sales|orders), records[]',
+    },
+    {
       method: 'GET',
       path: '/store-orders/:id',
       scope: 'orders:read',
