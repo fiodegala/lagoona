@@ -216,15 +216,44 @@ const StoreHeader = ({ categories }: StoreHeaderProps) => {
 
           {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center gap-0.5 min-w-0 flex-shrink overflow-hidden">
-            {navLinks.map((link) => (
-              <Link
-                key={link.label}
-                to={link.to}
-                className="px-3 xl:px-4 py-2 text-xs font-medium tracking-[0.1em] uppercase text-foreground/70 hover:text-store-gold transition-colors whitespace-nowrap"
-              >
-                {link.label}
-              </Link>
-            ))}
+            {navLinks.map((link) => {
+              if (link.label === 'Categorias') {
+                return (
+                  <div key={link.label} className="relative group">
+                    <Link
+                      to={link.to}
+                      className="px-3 xl:px-4 py-2 text-xs font-medium tracking-[0.1em] uppercase text-foreground/70 hover:text-store-gold transition-colors whitespace-nowrap inline-block"
+                    >
+                      {link.label}
+                    </Link>
+                    {activeCategories.length > 0 && (
+                      <div className="absolute top-full left-0 pt-1 hidden group-hover:block z-50">
+                        <div className="bg-background border rounded-lg shadow-xl p-3 min-w-[200px] space-y-0.5">
+                          {activeCategories.map((cat) => (
+                            <Link
+                              key={cat.id}
+                              to={`/loja/categoria/${cat.slug}`}
+                              className="block px-3 py-2 text-sm rounded-md hover:bg-muted transition-colors"
+                            >
+                              {cat.name}
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              }
+              return (
+                <Link
+                  key={link.label}
+                  to={link.to}
+                  className="px-3 xl:px-4 py-2 text-xs font-medium tracking-[0.1em] uppercase text-foreground/70 hover:text-store-gold transition-colors whitespace-nowrap"
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
           </nav>
 
           {/* Right Actions */}
