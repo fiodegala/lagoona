@@ -232,10 +232,10 @@ const ProductCard = memo(forwardRef<HTMLAnchorElement, ProductCardProps>(({ prod
             </div>
           )}
 
-          {/* Add to Cart Button */}
+          {/* Add to Cart Button - always visible on mobile */}
           <div className={cn(
             "absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-store-dark/80 to-transparent transition-all duration-300",
-            isHovered ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+            isMobile ? "opacity-100 translate-y-0" : (isHovered ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4")
           )}>
             <Button
               onClick={handleAddToCart}
