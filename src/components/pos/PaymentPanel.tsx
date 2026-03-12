@@ -149,7 +149,7 @@ const PaymentPanel = ({
   };
 
   return (
-    <div className="p-4 space-y-4">
+    <div className="p-4 space-y-4 overflow-y-auto max-h-full">
       {/* Channel selector */}
       <div>
         <h3 className="font-semibold mb-3">Canal do Cliente</h3>
