@@ -104,8 +104,7 @@ const NewsletterSection = () => {
   );
 };
 
-
-  const [products, setProducts] = useState<Product[]>([]);
+const HomePage = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [heroBanners, setHeroBanners] = useState<Banner[]>([]);
   const [promoBanners, setPromoBanners] = useState<Banner[]>([]);
