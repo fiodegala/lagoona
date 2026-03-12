@@ -774,6 +774,23 @@ const ProductDetails = () => {
           categoryId={product.category_id}
         />
       </div>
+
+      {/* Sticky Mobile Buy Bar */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 bg-background border-t p-3 flex items-center gap-3 lg:hidden">
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold truncate">{product.name}</p>
+          <p className="text-lg font-bold text-primary">{formatPrice(currentPrice)}</p>
+        </div>
+        <Button
+          size="lg"
+          className="gap-2 bg-store-primary text-store-accent hover:bg-store-primary/90 font-semibold shrink-0"
+          onClick={upsellHasSelection && upsellBuyTogether ? upsellBuyTogether : handleAddToCart}
+          disabled={isOutOfStock}
+        >
+          <ShoppingCart className="h-5 w-5" />
+          {isOutOfStock ? 'Esgotado' : 'Comprar'}
+        </Button>
+      </div>
     </StoreLayout>
   );
 };

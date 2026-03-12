@@ -420,6 +420,10 @@ const CheckoutPage = () => {
                       <Label htmlFor="phone">Telefone *</Label>
                       <Input id="phone" name="phone" type="tel" placeholder="(00) 00000-0000" value={formData.phone} onChange={handleInputChange} required />
                     </div>
+                    <div>
+                      <Label htmlFor="document">CPF / CNPJ</Label>
+                      <Input id="document" name="document" placeholder="000.000.000-00" value={formData.document} onChange={handleInputChange} />
+                    </div>
                   </CardContent>
                 </Card>
 

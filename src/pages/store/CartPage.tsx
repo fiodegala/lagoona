@@ -80,9 +80,35 @@ const CartPage = () => {
     );
   }
 
+  const FREE_SHIPPING_THRESHOLD = 299;
+  const remainingForFreeShipping = FREE_SHIPPING_THRESHOLD - subtotal;
+  const freeShippingProgress = Math.min(100, (subtotal / FREE_SHIPPING_THRESHOLD) * 100);
+
   return (
     <StoreLayout>
       <div className="container mx-auto px-4 py-8">
+        {/* Free Shipping Progress Bar */}
+        {!comboFreeShipping && (
+          <div className="mb-6 p-4 rounded-lg bg-muted/50 border">
+            {remainingForFreeShipping > 0 ? (
+              <>
+                <p className="text-sm mb-2">
+                  <Truck className="h-4 w-4 inline mr-1.5 text-store-primary" />
+                  Falta <strong>{formatPrice(remainingForFreeShipping)}</strong> para <strong>frete grátis!</strong>
+                </p>
+                <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+                  <div className="h-full bg-store-primary rounded-full transition-all duration-500" style={{ width: `${freeShippingProgress}%` }} />
+                </div>
+              </>
+            ) : (
+              <p className="text-sm text-green-600 font-medium">
+                <Truck className="h-4 w-4 inline mr-1.5" />
+                Parabéns! Você ganhou <strong>frete grátis!</strong> 🎉
+              </p>
+            )}
+          </div>
+        )}
+
         <h1 className="text-3xl font-bold mb-8">Carrinho de Compras</h1>
 
         <div className="grid lg:grid-cols-3 gap-8">
