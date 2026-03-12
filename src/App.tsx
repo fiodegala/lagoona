@@ -65,6 +65,7 @@ const WorkWithUsPage = lazy(() => import("./pages/store/WorkWithUsPage"));
 const CombosPage = lazy(() => import("./pages/store/CombosPage"));
 const QuoteViewPage = lazy(() => import("./pages/store/QuoteViewPage"));
 const CatalogPage = lazy(() => import("./pages/store/CatalogPage"));
+const ResellerCatalogPage = lazy(() => import("./pages/store/ResellerCatalogPage"));
 const AffiliateSignupPage = lazy(() => import("./pages/store/AffiliateSignupPage"));
 const AffiliateDashboardPage = lazy(() => import("./pages/store/AffiliateDashboardPage"));
 const AffiliateRedirectPage = lazy(() => import("./pages/store/AffiliateRedirectPage"));
