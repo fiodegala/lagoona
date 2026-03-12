@@ -603,26 +603,7 @@ const HomePage = () => {
       </section>
 
       {/* Newsletter */}
-      <section className="py-14 md:py-20 bg-store-accent">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl font-display font-bold text-white mb-2 italic">
-            Ganhe 10% OFF na primeira compra!
-          </h2>
-          <p className="text-white/50 mb-8 max-w-xl mx-auto font-light tracking-wide">
-            Cadastre seu e-mail e receba ofertas exclusivas, novidades e promoções.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center max-w-md mx-auto">
-            <input
-              type="email"
-              placeholder="Seu melhor e-mail"
-              className="flex-1 px-4 py-3 bg-white/5 border border-white/20 text-white placeholder:text-white/40 focus:outline-none focus:border-store-gold transition-colors"
-            />
-            <Button size="lg" className="font-semibold bg-store-gold text-store-dark hover:bg-store-gold/90 tracking-wide">
-              Quero meu cupom!
-            </Button>
-          </div>
-        </div>
-      </section>
+      <NewsletterSection />
     </StoreLayout>
   );
 };
