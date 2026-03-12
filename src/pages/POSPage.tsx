@@ -589,6 +589,10 @@ const POSPage = () => {
     setCustomerCreditBalance(0);
     setCartItems([]);
     setGeneralDiscount({ type: 'percentage', value: 0 });
+
+    if (typeof window !== 'undefined') {
+      window.sessionStorage.removeItem(POS_DRAFT_STORAGE_KEY);
+    }
   };
 
   const handleOpenSession = async (openingBalance: number, notes?: string) => {
