@@ -316,7 +316,7 @@ const HomePage = () => {
         </Suspense>
       )}
 
-      {/* Lançamentos - Carrossel */}
+      {/* Lançamentos - Grade */}
       <section className="py-16 md:py-20">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between mb-10">
@@ -337,48 +337,10 @@ const HomePage = () => {
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
           ) : newProducts.length > 0 ? (
-            <div className="relative overflow-hidden">
-              <div
-                id="lancamentos-carousel"
-                className="flex gap-4 md:gap-6 overflow-x-auto scrollbar-none -mx-4 px-4 touch-pan-y"
-                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-                onTouchStart={(e) => { lancamentosStartX.current = e.touches[0].clientX; }}
-                onTouchEnd={(e) => {
-                  const delta = e.changedTouches[0].clientX - lancamentosStartX.current;
-                  if (Math.abs(delta) > 50) {
-                    const el = document.getElementById('lancamentos-carousel');
-                    if (el) el.scrollBy({ left: delta < 0 ? 300 : -300, behavior: 'smooth' });
-                  }
-                }}
-              >
-                {newProducts.slice(0, 15).map((product) => (
-                  <div key={product.id} className="shrink-0 w-[160px] sm:w-[200px] md:w-[220px] lg:w-[240px]">
-                    <ProductCard product={product} meta={productsMeta[product.id]} />
-                  </div>
-                ))}
-              </div>
-              <Button
-                variant="outline"
-                size="icon"
-                className="absolute -left-3 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-background shadow-lg border z-10 hidden md:flex"
-                onClick={() => {
-                  const el = document.getElementById('lancamentos-carousel');
-                  if (el) el.scrollBy({ left: -560, behavior: 'smooth' });
-                }}
-              >
-                <ChevronLeft className="h-5 w-5" />
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                className="absolute -right-3 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-background shadow-lg border z-10 hidden md:flex"
-                onClick={() => {
-                  const el = document.getElementById('lancamentos-carousel');
-                  if (el) el.scrollBy({ left: 560, behavior: 'smooth' });
-                }}
-              >
-                <ChevronRight className="h-5 w-5" />
-              </Button>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
+              {newProducts.slice(0, 10).map((product) => (
+                <ProductCard key={product.id} product={product} meta={productsMeta[product.id]} />
+              ))}
             </div>
           ) : (
             <div className="text-center py-12 text-muted-foreground">
