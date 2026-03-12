@@ -40,7 +40,7 @@ const StoreLayout = ({ children }: StoreLayoutProps) => {
         <AIChatWidget />
         <SpinWheel />
       </Suspense>
-      <WhatsAppButton phoneNumber="556299416578" />
+      <WhatsAppButton phoneNumber="5562994165785" />
     </div>
   );
 };
