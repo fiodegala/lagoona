@@ -98,6 +98,27 @@ const PendingTransferModal: React.FC = () => {
     return () => { supabase.removeChannel(channel); };
   }, [userStoreId]);
 
+  // Repeating sound alert every 15s while there are pending transfers
+  useEffect(() => {
+    if (transfers.length > 0) {
+      playAlertSound(); // play immediately
+      alertIntervalRef.current = setInterval(() => {
+        playAlertSound();
+      }, 15000);
+    } else {
+      if (alertIntervalRef.current) {
+        clearInterval(alertIntervalRef.current);
+        alertIntervalRef.current = null;
+      }
+    }
+    return () => {
+      if (alertIntervalRef.current) {
+        clearInterval(alertIntervalRef.current);
+        alertIntervalRef.current = null;
+      }
+    };
+  }, [transfers.length, playAlertSound]);
+
   const loadPendingForMyStore = async () => {
     // Fetch stores fresh each time to avoid stale closures
     const { data: storesData } = await supabase.from('stores').select('id, name, type');
