@@ -607,6 +607,9 @@ const POSPage = () => {
     await posService.closeSession(session.id, closingBalance, notes);
     setSession(null);
     await offlineService.clearCurrentSession();
+    if (typeof window !== 'undefined') {
+      window.sessionStorage.removeItem(POS_DRAFT_STORAGE_KEY);
+    }
     toast({ title: 'Caixa fechado!' });
   };
 
