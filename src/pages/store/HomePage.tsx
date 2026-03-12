@@ -105,6 +105,7 @@ const NewsletterSection = () => {
 };
 
 const HomePage = () => {
+  const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [heroBanners, setHeroBanners] = useState<Banner[]>([]);
   const [promoBanners, setPromoBanners] = useState<Banner[]>([]);
