@@ -127,6 +127,63 @@ const POSPage = () => {
     loadSession();
   }, []);
 
+  useEffect(() => {
+    if (typeof window === 'undefined' || isLoading || !session || hasRestoredDraftRef.current) return;
+
+    try {
+      const rawDraft = window.sessionStorage.getItem(POS_DRAFT_STORAGE_KEY);
+      if (!rawDraft) return;
+
+      const draft = JSON.parse(rawDraft) as POSDraftState;
+      if (!draft || draft.sessionId !== session.id) {
+        window.sessionStorage.removeItem(POS_DRAFT_STORAGE_KEY);
+        return;
+      }
+
+      const isValidStep = STEPS.some((step) => step.key === draft.currentStep);
+      setCurrentStep(isValidStep ? draft.currentStep : 'sale-type');
+      setSaleType(draft.saleType || 'varejo');
+      setSelectedSeller(draft.selectedSeller ?? null);
+      setSelectedCustomer(draft.selectedCustomer ?? null);
+      setCartItems(Array.isArray(draft.cartItems) ? draft.cartItems : []);
+      setGeneralDiscount(
+        draft.generalDiscount?.type
+          ? draft.generalDiscount
+          : { type: 'percentage', value: 0 }
+      );
+    } catch (error) {
+      console.error('Error restoring POS draft:', error);
+      window.sessionStorage.removeItem(POS_DRAFT_STORAGE_KEY);
+    } finally {
+      hasRestoredDraftRef.current = true;
+    }
+  }, [isLoading, session]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || isLoading || !session || !hasRestoredDraftRef.current) return;
+
+    const draft: POSDraftState = {
+      sessionId: session.id,
+      currentStep,
+      saleType,
+      selectedSeller,
+      selectedCustomer,
+      cartItems,
+      generalDiscount,
+    };
+
+    window.sessionStorage.setItem(POS_DRAFT_STORAGE_KEY, JSON.stringify(draft));
+  }, [
+    isLoading,
+    session,
+    currentStep,
+    saleType,
+    selectedSeller,
+    selectedCustomer,
+    cartItems,
+    generalDiscount,
+  ]);
+
   // Calculate totals
   const subtotal = cartItems.reduce((sum, item) => sum + item.unit_price * item.quantity, 0);
   const itemDiscounts = cartItems.reduce((sum, item) => sum + item.discount_amount, 0);
