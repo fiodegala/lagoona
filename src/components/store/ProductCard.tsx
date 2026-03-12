@@ -55,6 +55,7 @@ const ProductCard = memo(forwardRef<HTMLAnchorElement, ProductCardProps>(({ prod
   const { isFavorite, toggleFavorite } = useFavorites();
   const navigate = useNavigate();
   const [isHovered, setIsHovered] = useState(false);
+  const isMobile = 'ontouchstart' in window;
   
   // Use pre-fetched meta if available, otherwise fall back to local fetch
   const [localColorValues, setLocalColorValues] = useState<string[]>([]);
@@ -63,6 +64,8 @@ const ProductCard = memo(forwardRef<HTMLAnchorElement, ProductCardProps>(({ prod
 
   const colorValues = meta ? meta.colorValues : localColorValues;
   const hasVariations = meta ? meta.hasVariations : localHasVariations;
+  const avgRating = meta?.avgRating || 0;
+  const reviewCount = meta?.reviewCount || 0;
   
   const isWishlisted = isFavorite(product.id);
 
@@ -229,10 +232,10 @@ const ProductCard = memo(forwardRef<HTMLAnchorElement, ProductCardProps>(({ prod
             </div>
           )}
 
-          {/* Add to Cart Button */}
+          {/* Add to Cart Button - always visible on mobile */}
           <div className={cn(
             "absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-store-dark/80 to-transparent transition-all duration-300",
-            isHovered ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+            isMobile ? "opacity-100 translate-y-0" : (isHovered ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4")
           )}>
             <Button
               onClick={handleAddToCart}
@@ -247,19 +250,21 @@ const ProductCard = memo(forwardRef<HTMLAnchorElement, ProductCardProps>(({ prod
 
         {/* Content */}
         <div className="p-4">
-          {/* Rating */}
-          <div className="flex items-center gap-1 mb-2">
-            {[1, 2, 3, 4, 5].map((star) => (
-              <Star
-                key={star}
-                className={cn(
-                  "h-3 w-3",
-                  star <= 4 ? "fill-warning text-warning" : "text-muted-foreground/30"
-                )}
-              />
-            ))}
-            <span className="text-xs text-muted-foreground ml-1">(128)</span>
-          </div>
+          {/* Rating - real data */}
+          {reviewCount > 0 && (
+            <div className="flex items-center gap-1 mb-2">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <Star
+                  key={star}
+                  className={cn(
+                    "h-3 w-3",
+                    star <= Math.round(avgRating) ? "fill-warning text-warning" : "text-muted-foreground/30"
+                  )}
+                />
+              ))}
+              <span className="text-xs text-muted-foreground ml-1">({reviewCount})</span>
+            </div>
+          )}
 
           {/* Title */}
           <h3 className="font-medium text-sm line-clamp-2 min-h-[2.5rem] group-hover:text-store-gold transition-colors">
@@ -306,7 +311,7 @@ const ProductCard = memo(forwardRef<HTMLAnchorElement, ProductCardProps>(({ prod
           </div>
 
           {/* Free shipping badge */}
-          {product.price >= 199 && (
+          {product.price >= 299 && (
             <Badge variant="outline" className="mt-2 text-store-gold border-store-gold/40 text-xs">
               Frete Grátis
             </Badge>

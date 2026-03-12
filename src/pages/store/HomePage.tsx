@@ -1,6 +1,6 @@
 import { useEffect, useState, lazy, Suspense, useCallback, useRef, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Loader2, ShoppingBag, Truck, RefreshCw, Shield, MessageCircle, TrendingUp, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowRight, Loader2, ShoppingBag, Truck, RefreshCw, Shield, MessageCircle, TrendingUp, ChevronLeft, ChevronRight, Instagram } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import StoreLayout from '@/components/store/StoreLayout';
 import { useSwipe } from '@/hooks/useSwipe';
@@ -12,6 +12,13 @@ import { bannersService, Banner } from '@/services/banners';
 import { enrichProductsWithStock } from '@/services/stockService';
 import { supabase } from '@/integrations/supabase/client';
 import { useProductCardsMeta } from '@/hooks/useProductCardsMeta';
+import { toast } from 'sonner';
+import insta1 from '@/assets/insta-1.jpg';
+import insta2 from '@/assets/insta-2.jpg';
+import insta3 from '@/assets/insta-3.jpg';
+import insta4 from '@/assets/insta-4.jpg';
+import insta5 from '@/assets/insta-5.jpg';
+import insta6 from '@/assets/insta-6.jpg';
 
 // Lazy load below-fold sections
 const DealsCountdownSection = lazy(() => import('@/components/store/DealsCountdownSection'));
@@ -30,6 +37,71 @@ const normalizeBannerUrl = (url: string | null): string | null => {
     // already a relative path
   }
   return url;
+};
+
+const NewsletterSection = () => {
+  const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [subscribed, setSubscribed] = useState(false);
+
+  const handleSubscribe = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim() || !/\S+@\S+\.\S+/.test(email)) {
+      toast.error('Digite um e-mail válido');
+      return;
+    }
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from('newsletter_subscribers')
+        .insert({ email: email.trim().toLowerCase() });
+      if (error) {
+        if (error.code === '23505') {
+          toast.info('Este e-mail já está cadastrado!');
+        } else {
+          throw error;
+        }
+      } else {
+        toast.success('Cadastrado com sucesso! 🎉');
+      }
+      setSubscribed(true);
+    } catch (err) {
+      console.error('Newsletter error:', err);
+      toast.error('Erro ao cadastrar. Tente novamente.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <section className="py-14 md:py-20 bg-store-accent">
+      <div className="container mx-auto px-4 text-center">
+        <h2 className="text-3xl font-display font-bold text-white mb-2 italic">
+          Ganhe 10% OFF na primeira compra!
+        </h2>
+        <p className="text-white/50 mb-8 max-w-xl mx-auto font-light tracking-wide">
+          Cadastre seu e-mail e receba ofertas exclusivas, novidades e promoções.
+        </p>
+        {subscribed ? (
+          <p className="text-white font-semibold text-lg">✅ Obrigado! Fique de olho no seu e-mail.</p>
+        ) : (
+          <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row gap-3 justify-center max-w-md mx-auto">
+            <input
+              type="email"
+              placeholder="Seu melhor e-mail"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="flex-1 px-4 py-3 bg-white/5 border border-white/20 text-white placeholder:text-white/40 focus:outline-none focus:border-store-gold transition-colors rounded-md"
+              required
+            />
+            <Button type="submit" size="lg" disabled={loading} className="font-semibold bg-store-gold text-store-dark hover:bg-store-gold/90 tracking-wide">
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Quero meu cupom!'}
+            </Button>
+          </form>
+        )}
+      </div>
+    </section>
+  );
 };
 
 const HomePage = () => {
@@ -262,7 +334,7 @@ const HomePage = () => {
               <div className="container mx-auto px-4">
                 <div className="max-w-2xl">
                   <span className="inline-block px-5 py-1.5 text-store-gold text-xs font-semibold tracking-[0.25em] uppercase mb-6 border border-store-gold/40">
-                    Nova Coleção 2024
+                    Nova Coleção 2025
                   </span>
                   <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold text-white mb-6 leading-tight italic">
                     Elegância que define o estilo moderno
@@ -545,21 +617,37 @@ const HomePage = () => {
         <VideoTestimonialsSection />
       </Suspense>
 
-      {/* Instagram Feed - Elfsight Widget */}
+      {/* Instagram Feed */}
       <section className="py-16 md:py-20 bg-store-secondary/30">
         <div className="container mx-auto px-4">
-          <div className="text-center">
+          <div className="text-center mb-10">
             <h2 className="text-2xl md:text-3xl font-display font-bold italic">Siga-nos no Instagram</h2>
             <div className="w-12 h-0.5 bg-store-gold mt-2 mx-auto" />
-            <p className="text-muted-foreground mt-3 font-light tracking-wide">@fiodegala</p>
-            <div className="mt-8">
-              <Button asChild variant="outline" className="gap-2 border-store-gold/30 text-store-gold hover:bg-store-gold/10 font-semibold tracking-wide">
-                <a href="https://www.instagram.com/fiodegala/" target="_blank" rel="noopener noreferrer">
-                  Seguir no Instagram
-                  <ArrowRight className="h-4 w-4" />
-                </a>
-              </Button>
-            </div>
+            <p className="text-muted-foreground mt-3 font-light tracking-wide">@fiodegalafdg</p>
+          </div>
+          <div className="grid grid-cols-3 md:grid-cols-6 gap-2 md:gap-3">
+            {[insta1, insta2, insta3, insta4, insta5, insta6].map((img, idx) => (
+              <a
+                key={idx}
+                href="https://www.instagram.com/fiodegalafdg/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group relative aspect-square overflow-hidden rounded-lg"
+              >
+                <img src={img} alt={`Instagram ${idx + 1}`} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" loading="lazy" />
+                <div className="absolute inset-0 bg-store-dark/0 group-hover:bg-store-dark/40 transition-colors flex items-center justify-center">
+                  <Instagram className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                </div>
+              </a>
+            ))}
+          </div>
+          <div className="text-center mt-8">
+            <Button asChild variant="outline" className="gap-2 border-store-gold/30 text-store-gold hover:bg-store-gold/10 font-semibold tracking-wide">
+              <a href="https://www.instagram.com/fiodegalafdg/" target="_blank" rel="noopener noreferrer">
+                Seguir no Instagram
+                <ArrowRight className="h-4 w-4" />
+              </a>
+            </Button>
           </div>
         </div>
       </section>
@@ -603,26 +691,7 @@ const HomePage = () => {
       </section>
 
       {/* Newsletter */}
-      <section className="py-14 md:py-20 bg-store-accent">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl font-display font-bold text-white mb-2 italic">
-            Ganhe 10% OFF na primeira compra!
-          </h2>
-          <p className="text-white/50 mb-8 max-w-xl mx-auto font-light tracking-wide">
-            Cadastre seu e-mail e receba ofertas exclusivas, novidades e promoções.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center max-w-md mx-auto">
-            <input
-              type="email"
-              placeholder="Seu melhor e-mail"
-              className="flex-1 px-4 py-3 bg-white/5 border border-white/20 text-white placeholder:text-white/40 focus:outline-none focus:border-store-gold transition-colors"
-            />
-            <Button size="lg" className="font-semibold bg-store-gold text-store-dark hover:bg-store-gold/90 tracking-wide">
-              Quero meu cupom!
-            </Button>
-          </div>
-        </div>
-      </section>
+      <NewsletterSection />
     </StoreLayout>
   );
 };
