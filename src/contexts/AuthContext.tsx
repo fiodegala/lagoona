@@ -61,6 +61,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [allowedMenus, setAllowedMenus] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Refs prevent stale-closure behavior inside onAuthStateChange
+  const currentUserIdRef = useRef<string | null>(null);
+  const authBootstrappedRef = useRef(false);
+
   const fetchUserData = async (userId: string): Promise<void> => {
     try {
       // Fetch profile
