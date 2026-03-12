@@ -386,7 +386,7 @@ const DataImport = () => {
                             <FileText className="h-3 w-3" />
                             {fileName}
                           </Badge>
-                          <Badge className="bg-green-500/10 text-green-600 gap-1">
+                          <Badge className="bg-success/10 text-success gap-1">
                             <CheckCircle2 className="h-3 w-3" />
                             {validCount} válido(s)
                           </Badge>
