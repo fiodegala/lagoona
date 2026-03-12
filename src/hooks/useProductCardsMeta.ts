@@ -69,14 +69,31 @@ export function useProductCardsMeta(productIds: string[]) {
         const hasVarSet = new Set<string>();
         variations?.forEach(v => hasVarSet.add(v.product_id));
 
+        // 4. Fetch approved reviews for rating display
+        const { data: reviews } = await supabase
+          .from('product_reviews')
+          .select('product_id, rating')
+          .in('product_id', productIds)
+          .eq('is_approved', true);
+
+        const reviewMap: Record<string, { sum: number; count: number }> = {};
+        reviews?.forEach(r => {
+          if (!reviewMap[r.product_id]) reviewMap[r.product_id] = { sum: 0, count: 0 };
+          reviewMap[r.product_id].sum += r.rating;
+          reviewMap[r.product_id].count += 1;
+        });
+
         if (cancelled) return;
 
         // Build meta map
         const result: Record<string, ProductCardMeta> = {};
         productIds.forEach(pid => {
+          const rv = reviewMap[pid];
           result[pid] = {
             colorValues: colorValuesMap[pid] || [],
             hasVariations: hasVarSet.has(pid),
+            avgRating: rv ? rv.sum / rv.count : 0,
+            reviewCount: rv ? rv.count : 0,
           };
         });
 
