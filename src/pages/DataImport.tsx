@@ -435,7 +435,7 @@ const DataImport = () => {
                                   {record.errors.length > 0 ? (
                                     <span className="text-sm text-destructive">{record.errors.join(', ')}</span>
                                   ) : (
-                                    <span className="text-green-500 text-sm">OK</span>
+                                    <span className="text-success text-sm">OK</span>
                                   )}
                                 </TableCell>
                               </TableRow>
