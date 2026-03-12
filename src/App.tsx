@@ -353,6 +353,15 @@ const App = () => (
                 }
               />
 
+              <Route
+                path="/admin/importar-dados"
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <DataImport />
+                  </ProtectedRoute>
+                }
+              />
+
               {/* Legacy redirects for admin routes */}
               <Route path="/products" element={<Navigate to="/admin/products" replace />} />
               <Route path="/categories" element={<Navigate to="/admin/categories" replace />} />
