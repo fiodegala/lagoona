@@ -222,6 +222,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = async () => {
     await supabase.auth.signOut();
+    currentUserIdRef.current = null;
+    authBootstrappedRef.current = true;
     setUser(null);
     setSession(null);
     setProfile(null);
