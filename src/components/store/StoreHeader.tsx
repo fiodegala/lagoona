@@ -198,7 +198,7 @@ const StoreHeader = ({ categories }: StoreHeaderProps) => {
 
   return (
     <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-md border-b border-border/50">
-      <div className="container mx-auto px-2 sm:px-4 max-w-full overflow-hidden">
+      <div className="container mx-auto px-2 sm:px-4 max-w-full">
         <div className="flex items-center justify-between h-16 min-w-0">
           {/* Logo */}
           <Link to="/" className="flex items-center shrink-0">
@@ -215,24 +215,24 @@ const StoreHeader = ({ categories }: StoreHeaderProps) => {
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center gap-0.5 min-w-0 flex-shrink overflow-hidden">
+          <nav className="hidden lg:flex items-center gap-0.5 min-w-0 flex-shrink overflow-visible">
             {navLinks.map((link) => {
               if (link.label === 'Categorias') {
               return (
-                  <div key={link.label} className="relative group/cat">
+                  <div key={link.label} className="relative group">
                     <Link
                       to={link.to}
                       className="px-3 xl:px-4 py-2 text-xs font-medium tracking-[0.1em] uppercase text-foreground/70 hover:text-store-gold transition-colors whitespace-nowrap inline-flex items-center gap-1"
                     >
                       {link.label}
                       {activeCategories.length > 0 && (
-                        <svg className="h-3 w-3 transition-transform group-hover/cat:rotate-180" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <svg className="h-3 w-3 transition-transform group-hover:rotate-180" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
                           <path d="M3 5L6 8L9 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                         </svg>
                       )}
                     </Link>
                     {activeCategories.length > 0 && (
-                      <div className="absolute top-full left-0 invisible opacity-0 group-hover/cat:visible group-hover/cat:opacity-100 transition-all duration-200 z-50">
+                      <div className="absolute top-full left-0 invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-all duration-200 z-50">
                         <div className="pt-2">
                           <div className="bg-background border rounded-lg shadow-xl p-3 min-w-[220px] space-y-0.5">
                             {activeCategories.map((cat) => (
