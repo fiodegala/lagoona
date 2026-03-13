@@ -96,6 +96,18 @@ const ProductDetails = () => {
     loadProduct();
   }, [id]);
 
+  useEffect(() => {
+    const loadTryOnConfig = async () => {
+      const { data } = await supabase
+        .from('store_config')
+        .select('value')
+        .eq('key', 'ai_tryon_enabled')
+        .maybeSingle();
+      setTryOnEnabled(data ? ((data.value as any) === true || data.value === 'true') : true);
+    };
+    loadTryOnConfig();
+  }, []);
+
   const handleVariationSelect = useCallback((variation: ProductVariation | null) => {
     setSelectedVariation(variation);
     if (variation?.image_url) {
