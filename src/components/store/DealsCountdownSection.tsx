@@ -48,8 +48,8 @@ const TimeBlock = ({ value, label }: { value: number; label: string }) => (
   </div>
 );
 
-const DealsCountdownSection = ({ products, hideProducts = false }: DealsCountdownSectionProps) => {
-  const [config, setConfig] = useState<DealsConfig>({ enabled: true, end_date: null });
+const DealsCountdownSection = ({ products, hideProducts = false, isHomePage = false }: DealsCountdownSectionProps) => {
+  const [config, setConfig] = useState<DealsConfig>({ enabled: true, end_date: null, show_on_home: true });
   const [timeLeft, setTimeLeft] = useState(0);
   const [loaded, setLoaded] = useState(false);
 
