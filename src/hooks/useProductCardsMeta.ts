@@ -45,7 +45,7 @@ export function useProductCardsMeta(productIds: string[]) {
 
           const { data: values } = await supabase
             .from('product_attribute_values')
-            .select('attribute_id, value')
+            .select('attribute_id, value, color_hex')
             .in('attribute_id', attrIds);
 
           if (values) {
@@ -53,7 +53,7 @@ export function useProductCardsMeta(productIds: string[]) {
               const pid = attrToProduct[v.attribute_id];
               if (pid) {
                 if (!colorValuesMap[pid]) colorValuesMap[pid] = [];
-                colorValuesMap[pid].push(v.value);
+                colorValuesMap[pid].push({ value: v.value, color_hex: v.color_hex });
               }
             });
           }
