@@ -116,6 +116,58 @@ serve(async (req) => {
       }
     }
 
+    if (type === "sales_sheet") {
+      // Import from Google Sheets cash register format
+      const { data: storeId } = await supabase.rpc("user_store_id", { _user_id: user.id });
+
+      for (let i = 0; i < records.length; i += BATCH_SIZE) {
+        const batch = records.slice(i, i + BATCH_SIZE).map((r: any) => {
+          const parcelas = r.parcelas ? r.parcelas.replace(/[^0-9]/g, '') : '';
+          const paymentDetails: any = {};
+          if (r.forma_pagamento) paymentDetails.method1 = r.forma_pagamento;
+          if (r.forma_pagamento_2) paymentDetails.method2 = r.forma_pagamento_2;
+          if (parcelas) paymentDetails.installments = parseInt(parcelas, 10);
+          if (r.como_conheceu) paymentDetails.referral_source = r.como_conheceu;
+          if (r.vendedor) paymentDetails.seller = r.vendedor;
+          if (r.online_ou_presencial) paymentDetails.channel = r.online_ou_presencial;
+          if (r.nome_loja) paymentDetails.store_name = r.nome_loja;
+          if (r.whatsapp) paymentDetails.whatsapp = r.whatsapp;
+          if (r.cidade) paymentDetails.city = r.cidade;
+          if (r.estado) paymentDetails.state = r.estado;
+          if (r.referencia) paymentDetails.product_ref = r.referencia;
+          if (r.venda_promocional) paymentDetails.is_promo = r.venda_promocional;
+
+          return {
+            local_id: crypto.randomUUID(),
+            user_id: user.id,
+            store_id: storeId || null,
+            customer_name: r.cliente || null,
+            items: r.referencia ? [{
+              name: r.referencia,
+              quantity: r.quantidade || 1,
+              price: r.valor_unitario || r.valor_total || 0,
+            }] : [],
+            subtotal: r.valor_total || 0,
+            total: r.valor_total || 0,
+            discount_amount: r.valor_desconto || 0,
+            payment_method: r.forma_pagamento || "other",
+            sale_type: r.tipo_venda || "varejo",
+            status: "completed",
+            notes: `Importado da planilha de caixa | Vendedor: ${r.vendedor || '-'} | Ref: ${r.referencia || '-'} | ${r.como_conheceu || ''}`,
+            payment_details: paymentDetails,
+            created_at: r.data || new Date().toISOString(),
+          };
+        });
+
+        const { data, error } = await supabase.from("pos_sales").insert(batch).select("id");
+        if (error) {
+          errors.push(`Lote ${Math.floor(i / BATCH_SIZE) + 1}: ${error.message}`);
+        } else {
+          inserted += data?.length || 0;
+        }
+      }
+    }
+
     if (type === "orders") {
       for (let i = 0; i < records.length; i += BATCH_SIZE) {
         const batch = records.slice(i, i + BATCH_SIZE).map((r: any) => ({
