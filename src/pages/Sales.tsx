@@ -821,6 +821,27 @@ const Sales = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Convert to Site Order Dialog */}
+      <AlertDialog open={!!convertConfirm} onOpenChange={o => { if (!o) setConvertConfirm(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Converter em Pedido do Site</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação criará um pedido na seção de Pedidos do Site e vinculará esta venda à loja "Site". Deseja continuar?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isConvertingToOrder}>Voltar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConvertToSiteOrder}
+              disabled={isConvertingToOrder}
+            >
+              {isConvertingToOrder ? 'Convertendo...' : 'Confirmar Conversão'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AdminLayout>
   );
 };
