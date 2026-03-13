@@ -18,6 +18,7 @@ import RecoveryCouponSettings from '@/components/settings/RecoveryCouponSettings
 import SpinWheelSettings from '@/components/settings/SpinWheelSettings';
 import WholesaleVideoSettings from '@/components/settings/WholesaleVideoSettings';
 import LowStockAlertSettings from '@/components/settings/LowStockAlertSettings';
+import AITryOnSettings from '@/components/settings/AITryOnSettings';
 
 const Settings = () => {
   const { profile, isAdmin, user } = useAuth();
