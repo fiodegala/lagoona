@@ -120,6 +120,17 @@ const DealsCountdownSettings = () => {
           />
         </div>
 
+        <div className="flex items-center justify-between">
+          <div>
+            <Label>Exibir na Home</Label>
+            <p className="text-xs text-muted-foreground mt-0.5">Mostrar seção de ofertas na página inicial. Se desativado, ofertas ficam apenas na página de ofertas.</p>
+          </div>
+          <Switch
+            checked={config.show_on_home}
+            onCheckedChange={(checked) => setConfig(prev => ({ ...prev, show_on_home: checked }))}
+          />
+        </div>
+
         {config.enabled && (
           <div className="space-y-4">
             <div className="space-y-2">
