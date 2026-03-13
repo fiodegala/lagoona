@@ -25,6 +25,7 @@ import ProductAITryOn from '@/components/store/ProductAITryOn';
 import UpsellSection from '@/components/store/UpsellSection';
 import { useCart } from '@/contexts/CartContext';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { getOptimizedImageUrl } from '@/lib/imageUtils';
 import { trackMetaViewContent } from '@/lib/metaPixel';
