@@ -150,7 +150,7 @@ serve(async (req) => {
             subtotal: r.valor_total || 0,
             total: r.valor_total || 0,
             discount_amount: r.valor_desconto || 0,
-            payment_method: r.forma_pagamento || "other",
+            payment_method: r.forma_pagamento || "cash",
             sale_type: r.tipo_venda || "varejo",
             status: "completed",
             notes: `Importado da planilha de caixa | Vendedor: ${r.vendedor || '-'} | Ref: ${r.referencia || '-'} | ${r.como_conheceu || ''}`,
