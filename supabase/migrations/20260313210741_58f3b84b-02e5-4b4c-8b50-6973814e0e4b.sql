@@ -1,0 +1,1 @@
+DELETE FROM pos_sales WHERE store_id = 'ad756bb1-e8ff-43a7-ac5c-c600ba7bd0e3' AND notes LIKE '%Importado da planilha%';
