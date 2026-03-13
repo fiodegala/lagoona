@@ -70,6 +70,7 @@ const ResellerCatalogPage = lazy(() => import("./pages/store/ResellerCatalogPage
 const AffiliateSignupPage = lazy(() => import("./pages/store/AffiliateSignupPage"));
 const AffiliateDashboardPage = lazy(() => import("./pages/store/AffiliateDashboardPage"));
 const AffiliateRedirectPage = lazy(() => import("./pages/store/AffiliateRedirectPage"));
+const ApiImportDocsPage = lazy(() => import("./pages/store/ApiImportDocsPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -127,6 +128,7 @@ const App = () => (
               <Route path="/afiliados" element={<AffiliateSignupPage />} />
               <Route path="/afiliados/painel" element={<AffiliateDashboardPage />} />
               <Route path="/r/:code" element={<AffiliateRedirectPage />} />
+              <Route path="/docs/api-import" element={<ApiImportDocsPage />} />
 
               {/* Admin Routes */}
               <Route path="/login" element={<Login />} />
