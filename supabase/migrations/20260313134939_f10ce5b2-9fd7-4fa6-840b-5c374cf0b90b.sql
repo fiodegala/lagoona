@@ -1,0 +1,1 @@
+ALTER TABLE public.product_attribute_values ADD COLUMN color_hex text DEFAULT NULL;
