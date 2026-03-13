@@ -70,6 +70,7 @@ const ResellerCatalogPage = lazy(() => import("./pages/store/ResellerCatalogPage
 const AffiliateSignupPage = lazy(() => import("./pages/store/AffiliateSignupPage"));
 const AffiliateDashboardPage = lazy(() => import("./pages/store/AffiliateDashboardPage"));
 const AffiliateRedirectPage = lazy(() => import("./pages/store/AffiliateRedirectPage"));
+const ApiImportDocsPage = lazy(() => import("./pages/store/ApiImportDocsPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
