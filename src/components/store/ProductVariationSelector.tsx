@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { variationsService, ProductVariation, ProductAttribute } from '@/services/variations';
 import { supabase } from '@/integrations/supabase/client';
+import { COLOR_MAP, isLightColor } from '@/lib/colorMap';
 
 interface ProductVariationSelectorProps {
   productId: string;
