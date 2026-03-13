@@ -120,30 +120,34 @@ serve(async (req) => {
       // Import from Google Sheets cash register format
       const { data: storeId } = await supabase.rpc("user_store_id", { _user_id: user.id });
 
-      // Build seller name -> user_id map from profiles
-      const sellerNames = [...new Set(records.map((r: any) => (r.vendedor || "").trim().toLowerCase()).filter(Boolean))];
+      // Build seller name -> user_id map from profiles (fetch ALL profiles to guarantee matching)
       const sellerMap: Record<string, string> = {};
-      if (sellerNames.length > 0) {
-        const { data: profiles } = await supabase
-          .from("profiles")
-          .select("user_id, full_name")
-          .or(sellerNames.map(n => `full_name.ilike.%${n}%`).join(","));
-        if (profiles) {
-          for (const p of profiles) {
-            sellerMap[p.full_name.trim().toLowerCase()] = p.user_id;
+      const { data: allProfiles } = await supabase
+        .from("profiles")
+        .select("user_id, full_name");
+      if (allProfiles) {
+        for (const p of allProfiles) {
+          // Store by lowercase full_name AND by first name for partial matching
+          const fullLower = p.full_name.trim().toLowerCase();
+          sellerMap[fullLower] = p.user_id;
+          const firstName = fullLower.split(/[\s\-]/)[0];
+          if (firstName && !sellerMap[firstName]) {
+            sellerMap[firstName] = p.user_id;
           }
         }
       }
+      console.log("Seller map keys:", Object.keys(sellerMap));
 
       const resolveUserId = (vendedor: string | undefined): string => {
         if (!vendedor) return user.id;
         const key = vendedor.trim().toLowerCase();
-        // Try exact match first
+        // Try exact match (full name or first name)
         if (sellerMap[key]) return sellerMap[key];
         // Try partial match
         for (const [name, uid] of Object.entries(sellerMap)) {
           if (name.includes(key) || key.includes(name)) return uid;
         }
+        console.log("No match found for seller:", vendedor);
         return user.id;
       };
 
