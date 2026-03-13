@@ -244,12 +244,12 @@ const ProductCard = memo(forwardRef<HTMLAnchorElement, ProductCardProps>(({ prod
           {/* Color Swatches */}
           {colorValues.length > 0 && (
             <div className="flex items-center gap-1.5 mt-2">
-              {colorValues.slice(0, 5).map((color, idx) => {
-                const hex = COLOR_MAP[color.toLowerCase().trim()] || '#CBD5E1';
+              {colorValues.slice(0, 5).map((colorMeta, idx) => {
+                const hex = colorMeta.color_hex || COLOR_MAP[colorMeta.value.toLowerCase().trim()] || '#CBD5E1';
                 return (
                   <span
                     key={idx}
-                    title={color}
+                    title={colorMeta.value}
                     className={cn(
                       "h-4 w-4 rounded-full shrink-0",
                       isLightColor(hex) && "border border-border"
