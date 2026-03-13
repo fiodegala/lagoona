@@ -28,7 +28,7 @@ const ProductCard = memo(forwardRef<HTMLAnchorElement, ProductCardProps>(({ prod
   const isMobile = 'ontouchstart' in window;
   
   // Use pre-fetched meta if available, otherwise fall back to local fetch
-  const [localColorValues, setLocalColorValues] = useState<string[]>([]);
+  const [localColorValues, setLocalColorValues] = useState<ColorValueMeta[]>([]);
   const [localHasVariations, setLocalHasVariations] = useState(false);
   const [localLoaded, setLocalLoaded] = useState(!!meta);
 
