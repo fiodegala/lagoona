@@ -265,6 +265,73 @@ for i in range(0, len(vendas), BATCH):
           </CardContent>
         </Card>
 
+        {/* Google Sheets - Apps Script */}
+        <Card>
+          <CardHeader>
+            <CardTitle>6. Google Sheets → Apps Script (direto do Sheets)</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              No Google Sheets, vá em <strong>Extensões → Apps Script</strong> e cole o código abaixo. 
+              Use os mesmos nomes de campo da API como cabeçalhos da planilha.
+            </p>
+
+            <div>
+              <h4 className="text-sm font-semibold mb-2">Estrutura da planilha:</h4>
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs border">
+                  <thead><tr className="bg-muted"><th className="border px-2 py-1">cliente</th><th className="border px-2 py-1">valor_total</th><th className="border px-2 py-1">forma_pagamento</th><th className="border px-2 py-1">tipo_venda</th><th className="border px-2 py-1">data</th></tr></thead>
+                  <tbody>
+                    <tr><td className="border px-2 py-1">Maria Silva</td><td className="border px-2 py-1">259.90</td><td className="border px-2 py-1">pix</td><td className="border px-2 py-1">varejo</td><td className="border px-2 py-1">2024-01-15T14:30:00Z</td></tr>
+                    <tr><td className="border px-2 py-1">João Santos</td><td className="border px-2 py-1">189.90</td><td className="border px-2 py-1">cartao_credito</td><td className="border px-2 py-1">varejo</td><td className="border px-2 py-1">2024-02-20T10:00:00Z</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div className="relative">
+              <Button
+                variant="outline"
+                size="sm"
+                className="absolute top-2 right-2 z-10"
+                onClick={() => copy(appsScriptCode)}
+              >
+                <Copy className="h-4 w-4 mr-2" />
+                Copiar
+              </Button>
+              <pre className="bg-muted p-4 rounded-lg text-xs overflow-x-auto max-h-[500px]">
+                {appsScriptCode}
+              </pre>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Google Sheets - Python */}
+        <Card>
+          <CardHeader>
+            <CardTitle>7. Google Sheets → Python (automação)</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Ideal para automação e agendamento. Requer a biblioteca <code className="bg-muted px-1 rounded text-xs">gspread</code> e credenciais de Service Account do Google.
+            </p>
+            <div className="relative">
+              <Button
+                variant="outline"
+                size="sm"
+                className="absolute top-2 right-2 z-10"
+                onClick={() => copy(pythonGsheetsScript)}
+              >
+                <Copy className="h-4 w-4 mr-2" />
+                Copiar
+              </Button>
+              <pre className="bg-muted p-4 rounded-lg text-xs overflow-x-auto max-h-[500px]">
+                {pythonGsheetsScript}
+              </pre>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Resposta */}
         <Card>
           <CardHeader>
