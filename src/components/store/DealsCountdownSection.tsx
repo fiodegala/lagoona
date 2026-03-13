@@ -15,6 +15,7 @@ interface DealsCountdownSectionProps {
 interface DealsConfig {
   enabled: boolean;
   end_date: string | null;
+  show_on_home: boolean;
 }
 
 const getTimeLeft = (endDate: string | null) => {
