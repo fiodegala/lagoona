@@ -12,12 +12,13 @@ import {
 } from '@/components/ui/table';
 import {
   Upload, FileText, AlertCircle, CheckCircle2, Download, Loader2,
-  Users, ShoppingCart, Receipt, Database,
+  Users, ShoppingCart, Receipt, Database, FileSpreadsheet,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import SalesSheetImport from '@/components/SalesSheetImport';
 
-type ImportType = 'customers' | 'sales' | 'orders';
+type ImportType = 'customers' | 'sales' | 'orders' | 'sales_sheet';
 
 interface ParsedRecord {
   data: Record<string, string>;
