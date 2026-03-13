@@ -384,7 +384,7 @@ const HomePage = () => {
       {/* Ofertas do Dia com Countdown */}
       {!isLoading && (
         <Suspense fallback={null}>
-          <DealsCountdownSection products={dealProducts} />
+          <DealsCountdownSection products={dealProducts} isHomePage />
         </Suspense>
       )}
 

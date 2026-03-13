@@ -16,11 +16,12 @@ const DEALS_CONFIG_KEY = 'deals_countdown';
 
 interface DealsConfig {
   enabled: boolean;
-  end_date: string | null; // ISO string
+  end_date: string | null;
+  show_on_home: boolean;
 }
 
 const DealsCountdownSettings = () => {
-  const [config, setConfig] = useState<DealsConfig>({ enabled: true, end_date: null });
+  const [config, setConfig] = useState<DealsConfig>({ enabled: true, end_date: null, show_on_home: true });
   const [date, setDate] = useState<Date | undefined>();
   const [time, setTime] = useState('23:59');
   const [saving, setSaving] = useState(false);
@@ -67,6 +68,7 @@ const DealsCountdownSettings = () => {
       const newConfig: DealsConfig = {
         enabled: config.enabled,
         end_date: endDate,
+        show_on_home: config.show_on_home,
       };
 
       const { data: existing } = await supabase
@@ -115,6 +117,17 @@ const DealsCountdownSettings = () => {
           <Switch
             checked={config.enabled}
             onCheckedChange={(checked) => setConfig(prev => ({ ...prev, enabled: checked }))}
+          />
+        </div>
+
+        <div className="flex items-center justify-between">
+          <div>
+            <Label>Exibir na Home</Label>
+            <p className="text-xs text-muted-foreground mt-0.5">Mostrar seção de ofertas na página inicial. Se desativado, ofertas ficam apenas na página de ofertas.</p>
+          </div>
+          <Switch
+            checked={config.show_on_home}
+            onCheckedChange={(checked) => setConfig(prev => ({ ...prev, show_on_home: checked }))}
           />
         </div>
 

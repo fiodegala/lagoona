@@ -10,11 +10,13 @@ import { useProductCardsMeta, ProductCardMeta } from '@/hooks/useProductCardsMet
 interface DealsCountdownSectionProps {
   products: Product[];
   hideProducts?: boolean;
+  isHomePage?: boolean;
 }
 
 interface DealsConfig {
   enabled: boolean;
   end_date: string | null;
+  show_on_home: boolean;
 }
 
 const getTimeLeft = (endDate: string | null) => {
@@ -46,8 +48,8 @@ const TimeBlock = ({ value, label }: { value: number; label: string }) => (
   </div>
 );
 
-const DealsCountdownSection = ({ products, hideProducts = false }: DealsCountdownSectionProps) => {
-  const [config, setConfig] = useState<DealsConfig>({ enabled: true, end_date: null });
+const DealsCountdownSection = ({ products, hideProducts = false, isHomePage = false }: DealsCountdownSectionProps) => {
+  const [config, setConfig] = useState<DealsConfig>({ enabled: true, end_date: null, show_on_home: true });
   const [timeLeft, setTimeLeft] = useState(0);
   const [loaded, setLoaded] = useState(false);
 
@@ -85,6 +87,7 @@ const DealsCountdownSection = ({ products, hideProducts = false }: DealsCountdow
   }, [loaded, config.end_date]);
 
   if (!loaded || !config.enabled || products.length === 0 || timeLeft <= 0) return null;
+  if (isHomePage && config.show_on_home === false) return null;
 
   const { days, hours, minutes, seconds } = formatTime(timeLeft);
 
