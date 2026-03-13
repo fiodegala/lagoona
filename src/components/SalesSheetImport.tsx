@@ -77,16 +77,13 @@ const SalesSheetImport = () => {
     return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}T12:00:00`;
   };
 
-  const mapPaymentMethod = (method: string): string => {
+  const mapPaymentMethod = (method: string, tipoPagamento: string): string => {
+    if (tipoPagamento.toUpperCase().includes('DUAS')) return 'mixed';
     const m = method.trim().toUpperCase();
     if (m.includes('PIX')) return 'pix';
-    if (m.includes('DÉBITO') || m.includes('DEBITO')) return 'debit';
-    if (m.includes('CRÉDITO') || m.includes('CREDITO')) return 'credit';
     if (m.includes('DINHEIRO')) return 'cash';
-    if (m.includes('CHEQUE')) return 'cheque';
-    if (m.includes('LINK')) return 'link_pagamento';
-    if (m.includes('BOLETO')) return 'boleto';
-    return 'other';
+    // credit, debit, link, cheque all map to 'card'
+    return 'card';
   };
 
   const mapSaleType = (modalidade: string): string => {
