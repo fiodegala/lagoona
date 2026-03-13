@@ -12,6 +12,7 @@ export interface ProductAttributeValue {
   id: string;
   attribute_id: string;
   value: string;
+  color_hex: string | null;
   created_at: string;
 }
 
@@ -142,6 +143,15 @@ export const variationsService = {
     const { error } = await supabase
       .from('product_attribute_values')
       .delete()
+      .eq('id', valueId);
+
+    if (error) throw error;
+  },
+
+  async updateAttributeValueColor(valueId: string, colorHex: string | null): Promise<void> {
+    const { error } = await supabase
+      .from('product_attribute_values')
+      .update({ color_hex: colorHex })
       .eq('id', valueId);
 
     if (error) throw error;

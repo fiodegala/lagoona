@@ -1230,18 +1230,21 @@ export type Database = {
       product_attribute_values: {
         Row: {
           attribute_id: string
+          color_hex: string | null
           created_at: string
           id: string
           value: string
         }
         Insert: {
           attribute_id: string
+          color_hex?: string | null
           created_at?: string
           id?: string
           value: string
         }
         Update: {
           attribute_id?: string
+          color_hex?: string | null
           created_at?: string
           id?: string
           value?: string

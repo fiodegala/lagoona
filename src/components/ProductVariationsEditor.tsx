@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { COLOR_MAP } from '@/lib/colorMap';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -420,19 +421,44 @@ const ProductVariationsEditor = ({ productId, basePrice }: ProductVariationsEdit
                 </AlertDialog>
               </div>
               <div className="flex flex-wrap gap-2">
-                {attr.values?.map((val) => (
-                  <Badge key={val.id} variant="secondary" className="gap-1 pr-1">
-                    {val.value}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-4 w-4 hover:bg-transparent"
-                      onClick={() => handleDeleteValue(val.id)}
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-                  </Badge>
-                ))}
+                {attr.values?.map((val) => {
+                  const isColorAttr = attr.name.toLowerCase().includes('cor');
+                  const currentHex = val.color_hex || COLOR_MAP[val.value.toLowerCase().trim()] || null;
+                  return (
+                    <Badge key={val.id} variant="secondary" className="gap-1.5 pr-1">
+                      {isColorAttr && (
+                        <label className="relative cursor-pointer">
+                          <span
+                            className="inline-block h-4 w-4 rounded-full border border-border shrink-0"
+                            style={{ backgroundColor: currentHex || '#CBD5E1' }}
+                          />
+                          <input
+                            type="color"
+                            className="absolute inset-0 opacity-0 w-4 h-4 cursor-pointer"
+                            value={currentHex || '#CBD5E1'}
+                            onChange={async (e) => {
+                              try {
+                                await variationsService.updateAttributeValueColor(val.id, e.target.value);
+                                await loadData();
+                              } catch {
+                                toast.error('Erro ao salvar cor');
+                              }
+                            }}
+                          />
+                        </label>
+                      )}
+                      {val.value}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-4 w-4 hover:bg-transparent"
+                        onClick={() => handleDeleteValue(val.id)}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </Badge>
+                  );
+                })}
                 {addingValueTo === attr.id ? (
                   <div className="flex items-center gap-1">
                     <Input

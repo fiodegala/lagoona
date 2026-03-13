@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import { Product } from '@/services/products';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
-import { ProductCardMeta } from '@/hooks/useProductCardsMeta';
+import { ProductCardMeta, ColorValueMeta } from '@/hooks/useProductCardsMeta';
 import { COLOR_MAP, isLightColor } from '@/lib/colorMap';
 
 interface ProductCardProps {
@@ -28,7 +28,7 @@ const ProductCard = memo(forwardRef<HTMLAnchorElement, ProductCardProps>(({ prod
   const isMobile = 'ontouchstart' in window;
   
   // Use pre-fetched meta if available, otherwise fall back to local fetch
-  const [localColorValues, setLocalColorValues] = useState<string[]>([]);
+  const [localColorValues, setLocalColorValues] = useState<ColorValueMeta[]>([]);
   const [localHasVariations, setLocalHasVariations] = useState(false);
   const [localLoaded, setLocalLoaded] = useState(!!meta);
 
@@ -62,9 +62,9 @@ const ProductCard = memo(forwardRef<HTMLAnchorElement, ProductCardProps>(({ prod
         const attrIds = colorsRes.data.map(a => a.id);
         const { data: values } = await supabase
           .from('product_attribute_values')
-          .select('value')
+          .select('value, color_hex')
           .in('attribute_id', attrIds);
-        if (values) setLocalColorValues(values.map(v => v.value));
+        if (values) setLocalColorValues(values.map(v => ({ value: v.value, color_hex: v.color_hex })));
       }
 
       setLocalHasVariations((varsRes.data || []).length > 0);
@@ -244,12 +244,12 @@ const ProductCard = memo(forwardRef<HTMLAnchorElement, ProductCardProps>(({ prod
           {/* Color Swatches */}
           {colorValues.length > 0 && (
             <div className="flex items-center gap-1.5 mt-2">
-              {colorValues.slice(0, 5).map((color, idx) => {
-                const hex = COLOR_MAP[color.toLowerCase().trim()] || '#CBD5E1';
+              {colorValues.slice(0, 5).map((colorMeta, idx) => {
+                const hex = colorMeta.color_hex || COLOR_MAP[colorMeta.value.toLowerCase().trim()] || '#CBD5E1';
                 return (
                   <span
                     key={idx}
-                    title={color}
+                    title={colorMeta.value}
                     className={cn(
                       "h-4 w-4 rounded-full shrink-0",
                       isLightColor(hex) && "border border-border"

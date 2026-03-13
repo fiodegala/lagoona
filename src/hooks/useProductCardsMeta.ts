@@ -1,8 +1,13 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
+export interface ColorValueMeta {
+  value: string;
+  color_hex: string | null;
+}
+
 export interface ProductCardMeta {
-  colorValues: string[];
+  colorValues: ColorValueMeta[];
   hasVariations: boolean;
   avgRating: number;
   reviewCount: number;
@@ -37,7 +42,7 @@ export function useProductCardsMeta(productIds: string[]) {
           .ilike('name', '%cor%');
 
         // 2. If we have color attributes, fetch their values in one query
-        let colorValuesMap: Record<string, string[]> = {};
+        let colorValuesMap: Record<string, ColorValueMeta[]> = {};
         if (colorAttrs && colorAttrs.length > 0) {
           const attrIds = colorAttrs.map(a => a.id);
           const attrToProduct: Record<string, string> = {};
@@ -45,7 +50,7 @@ export function useProductCardsMeta(productIds: string[]) {
 
           const { data: values } = await supabase
             .from('product_attribute_values')
-            .select('attribute_id, value')
+            .select('attribute_id, value, color_hex')
             .in('attribute_id', attrIds);
 
           if (values) {
@@ -53,7 +58,7 @@ export function useProductCardsMeta(productIds: string[]) {
               const pid = attrToProduct[v.attribute_id];
               if (pid) {
                 if (!colorValuesMap[pid]) colorValuesMap[pid] = [];
-                colorValuesMap[pid].push(v.value);
+                colorValuesMap[pid].push({ value: v.value, color_hex: v.color_hex });
               }
             });
           }

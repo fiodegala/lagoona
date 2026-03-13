@@ -148,7 +148,7 @@ const ProductVariationSelector = ({ productId, onVariationSelect, onHasVariation
                 const isAvailable = isValueAvailable(attribute.name, value.value);
                 const stock = getVariationStock(attribute.name, value.value);
                 const isOutOfStock = stock === 0;
-                const colorHex = isColorAttr ? COLOR_MAP[value.value.toLowerCase().trim()] : null;
+                const colorHex = isColorAttr ? ((value as any).color_hex || COLOR_MAP[value.value.toLowerCase().trim()] || null) : null;
 
                 return (
                   <Button
