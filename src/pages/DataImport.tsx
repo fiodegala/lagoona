@@ -264,6 +264,7 @@ const DataImport = () => {
 
   const downloadTemplate = (type: ImportType) => {
     const tpl = TEMPLATES[type];
+    if (!tpl) return;
     const content = `${tpl.headers}\n${tpl.example}`;
     const blob = new Blob(['\uFEFF' + content], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
