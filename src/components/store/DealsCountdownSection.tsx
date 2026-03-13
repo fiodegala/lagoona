@@ -10,6 +10,7 @@ import { useProductCardsMeta, ProductCardMeta } from '@/hooks/useProductCardsMet
 interface DealsCountdownSectionProps {
   products: Product[];
   hideProducts?: boolean;
+  isHomePage?: boolean;
 }
 
 interface DealsConfig {
