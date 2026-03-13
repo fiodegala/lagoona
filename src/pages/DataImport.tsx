@@ -12,12 +12,13 @@ import {
 } from '@/components/ui/table';
 import {
   Upload, FileText, AlertCircle, CheckCircle2, Download, Loader2,
-  Users, ShoppingCart, Receipt, Database,
+  Users, ShoppingCart, Receipt, Database, FileSpreadsheet,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import SalesSheetImport from '@/components/SalesSheetImport';
 
-type ImportType = 'customers' | 'sales' | 'orders';
+type ImportType = 'customers' | 'sales' | 'orders' | 'sales_sheet';
 
 interface ParsedRecord {
   data: Record<string, string>;
@@ -27,7 +28,7 @@ interface ParsedRecord {
 
 const BATCH_SIZE = 100;
 
-const TEMPLATES: Record<ImportType, { headers: string; example: string; filename: string }> = {
+const TEMPLATES: Partial<Record<ImportType, { headers: string; example: string; filename: string }>> = {
   customers: {
     headers: 'nome;email;telefone;documento;tipo;endereco;cidade;estado;cep;bairro;observacoes',
     example: 'Maria Silva;maria@email.com;11999998888;123.456.789-00;fisica;Rua A, 100;São Paulo;SP;01000-000;Centro;Cliente VIP',
@@ -49,12 +50,14 @@ const TYPE_LABELS: Record<ImportType, { label: string; icon: typeof Users; descr
   customers: { label: 'Clientes', icon: Users, description: 'Importar base de clientes' },
   sales: { label: 'Vendas (PDV)', icon: Receipt, description: 'Importar histórico de vendas' },
   orders: { label: 'Pedidos Online', icon: ShoppingCart, description: 'Importar pedidos do e-commerce' },
+  sales_sheet: { label: 'Caixa (Planilha)', icon: FileSpreadsheet, description: 'Importar da planilha de caixa Google Sheets' },
 };
 
 const REQUIRED_FIELDS: Record<ImportType, string[]> = {
   customers: ['nome'],
   sales: ['valor_total'],
   orders: ['email', 'valor_total'],
+  sales_sheet: [],
 };
 
 const DataImport = () => {
@@ -261,6 +264,7 @@ const DataImport = () => {
 
   const downloadTemplate = (type: ImportType) => {
     const tpl = TEMPLATES[type];
+    if (!tpl) return;
     const content = `${tpl.headers}\n${tpl.example}`;
     const blob = new Blob(['\uFEFF' + content], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -292,7 +296,7 @@ const DataImport = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v as ImportType); resetState(); }}>
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             {(Object.entries(TYPE_LABELS) as [ImportType, typeof TYPE_LABELS[ImportType]][]).map(([key, val]) => (
               <TabsTrigger key={key} value={key} className="gap-2">
                 <val.icon className="h-4 w-4" />
@@ -301,7 +305,11 @@ const DataImport = () => {
             ))}
           </TabsList>
 
-          {(Object.keys(TYPE_LABELS) as ImportType[]).map((type) => (
+          <TabsContent value="sales_sheet">
+            <SalesSheetImport />
+          </TabsContent>
+
+          {(Object.keys(TYPE_LABELS) as ImportType[]).filter(t => t !== 'sales_sheet').map((type) => (
             <TabsContent key={type} value={type}>
               <Card>
                 <CardHeader>
