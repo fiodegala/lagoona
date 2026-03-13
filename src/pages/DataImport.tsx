@@ -28,7 +28,7 @@ interface ParsedRecord {
 
 const BATCH_SIZE = 100;
 
-const TEMPLATES: Record<ImportType, { headers: string; example: string; filename: string }> = {
+const TEMPLATES: Partial<Record<ImportType, { headers: string; example: string; filename: string }>> = {
   customers: {
     headers: 'nome;email;telefone;documento;tipo;endereco;cidade;estado;cep;bairro;observacoes',
     example: 'Maria Silva;maria@email.com;11999998888;123.456.789-00;fisica;Rua A, 100;São Paulo;SP;01000-000;Centro;Cliente VIP',
