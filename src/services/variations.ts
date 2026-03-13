@@ -148,6 +148,15 @@ export const variationsService = {
     if (error) throw error;
   },
 
+  async updateAttributeValueColor(valueId: string, colorHex: string | null): Promise<void> {
+    const { error } = await supabase
+      .from('product_attribute_values')
+      .update({ color_hex: colorHex })
+      .eq('id', valueId);
+
+    if (error) throw error;
+  },
+
   // Variations
   async getVariationsByProduct(productId: string): Promise<ProductVariation[]> {
     const { data: variations, error: varError } = await supabase
