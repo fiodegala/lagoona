@@ -60,6 +60,104 @@ for i in range(0, len(vendas), BATCH):
     result = resp.json()
     print(f"Lote {i//BATCH + 1}: {result.get('inserted', 0)} inseridos")`;
 
+  const appsScriptCode = `function importarParaLoja() {
+  var SHEET = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  var API_URL = "${API_URL}";
+  var PUBLIC_KEY = "pk_sua_chave";
+  var SECRET_KEY = "sk_sua_chave";
+  
+  // Pegar dados da planilha (a partir da linha 2)
+  var data = SHEET.getDataRange().getValues();
+  var headers = data[0];
+  var records = [];
+  
+  for (var i = 1; i < data.length; i++) {
+    var row = {};
+    headers.forEach(function(h, j) { row[h] = data[i][j]; });
+    records.push(row);
+  }
+  
+  // Assinar requisição
+  var timestamp = Math.floor(Date.now() / 1000).toString();
+  var nonce = Utilities.getUuid();
+  var bodyStr = JSON.stringify({ type: "sales", records: records });
+  var bodyHash = sha256(bodyStr);
+  var secretHash = sha256(SECRET_KEY);
+  var payload = "POST\\n/api-import\\n" + timestamp + "\\n" + nonce + "\\n" + bodyHash;
+  var signature = hmacSha256(secretHash, payload);
+  
+  var response = UrlFetchApp.fetch(API_URL, {
+    method: "post",
+    contentType: "application/json",
+    headers: {
+      "X-Client-Key": PUBLIC_KEY,
+      "X-Timestamp": timestamp,
+      "X-Nonce": nonce,
+      "X-Signature": signature,
+    },
+    payload: bodyStr,
+  });
+  
+  Logger.log(response.getContentText());
+  SpreadsheetApp.getUi().alert("Resultado: " + response.getContentText());
+}
+
+function sha256(text) {
+  var raw = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, text);
+  return raw.map(function(b) {
+    return ('0' + ((b + 256) % 256).toString(16)).slice(-2);
+  }).join('');
+}
+
+function hmacSha256(key, message) {
+  var raw = Utilities.computeHmacSha256Signature(message, key);
+  return raw.map(function(b) {
+    return ('0' + ((b + 256) % 256).toString(16)).slice(-2);
+  }).join('');
+}`;
+
+  const pythonGsheetsScript = `import gspread, hashlib, hmac, uuid, time, json, requests
+from oauth2client.service_account import ServiceAccountCredentials
+
+# Conectar ao Google Sheets
+scope = ["https://spreadsheets.google.com/feeds",
+         "https://www.googleapis.com/auth/drive"]
+creds = ServiceAccountCredentials.from_json_keyfile_name("credenciais.json", scope)
+client = gspread.authorize(creds)
+
+sheet = client.open("Nome da Planilha").sheet1
+records = sheet.get_all_records()  # retorna lista de dicts
+
+# Enviar para a API
+API_URL = "${API_URL}"
+PUBLIC_KEY = "pk_sua_chave"
+SECRET_KEY = "sk_sua_chave"
+
+def sign_request(method, path, body_str):
+    timestamp = str(int(time.time()))
+    nonce = str(uuid.uuid4())
+    body_hash = hashlib.sha256(body_str.encode()).hexdigest()
+    secret_hash = hashlib.sha256(SECRET_KEY.encode()).hexdigest()
+    payload = f"{method}\\n{path}\\n{timestamp}\\n{nonce}\\n{body_hash}"
+    signature = hmac.new(
+        secret_hash.encode(), payload.encode(), hashlib.sha256
+    ).hexdigest()
+    return {
+        "Content-Type": "application/json",
+        "X-Client-Key": PUBLIC_KEY,
+        "X-Timestamp": timestamp,
+        "X-Nonce": nonce,
+        "X-Signature": signature,
+    }
+
+BATCH = 500
+for i in range(0, len(records), BATCH):
+    batch = records[i:i+BATCH]
+    body = json.dumps({"type": "sales", "records": batch})
+    headers = sign_request("POST", "/api-import", body)
+    resp = requests.post(API_URL, headers=headers, data=body)
+    print(f"Lote {i//BATCH+1}: {resp.json()}")`;
+
   return (
     <StoreLayout>
       <div className="max-w-4xl mx-auto px-4 py-12 space-y-8">
