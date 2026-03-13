@@ -42,7 +42,7 @@ export function useProductCardsMeta(productIds: string[]) {
           .ilike('name', '%cor%');
 
         // 2. If we have color attributes, fetch their values in one query
-        let colorValuesMap: Record<string, string[]> = {};
+        let colorValuesMap: Record<string, ColorValueMeta[]> = {};
         if (colorAttrs && colorAttrs.length > 0) {
           const attrIds = colorAttrs.map(a => a.id);
           const attrToProduct: Record<string, string> = {};
