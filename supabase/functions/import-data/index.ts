@@ -175,7 +175,8 @@ serve(async (req) => {
       };
 
       for (let i = 0; i < records.length; i += BATCH_SIZE) {
-        const batch = records.slice(i, i + BATCH_SIZE).map((r: any) => {
+        const batchRecords = records.slice(i, i + BATCH_SIZE);
+        const batch = await Promise.all(batchRecords.map(async (r: any) => {
           const parcelas = r.parcelas ? r.parcelas.replace(/[^0-9]/g, '') : '';
           const paymentDetails: any = {};
           if (r.forma_pagamento_original) paymentDetails.method1 = r.forma_pagamento_original;
@@ -227,9 +228,12 @@ serve(async (req) => {
             created_at: createdAt,
             dedup_hash: dedupHash,
           };
-        });
+        }));
 
-        const { data, error } = await supabase.from("pos_sales").insert(batch).select("id");
+        const { data, error } = await supabase.from("pos_sales").upsert(batch, {
+          onConflict: "dedup_hash",
+          ignoreDuplicates: true,
+        }).select("id");
         if (error) {
           errors.push(`Lote ${Math.floor(i / BATCH_SIZE) + 1}: ${error.message}`);
         } else {
