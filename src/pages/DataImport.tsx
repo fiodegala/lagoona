@@ -57,6 +57,7 @@ const REQUIRED_FIELDS: Record<ImportType, string[]> = {
   customers: ['nome'],
   sales: ['valor_total'],
   orders: ['email', 'valor_total'],
+  sales_sheet: [],
 };
 
 const DataImport = () => {
