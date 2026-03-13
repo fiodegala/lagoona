@@ -49,6 +49,68 @@ const Sales = () => {
   const [editDate, setEditDate] = useState<Date | undefined>(undefined);
   const [editTime, setEditTime] = useState('');
   const [isSavingDate, setIsSavingDate] = useState(false);
+  const [isConvertingToOrder, setIsConvertingToOrder] = useState(false);
+  const [convertConfirm, setConvertConfirm] = useState<any>(null);
+
+  const WEBSITE_STORE_ID = 'e0b8ebbc-1b3b-4aec-b5f7-6925762e6ea1';
+
+  const handleConvertToSiteOrder = async () => {
+    const sale = convertConfirm;
+    if (!sale || !user) return;
+    setIsConvertingToOrder(true);
+    try {
+      const items = saleItems(sale.items);
+      const customerEmail = detailCustomer?.email || sale.customer_document || 'pdv@loja.com';
+      const customerName = detailCustomer?.name || sale.customer_name || 'Consumidor Final';
+
+      // Create order in orders table
+      const { data: order, error: orderErr } = await supabase
+        .from('orders')
+        .insert({
+          customer_email: customerEmail,
+          customer_name: customerName,
+          customer_id: sale.customer_id || null,
+          items: items as any,
+          total: sale.total,
+          payment_method: sale.payment_method,
+          payment_status: 'paid',
+          status: 'processing',
+          store_id: WEBSITE_STORE_ID,
+          notes: `Convertido da venda PDV #${sale.id.slice(0, 8)}. ${sale.notes || ''}`.trim(),
+          created_at: sale.created_at,
+        })
+        .select()
+        .single();
+      if (orderErr) throw orderErr;
+
+      // Update POS sale to point to website store
+      const { error: updateErr } = await supabase
+        .from('pos_sales')
+        .update({ store_id: WEBSITE_STORE_ID } as any)
+        .eq('id', sale.id);
+      if (updateErr) throw updateErr;
+
+      auditService.log({
+        action: 'convert_to_site_order',
+        entity_type: 'pos_sale',
+        entity_id: sale.id,
+        details: {
+          order_id: order.id,
+          total: sale.total,
+          customer: customerName,
+        },
+      });
+
+      setDetailSale({ ...sale, store_id: WEBSITE_STORE_ID });
+      queryClient.invalidateQueries({ queryKey: ['pos-sales'] });
+      toast.success(`Venda convertida em pedido do Site #${order.id.slice(0, 8)}`);
+      setConvertConfirm(null);
+    } catch (e: any) {
+      toast.error('Erro ao converter: ' + (e.message || ''));
+    } finally {
+      setIsConvertingToOrder(false);
+    }
+  };
 
   // Fetch full customer data when opening detail
   const openSaleDetail = async (sale: any) => {
