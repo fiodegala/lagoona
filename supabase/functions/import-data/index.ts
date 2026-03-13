@@ -191,25 +191,41 @@ serve(async (req) => {
           if (r.referencia) paymentDetails.product_ref = r.referencia;
           if (r.venda_promocional) paymentDetails.is_promo = r.venda_promocional;
 
+          const createdAt = r.data || new Date().toISOString();
+          const customerName = r.cliente || '';
+          const totalVal = r.valor_total || 0;
+          const paymentMethod = r.forma_pagamento || "cash";
+          const seller = r.vendedor || '';
+          const productRef = r.referencia || '';
+
+          // Build a dedup hash from key fields to prevent duplicate imports
+          const hashInput = `${customerName}|${createdAt.substring(0, 10)}|${totalVal}|${paymentMethod}|${seller}|${productRef}`;
+          const encoder = new TextEncoder();
+          const data = encoder.encode(hashInput.toLowerCase().trim());
+          const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+          const hashArray = Array.from(new Uint8Array(hashBuffer));
+          const dedupHash = hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+
           return {
             local_id: crypto.randomUUID(),
             user_id: resolveUserId(r.vendedor),
             store_id: resolveStoreId(r.vendedor),
-            customer_name: r.cliente || null,
+            customer_name: customerName || null,
             items: r.referencia ? [{
               name: r.referencia,
               quantity: r.quantidade || 1,
               price: r.valor_unitario || r.valor_total || 0,
             }] : [],
-            subtotal: r.valor_total || 0,
-            total: r.valor_total || 0,
+            subtotal: totalVal,
+            total: totalVal,
             discount_amount: r.valor_desconto || 0,
-            payment_method: r.forma_pagamento || "cash",
+            payment_method: paymentMethod,
             sale_type: r.tipo_venda || "varejo",
             status: "completed",
-            notes: `Importado da planilha de caixa | Vendedor: ${r.vendedor || '-'} | Ref: ${r.referencia || '-'} | ${r.como_conheceu || ''}`,
+            notes: `Importado da planilha de caixa | Vendedor: ${seller || '-'} | Ref: ${productRef || '-'} | ${r.como_conheceu || ''}`,
             payment_details: paymentDetails,
-            created_at: r.data || new Date().toISOString(),
+            created_at: createdAt,
+            dedup_hash: dedupHash,
           };
         });
 
