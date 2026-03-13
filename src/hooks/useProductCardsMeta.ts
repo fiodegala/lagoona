@@ -1,8 +1,13 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
+export interface ColorValueMeta {
+  value: string;
+  color_hex: string | null;
+}
+
 export interface ProductCardMeta {
-  colorValues: string[];
+  colorValues: ColorValueMeta[];
   hasVariations: boolean;
   avgRating: number;
   reviewCount: number;
