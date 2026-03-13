@@ -40,6 +40,8 @@ export const COLOR_MAP: Record<string, string> = {
   vermelha: '#EF4444',
   amarela: '#EAB308',
   azulada: '#3B82F6',
+  caqui: '#C3B091',
+  khaki: '#C3B091',
 };
 
 export const LIGHT_COLORS = ['#FFFFFF', '#FAF9F6', '#FFFDD0', '#E6E6FA', '#E8C4A2', '#87CEEB'];
