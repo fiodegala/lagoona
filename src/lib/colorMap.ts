@@ -27,11 +27,19 @@ export const COLOR_MAP: Record<string, string> = {
   lilás: '#C8A2C8',
   salmão: '#FA8072',
   'off white': '#FAF9F6',
+  off: '#FAF9F6',
   'azul marinho': '#1E3A5F',
   'azul bic': '#0066FF',
   'azul sky': '#87CEEB',
   marsala: '#964B50',
   grafite: '#474747',
+  preta: '#000000',
+  branca: '#FFFFFF',
+  'verde oliva': '#808000',
+  'verde musgo': '#2E4D2E',
+  vermelha: '#EF4444',
+  amarela: '#EAB308',
+  azulada: '#3B82F6',
 };
 
 export const LIGHT_COLORS = ['#FFFFFF', '#FAF9F6', '#FFFDD0', '#E6E6FA', '#E8C4A2', '#87CEEB'];
