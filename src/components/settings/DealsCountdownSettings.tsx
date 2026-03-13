@@ -68,6 +68,7 @@ const DealsCountdownSettings = () => {
       const newConfig: DealsConfig = {
         enabled: config.enabled,
         end_date: endDate,
+        show_on_home: config.show_on_home,
       };
 
       const { data: existing } = await supabase
