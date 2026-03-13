@@ -60,6 +60,104 @@ for i in range(0, len(vendas), BATCH):
     result = resp.json()
     print(f"Lote {i//BATCH + 1}: {result.get('inserted', 0)} inseridos")`;
 
+  const appsScriptCode = `function importarParaLoja() {
+  var SHEET = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  var API_URL = "${API_URL}";
+  var PUBLIC_KEY = "pk_sua_chave";
+  var SECRET_KEY = "sk_sua_chave";
+  
+  // Pegar dados da planilha (a partir da linha 2)
+  var data = SHEET.getDataRange().getValues();
+  var headers = data[0];
+  var records = [];
+  
+  for (var i = 1; i < data.length; i++) {
+    var row = {};
+    headers.forEach(function(h, j) { row[h] = data[i][j]; });
+    records.push(row);
+  }
+  
+  // Assinar requisição
+  var timestamp = Math.floor(Date.now() / 1000).toString();
+  var nonce = Utilities.getUuid();
+  var bodyStr = JSON.stringify({ type: "sales", records: records });
+  var bodyHash = sha256(bodyStr);
+  var secretHash = sha256(SECRET_KEY);
+  var payload = "POST\\n/api-import\\n" + timestamp + "\\n" + nonce + "\\n" + bodyHash;
+  var signature = hmacSha256(secretHash, payload);
+  
+  var response = UrlFetchApp.fetch(API_URL, {
+    method: "post",
+    contentType: "application/json",
+    headers: {
+      "X-Client-Key": PUBLIC_KEY,
+      "X-Timestamp": timestamp,
+      "X-Nonce": nonce,
+      "X-Signature": signature,
+    },
+    payload: bodyStr,
+  });
+  
+  Logger.log(response.getContentText());
+  SpreadsheetApp.getUi().alert("Resultado: " + response.getContentText());
+}
+
+function sha256(text) {
+  var raw = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, text);
+  return raw.map(function(b) {
+    return ('0' + ((b + 256) % 256).toString(16)).slice(-2);
+  }).join('');
+}
+
+function hmacSha256(key, message) {
+  var raw = Utilities.computeHmacSha256Signature(message, key);
+  return raw.map(function(b) {
+    return ('0' + ((b + 256) % 256).toString(16)).slice(-2);
+  }).join('');
+}`;
+
+  const pythonGsheetsScript = `import gspread, hashlib, hmac, uuid, time, json, requests
+from oauth2client.service_account import ServiceAccountCredentials
+
+# Conectar ao Google Sheets
+scope = ["https://spreadsheets.google.com/feeds",
+         "https://www.googleapis.com/auth/drive"]
+creds = ServiceAccountCredentials.from_json_keyfile_name("credenciais.json", scope)
+client = gspread.authorize(creds)
+
+sheet = client.open("Nome da Planilha").sheet1
+records = sheet.get_all_records()  # retorna lista de dicts
+
+# Enviar para a API
+API_URL = "${API_URL}"
+PUBLIC_KEY = "pk_sua_chave"
+SECRET_KEY = "sk_sua_chave"
+
+def sign_request(method, path, body_str):
+    timestamp = str(int(time.time()))
+    nonce = str(uuid.uuid4())
+    body_hash = hashlib.sha256(body_str.encode()).hexdigest()
+    secret_hash = hashlib.sha256(SECRET_KEY.encode()).hexdigest()
+    payload = f"{method}\\n{path}\\n{timestamp}\\n{nonce}\\n{body_hash}"
+    signature = hmac.new(
+        secret_hash.encode(), payload.encode(), hashlib.sha256
+    ).hexdigest()
+    return {
+        "Content-Type": "application/json",
+        "X-Client-Key": PUBLIC_KEY,
+        "X-Timestamp": timestamp,
+        "X-Nonce": nonce,
+        "X-Signature": signature,
+    }
+
+BATCH = 500
+for i in range(0, len(records), BATCH):
+    batch = records[i:i+BATCH]
+    body = json.dumps({"type": "sales", "records": batch})
+    headers = sign_request("POST", "/api-import", body)
+    resp = requests.post(API_URL, headers=headers, data=body)
+    print(f"Lote {i//BATCH+1}: {resp.json()}")`;
+
   return (
     <StoreLayout>
       <div className="max-w-4xl mx-auto px-4 py-12 space-y-8">
@@ -265,10 +363,77 @@ for i in range(0, len(vendas), BATCH):
           </CardContent>
         </Card>
 
+        {/* Google Sheets - Apps Script */}
+        <Card>
+          <CardHeader>
+            <CardTitle>6. Google Sheets → Apps Script (direto do Sheets)</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              No Google Sheets, vá em <strong>Extensões → Apps Script</strong> e cole o código abaixo. 
+              Use os mesmos nomes de campo da API como cabeçalhos da planilha.
+            </p>
+
+            <div>
+              <h4 className="text-sm font-semibold mb-2">Estrutura da planilha:</h4>
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs border">
+                  <thead><tr className="bg-muted"><th className="border px-2 py-1">cliente</th><th className="border px-2 py-1">valor_total</th><th className="border px-2 py-1">forma_pagamento</th><th className="border px-2 py-1">tipo_venda</th><th className="border px-2 py-1">data</th></tr></thead>
+                  <tbody>
+                    <tr><td className="border px-2 py-1">Maria Silva</td><td className="border px-2 py-1">259.90</td><td className="border px-2 py-1">pix</td><td className="border px-2 py-1">varejo</td><td className="border px-2 py-1">2024-01-15T14:30:00Z</td></tr>
+                    <tr><td className="border px-2 py-1">João Santos</td><td className="border px-2 py-1">189.90</td><td className="border px-2 py-1">cartao_credito</td><td className="border px-2 py-1">varejo</td><td className="border px-2 py-1">2024-02-20T10:00:00Z</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div className="relative">
+              <Button
+                variant="outline"
+                size="sm"
+                className="absolute top-2 right-2 z-10"
+                onClick={() => copy(appsScriptCode)}
+              >
+                <Copy className="h-4 w-4 mr-2" />
+                Copiar
+              </Button>
+              <pre className="bg-muted p-4 rounded-lg text-xs overflow-x-auto max-h-[500px]">
+                {appsScriptCode}
+              </pre>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Google Sheets - Python */}
+        <Card>
+          <CardHeader>
+            <CardTitle>7. Google Sheets → Python (automação)</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Ideal para automação e agendamento. Requer a biblioteca <code className="bg-muted px-1 rounded text-xs">gspread</code> e credenciais de Service Account do Google.
+            </p>
+            <div className="relative">
+              <Button
+                variant="outline"
+                size="sm"
+                className="absolute top-2 right-2 z-10"
+                onClick={() => copy(pythonGsheetsScript)}
+              >
+                <Copy className="h-4 w-4 mr-2" />
+                Copiar
+              </Button>
+              <pre className="bg-muted p-4 rounded-lg text-xs overflow-x-auto max-h-[500px]">
+                {pythonGsheetsScript}
+              </pre>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Resposta */}
         <Card>
           <CardHeader>
-            <CardTitle>6. Resposta da API</CardTitle>
+            <CardTitle>8. Resposta da API</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
@@ -300,7 +465,7 @@ for i in range(0, len(vendas), BATCH):
         {/* Onde aparece */}
         <Card>
           <CardHeader>
-            <CardTitle>7. Onde os Dados Aparecem</CardTitle>
+            <CardTitle>9. Onde os Dados Aparecem</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
@@ -340,14 +505,14 @@ for i in range(0, len(vendas), BATCH):
         {/* Fluxo recomendado */}
         <Card>
           <CardHeader>
-            <CardTitle>8. Fluxo Recomendado</CardTitle>
+            <CardTitle>10. Fluxo Recomendado</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
               {[
-                'Exporte os dados do Power BI como CSV ou conecte via Python',
+                'Exporte os dados do Power BI ou Google Sheets',
                 'Mapeie as colunas para os campos aceitos pela API',
-                'Execute o script Python em lotes de 500 registros',
+                'Execute o script (Apps Script, Python ou cURL) em lotes de 500',
                 'Verifique no Dashboard se os dados retroativos aparecem nos gráficos',
               ].map((step, i) => (
                 <div key={i} className="flex items-start gap-3">
