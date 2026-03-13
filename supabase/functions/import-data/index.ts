@@ -124,8 +124,8 @@ serve(async (req) => {
         const batch = records.slice(i, i + BATCH_SIZE).map((r: any) => {
           const parcelas = r.parcelas ? r.parcelas.replace(/[^0-9]/g, '') : '';
           const paymentDetails: any = {};
-          if (r.forma_pagamento) paymentDetails.method1 = r.forma_pagamento;
-          if (r.forma_pagamento_2) paymentDetails.method2 = r.forma_pagamento_2;
+          if (r.forma_pagamento_original) paymentDetails.method1 = r.forma_pagamento_original;
+          if (r.forma_pagamento_2_original) paymentDetails.method2 = r.forma_pagamento_2_original;
           if (parcelas) paymentDetails.installments = parseInt(parcelas, 10);
           if (r.como_conheceu) paymentDetails.referral_source = r.como_conheceu;
           if (r.vendedor) paymentDetails.seller = r.vendedor;
@@ -150,7 +150,7 @@ serve(async (req) => {
             subtotal: r.valor_total || 0,
             total: r.valor_total || 0,
             discount_amount: r.valor_desconto || 0,
-            payment_method: r.forma_pagamento || "other",
+            payment_method: r.forma_pagamento || "cash",
             sale_type: r.tipo_venda || "varejo",
             status: "completed",
             notes: `Importado da planilha de caixa | Vendedor: ${r.vendedor || '-'} | Ref: ${r.referencia || '-'} | ${r.como_conheceu || ''}`,

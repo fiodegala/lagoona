@@ -77,16 +77,13 @@ const SalesSheetImport = () => {
     return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}T12:00:00`;
   };
 
-  const mapPaymentMethod = (method: string): string => {
+  const mapPaymentMethod = (method: string, tipoPagamento: string): string => {
+    if (tipoPagamento.toUpperCase().includes('DUAS')) return 'mixed';
     const m = method.trim().toUpperCase();
     if (m.includes('PIX')) return 'pix';
-    if (m.includes('DÉBITO') || m.includes('DEBITO')) return 'debit';
-    if (m.includes('CRÉDITO') || m.includes('CREDITO')) return 'credit';
     if (m.includes('DINHEIRO')) return 'cash';
-    if (m.includes('CHEQUE')) return 'cheque';
-    if (m.includes('LINK')) return 'link_pagamento';
-    if (m.includes('BOLETO')) return 'boleto';
-    return 'other';
+    // credit, debit, link, cheque all map to 'card'
+    return 'card';
   };
 
   const mapSaleType = (modalidade: string): string => {
@@ -246,8 +243,9 @@ const SalesSheetImport = () => {
       quantidade: row.quantidade,
       valor_unitario: row.valorUnitario,
       valor_total: row.valorTotal,
-      forma_pagamento: mapPaymentMethod(row.formaPagamento1),
-      forma_pagamento_2: row.tipoPagamento.toUpperCase().includes('DUAS') ? mapPaymentMethod(row.formaPagamento2) : null,
+      forma_pagamento: mapPaymentMethod(row.formaPagamento1, row.tipoPagamento),
+      forma_pagamento_original: row.formaPagamento1,
+      forma_pagamento_2_original: row.formaPagamento2 || null,
       tipo_venda: mapSaleType(row.modalidade),
       vendedor: row.vendedor,
       como_conheceu: row.comoConheceu,
