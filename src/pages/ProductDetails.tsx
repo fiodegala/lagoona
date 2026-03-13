@@ -561,6 +561,7 @@ const ProductDetails = () => {
             )}
 
             {/* AI Try-On Button */}
+            {tryOnEnabled && (
             <Dialog open={tryOnOpen} onOpenChange={setTryOnOpen}>
               <DialogTrigger asChild>
                 <Button
@@ -587,6 +588,7 @@ const ProductDetails = () => {
                 />
               </DialogContent>
             </Dialog>
+            )}
 
             {/* Quantity Selector */}
             <div className="space-y-2">
