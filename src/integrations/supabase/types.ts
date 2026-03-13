@@ -1018,6 +1018,7 @@ export type Database = {
           customer_document: string | null
           customer_id: string | null
           customer_name: string | null
+          dedup_hash: string | null
           discount_amount: number | null
           discount_type: string | null
           discount_value: number | null
@@ -1049,6 +1050,7 @@ export type Database = {
           customer_document?: string | null
           customer_id?: string | null
           customer_name?: string | null
+          dedup_hash?: string | null
           discount_amount?: number | null
           discount_type?: string | null
           discount_value?: number | null
@@ -1080,6 +1082,7 @@ export type Database = {
           customer_document?: string | null
           customer_id?: string | null
           customer_name?: string | null
+          dedup_hash?: string | null
           discount_amount?: number | null
           discount_type?: string | null
           discount_value?: number | null
