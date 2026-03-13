@@ -194,7 +194,7 @@ serve(async (req) => {
           return {
             local_id: crypto.randomUUID(),
             user_id: resolveUserId(r.vendedor),
-            store_id: storeId || null,
+            store_id: resolveStoreId(r.vendedor),
             customer_name: r.cliente || null,
             items: r.referencia ? [{
               name: r.referencia,
