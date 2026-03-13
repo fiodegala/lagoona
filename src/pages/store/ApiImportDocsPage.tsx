@@ -433,7 +433,7 @@ for i in range(0, len(records), BATCH):
         {/* Resposta */}
         <Card>
           <CardHeader>
-            <CardTitle>6. Resposta da API</CardTitle>
+            <CardTitle>8. Resposta da API</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
