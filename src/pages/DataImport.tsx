@@ -305,7 +305,11 @@ const DataImport = () => {
             ))}
           </TabsList>
 
-          {(Object.keys(TYPE_LABELS) as ImportType[]).map((type) => (
+          <TabsContent value="sales_sheet">
+            <SalesSheetImport />
+          </TabsContent>
+
+          {(Object.keys(TYPE_LABELS) as ImportType[]).filter(t => t !== 'sales_sheet').map((type) => (
             <TabsContent key={type} value={type}>
               <Card>
                 <CardHeader>
