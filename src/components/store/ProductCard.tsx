@@ -62,9 +62,9 @@ const ProductCard = memo(forwardRef<HTMLAnchorElement, ProductCardProps>(({ prod
         const attrIds = colorsRes.data.map(a => a.id);
         const { data: values } = await supabase
           .from('product_attribute_values')
-          .select('value')
+          .select('value, color_hex')
           .in('attribute_id', attrIds);
-        if (values) setLocalColorValues(values.map(v => v.value));
+        if (values) setLocalColorValues(values.map(v => ({ value: v.value, color_hex: v.color_hex })));
       }
 
       setLocalHasVariations((varsRes.data || []).length > 0);
