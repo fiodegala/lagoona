@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import { Product } from '@/services/products';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
-import { ProductCardMeta } from '@/hooks/useProductCardsMeta';
+import { ProductCardMeta, ColorValueMeta } from '@/hooks/useProductCardsMeta';
 import { COLOR_MAP, isLightColor } from '@/lib/colorMap';
 
 interface ProductCardProps {
