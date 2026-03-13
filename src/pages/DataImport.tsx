@@ -50,6 +50,7 @@ const TYPE_LABELS: Record<ImportType, { label: string; icon: typeof Users; descr
   customers: { label: 'Clientes', icon: Users, description: 'Importar base de clientes' },
   sales: { label: 'Vendas (PDV)', icon: Receipt, description: 'Importar histórico de vendas' },
   orders: { label: 'Pedidos Online', icon: ShoppingCart, description: 'Importar pedidos do e-commerce' },
+  sales_sheet: { label: 'Caixa (Planilha)', icon: FileSpreadsheet, description: 'Importar da planilha de caixa Google Sheets' },
 };
 
 const REQUIRED_FIELDS: Record<ImportType, string[]> = {
