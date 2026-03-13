@@ -246,14 +246,13 @@ const ProductCard = memo(forwardRef<HTMLAnchorElement, ProductCardProps>(({ prod
             <div className="flex items-center gap-1.5 mt-2">
               {colorValues.slice(0, 5).map((color, idx) => {
                 const hex = COLOR_MAP[color.toLowerCase().trim()] || '#CBD5E1';
-                const isLight = ['#FFFFFF', '#FAF9F6', '#FFFDD0', '#E6E6FA', '#E8C4A2'].includes(hex);
                 return (
                   <span
                     key={idx}
                     title={color}
                     className={cn(
                       "h-4 w-4 rounded-full shrink-0",
-                      isLight && "border border-border"
+                      isLightColor(hex) && "border border-border"
                     )}
                     style={{ backgroundColor: hex }}
                   />

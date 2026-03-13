@@ -130,52 +130,65 @@ const ProductVariationSelector = ({ productId, onVariationSelect, onHasVariation
 
   return (
     <div className="space-y-6">
-      {attributes.map((attribute) => (
-        <div key={attribute.id} className="space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="font-medium text-sm">{attribute.name}:</span>
-            {selectedValues[attribute.name] && (
-              <span className="text-sm text-muted-foreground">
-                {selectedValues[attribute.name]}
-              </span>
-            )}
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {attribute.values?.map((value) => {
-              const isSelected = selectedValues[attribute.name] === value.value;
-              const isAvailable = isValueAvailable(attribute.name, value.value);
-              const stock = getVariationStock(attribute.name, value.value);
-              const isOutOfStock = stock === 0;
+      {attributes.map((attribute) => {
+        const isColorAttr = attribute.name.toLowerCase().includes('cor');
+        return (
+          <div key={attribute.id} className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="font-medium text-sm">{attribute.name}:</span>
+              {selectedValues[attribute.name] && (
+                <span className="text-sm text-muted-foreground">
+                  {selectedValues[attribute.name]}
+                </span>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {attribute.values?.map((value) => {
+                const isSelected = selectedValues[attribute.name] === value.value;
+                const isAvailable = isValueAvailable(attribute.name, value.value);
+                const stock = getVariationStock(attribute.name, value.value);
+                const isOutOfStock = stock === 0;
+                const colorHex = isColorAttr ? COLOR_MAP[value.value.toLowerCase().trim()] : null;
 
-              return (
-                <Button
-                  key={value.id}
-                  variant={isSelected ? 'default' : 'outline'}
-                  size="sm"
-                  disabled={!isAvailable || isOutOfStock}
-                  onClick={() => handleValueSelect(attribute.name, value.value)}
-                  className={cn(
-                    'relative min-w-[60px] transition-all',
-                    isSelected && 'bg-store-primary text-store-accent hover:bg-store-primary/90',
-                    !isAvailable && 'opacity-50 line-through',
-                    isOutOfStock && 'opacity-40'
-                  )}
-                >
-                  {value.value}
-                  {isOutOfStock && isAvailable && (
-                    <Badge 
-                      variant="secondary" 
-                      className="absolute -top-2 -right-2 text-[10px] px-1 py-0"
-                    >
-                      Esgotado
-                    </Badge>
-                  )}
-                </Button>
-              );
-            })}
+                return (
+                  <Button
+                    key={value.id}
+                    variant={isSelected ? 'default' : 'outline'}
+                    size="sm"
+                    disabled={!isAvailable || isOutOfStock}
+                    onClick={() => handleValueSelect(attribute.name, value.value)}
+                    className={cn(
+                      'relative min-w-[60px] transition-all gap-1.5',
+                      isSelected && 'bg-store-primary text-store-accent hover:bg-store-primary/90',
+                      !isAvailable && 'opacity-50 line-through',
+                      isOutOfStock && 'opacity-40'
+                    )}
+                  >
+                    {colorHex && (
+                      <span
+                        className={cn(
+                          "h-3.5 w-3.5 rounded-full shrink-0 inline-block",
+                          isLightColor(colorHex) && "border border-border"
+                        )}
+                        style={{ backgroundColor: colorHex }}
+                      />
+                    )}
+                    {value.value}
+                    {isOutOfStock && isAvailable && (
+                      <Badge 
+                        variant="secondary" 
+                        className="absolute -top-2 -right-2 text-[10px] px-1 py-0"
+                      >
+                        Esgotado
+                      </Badge>
+                    )}
+                  </Button>
+                );
+              })}
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 };
