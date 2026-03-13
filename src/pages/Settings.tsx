@@ -221,6 +221,7 @@ const Settings = () => {
             <WholesaleVideoSettings />
             <WhatsAppTemplatesSettings />
             <LowStockAlertSettings />
+            <AITryOnSettings />
           </>
         )}
 
