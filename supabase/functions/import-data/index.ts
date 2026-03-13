@@ -118,21 +118,36 @@ serve(async (req) => {
 
     if (type === "sales_sheet") {
       // Import from Google Sheets cash register format
-      const { data: storeId } = await supabase.rpc("user_store_id", { _user_id: user.id });
+      const { data: defaultStoreId } = await supabase.rpc("user_store_id", { _user_id: user.id });
 
-      // Build seller name -> user_id map from profiles (fetch ALL profiles to guarantee matching)
+      // Build seller name -> user_id AND store_id maps from profiles + user_roles
       const sellerMap: Record<string, string> = {};
+      const sellerStoreMap: Record<string, string> = {};
       const { data: allProfiles } = await supabase
         .from("profiles")
         .select("user_id, full_name");
       if (allProfiles) {
+        // Also fetch user_roles to get store_id per user
+        const userIds = allProfiles.map(p => p.user_id);
+        const { data: roles } = await supabase
+          .from("user_roles")
+          .select("user_id, store_id")
+          .in("user_id", userIds);
+        const roleMap: Record<string, string> = {};
+        if (roles) {
+          for (const r of roles) {
+            if (r.store_id) roleMap[r.user_id] = r.store_id;
+          }
+        }
+
         for (const p of allProfiles) {
-          // Store by lowercase full_name AND by first name for partial matching
           const fullLower = p.full_name.trim().toLowerCase();
           sellerMap[fullLower] = p.user_id;
+          if (roleMap[p.user_id]) sellerStoreMap[fullLower] = roleMap[p.user_id];
           const firstName = fullLower.split(/[\s\-]/)[0];
           if (firstName && !sellerMap[firstName]) {
             sellerMap[firstName] = p.user_id;
+            if (roleMap[p.user_id]) sellerStoreMap[firstName] = roleMap[p.user_id];
           }
         }
       }
@@ -141,14 +156,22 @@ serve(async (req) => {
       const resolveUserId = (vendedor: string | undefined): string => {
         if (!vendedor) return user.id;
         const key = vendedor.trim().toLowerCase();
-        // Try exact match (full name or first name)
         if (sellerMap[key]) return sellerMap[key];
-        // Try partial match
         for (const [name, uid] of Object.entries(sellerMap)) {
           if (name.includes(key) || key.includes(name)) return uid;
         }
         console.log("No match found for seller:", vendedor);
         return user.id;
+      };
+
+      const resolveStoreId = (vendedor: string | undefined): string | null => {
+        if (!vendedor) return defaultStoreId || null;
+        const key = vendedor.trim().toLowerCase();
+        if (sellerStoreMap[key]) return sellerStoreMap[key];
+        for (const [name, sid] of Object.entries(sellerStoreMap)) {
+          if (name.includes(key) || key.includes(name)) return sid;
+        }
+        return defaultStoreId || null;
       };
 
       for (let i = 0; i < records.length; i += BATCH_SIZE) {
