@@ -295,7 +295,7 @@ const DataImport = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v as ImportType); resetState(); }}>
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             {(Object.entries(TYPE_LABELS) as [ImportType, typeof TYPE_LABELS[ImportType]][]).map(([key, val]) => (
               <TabsTrigger key={key} value={key} className="gap-2">
                 <val.icon className="h-4 w-4" />
