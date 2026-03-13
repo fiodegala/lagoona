@@ -21,7 +21,7 @@ interface DealsConfig {
 }
 
 const DealsCountdownSettings = () => {
-  const [config, setConfig] = useState<DealsConfig>({ enabled: true, end_date: null });
+  const [config, setConfig] = useState<DealsConfig>({ enabled: true, end_date: null, show_on_home: true });
   const [date, setDate] = useState<Date | undefined>();
   const [time, setTime] = useState('23:59');
   const [saving, setSaving] = useState(false);
