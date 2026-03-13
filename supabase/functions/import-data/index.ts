@@ -120,6 +120,33 @@ serve(async (req) => {
       // Import from Google Sheets cash register format
       const { data: storeId } = await supabase.rpc("user_store_id", { _user_id: user.id });
 
+      // Build seller name -> user_id map from profiles
+      const sellerNames = [...new Set(records.map((r: any) => (r.vendedor || "").trim().toLowerCase()).filter(Boolean))];
+      const sellerMap: Record<string, string> = {};
+      if (sellerNames.length > 0) {
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("user_id, full_name")
+          .or(sellerNames.map(n => `full_name.ilike.%${n}%`).join(","));
+        if (profiles) {
+          for (const p of profiles) {
+            sellerMap[p.full_name.trim().toLowerCase()] = p.user_id;
+          }
+        }
+      }
+
+      const resolveUserId = (vendedor: string | undefined): string => {
+        if (!vendedor) return user.id;
+        const key = vendedor.trim().toLowerCase();
+        // Try exact match first
+        if (sellerMap[key]) return sellerMap[key];
+        // Try partial match
+        for (const [name, uid] of Object.entries(sellerMap)) {
+          if (name.includes(key) || key.includes(name)) return uid;
+        }
+        return user.id;
+      };
+
       for (let i = 0; i < records.length; i += BATCH_SIZE) {
         const batch = records.slice(i, i + BATCH_SIZE).map((r: any) => {
           const parcelas = r.parcelas ? r.parcelas.replace(/[^0-9]/g, '') : '';
@@ -139,7 +166,7 @@ serve(async (req) => {
 
           return {
             local_id: crypto.randomUUID(),
-            user_id: user.id,
+            user_id: resolveUserId(r.vendedor),
             store_id: storeId || null,
             customer_name: r.cliente || null,
             items: r.referencia ? [{
