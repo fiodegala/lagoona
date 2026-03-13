@@ -87,6 +87,7 @@ const DealsCountdownSection = ({ products, hideProducts = false, isHomePage = fa
   }, [loaded, config.end_date]);
 
   if (!loaded || !config.enabled || products.length === 0 || timeLeft <= 0) return null;
+  if (isHomePage && config.show_on_home === false) return null;
 
   const { days, hours, minutes, seconds } = formatTime(timeLeft);
 
