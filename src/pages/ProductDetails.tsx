@@ -25,6 +25,7 @@ import ProductAITryOn from '@/components/store/ProductAITryOn';
 import UpsellSection from '@/components/store/UpsellSection';
 import { useCart } from '@/contexts/CartContext';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { getOptimizedImageUrl } from '@/lib/imageUtils';
 import { trackMetaViewContent } from '@/lib/metaPixel';
@@ -44,6 +45,7 @@ const ProductDetails = () => {
   const [upsellHasSelection, setUpsellHasSelection] = useState(false);
   const [upsellBuyTogether, setUpsellBuyTogether] = useState<(() => void) | null>(null);
   const [tryOnOpen, setTryOnOpen] = useState(false);
+  const [tryOnEnabled, setTryOnEnabled] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const { addItem } = useCart();
@@ -93,6 +95,18 @@ const ProductDetails = () => {
 
     loadProduct();
   }, [id]);
+
+  useEffect(() => {
+    const loadTryOnConfig = async () => {
+      const { data } = await supabase
+        .from('store_config')
+        .select('value')
+        .eq('key', 'ai_tryon_enabled')
+        .maybeSingle();
+      setTryOnEnabled(data ? ((data.value as any) === true || data.value === 'true') : true);
+    };
+    loadTryOnConfig();
+  }, []);
 
   const handleVariationSelect = useCallback((variation: ProductVariation | null) => {
     setSelectedVariation(variation);
@@ -547,6 +561,7 @@ const ProductDetails = () => {
             )}
 
             {/* AI Try-On Button */}
+            {tryOnEnabled && (
             <Dialog open={tryOnOpen} onOpenChange={setTryOnOpen}>
               <DialogTrigger asChild>
                 <Button
@@ -573,6 +588,7 @@ const ProductDetails = () => {
                 />
               </DialogContent>
             </Dialog>
+            )}
 
             {/* Quantity Selector */}
             <div className="space-y-2">
