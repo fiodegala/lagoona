@@ -33,6 +33,7 @@ export const COLOR_MAP: Record<string, string> = {
   'azul sky': '#87CEEB',
   marsala: '#964B50',
   grafite: '#474747',
+  gráfite: '#474747',
   preta: '#000000',
   branca: '#FFFFFF',
   'verde oliva': '#808000',
