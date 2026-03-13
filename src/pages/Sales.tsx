@@ -538,6 +538,14 @@ const Sales = () => {
               )}
             </div>
             <div className="flex items-center gap-2">
+              {canCancel && detailSale && (detailSale as any).status !== 'cancelled' && detailSale.store_id !== WEBSITE_STORE_ID && (
+                <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setConvertConfirm(detailSale)}>
+                  <Globe className="h-4 w-4" /> Converter p/ Site
+                </Button>
+              )}
+              {detailSale && detailSale.store_id === WEBSITE_STORE_ID && (
+                <Badge variant="secondary" className="text-xs"><Globe className="h-3 w-3 mr-1" /> Pedido do Site</Badge>
+              )}
               {canCancel && detailSale && (detailSale as any).status !== 'cancelled' && (
                 <Button variant="destructive" size="sm" className="gap-1.5" onClick={() => setCancelSale(detailSale)}>
                   <Ban className="h-4 w-4" /> Cancelar
