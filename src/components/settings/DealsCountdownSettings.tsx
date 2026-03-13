@@ -16,7 +16,8 @@ const DEALS_CONFIG_KEY = 'deals_countdown';
 
 interface DealsConfig {
   enabled: boolean;
-  end_date: string | null; // ISO string
+  end_date: string | null;
+  show_on_home: boolean;
 }
 
 const DealsCountdownSettings = () => {
