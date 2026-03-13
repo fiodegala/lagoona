@@ -505,14 +505,14 @@ for i in range(0, len(records), BATCH):
         {/* Fluxo recomendado */}
         <Card>
           <CardHeader>
-            <CardTitle>8. Fluxo Recomendado</CardTitle>
+            <CardTitle>10. Fluxo Recomendado</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
               {[
-                'Exporte os dados do Power BI como CSV ou conecte via Python',
+                'Exporte os dados do Power BI ou Google Sheets',
                 'Mapeie as colunas para os campos aceitos pela API',
-                'Execute o script Python em lotes de 500 registros',
+                'Execute o script (Apps Script, Python ou cURL) em lotes de 500',
                 'Verifique no Dashboard se os dados retroativos aparecem nos gráficos',
               ].map((step, i) => (
                 <div key={i} className="flex items-start gap-3">
