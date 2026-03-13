@@ -12,6 +12,7 @@ export interface ProductAttributeValue {
   id: string;
   attribute_id: string;
   value: string;
+  color_hex: string | null;
   created_at: string;
 }
 
