@@ -796,6 +796,45 @@ export type Database = {
           },
         ]
       }
+      import_history: {
+        Row: {
+          created_at: string
+          errors: string[] | null
+          errors_count: number
+          file_name: string
+          id: string
+          import_type: string
+          records_inserted: number
+          records_sent: number
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          errors?: string[] | null
+          errors_count?: number
+          file_name: string
+          id?: string
+          import_type: string
+          records_inserted?: number
+          records_sent?: number
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          errors?: string[] | null
+          errors_count?: number
+          file_name?: string
+          id?: string
+          import_type?: string
+          records_inserted?: number
+          records_sent?: number
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       job_applications: {
         Row: {
           created_at: string
