@@ -11,6 +11,10 @@ interface ShippingLabelProps {
     id: string;
     customer_name?: string;
     customer_email?: string;
+    total?: number;
+    payment_method?: string;
+    payment_status?: string;
+    metadata?: any;
     shipping_address?: {
       address?: string;
       number?: string;
@@ -26,6 +30,15 @@ interface ShippingLabelProps {
     items?: any;
   } | null;
 }
+
+const paymentMethodLabels: Record<string, string> = {
+  pix: 'PIX',
+  credit_card: 'Cartão de Crédito',
+  debit_card: 'Cartão de Débito',
+  boleto: 'Boleto',
+  bolbradesco: 'Boleto',
+  bank_transfer: 'PIX',
+};
 
 const ShippingLabelModal = ({ open, onOpenChange, order }: ShippingLabelProps) => {
   const labelRef = useRef<HTMLDivElement>(null);
@@ -54,11 +67,37 @@ const ShippingLabelModal = ({ open, onOpenChange, order }: ShippingLabelProps) =
   const cityStateLine = [addr.city, addr.state].filter(Boolean).join(' - ');
   const zipCode = addr.zip_code || '';
 
+  const meta = order.metadata || {};
+  const paymentTypeId = meta.payment_type_id || '';
+  const paymentLabel = (() => {
+    if (paymentTypeId) return paymentMethodLabels[paymentTypeId] || paymentTypeId;
+    if (order.payment_method) return paymentMethodLabels[order.payment_method] || order.payment_method;
+    return '';
+  })();
+
+  const items = (() => {
+    try {
+      const parsed = typeof order.items === 'string' ? JSON.parse(order.items) : order.items;
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  })();
+
+  const sectionTitle: React.CSSProperties = {
+    fontSize: '9px', textTransform: 'uppercase', letterSpacing: '1px',
+    color: '#666', marginBottom: '6px', fontWeight: 'bold',
+  };
+
+  const sectionStyle: React.CSSProperties = {
+    marginBottom: '12px', paddingBottom: '10px', borderBottom: '1px dashed #999',
+  };
+
   const handlePrint = () => {
     const content = labelRef.current;
     if (!content) return;
 
-    const printWindow = window.open('', '_blank', 'width=600,height=400');
+    const printWindow = window.open('', '_blank', 'width=800,height=600');
     if (!printWindow) return;
 
     printWindow.document.write(`
@@ -69,23 +108,13 @@ const ShippingLabelModal = ({ open, onOpenChange, order }: ShippingLabelProps) =
         <style>
           * { margin: 0; padding: 0; box-sizing: border-box; }
           body { font-family: Arial, sans-serif; padding: 0; }
-          @page { size: 100mm 150mm; margin: 4mm; }
+          @page { size: 148mm 210mm; margin: 6mm; }
           .label-container {
             width: 100%;
             border: 2px solid #000;
-            padding: 12px;
+            padding: 16px;
             page-break-inside: avoid;
           }
-          .section { margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px dashed #999; }
-          .section:last-child { border-bottom: none; margin-bottom: 0; }
-          .section-title { font-size: 9px; text-transform: uppercase; letter-spacing: 1px; color: #666; margin-bottom: 4px; font-weight: bold; }
-          .name { font-size: 16px; font-weight: bold; margin-bottom: 2px; }
-          .address { font-size: 13px; line-height: 1.5; }
-          .zip { font-size: 18px; font-weight: bold; letter-spacing: 2px; margin-top: 4px; }
-          .order-info { font-size: 11px; color: #333; }
-          .order-id { font-family: monospace; font-size: 12px; font-weight: bold; }
-          .tracking { font-family: monospace; font-size: 14px; font-weight: bold; letter-spacing: 1px; }
-          .items-summary { font-size: 10px; color: #555; margin-top: 4px; }
         </style>
       </head>
       <body>
@@ -97,88 +126,115 @@ const ShippingLabelModal = ({ open, onOpenChange, order }: ShippingLabelProps) =
     printWindow.document.close();
   };
 
-  const itemsSummary = (() => {
-    try {
-      const items = typeof order.items === 'string' ? JSON.parse(order.items) : order.items;
-      if (!Array.isArray(items)) return '';
-      return items.map((i: any) => `${i.quantity || 1}x ${i.name || i.product_name || 'Produto'}`).join(' | ');
-    } catch {
-      return '';
-    }
-  })();
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-xl max-h-[90vh] flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle>Etiqueta de Envio</DialogTitle>
         </DialogHeader>
 
-        <div ref={labelRef}>
-          <div className="label-container" style={{ border: '2px solid #000', padding: '16px', fontFamily: 'Arial, sans-serif' }}>
-            {/* Logo */}
-            <div style={{ textAlign: 'center', marginBottom: '10px', paddingBottom: '10px', borderBottom: '1px dashed #999' }}>
-              <img src={logoBase64 || logoEtiqueta} alt="Fio de Gala" style={{ height: '40px', margin: '0 auto' }} />
-            </div>
-            {/* Destinatário */}
-            <div className="section" style={{ marginBottom: '12px', paddingBottom: '10px', borderBottom: '1px dashed #999' }}>
-              <div className="section-title" style={{ fontSize: '9px', textTransform: 'uppercase', letterSpacing: '1px', color: '#666', marginBottom: '4px', fontWeight: 'bold' }}>
-                Destinatário
+        <div className="flex-1 overflow-y-auto pr-1">
+          <div ref={labelRef}>
+            <div className="label-container" style={{ border: '2px solid #000', padding: '16px', fontFamily: 'Arial, sans-serif' }}>
+              {/* Logo */}
+              <div style={{ textAlign: 'center', marginBottom: '12px', paddingBottom: '10px', borderBottom: '1px dashed #999' }}>
+                <img src={logoBase64 || logoEtiqueta} alt="Fio de Gala" style={{ height: '44px', margin: '0 auto' }} />
               </div>
-              <div className="name" style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '2px' }}>
-                {recipientName}
-              </div>
-              <div className="address" style={{ fontSize: '13px', lineHeight: '1.5' }}>
-                {addressLine && <div>{addressLine}</div>}
-                {complementLine && <div>{complementLine}</div>}
-                {neighborhoodLine && <div>{neighborhoodLine}</div>}
-                {cityStateLine && <div>{cityStateLine}</div>}
-              </div>
-              {zipCode && (
-                <div className="zip" style={{ fontSize: '18px', fontWeight: 'bold', letterSpacing: '2px', marginTop: '4px' }}>
-                  CEP: {zipCode}
-                </div>
-              )}
-            </div>
 
-            {/* Pedido */}
-            <div className="section" style={{ marginBottom: '12px', paddingBottom: '10px', borderBottom: '1px dashed #999' }}>
-              <div className="section-title" style={{ fontSize: '9px', textTransform: 'uppercase', letterSpacing: '1px', color: '#666', marginBottom: '4px', fontWeight: 'bold' }}>
-                Pedido
-              </div>
-              <div className="order-id" style={{ fontFamily: 'monospace', fontSize: '12px', fontWeight: 'bold' }}>
-                #{order.id.slice(0, 8).toUpperCase()}
-              </div>
-              {order.tracking_code && (
-                <div style={{ marginTop: '4px' }}>
-                  <span style={{ fontSize: '10px', color: '#666' }}>Rastreio: </span>
-                  <span className="tracking" style={{ fontFamily: 'monospace', fontSize: '14px', fontWeight: 'bold', letterSpacing: '1px' }}>
-                    {order.tracking_code}
-                  </span>
+              {/* Destinatário */}
+              <div style={sectionStyle}>
+                <div style={sectionTitle}>Destinatário</div>
+                <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '2px' }}>
+                  {recipientName}
                 </div>
-              )}
-              {order.shipping_carrier && (
-                <div style={{ fontSize: '11px', color: '#333', marginTop: '2px' }}>
-                  Transportadora: {order.shipping_carrier}
+                <div style={{ fontSize: '13px', lineHeight: '1.5' }}>
+                  {addressLine && <div>{addressLine}</div>}
+                  {complementLine && <div>{complementLine}</div>}
+                  {neighborhoodLine && <div>{neighborhoodLine}</div>}
+                  {cityStateLine && <div>{cityStateLine}</div>}
+                </div>
+                {zipCode && (
+                  <div style={{ fontSize: '18px', fontWeight: 'bold', letterSpacing: '2px', marginTop: '4px' }}>
+                    CEP: {zipCode}
+                  </div>
+                )}
+              </div>
+
+              {/* Pedido + Pagamento */}
+              <div style={sectionStyle}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div>
+                    <div style={sectionTitle}>Pedido</div>
+                    <div style={{ fontFamily: 'monospace', fontSize: '14px', fontWeight: 'bold' }}>
+                      #{order.id.slice(0, 8).toUpperCase()}
+                    </div>
+                    {order.tracking_code && (
+                      <div style={{ marginTop: '4px' }}>
+                        <span style={{ fontSize: '10px', color: '#666' }}>Rastreio: </span>
+                        <span style={{ fontFamily: 'monospace', fontSize: '14px', fontWeight: 'bold', letterSpacing: '1px' }}>
+                          {order.tracking_code}
+                        </span>
+                      </div>
+                    )}
+                    {order.shipping_carrier && (
+                      <div style={{ fontSize: '11px', color: '#333', marginTop: '2px' }}>
+                        Transportadora: {order.shipping_carrier}
+                      </div>
+                    )}
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={sectionTitle}>Total</div>
+                    <div style={{ fontSize: '16px', fontWeight: 'bold' }}>
+                      R$ {Number(order.total || 0).toFixed(2)}
+                    </div>
+                    {paymentLabel && (
+                      <div style={{ fontSize: '11px', color: '#333', marginTop: '2px' }}>
+                        {paymentLabel}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Itens com imagens */}
+              {items.length > 0 && (
+                <div style={{ marginBottom: '0' }}>
+                  <div style={sectionTitle}>Conteúdo ({items.length} {items.length === 1 ? 'item' : 'itens'})</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {items.map((item: any, idx: number) => (
+                      <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '6px', border: '1px solid #ddd', borderRadius: '4px' }}>
+                        {(item.image_url || item.imageUrl) && (
+                          <img
+                            src={item.image_url || item.imageUrl}
+                            alt={item.name || 'Produto'}
+                            style={{ width: '44px', height: '44px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #eee', flexShrink: 0 }}
+                          />
+                        )}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: '12px', fontWeight: 'bold', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {item.name || item.product_name || 'Produto'}
+                          </div>
+                          {item.variation && (
+                            <div style={{ fontSize: '10px', color: '#666' }}>{item.variation}</div>
+                          )}
+                          {item.sku && (
+                            <div style={{ fontSize: '10px', color: '#999' }}>SKU: {item.sku}</div>
+                          )}
+                        </div>
+                        <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                          <div style={{ fontSize: '12px', fontWeight: 'bold' }}>R$ {Number(item.price || 0).toFixed(2)}</div>
+                          <div style={{ fontSize: '10px', color: '#666' }}>Qtd: {item.quantity || 1}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
-
-            {/* Itens */}
-            {itemsSummary && (
-              <div className="section">
-                <div className="section-title" style={{ fontSize: '9px', textTransform: 'uppercase', letterSpacing: '1px', color: '#666', marginBottom: '4px', fontWeight: 'bold' }}>
-                  Conteúdo
-                </div>
-                <div className="items-summary" style={{ fontSize: '10px', color: '#555' }}>
-                  {itemsSummary}
-                </div>
-              </div>
-            )}
           </div>
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="pt-2">
           <Button variant="outline" onClick={() => onOpenChange(false)}>Fechar</Button>
           <Button onClick={handlePrint}>
             <Printer className="h-4 w-4 mr-1" />
