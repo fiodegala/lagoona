@@ -51,13 +51,17 @@ serve(async (req) => {
           ],
         };
 
-        const response = await fetch(`${ME_API_URL}/me/shipment/calculate`, {
+        const url = `${ME_API_URL}/me/shipment/calculate`;
+        console.log("Calling Melhor Envio:", url);
+        console.log("Token starts with:", token.substring(0, 20));
+
+        const response = await fetch(url, {
           method: "POST",
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
             Accept: "application/json",
-            "User-Agent": "FDG System (contato@fiodegala.com.br)",
+            "User-Agent": "FDG System contato@fiodegala.com.br",
           },
           body: JSON.stringify(body),
         });
