@@ -210,6 +210,7 @@ const Settings = () => {
           <p className="text-muted-foreground mt-1">Gerencie suas preferências e conta</p>
         </div>
 
+        <PushNotificationSettings />
         <SalesGoalsSettings />
 
         {isAdmin && (
