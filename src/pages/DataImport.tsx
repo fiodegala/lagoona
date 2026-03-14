@@ -107,6 +107,14 @@ const DataImport = () => {
     fetchHistory();
   };
 
+  const resetState = () => {
+    setParsedRecords([]);
+    setFileName(null);
+    setProgress(0);
+    setImportResult(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
   const deleteHistoryEntry = async (id: string) => {
     setDeletingId(id);
     const { error } = await supabase.from('import_history').delete().eq('id', id);
