@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { shippingService, ShippingZone, CreateShippingZoneData } from '@/services/shipping';
+import AdminShippingQuote from '@/components/AdminShippingQuote';
 
 const Shipping = () => {
   const [zones, setZones] = useState<ShippingZone[]>([]);
