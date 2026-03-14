@@ -86,7 +86,7 @@ const ShippingCalculator = ({
       const { data, error } = await supabase.functions.invoke('melhor-envio', {
         body: {
           action: 'calculate',
-          from_zip: '01001000', // CEP da loja - ajustar conforme necessário
+          from_zip: '74550020',
           to_zip: cleanCep,
           weight: productWeight,
           width: productWidth,
