@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import AdminLayout from '@/components/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,8 +11,12 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
 import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import {
   Upload, FileText, AlertCircle, CheckCircle2, Download, Loader2,
-  Users, ShoppingCart, Receipt, Database, FileSpreadsheet,
+  Users, ShoppingCart, Receipt, Database, FileSpreadsheet, History, Trash2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -68,6 +72,40 @@ const DataImport = () => {
   const [progress, setProgress] = useState(0);
   const [importResult, setImportResult] = useState<{ inserted: number; errors: string[] } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [importHistory, setImportHistory] = useState<any[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const fetchHistory = useCallback(async () => {
+    setLoadingHistory(true);
+    const { data } = await supabase
+      .from('import_history')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(50);
+    setImportHistory(data || []);
+    setLoadingHistory(false);
+  }, []);
+
+  useEffect(() => {
+    fetchHistory();
+  }, [fetchHistory]);
+
+  const saveImportHistory = async (type: string, file: string, sent: number, inserted: number, errors: string[]) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    await supabase.from('import_history').insert({
+      user_id: user.id,
+      file_name: file,
+      import_type: type,
+      records_sent: sent,
+      records_inserted: inserted,
+      errors_count: errors.length,
+      errors: errors.slice(0, 20),
+      status: errors.length === 0 ? 'completed' : inserted > 0 ? 'partial' : 'failed',
+    });
+    fetchHistory();
+  };
 
   const resetState = () => {
     setParsedRecords([]);
@@ -75,6 +113,18 @@ const DataImport = () => {
     setProgress(0);
     setImportResult(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const deleteHistoryEntry = async (id: string) => {
+    setDeletingId(id);
+    const { error } = await supabase.from('import_history').delete().eq('id', id);
+    if (error) {
+      toast.error('Erro ao excluir registro');
+    } else {
+      toast.success('Registro excluído');
+      setImportHistory(prev => prev.filter(h => h.id !== id));
+    }
+    setDeletingId(null);
   };
 
   const parseCSV = useCallback((content: string, type: ImportType): ParsedRecord[] => {
@@ -252,6 +302,9 @@ const DataImport = () => {
 
     setIsImporting(false);
     setImportResult({ inserted: totalInserted, errors: allErrors });
+
+    // Save to history
+    await saveImportHistory(activeTab, fileName || 'arquivo.csv', validRecords.length, totalInserted, allErrors);
 
     if (allErrors.length === 0) {
       toast.success(`${totalInserted} registros importados com sucesso!`);
@@ -487,6 +540,103 @@ const DataImport = () => {
             </TabsContent>
           ))}
         </Tabs>
+        {/* Import History */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <History className="h-5 w-5" />
+              Histórico de Importações
+            </CardTitle>
+            <CardDescription>Todos os arquivos enviados anteriormente</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {loadingHistory ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : importHistory.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-8">Nenhuma importação realizada ainda.</p>
+            ) : (
+              <ScrollArea className="max-h-[400px]">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Data</TableHead>
+                      <TableHead>Arquivo</TableHead>
+                      <TableHead>Tipo</TableHead>
+                      <TableHead className="text-center">Enviados</TableHead>
+                      <TableHead className="text-center">Importados</TableHead>
+                      <TableHead className="text-center">Erros</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="w-[60px]"></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {importHistory.map((entry) => (
+                      <TableRow key={entry.id}>
+                        <TableCell className="text-sm whitespace-nowrap">
+                          {new Date(entry.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                        </TableCell>
+                        <TableCell className="max-w-[200px] truncate">
+                          <div className="flex items-center gap-1.5">
+                            <FileText className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                            {entry.file_name}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="text-xs">
+                            {TYPE_LABELS[entry.import_type as ImportType]?.label || entry.import_type}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-center">{entry.records_sent}</TableCell>
+                        <TableCell className="text-center font-medium">{entry.records_inserted}</TableCell>
+                        <TableCell className="text-center">
+                          {entry.errors_count > 0 ? (
+                            <span className="text-destructive">{entry.errors_count}</span>
+                          ) : '0'}
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={entry.status === 'completed' ? 'default' : entry.status === 'partial' ? 'secondary' : 'destructive'}
+                            className="text-xs"
+                          >
+                            {entry.status === 'completed' ? 'Sucesso' : entry.status === 'partial' ? 'Parcial' : 'Falha'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive">
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Excluir registro?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Isso removerá apenas o registro do histórico. Os dados já importados não serão afetados.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => deleteHistoryEntry(entry.id)}
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                >
+                                  {deletingId === entry.id ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Excluir'}
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </ScrollArea>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </AdminLayout>
   );
