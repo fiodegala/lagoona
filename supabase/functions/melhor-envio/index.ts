@@ -26,36 +26,6 @@ serve(async (req) => {
     const { action, ...params } = await req.json();
 
     switch (action) {
-      case "test": {
-        const token = await getMelhorEnvioToken();
-        console.log("Token length:", token.length, "starts:", token.substring(0, 30));
-        const testUrl = `${ME_API_URL}/me/shipment/calculate`;
-        console.log("Testing URL:", testUrl);
-        try {
-          const res = await fetch(testUrl, {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-              Accept: "application/json",
-              "User-Agent": "FDG contato@fiodegala.com.br",
-            },
-            body: JSON.stringify({
-              from: { postal_code: "74550020" },
-              to: { postal_code: "01310100" },
-              products: [{ id: "1", width: 11, height: 2, length: 16, weight: 0.3, insurance_value: 0, quantity: 1 }],
-            }),
-          });
-          const text = await res.text();
-          console.log("Response status:", res.status);
-          console.log("Response body (first 500):", text.substring(0, 500));
-          return jsonResponse({ status: res.status, body: text.substring(0, 1000) });
-        } catch (e) {
-          console.error("Fetch error:", e);
-          return jsonError(`Fetch error: ${e}`, 500);
-        }
-      }
-
       case "calculate": {
         const { from_zip, to_zip, weight, height, width, length, insurance_value } = params;
 
@@ -81,17 +51,13 @@ serve(async (req) => {
           ],
         };
 
-        const url = `${ME_API_URL}/me/shipment/calculate`;
-        console.log("Calling Melhor Envio:", url);
-        console.log("Token starts with:", token.substring(0, 20));
-
-        const response = await fetch(url, {
+        const response = await fetch(`${ME_API_URL}/me/shipment/calculate`, {
           method: "POST",
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
             Accept: "application/json",
-            "User-Agent": "FDG System contato@fiodegala.com.br",
+            "User-Agent": "FDG contato@fiodegala.com.br",
           },
           body: JSON.stringify(body),
         });
