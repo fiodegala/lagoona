@@ -19,6 +19,7 @@ import SpinWheelSettings from '@/components/settings/SpinWheelSettings';
 import WholesaleVideoSettings from '@/components/settings/WholesaleVideoSettings';
 import LowStockAlertSettings from '@/components/settings/LowStockAlertSettings';
 import AITryOnSettings from '@/components/settings/AITryOnSettings';
+import PushNotificationSettings from '@/components/settings/PushNotificationSettings';
 
 const Settings = () => {
   const { profile, isAdmin, user } = useAuth();
