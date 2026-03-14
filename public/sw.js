@@ -1,10 +1,6 @@
-/// <reference lib="webworker" />
-
 // Service Worker for Push Notifications and PWA
-const sw = self as unknown as ServiceWorkerGlobalScope;
 
-// Push event - received from server
-sw.addEventListener('push', (event) => {
+self.addEventListener('push', (event) => {
   let data = { title: 'Fio de Gala', message: 'Nova notificação', type: '', entityId: '' };
 
   try {
@@ -12,28 +8,21 @@ sw.addEventListener('push', (event) => {
       data = { ...data, ...event.data.json() };
     }
   } catch {
-    // fallback
+    // fallback payload
   }
 
-  const iconMap: Record<string, string> = {
-    new_order: '🛍️',
-    abandoned_cart: '🛒',
-    pos_sale: '💰',
-    stock_transfer: '📦',
-  };
-
-  const routeMap: Record<string, string> = {
+  const routeMap = {
     new_order: '/admin/orders',
     abandoned_cart: '/admin/abandoned-carts',
     pos_sale: '/admin/sales',
     stock_transfer: '/admin/stock',
   };
 
-  const options: NotificationOptions = {
+  const options = {
     body: data.message,
     icon: '/favicon.png',
     badge: '/favicon.png',
-    tag: data.type + '-' + (data.entityId || Date.now()),
+    tag: `${data.type}-${data.entityId || Date.now()}`,
     data: {
       url: routeMap[data.type] || '/admin',
       type: data.type,
@@ -43,39 +32,35 @@ sw.addEventListener('push', (event) => {
     requireInteraction: true,
   };
 
-  event.waitUntil(
-    sw.registration.showNotification(data.title, options)
-  );
+  event.waitUntil(self.registration.showNotification(data.title, options));
 });
 
-// Notification click - open the app at the right route
-sw.addEventListener('notificationclick', (event) => {
+self.addEventListener('notificationclick', (event) => {
   event.notification.close();
 
-  const url = event.notification.data?.url || '/admin';
+  const url = event.notification?.data?.url || '/admin';
 
   event.waitUntil(
-    sw.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
-      // Try to focus an existing window
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
       for (const client of clients) {
-        if (client.url.includes(self.location.origin)) {
+        if (client.url.includes(self.location.origin) && 'focus' in client) {
           client.focus();
-          client.navigate(url);
+          if ('navigate' in client) {
+            client.navigate(url);
+          }
           return;
         }
       }
-      // Open new window
-      return sw.clients.openWindow(url);
+
+      return self.clients.openWindow(url);
     })
   );
 });
 
-// Install event
-sw.addEventListener('install', () => {
-  sw.skipWaiting();
+self.addEventListener('install', () => {
+  self.skipWaiting();
 });
 
-// Activate event
-sw.addEventListener('activate', (event) => {
-  event.waitUntil(sw.clients.claim());
+self.addEventListener('activate', (event) => {
+  event.waitUntil(self.clients.claim());
 });

@@ -19,15 +19,35 @@ export function usePushNotifications() {
     }
   }, []);
 
+  const getServiceWorkerRegistration = useCallback(async () => {
+    if (!('serviceWorker' in navigator)) {
+      throw new Error('service_worker_not_supported');
+    }
+
+    const existing = await navigator.serviceWorker.getRegistration();
+    if (existing) return existing;
+
+    await navigator.serviceWorker.register('/sw.js');
+
+    const registration = await Promise.race<ServiceWorkerRegistration>([
+      navigator.serviceWorker.ready,
+      new Promise<ServiceWorkerRegistration>((_, reject) =>
+        window.setTimeout(() => reject(new Error('service_worker_timeout')), 8000)
+      ),
+    ]);
+
+    return registration;
+  }, []);
+
   const checkExistingSubscription = useCallback(async () => {
     try {
-      const registration = await navigator.serviceWorker.ready;
+      const registration = await getServiceWorkerRegistration();
       const subscription = await registration.pushManager.getSubscription();
       setIsSubscribed(!!subscription);
     } catch {
       setIsSubscribed(false);
     }
-  }, []);
+  }, [getServiceWorkerRegistration]);
 
   const getVapidPublicKey = useCallback(async (): Promise<string | null> => {
     // Try to get from store_config
@@ -86,7 +106,7 @@ export function usePushNotifications() {
         return outputArray;
       };
 
-      const registration = await navigator.serviceWorker.ready;
+      const registration = await getServiceWorkerRegistration();
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(vapidKey),
@@ -121,11 +141,11 @@ export function usePushNotifications() {
     } finally {
       setIsLoading(false);
     }
-  }, [isSupported, user, getVapidPublicKey]);
+  }, [isSupported, user, getVapidPublicKey, getServiceWorkerRegistration]);
 
   const unsubscribe = useCallback(async () => {
     try {
-      const registration = await navigator.serviceWorker.ready;
+      const registration = await getServiceWorkerRegistration();
       const subscription = await registration.pushManager.getSubscription();
       if (subscription) {
         await subscription.unsubscribe();
@@ -141,7 +161,7 @@ export function usePushNotifications() {
     } catch (err) {
       console.error('Unsubscribe error:', err);
     }
-  }, []);
+  }, [getServiceWorkerRegistration]);
 
   return {
     isSupported,
