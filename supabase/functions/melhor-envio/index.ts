@@ -7,7 +7,7 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
 };
 
-const ME_API_URL = "https://sandbox.melhorenvio.com.br/api/v2";
+const ME_API_URL = "https://melhorenvio.com.br/api/v2";
 
 async function getMelhorEnvioToken(): Promise<string> {
   const token = Deno.env.get("MELHOR_ENVIO_ACCESS_TOKEN");
