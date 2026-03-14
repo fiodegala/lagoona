@@ -199,6 +199,27 @@ const OrderDetailModal = ({ open, onOpenChange, order }: OrderDetailModalProps) 
               </>
             )}
 
+            {/* Cotação de Frete */}
+            <Separator />
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="text-sm font-semibold flex items-center gap-1.5">
+                  <Truck className="h-3.5 w-3.5 text-muted-foreground" />
+                  Cotação de Frete
+                </h4>
+                <Button variant="outline" size="sm" onClick={() => setShowQuote(!showQuote)}>
+                  {showQuote ? 'Fechar' : 'Cotar Frete'}
+                </Button>
+              </div>
+              {showQuote && (
+                <AdminShippingQuote
+                  compact
+                  initialCep={addr.zip_code?.replace(/\D/g, '') || ''}
+                  initialInsuranceValue={Number(order.total) || 0}
+                />
+              )}
+            </div>
+
             <Separator />
 
             {/* Itens */}
