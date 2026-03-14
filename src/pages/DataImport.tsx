@@ -540,6 +540,103 @@ const DataImport = () => {
             </TabsContent>
           ))}
         </Tabs>
+        {/* Import History */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <History className="h-5 w-5" />
+              Histórico de Importações
+            </CardTitle>
+            <CardDescription>Todos os arquivos enviados anteriormente</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {loadingHistory ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : importHistory.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-8">Nenhuma importação realizada ainda.</p>
+            ) : (
+              <ScrollArea className="max-h-[400px]">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Data</TableHead>
+                      <TableHead>Arquivo</TableHead>
+                      <TableHead>Tipo</TableHead>
+                      <TableHead className="text-center">Enviados</TableHead>
+                      <TableHead className="text-center">Importados</TableHead>
+                      <TableHead className="text-center">Erros</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="w-[60px]"></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {importHistory.map((entry) => (
+                      <TableRow key={entry.id}>
+                        <TableCell className="text-sm whitespace-nowrap">
+                          {new Date(entry.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                        </TableCell>
+                        <TableCell className="max-w-[200px] truncate">
+                          <div className="flex items-center gap-1.5">
+                            <FileText className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                            {entry.file_name}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="text-xs">
+                            {TYPE_LABELS[entry.import_type as ImportType]?.label || entry.import_type}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-center">{entry.records_sent}</TableCell>
+                        <TableCell className="text-center font-medium">{entry.records_inserted}</TableCell>
+                        <TableCell className="text-center">
+                          {entry.errors_count > 0 ? (
+                            <span className="text-destructive">{entry.errors_count}</span>
+                          ) : '0'}
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={entry.status === 'completed' ? 'default' : entry.status === 'partial' ? 'secondary' : 'destructive'}
+                            className="text-xs"
+                          >
+                            {entry.status === 'completed' ? 'Sucesso' : entry.status === 'partial' ? 'Parcial' : 'Falha'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive">
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Excluir registro?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Isso removerá apenas o registro do histórico. Os dados já importados não serão afetados.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => deleteHistoryEntry(entry.id)}
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                >
+                                  {deletingId === entry.id ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Excluir'}
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </ScrollArea>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </AdminLayout>
   );
