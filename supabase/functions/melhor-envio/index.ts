@@ -10,16 +10,11 @@ const corsHeaders = {
 const ME_API_URL = "https://melhorenvio.com.br/api/v2";
 
 async function getMelhorEnvioToken(): Promise<string> {
-  const clientId = Deno.env.get("MELHOR_ENVIO_CLIENT_ID");
-  const clientSecret = Deno.env.get("MELHOR_ENVIO_CLIENT_SECRET");
-
-  if (!clientId || !clientSecret) {
-    throw new Error("Melhor Envio credentials not configured");
+  const token = Deno.env.get("MELHOR_ENVIO_ACCESS_TOKEN");
+  if (!token) {
+    throw new Error("MELHOR_ENVIO_ACCESS_TOKEN not configured");
   }
-
-  // For server-to-server, use client_credentials or the secret directly as token
-  // Melhor Envio uses OAuth2 - the client secret IS the access token for app-level access
-  return clientSecret;
+  return token;
 }
 
 serve(async (req) => {
