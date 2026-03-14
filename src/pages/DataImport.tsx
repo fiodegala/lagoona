@@ -303,6 +303,9 @@ const DataImport = () => {
     setIsImporting(false);
     setImportResult({ inserted: totalInserted, errors: allErrors });
 
+    // Save to history
+    await saveImportHistory(activeTab, fileName || 'arquivo.csv', validRecords.length, totalInserted, allErrors);
+
     if (allErrors.length === 0) {
       toast.success(`${totalInserted} registros importados com sucesso!`);
     } else if (totalInserted > 0) {
