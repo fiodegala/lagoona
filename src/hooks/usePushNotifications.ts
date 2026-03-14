@@ -1,7 +1,25 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+
+async function getSWRegistration(): Promise<ServiceWorkerRegistration> {
+  if (!('serviceWorker' in navigator)) {
+    throw new Error('service_worker_not_supported');
+  }
+
+  const existing = await navigator.serviceWorker.getRegistration();
+  if (existing) return existing;
+
+  await navigator.serviceWorker.register('/sw.js');
+
+  return Promise.race<ServiceWorkerRegistration>([
+    navigator.serviceWorker.ready,
+    new Promise<ServiceWorkerRegistration>((_, reject) =>
+      window.setTimeout(() => reject(new Error('service_worker_timeout')), 8000)
+    ),
+  ]);
+}
 
 export function usePushNotifications() {
   const { user, isAdmin } = useAuth();
@@ -15,42 +33,14 @@ export function usePushNotifications() {
     setIsSupported(supported);
     if (supported) {
       setPermission(Notification.permission);
-      checkExistingSubscription();
+      getSWRegistration()
+        .then(reg => reg.pushManager.getSubscription())
+        .then(sub => setIsSubscribed(!!sub))
+        .catch(() => setIsSubscribed(false));
     }
   }, []);
-
-  const getServiceWorkerRegistration = useCallback(async () => {
-    if (!('serviceWorker' in navigator)) {
-      throw new Error('service_worker_not_supported');
-    }
-
-    const existing = await navigator.serviceWorker.getRegistration();
-    if (existing) return existing;
-
-    await navigator.serviceWorker.register('/sw.js');
-
-    const registration = await Promise.race<ServiceWorkerRegistration>([
-      navigator.serviceWorker.ready,
-      new Promise<ServiceWorkerRegistration>((_, reject) =>
-        window.setTimeout(() => reject(new Error('service_worker_timeout')), 8000)
-      ),
-    ]);
-
-    return registration;
-  }, []);
-
-  const checkExistingSubscription = useCallback(async () => {
-    try {
-      const registration = await getServiceWorkerRegistration();
-      const subscription = await registration.pushManager.getSubscription();
-      setIsSubscribed(!!subscription);
-    } catch {
-      setIsSubscribed(false);
-    }
-  }, [getServiceWorkerRegistration]);
 
   const getVapidPublicKey = useCallback(async (): Promise<string | null> => {
-    // Try to get from store_config
     const { data } = await supabase
       .from('store_config')
       .select('value')
@@ -61,7 +51,6 @@ export function usePushNotifications() {
       return (data.value as any).key;
     }
 
-    // Generate keys if admin
     if (isAdmin) {
       const { data: genData, error } = await supabase.functions.invoke('generate-vapid-keys');
       if (error) {
@@ -79,7 +68,6 @@ export function usePushNotifications() {
 
     setIsLoading(true);
     try {
-      // Request permission
       const perm = await Notification.requestPermission();
       setPermission(perm);
 
@@ -94,7 +82,6 @@ export function usePushNotifications() {
         return false;
       }
 
-      // Convert base64url to Uint8Array
       const urlBase64ToUint8Array = (base64String: string) => {
         const padding = '='.repeat((4 - base64String.length % 4) % 4);
         const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
@@ -106,7 +93,7 @@ export function usePushNotifications() {
         return outputArray;
       };
 
-      const registration = await getServiceWorkerRegistration();
+      const registration = await getSWRegistration();
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(vapidKey),
@@ -114,7 +101,6 @@ export function usePushNotifications() {
 
       const subJson = subscription.toJSON();
 
-      // Save to database
       const { error } = await supabase
         .from('push_subscriptions' as any)
         .upsert({
@@ -133,7 +119,6 @@ export function usePushNotifications() {
       setIsSubscribed(true);
       toast.success('Notificações push ativadas!');
       return true;
-
     } catch (err) {
       console.error('Push subscription error:', err);
       toast.error('Erro ao ativar notificações push');
@@ -141,16 +126,14 @@ export function usePushNotifications() {
     } finally {
       setIsLoading(false);
     }
-  }, [isSupported, user, getVapidPublicKey, getServiceWorkerRegistration]);
+  }, [isSupported, user, getVapidPublicKey]);
 
   const unsubscribe = useCallback(async () => {
     try {
-      const registration = await getServiceWorkerRegistration();
+      const registration = await getSWRegistration();
       const subscription = await registration.pushManager.getSubscription();
       if (subscription) {
         await subscription.unsubscribe();
-
-        // Deactivate in database
         await supabase
           .from('push_subscriptions' as any)
           .update({ is_active: false })
@@ -161,7 +144,7 @@ export function usePushNotifications() {
     } catch (err) {
       console.error('Unsubscribe error:', err);
     }
-  }, [getServiceWorkerRegistration]);
+  }, []);
 
   return {
     isSupported,
