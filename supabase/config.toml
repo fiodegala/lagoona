@@ -44,3 +44,6 @@ verify_jwt = false
 
 [functions.api-import]
 verify_jwt = false
+
+[functions.melhor-envio]
+verify_jwt = false
