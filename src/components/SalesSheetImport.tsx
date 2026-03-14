@@ -42,7 +42,11 @@ interface ParsedSaleRow {
 
 const BATCH_SIZE = 50;
 
-const SalesSheetImport = () => {
+interface SalesSheetImportProps {
+  onImportComplete?: (fileName: string, sent: number, inserted: number, errors: string[]) => void;
+}
+
+const SalesSheetImport = ({ onImportComplete }: SalesSheetImportProps) => {
   const [parsedRows, setParsedRows] = useState<ParsedSaleRow[]>([]);
   const [fileName, setFileName] = useState<string | null>(null);
   const [isImporting, setIsImporting] = useState(false);
@@ -288,6 +292,9 @@ const SalesSheetImport = () => {
 
     setIsImporting(false);
     setImportResult({ inserted: totalInserted, errors: allErrors });
+
+    // Notify parent for history tracking
+    onImportComplete?.(fileName || 'planilha-caixa.csv', validRows.length, totalInserted, allErrors);
 
     if (allErrors.length === 0) {
       toast.success(`${totalInserted} vendas importadas com sucesso!`);
