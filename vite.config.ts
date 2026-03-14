@@ -17,11 +17,13 @@ export default defineConfig(({ mode }) => ({
     react(),
     mode === "development" && componentTagger(),
     VitePWA({
-      strategies: 'injectManifest',
-      srcDir: 'public',
-      filename: 'sw.js',
       registerType: 'autoUpdate',
       injectRegister: false,
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,jpg,jpeg,webp,woff,woff2}'],
+        navigateFallback: '/index.html',
+        navigateFallbackDenylist: [/^\/~oauth/, /^\/sw\.js/],
+      },
       manifest: {
         name: 'Fio de Gala - Urban Man',
         short_name: 'Fio de Gala',
@@ -39,12 +41,6 @@ export default defineConfig(({ mode }) => ({
             purpose: 'any maskable',
           },
         ],
-      },
-      injectManifest: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,jpg,jpeg,webp,woff,woff2}'],
-      },
-      devOptions: {
-        enabled: false,
       },
     }),
   ].filter(Boolean),
