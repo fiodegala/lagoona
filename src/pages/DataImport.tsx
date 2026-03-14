@@ -359,7 +359,7 @@ const DataImport = () => {
           </TabsList>
 
           <TabsContent value="sales_sheet">
-            <SalesSheetImport />
+            <SalesSheetImport onImportComplete={(file, sent, inserted, errors) => saveImportHistory('sales_sheet', file, sent, inserted, errors)} />
           </TabsContent>
 
           {(Object.keys(TYPE_LABELS) as ImportType[]).filter(t => t !== 'sales_sheet').map((type) => (
