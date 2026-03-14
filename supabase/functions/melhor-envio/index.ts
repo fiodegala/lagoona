@@ -10,16 +10,11 @@ const corsHeaders = {
 const ME_API_URL = "https://melhorenvio.com.br/api/v2";
 
 async function getMelhorEnvioToken(): Promise<string> {
-  const clientId = Deno.env.get("MELHOR_ENVIO_CLIENT_ID");
-  const clientSecret = Deno.env.get("MELHOR_ENVIO_CLIENT_SECRET");
-
-  if (!clientId || !clientSecret) {
-    throw new Error("Melhor Envio credentials not configured");
+  const token = Deno.env.get("MELHOR_ENVIO_ACCESS_TOKEN");
+  if (!token) {
+    throw new Error("MELHOR_ENVIO_ACCESS_TOKEN not configured");
   }
-
-  // For server-to-server, use client_credentials or the secret directly as token
-  // Melhor Envio uses OAuth2 - the client secret IS the access token for app-level access
-  return clientSecret;
+  return token;
 }
 
 serve(async (req) => {
@@ -62,7 +57,7 @@ serve(async (req) => {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
             Accept: "application/json",
-            "User-Agent": "FDG System (contato@fiodegala.com.br)",
+            "User-Agent": "FDG contato@fiodegala.com.br",
           },
           body: JSON.stringify(body),
         });
@@ -111,7 +106,7 @@ serve(async (req) => {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
             Accept: "application/json",
-            "User-Agent": "FDG System (contato@fiodegala.com.br)",
+            "User-Agent": "FDG contato@fiodegala.com.br",
           },
           body: JSON.stringify(order),
         });
@@ -136,7 +131,7 @@ serve(async (req) => {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
             Accept: "application/json",
-            "User-Agent": "FDG System (contato@fiodegala.com.br)",
+            "User-Agent": "FDG contato@fiodegala.com.br",
           },
           body: JSON.stringify({ orders }),
         });
@@ -161,7 +156,7 @@ serve(async (req) => {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
             Accept: "application/json",
-            "User-Agent": "FDG System (contato@fiodegala.com.br)",
+            "User-Agent": "FDG contato@fiodegala.com.br",
           },
           body: JSON.stringify({ orders, mode: "public" }),
         });
@@ -186,7 +181,7 @@ serve(async (req) => {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
             Accept: "application/json",
-            "User-Agent": "FDG System (contato@fiodegala.com.br)",
+            "User-Agent": "FDG contato@fiodegala.com.br",
           },
           body: JSON.stringify({ orders }),
         });
