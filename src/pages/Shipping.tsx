@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { shippingService, ShippingZone, CreateShippingZoneData } from '@/services/shipping';
+import AdminShippingQuote from '@/components/AdminShippingQuote';
 
 const Shipping = () => {
   const [zones, setZones] = useState<ShippingZone[]>([]);
@@ -176,6 +177,8 @@ const Shipping = () => {
             <CardContent><div className="text-2xl font-bold text-muted-foreground">{zones.length - activeZones}</div></CardContent>
           </Card>
         </div>
+
+        <AdminShippingQuote />
 
         <Card>
           <CardContent className="p-0">

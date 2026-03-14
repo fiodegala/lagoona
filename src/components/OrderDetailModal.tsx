@@ -1,10 +1,13 @@
+import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { Button } from '@/components/ui/button';
 import { Package, Mail, MapPin, CreditCard, Clock, Truck } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import AdminShippingQuote from '@/components/AdminShippingQuote';
 
 const statusMap: Record<string, { label: string; variant: 'outline'; className: string }> = {
   pending: { label: 'Pendente', variant: 'outline', className: 'border-yellow-500 bg-yellow-50 text-yellow-700 dark:bg-yellow-950 dark:text-yellow-400' },
@@ -32,6 +35,8 @@ interface OrderDetailModalProps {
 }
 
 const OrderDetailModal = ({ open, onOpenChange, order }: OrderDetailModalProps) => {
+  const [showQuote, setShowQuote] = useState(false);
+
   if (!order) return null;
 
   const status = statusMap[order.status] || { label: order.status, variant: 'outline' as const, className: '' };
@@ -193,6 +198,27 @@ const OrderDetailModal = ({ open, onOpenChange, order }: OrderDetailModalProps) 
                 </div>
               </>
             )}
+
+            {/* Cotação de Frete */}
+            <Separator />
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="text-sm font-semibold flex items-center gap-1.5">
+                  <Truck className="h-3.5 w-3.5 text-muted-foreground" />
+                  Cotação de Frete
+                </h4>
+                <Button variant="outline" size="sm" onClick={() => setShowQuote(!showQuote)}>
+                  {showQuote ? 'Fechar' : 'Cotar Frete'}
+                </Button>
+              </div>
+              {showQuote && (
+                <AdminShippingQuote
+                  compact
+                  initialCep={addr.zip_code?.replace(/\D/g, '') || ''}
+                  initialInsuranceValue={Number(order.total) || 0}
+                />
+              )}
+            </div>
 
             <Separator />
 
