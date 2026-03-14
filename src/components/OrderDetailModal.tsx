@@ -92,7 +92,7 @@ const OrderDetailModal = ({ open, onOpenChange, order }: OrderDetailModalProps) 
           </DialogTitle>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 min-h-0 pr-2">
+        <ScrollArea className="flex-1 min-h-0 pr-2 overflow-y-auto" style={{ maxHeight: 'calc(90vh - 80px)' }}>
           <div className="space-y-5 py-2">
             {/* Status e Data */}
             <div className="flex items-center justify-between">
