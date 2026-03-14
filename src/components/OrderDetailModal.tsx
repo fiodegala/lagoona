@@ -35,6 +35,8 @@ interface OrderDetailModalProps {
 }
 
 const OrderDetailModal = ({ open, onOpenChange, order }: OrderDetailModalProps) => {
+  const [showQuote, setShowQuote] = useState(false);
+
   if (!order) return null;
 
   const status = statusMap[order.status] || { label: order.status, variant: 'outline' as const, className: '' };

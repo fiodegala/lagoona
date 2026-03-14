@@ -178,6 +178,8 @@ const Shipping = () => {
           </Card>
         </div>
 
+        <AdminShippingQuote />
+
         <Card>
           <CardContent className="p-0">
             {isLoading ? (
