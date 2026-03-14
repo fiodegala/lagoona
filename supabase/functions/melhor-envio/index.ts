@@ -156,7 +156,7 @@ serve(async (req) => {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
             Accept: "application/json",
-            "User-Agent": "FDG System (contato@fiodegala.com.br)",
+            "User-Agent": "FDG contato@fiodegala.com.br",
           },
           body: JSON.stringify({ orders, mode: "public" }),
         });
