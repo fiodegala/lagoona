@@ -72,13 +72,51 @@ const DataImport = () => {
   const [progress, setProgress] = useState(0);
   const [importResult, setImportResult] = useState<{ inserted: number; errors: string[] } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [importHistory, setImportHistory] = useState<any[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const resetState = () => {
-    setParsedRecords([]);
-    setFileName(null);
-    setProgress(0);
-    setImportResult(null);
-    if (fileInputRef.current) fileInputRef.current.value = '';
+  const fetchHistory = useCallback(async () => {
+    setLoadingHistory(true);
+    const { data } = await supabase
+      .from('import_history')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(50);
+    setImportHistory(data || []);
+    setLoadingHistory(false);
+  }, []);
+
+  useEffect(() => {
+    fetchHistory();
+  }, [fetchHistory]);
+
+  const saveImportHistory = async (type: string, file: string, sent: number, inserted: number, errors: string[]) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    await supabase.from('import_history').insert({
+      user_id: user.id,
+      file_name: file,
+      import_type: type,
+      records_sent: sent,
+      records_inserted: inserted,
+      errors_count: errors.length,
+      errors: errors.slice(0, 20),
+      status: errors.length === 0 ? 'completed' : inserted > 0 ? 'partial' : 'failed',
+    });
+    fetchHistory();
+  };
+
+  const deleteHistoryEntry = async (id: string) => {
+    setDeletingId(id);
+    const { error } = await supabase.from('import_history').delete().eq('id', id);
+    if (error) {
+      toast.error('Erro ao excluir registro');
+    } else {
+      toast.success('Registro excluído');
+      setImportHistory(prev => prev.filter(h => h.id !== id));
+    }
+    setDeletingId(null);
   };
 
   const parseCSV = useCallback((content: string, type: ImportType): ParsedRecord[] => {
