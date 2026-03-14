@@ -293,6 +293,9 @@ const SalesSheetImport = ({ onImportComplete }: SalesSheetImportProps) => {
     setIsImporting(false);
     setImportResult({ inserted: totalInserted, errors: allErrors });
 
+    // Notify parent for history tracking
+    onImportComplete?.(fileName || 'planilha-caixa.csv', validRows.length, totalInserted, allErrors);
+
     if (allErrors.length === 0) {
       toast.success(`${totalInserted} vendas importadas com sucesso!`);
     } else if (totalInserted > 0) {
