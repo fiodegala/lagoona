@@ -746,11 +746,13 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
         </div>
       </div>
 
-      {/* Lagoona Brand */}
-      <div className="space-y-3 rounded-lg border border-blue-200 bg-blue-50/50 dark:border-blue-800 dark:bg-blue-950/30 p-4">
+      {/* Marca Lagoona */}
+      <div className="rounded-lg border-2 border-blue-300 bg-blue-50 dark:border-blue-700 dark:bg-blue-950/40 p-4">
         <div className="flex items-center justify-between">
-          <div>
-            <Label htmlFor="isLagoona" className="text-sm font-medium">Produto Lagoona</Label>
+          <div className="space-y-1">
+            <Label htmlFor="isLagoona" className="text-sm font-semibold text-blue-800 dark:text-blue-200">
+              🏷️ Produto Lagoona
+            </Label>
             <p className="text-xs text-muted-foreground">
               Vendas deste produto serão atribuídas à loja Lagoona nos relatórios
             </p>
