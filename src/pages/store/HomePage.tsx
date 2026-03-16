@@ -24,6 +24,7 @@ import insta6 from '@/assets/insta-6.jpg';
 const DealsCountdownSection = lazy(() => import('@/components/store/DealsCountdownSection'));
 const VideoTestimonialsSection = lazy(() => import('@/components/store/VideoTestimonialsSection'));
 const FeaturedProductSection = lazy(() => import('@/components/store/FeaturedProductSection'));
+const CustomerFeedbackSection = lazy(() => import('@/components/store/CustomerFeedbackSection'));
 
 // Normalize banner link_url: strip origin for internal links so React Router works
 const normalizeBannerUrl = (url: string | null): string | null => {
