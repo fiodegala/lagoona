@@ -26,7 +26,7 @@ const MultiImageUpload = ({
   const [uploadingCount, setUploadingCount] = useState(0);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
-  const [objectFit, setObjectFit] = useState<'cover' | 'contain'>('cover');
+  const [cropIndex, setCropIndex] = useState<number | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
