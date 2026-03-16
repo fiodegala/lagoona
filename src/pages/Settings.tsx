@@ -20,6 +20,7 @@ import WholesaleVideoSettings from '@/components/settings/WholesaleVideoSettings
 import LowStockAlertSettings from '@/components/settings/LowStockAlertSettings';
 import AITryOnSettings from '@/components/settings/AITryOnSettings';
 import PushNotificationSettings from '@/components/settings/PushNotificationSettings';
+import CustomerFeedbackSettings from '@/components/settings/CustomerFeedbackSettings';
 
 const Settings = () => {
   const { profile, isAdmin, user } = useAuth();
@@ -218,6 +219,7 @@ const Settings = () => {
             <DealsCountdownSettings />
             <FeaturedProductSettings />
             <VideoTestimonialsSettings />
+            <CustomerFeedbackSettings />
             <SpinWheelSettings />
             <RecoveryCouponSettings />
             <WholesaleVideoSettings />
