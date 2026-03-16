@@ -1,9 +1,10 @@
 import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
-import { Upload, X, Loader2, ImageIcon, GripVertical } from 'lucide-react';
+import { Upload, X, Loader2, ImageIcon, GripVertical, Maximize, Minimize } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface MultiImageUploadProps {
   values: string[];
@@ -24,6 +25,7 @@ const MultiImageUpload = ({
   const [uploadingCount, setUploadingCount] = useState(0);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const [objectFit, setObjectFit] = useState<'cover' | 'contain'>('cover');
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -154,7 +156,10 @@ const MultiImageUpload = ({
               <img
                 src={url}
                 alt={`Galeria ${index + 1}`}
-                className="w-full h-full object-cover"
+                className={cn(
+                  "w-full h-full",
+                  objectFit === 'cover' ? 'object-cover' : 'object-contain bg-muted'
+                )}
               />
               
               {/* Order Badge */}
@@ -218,7 +223,7 @@ const MultiImageUpload = ({
 
       {/* Upload Button & Counter */}
       <div className="flex items-center justify-between">
-        <div>
+        <div className="flex items-center gap-2">
           <input
             ref={inputRef}
             type="file"
@@ -247,6 +252,28 @@ const MultiImageUpload = ({
               </>
             )}
           </Button>
+
+          {values.length > 0 && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setObjectFit(objectFit === 'cover' ? 'contain' : 'cover')}
+                >
+                  {objectFit === 'cover' ? (
+                    <><Minimize className="mr-1 h-4 w-4" /> Conter</>
+                  ) : (
+                    <><Maximize className="mr-1 h-4 w-4" /> Preencher</>
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {objectFit === 'cover' ? 'Ajustar imagem dentro da área' : 'Preencher toda a área (cortar)'}
+              </TooltipContent>
+            </Tooltip>
+          )}
         </div>
         
         <span className="text-xs text-muted-foreground">

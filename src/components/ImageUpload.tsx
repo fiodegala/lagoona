@@ -1,8 +1,10 @@
 import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
-import { Upload, X, Loader2, ImageIcon } from 'lucide-react';
+import { Upload, X, Loader2, ImageIcon, Maximize, Minimize } from 'lucide-react';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface ImageUploadProps {
   value?: string;
@@ -13,19 +15,18 @@ interface ImageUploadProps {
 
 const ImageUpload = ({ value, onChange, bucket, folder = '' }: ImageUploadProps) => {
   const [isUploading, setIsUploading] = useState(false);
+  const [objectFit, setObjectFit] = useState<'cover' | 'contain'>('cover');
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
     if (!file.type.startsWith('image/')) {
       toast.error('Por favor, selecione uma imagem');
       return;
     }
 
-    // Validate file size (max 20MB)
     if (file.size > 20 * 1024 * 1024) {
       toast.error('A imagem deve ter no máximo 20MB');
       return;
@@ -34,12 +35,10 @@ const ImageUpload = ({ value, onChange, bucket, folder = '' }: ImageUploadProps)
     setIsUploading(true);
 
     try {
-      // Generate unique filename
       const ext = file.name.split('.').pop();
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${ext}`;
       const filePath = folder ? `${folder}/${fileName}` : fileName;
 
-      // Upload to Supabase Storage
       const { error: uploadError } = await supabase.storage
         .from(bucket)
         .upload(filePath, file, {
@@ -49,7 +48,6 @@ const ImageUpload = ({ value, onChange, bucket, folder = '' }: ImageUploadProps)
 
       if (uploadError) throw uploadError;
 
-      // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from(bucket)
         .getPublicUrl(filePath);
@@ -78,7 +76,10 @@ const ImageUpload = ({ value, onChange, bucket, folder = '' }: ImageUploadProps)
           <img
             src={value}
             alt="Preview"
-            className="h-32 w-32 rounded-lg object-cover border"
+            className={cn(
+              "h-32 w-32 rounded-lg border",
+              objectFit === 'cover' ? 'object-cover' : 'object-contain bg-muted'
+            )}
           />
           <Button
             type="button"
@@ -89,6 +90,26 @@ const ImageUpload = ({ value, onChange, bucket, folder = '' }: ImageUploadProps)
           >
             <X className="h-3 w-3" />
           </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                variant="secondary"
+                size="icon"
+                className="absolute -bottom-2 -right-2 h-6 w-6"
+                onClick={() => setObjectFit(objectFit === 'cover' ? 'contain' : 'cover')}
+              >
+                {objectFit === 'cover' ? (
+                  <Minimize className="h-3 w-3" />
+                ) : (
+                  <Maximize className="h-3 w-3" />
+                )}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+              {objectFit === 'cover' ? 'Ajustar à área (conter)' : 'Preencher área (cortar)'}
+            </TooltipContent>
+          </Tooltip>
         </div>
       ) : (
         <div className="flex items-center justify-center h-32 w-32 rounded-lg border-2 border-dashed border-muted-foreground/25 bg-muted/50">
