@@ -613,6 +613,11 @@ const HomePage = () => {
         </div>
       </section>
 
+      {/* Feedbacks de Clientes (Prints + Avaliações) */}
+      <Suspense fallback={null}>
+        <CustomerFeedbackSection />
+      </Suspense>
+
       {/* Depoimentos em Vídeo */}
       <Suspense fallback={null}>
         <VideoTestimonialsSection />

@@ -219,6 +219,7 @@ const Settings = () => {
             <DealsCountdownSettings />
             <FeaturedProductSettings />
             <VideoTestimonialsSettings />
+            <CustomerFeedbackSettings />
             <SpinWheelSettings />
             <RecoveryCouponSettings />
             <WholesaleVideoSettings />
