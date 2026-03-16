@@ -188,11 +188,11 @@ const Banners = () => {
                   {filteredBanners.map((banner) => (
                     <Card key={banner.id} className={!banner.is_active ? 'opacity-60' : ''}>
                       <div className="relative aspect-[16/9] overflow-hidden rounded-t-lg bg-muted">
-                        <img
-                          src={banner.image_url}
-                          alt={banner.title || 'Banner'}
-                          className="w-full h-full object-cover"
-                        />
+                        {banner.media_type === 'video' && banner.video_url ? (
+                          <video src={banner.video_url} muted autoPlay loop playsInline className="w-full h-full object-cover" />
+                        ) : (
+                          <img src={banner.image_url} alt={banner.title || 'Banner'} className="w-full h-full object-cover" />
+                        )}
                         {!banner.is_active && (
                           <div className="absolute top-2 left-2">
                             <Badge variant="secondary">Inativo</Badge>
