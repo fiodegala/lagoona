@@ -132,6 +132,7 @@ const CustomerFeedbackSettings = () => {
                 <div>
                   <Label className="text-xs">Imagem do Print</Label>
                   <ImageUpload
+                    bucket="product-images"
                     value={print.image_url}
                     onChange={(url) => updatePrint(print.id, { image_url: url })}
                     folder="feedback-prints"
