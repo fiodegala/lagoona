@@ -70,6 +70,7 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
   const [productType, setProductType] = useState<'simple' | 'variable'>('simple');
   const [hasVariations, setHasVariations] = useState(false);
   const [barcode, setBarcode] = useState('');
+  const [isLagoona, setIsLagoona] = useState(false);
   
   // Shipping fields
   const [weightKg, setWeightKg] = useState('');

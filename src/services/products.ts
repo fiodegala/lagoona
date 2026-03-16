@@ -57,6 +57,7 @@ export interface CreateProductData {
   height_cm?: number;
   depth_cm?: number;
   barcode?: string;
+  is_lagoona?: boolean;
 }
 
 export const productsService = {
