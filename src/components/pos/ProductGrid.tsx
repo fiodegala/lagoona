@@ -26,6 +26,7 @@ interface CachedProduct {
   image_url: string | null;
   barcode: string | null;
   is_active: boolean;
+  is_lagoona?: boolean;
   variations: Array<{
     id: string;
     sku: string | null;

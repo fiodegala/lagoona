@@ -120,6 +120,7 @@ export const offlineService = {
         image_url: product.image_url,
         barcode: product.barcode,
         is_active: product.is_active,
+        is_lagoona: product.is_lagoona || false,
         variations: (product.product_variations || []).map((v: Record<string, unknown>) => ({
           id: v.id as string,
           sku: v.sku as string | null,
