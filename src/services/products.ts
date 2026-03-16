@@ -138,6 +138,7 @@ export const productsService = {
     if (input.height_cm !== undefined) updateData.height_cm = input.height_cm;
     if (input.depth_cm !== undefined) updateData.depth_cm = input.depth_cm;
     if (input.barcode !== undefined) updateData.barcode = input.barcode;
+    if (input.is_lagoona !== undefined) updateData.is_lagoona = input.is_lagoona;
 
     const { data, error } = await supabase
       .from('products')

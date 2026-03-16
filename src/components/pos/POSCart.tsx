@@ -47,6 +47,7 @@ export interface CartItem {
   discount_amount: number;
   total: number;
   max_stock: number;
+  is_lagoona?: boolean;
 }
 
 interface POSCartProps {
