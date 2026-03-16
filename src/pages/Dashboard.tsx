@@ -219,10 +219,12 @@ const Dashboard = () => {
         ordersQuery = ordersQuery.eq('store_id', SITE_STORE_ID).limit(0);
       }
 
-      // POS Sales: filter by store
+      // POS Sales: filter by store (Lagoona needs all sales to filter by items)
       let posSalesQuery = supabase.from('pos_sales').select('*').order('created_at', { ascending: false });
       if (isSiteStoreSelected) {
         posSalesQuery = posSalesQuery.eq('store_id', SITE_STORE_ID).limit(0);
+      } else if (isLagoonaStoreSelected) {
+        // Fetch all POS sales - will filter client-side by is_lagoona items
       } else if (storeFilter) {
         posSalesQuery = posSalesQuery.eq('store_id', storeFilter);
       }
