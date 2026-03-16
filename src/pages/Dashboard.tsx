@@ -331,14 +331,44 @@ const Dashboard = () => {
     if (selectedSellerId !== 'all') {
       activeSales = activeSales.filter(s => s.user_id === selectedSellerId);
     }
-    if (!periodStartDate) return activeSales;
-    return activeSales.filter(s => {
-      const saleDate = new Date(s.created_at);
-      const afterStart = saleDate >= periodStartDate;
-      const beforeEnd = !periodEndDate || saleDate <= periodEndDate;
-      return afterStart && beforeEnd;
-    });
-  }, [rawPOSSales, periodStartDate, periodEndDate, selectedSellerId]);
+    if (periodStartDate) {
+      activeSales = activeSales.filter(s => {
+        const saleDate = new Date(s.created_at);
+        const afterStart = saleDate >= periodStartDate;
+        const beforeEnd = !periodEndDate || saleDate <= periodEndDate;
+        return afterStart && beforeEnd;
+      });
+    }
+
+    // Lagoona filtering: when Lagoona store is selected, only show sales with Lagoona items
+    // and recalculate totals based on those items only
+    if (isLagoonaStoreSelected) {
+      return activeSales
+        .map(sale => {
+          const lagoonaItems = (sale.items || []).filter((item: any) => item.is_lagoona);
+          if (lagoonaItems.length === 0) return null;
+          const lagoonaTotal = lagoonaItems.reduce((sum: number, item: any) => sum + (Number(item.total) || 0), 0);
+          return { ...sale, items: lagoonaItems, total: lagoonaTotal };
+        })
+        .filter(Boolean) as typeof activeSales;
+    }
+
+    // For non-Lagoona physical stores, exclude Lagoona items from totals
+    if (activeStoreFilter && activeStoreFilter !== SITE_STORE_ID && activeStoreFilter !== LAGOONA_STORE_ID) {
+      return activeSales
+        .map(sale => {
+          const hasLagoonaItems = (sale.items || []).some((item: any) => item.is_lagoona);
+          if (!hasLagoonaItems) return sale;
+          const nonLagoonaItems = (sale.items || []).filter((item: any) => !item.is_lagoona);
+          if (nonLagoonaItems.length === 0) return null;
+          const adjustedTotal = nonLagoonaItems.reduce((sum: number, item: any) => sum + (Number(item.total) || 0), 0);
+          return { ...sale, items: nonLagoonaItems, total: adjustedTotal };
+        })
+        .filter(Boolean) as typeof activeSales;
+    }
+
+    return activeSales;
+  }, [rawPOSSales, periodStartDate, periodEndDate, selectedSellerId, isLagoonaStoreSelected, activeStoreFilter]);
 
   // Calculate online stats based on filtered data
   const stats: DashboardStats | null = useMemo(() => {
