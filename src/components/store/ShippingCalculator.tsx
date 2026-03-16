@@ -3,17 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Truck, Loader2, MapPin } from 'lucide-react';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
-
-interface ShippingOption {
-  id: number;
-  name: string;
-  price: number;
-  discount: number;
-  deliveryTime: number;
-  deliveryRange: { min: number; max: number };
-  company: { id: number; name: string; picture: string };
-}
+import { shippingService } from '@/services/shipping';
 
 interface ShippingResult {
   name: string;
@@ -24,9 +14,6 @@ interface ShippingResult {
 
 interface ShippingCalculatorProps {
   productWeight?: number;
-  productWidth?: number;
-  productHeight?: number;
-  productLength?: number;
   orderTotal?: number;
   forceFreeShipping?: boolean;
   onShippingCalculated?: (result: ShippingResult | null) => void;
@@ -36,17 +23,15 @@ const FREE_SHIPPING_MIN = 299;
 
 const ShippingCalculator = ({
   productWeight = 0.3,
-  productWidth = 11,
-  productHeight = 2,
-  productLength = 16,
   orderTotal = 0,
   forceFreeShipping = false,
   onShippingCalculated,
 }: ShippingCalculatorProps) => {
   const [cep, setCep] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [options, setOptions] = useState<ShippingOption[] | null>(null);
+  const [result, setResult] = useState<{ zone: any; price: number; isFreeShipping: boolean; estimatedDays: string } | null>(null);
   const [address, setAddress] = useState<string | null>(null);
+  const [noZone, setNoZone] = useState(false);
 
   const formatCep = (value: string) => {
     const numbers = value.replace(/\D/g, '');
@@ -66,8 +51,9 @@ const ShippingCalculator = ({
     }
 
     setIsLoading(true);
-    setOptions(null);
+    setResult(null);
     setAddress(null);
+    setNoZone(false);
 
     try {
       // Fetch address from ViaCEP
@@ -82,61 +68,27 @@ const ShippingCalculator = ({
 
       setAddress(`${addressData.localidade} - ${addressData.uf}`);
 
-      // Calculate via Melhor Envio
-      const { data, error } = await supabase.functions.invoke('melhor-envio', {
-        body: {
-          action: 'calculate',
-          from_zip: '74550020',
-          to_zip: cleanCep,
-          weight: productWeight,
-          width: productWidth,
-          height: productHeight,
-          length: productLength,
-          insurance_value: orderTotal,
-        },
-      });
+      // Calculate using internal shipping zones
+      const shippingResult = await shippingService.calculateShipping(cleanCep, productWeight, orderTotal);
 
-      if (error) {
-        console.error('Melhor Envio error:', error);
-        toast.error('Erro ao calcular frete. Tente novamente.');
-        return;
-      }
-
-      if (!data?.services || data.services.length === 0) {
-        setOptions([]);
+      if (!shippingResult) {
+        setNoZone(true);
         onShippingCalculated?.(null);
         toast.info('Não há opções de frete disponíveis para este CEP.');
         return;
       }
 
-      const services: ShippingOption[] = data.services.map((s: any) => ({
-        id: s.id,
-        name: s.name,
-        price: s.price - (s.discount || 0),
-        discount: s.discount || 0,
-        deliveryTime: s.delivery_time,
-        deliveryRange: s.delivery_range || { min: s.delivery_time, max: s.delivery_time },
-        company: s.company,
-      }));
+      const isFree = forceFreeShipping || (shippingResult.zone.free_shipping_min_value !== null && orderTotal >= shippingResult.zone.free_shipping_min_value) || orderTotal >= FREE_SHIPPING_MIN;
+      const finalPrice = isFree ? 0 : shippingResult.price;
 
-      setOptions(services);
+      setResult({ ...shippingResult, price: finalPrice, isFreeShipping: isFree });
 
-      // Callback with cheapest option
-      if (services.length > 0) {
-        const cheapest = services.reduce((a, b) => (a.price < b.price ? a : b));
-        const isFree = forceFreeShipping || orderTotal >= FREE_SHIPPING_MIN;
-        const daysText =
-          cheapest.deliveryRange.min === cheapest.deliveryRange.max
-            ? `${cheapest.deliveryRange.min} dias úteis`
-            : `${cheapest.deliveryRange.min} a ${cheapest.deliveryRange.max} dias úteis`;
-
-        onShippingCalculated?.({
-          name: `${cheapest.company.name} - ${cheapest.name}`,
-          price: isFree ? 0 : cheapest.price,
-          days: daysText,
-          isFreeShipping: isFree,
-        });
-      }
+      onShippingCalculated?.({
+        name: shippingResult.zone.name,
+        price: finalPrice,
+        days: shippingResult.estimatedDays,
+        isFreeShipping: isFree,
+      });
     } catch (error) {
       console.error('Error calculating shipping:', error);
       toast.error('Erro ao calcular frete. Tente novamente.');
@@ -152,8 +104,6 @@ const ShippingCalculator = ({
       currency: 'BRL',
     }).format(price);
   };
-
-  const isFree = forceFreeShipping || orderTotal >= FREE_SHIPPING_MIN;
 
   return (
     <div className="space-y-4 p-4 border rounded-lg bg-muted/30">
@@ -196,49 +146,26 @@ const ShippingCalculator = ({
         </div>
       )}
 
-      {options && (
-        <div className="space-y-2 pt-2">
-          {options.length === 0 && (
-            <p className="text-sm text-muted-foreground">Nenhuma opção disponível para este CEP.</p>
-          )}
-          {options.map((option) => {
-            const finalPrice = isFree ? 0 : option.price;
-            const daysText =
-              option.deliveryRange.min === option.deliveryRange.max
-                ? `${option.deliveryRange.min} dias úteis`
-                : `${option.deliveryRange.min} a ${option.deliveryRange.max} dias úteis`;
+      {noZone && (
+        <p className="text-sm text-muted-foreground">Nenhuma opção disponível para este CEP.</p>
+      )}
 
-            return (
-              <div
-                key={option.id}
-                className="flex items-center justify-between p-3 bg-background rounded-lg border"
-              >
-                <div className="flex items-center gap-3">
-                  {option.company.picture && (
-                    <img
-                      src={option.company.picture}
-                      alt={option.company.name}
-                      className="h-6 w-auto object-contain"
-                    />
-                  )}
-                  <div>
-                    <div className="font-medium text-sm">
-                      {option.company.name} - {option.name}
-                    </div>
-                    <div className="text-xs text-muted-foreground">{daysText}</div>
-                  </div>
-                </div>
-                <div className={`font-semibold ${finalPrice === 0 ? 'text-success' : ''}`}>
-                  {isFree && option.price > 0 && (
-                    <span className="text-xs line-through text-muted-foreground mr-1">
-                      {formatPrice(option.price)}
-                    </span>
-                  )}
-                  {formatPrice(finalPrice)}
-                </div>
-              </div>
-            );
-          })}
+      {result && (
+        <div className="space-y-2 pt-2">
+          <div className="flex items-center justify-between p-3 bg-background rounded-lg border">
+            <div>
+              <div className="font-medium text-sm">{result.zone.name}</div>
+              <div className="text-xs text-muted-foreground">{result.estimatedDays}</div>
+            </div>
+            <div className={`font-semibold ${result.isFreeShipping ? 'text-success' : ''}`}>
+              {result.isFreeShipping && result.price === 0 && (
+                <span className="text-xs line-through text-muted-foreground mr-1">
+                  {formatPrice(result.zone.base_price + (result.zone.price_per_kg * productWeight))}
+                </span>
+              )}
+              {formatPrice(result.price)}
+            </div>
+          </div>
         </div>
       )}
     </div>
