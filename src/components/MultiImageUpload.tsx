@@ -262,27 +262,6 @@ const MultiImageUpload = ({
             )}
           </Button>
 
-          {values.length > 0 && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setObjectFit(objectFit === 'cover' ? 'contain' : 'cover')}
-                >
-                  {objectFit === 'cover' ? (
-                    <><Minimize className="mr-1 h-4 w-4" /> Conter</>
-                  ) : (
-                    <><Maximize className="mr-1 h-4 w-4" /> Preencher</>
-                  )}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                {objectFit === 'cover' ? 'Ajustar imagem dentro da área' : 'Preencher toda a área (cortar)'}
-              </TooltipContent>
-            </Tooltip>
-          )}
         </div>
         
         <span className="text-xs text-muted-foreground">
@@ -292,8 +271,42 @@ const MultiImageUpload = ({
 
       {values.length > 1 && (
         <p className="text-xs text-muted-foreground">
-          💡 Arraste as imagens para reordená-las. A primeira será a imagem principal.
+          💡 Arraste as imagens para reordená-las. A primeira será a imagem principal. Clique no ícone ✂️ para ajustar.
         </p>
+      )}
+
+      {cropIndex !== null && values[cropIndex] && (
+        <ImageCropModal
+          open={true}
+          imageSrc={values[cropIndex]}
+          onClose={() => setCropIndex(null)}
+          onCropComplete={async (croppedBlob) => {
+            try {
+              const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.jpg`;
+              const filePath = folder ? `${folder}/${fileName}` : fileName;
+              const { error: uploadError } = await supabase.storage
+                .from(bucket)
+                .upload(filePath, croppedBlob, {
+                  cacheControl: '3600',
+                  upsert: false,
+                  contentType: 'image/jpeg',
+                });
+              if (uploadError) throw uploadError;
+              const { data: { publicUrl } } = supabase.storage
+                .from(bucket)
+                .getPublicUrl(filePath);
+              const newValues = [...values];
+              newValues[cropIndex] = publicUrl;
+              onChange(newValues);
+              toast.success('Imagem ajustada!');
+            } catch (error) {
+              console.error('Crop upload error:', error);
+              toast.error('Erro ao salvar imagem ajustada');
+            } finally {
+              setCropIndex(null);
+            }
+          }}
+        />
       )}
     </div>
   );
