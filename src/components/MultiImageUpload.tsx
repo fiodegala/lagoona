@@ -1,10 +1,11 @@
 import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
-import { Upload, X, Loader2, ImageIcon, GripVertical, Maximize, Minimize } from 'lucide-react';
+import { Upload, X, Loader2, ImageIcon, GripVertical, Crop } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import ImageCropModal from './ImageCropModal';
 
 interface MultiImageUploadProps {
   values: string[];
