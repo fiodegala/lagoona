@@ -10,8 +10,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import AdminLayout from '@/components/AdminLayout';
 import ImageUpload from '@/components/ImageUpload';
+import VideoUpload from '@/components/VideoUpload';
 import { bannersService, Banner, CreateBannerData } from '@/services/banners';
 
 const bannerTypes = [
@@ -33,6 +35,8 @@ const Banners = () => {
     title: '',
     subtitle: '',
     image_url: '',
+    video_url: '',
+    media_type: 'image',
     link_url: '',
     sort_order: 0,
     is_active: true,
@@ -64,6 +68,8 @@ const Banners = () => {
         title: banner.title || '',
         subtitle: banner.subtitle || '',
         image_url: banner.image_url,
+        video_url: banner.video_url || '',
+        media_type: banner.media_type || 'image',
         link_url: banner.link_url || '',
         sort_order: banner.sort_order,
         is_active: banner.is_active,
@@ -76,6 +82,8 @@ const Banners = () => {
         title: '',
         subtitle: '',
         image_url: '',
+        video_url: '',
+        media_type: 'image',
         link_url: '',
         sort_order: filteredBanners.length,
         is_active: true,
@@ -86,8 +94,12 @@ const Banners = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.image_url) {
+    if (formData.media_type === 'image' && !formData.image_url) {
       toast.error('Selecione uma imagem');
+      return;
+    }
+    if (formData.media_type === 'video' && !formData.video_url) {
+      toast.error('Selecione um vídeo');
       return;
     }
     setIsSaving(true);
@@ -176,11 +188,11 @@ const Banners = () => {
                   {filteredBanners.map((banner) => (
                     <Card key={banner.id} className={!banner.is_active ? 'opacity-60' : ''}>
                       <div className="relative aspect-[16/9] overflow-hidden rounded-t-lg bg-muted">
-                        <img
-                          src={banner.image_url}
-                          alt={banner.title || 'Banner'}
-                          className="w-full h-full object-cover"
-                        />
+                        {banner.media_type === 'video' && banner.video_url ? (
+                          <video src={banner.video_url} muted autoPlay loop playsInline className="w-full h-full object-cover" />
+                        ) : (
+                          <img src={banner.image_url} alt={banner.title || 'Banner'} className="w-full h-full object-cover" />
+                        )}
                         {!banner.is_active && (
                           <div className="absolute top-2 left-2">
                             <Badge variant="secondary">Inativo</Badge>
@@ -246,15 +258,46 @@ const Banners = () => {
 
             <div className="grid gap-4 py-4">
               <div className="space-y-2">
-                <Label>Imagem *</Label>
-                <ImageUpload
-                  value={formData.image_url}
-                  onChange={(url) => setFormData(prev => ({ ...prev, image_url: url || '' }))}
-                  bucket="product-images"
-                  folder="banners"
-                />
-                <p className="text-xs text-muted-foreground">Recomendado: 1920x600px para banners hero</p>
+                <Label>Tipo de mídia</Label>
+                <RadioGroup
+                  value={formData.media_type || 'image'}
+                  onValueChange={(v) => setFormData(prev => ({ ...prev, media_type: v }))}
+                  className="flex gap-4"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="image" id="media-image" />
+                    <Label htmlFor="media-image" className="cursor-pointer">Imagem</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="video" id="media-video" />
+                    <Label htmlFor="media-video" className="cursor-pointer">Vídeo</Label>
+                  </div>
+                </RadioGroup>
               </div>
+
+              {formData.media_type === 'video' ? (
+                <div className="space-y-2">
+                  <Label>Vídeo *</Label>
+                  <VideoUpload
+                    value={formData.video_url || undefined}
+                    onChange={(url) => setFormData(prev => ({ ...prev, video_url: url || '' }))}
+                    bucket="product-images"
+                    folder="banners"
+                    maxSizeMB={50}
+                  />
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <Label>Imagem *</Label>
+                  <ImageUpload
+                    value={formData.image_url}
+                    onChange={(url) => setFormData(prev => ({ ...prev, image_url: url || '' }))}
+                    bucket="product-images"
+                    folder="banners"
+                  />
+                  <p className="text-xs text-muted-foreground">Recomendado: 1920x600px para banners hero</p>
+                </div>
+              )}
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">

@@ -376,11 +376,13 @@ export type Database = {
           image_url: string
           is_active: boolean
           link_url: string | null
+          media_type: string
           sort_order: number
           subtitle: string | null
           title: string | null
           type: string
           updated_at: string
+          video_url: string | null
         }
         Insert: {
           created_at?: string
@@ -388,11 +390,13 @@ export type Database = {
           image_url: string
           is_active?: boolean
           link_url?: string | null
+          media_type?: string
           sort_order?: number
           subtitle?: string | null
           title?: string | null
           type?: string
           updated_at?: string
+          video_url?: string | null
         }
         Update: {
           created_at?: string
@@ -400,11 +404,13 @@ export type Database = {
           image_url?: string
           is_active?: boolean
           link_url?: string | null
+          media_type?: string
           sort_order?: number
           subtitle?: string | null
           title?: string | null
           type?: string
           updated_at?: string
+          video_url?: string | null
         }
         Relationships: []
       }

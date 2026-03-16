@@ -6,6 +6,8 @@ export interface Banner {
   title: string | null;
   subtitle: string | null;
   image_url: string;
+  video_url: string | null;
+  media_type: string;
   link_url: string | null;
   sort_order: number;
   is_active: boolean;
@@ -18,6 +20,8 @@ export interface CreateBannerData {
   title?: string;
   subtitle?: string;
   image_url: string;
+  video_url?: string;
+  media_type?: string;
   link_url?: string;
   sort_order?: number;
   is_active?: boolean;
