@@ -257,6 +257,7 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
           visible_in_pos: visibleInPos,
           visible_in_catalog: visibleInCatalog,
           barcode: barcode.trim() || undefined,
+          is_lagoona: isLagoona,
           wholesale_price: wholesalePrice ? parseFloat(wholesalePrice) : undefined,
           exclusive_price: exclusivePrice ? parseFloat(exclusivePrice) : undefined,
           promotional_price: promotionalPrice ? parseFloat(promotionalPrice) : undefined,
