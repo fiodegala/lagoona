@@ -156,7 +156,10 @@ const MultiImageUpload = ({
               <img
                 src={url}
                 alt={`Galeria ${index + 1}`}
-                className="w-full h-full object-cover"
+                className={cn(
+                  "w-full h-full",
+                  objectFit === 'cover' ? 'object-cover' : 'object-contain bg-muted'
+                )}
               />
               
               {/* Order Badge */}
