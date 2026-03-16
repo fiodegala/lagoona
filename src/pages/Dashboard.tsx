@@ -138,6 +138,7 @@ interface SalesGoal {
 }
 
 const SITE_STORE_ID = 'e0b8ebbc-1b3b-4aec-b5f7-6925762e6ea1';
+const LAGOONA_STORE_ID = '5e76470a-609c-4e75-a8e3-1c663e66c076';
 
 const Dashboard = () => {
   const { user, profile, roles, isAdmin, userStoreId, userStore, accessibleStoreIds } = useAuth();
