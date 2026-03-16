@@ -183,11 +183,14 @@ const HomePage = () => {
   // Auto-rotate hero banners
   useEffect(() => {
     if (heroBanners.length <= 1) return;
+    const currentBanner = heroBanners[currentHeroBanner];
+    const isVideo = currentBanner?.media_type === 'video' && currentBanner?.video_url;
+    if (isVideo) return; // Pause rotation for video banners — let them loop
     const interval = setInterval(() => {
       setCurrentHeroBanner(prev => (prev + 1) % heroBanners.length);
     }, 7000);
     return () => clearInterval(interval);
-  }, [heroBanners.length]);
+  }, [heroBanners, currentHeroBanner]);
 
   // Auto-rotate mid banners
   useEffect(() => {
