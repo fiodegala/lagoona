@@ -35,6 +35,8 @@ const Banners = () => {
     title: '',
     subtitle: '',
     image_url: '',
+    video_url: '',
+    media_type: 'image',
     link_url: '',
     sort_order: 0,
     is_active: true,
