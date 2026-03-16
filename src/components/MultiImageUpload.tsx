@@ -165,6 +165,17 @@ const MultiImageUpload = ({
                 {index + 1}
               </div>
 
+              {/* Crop Button */}
+              <Button
+                type="button"
+                variant="secondary"
+                size="icon"
+                className="absolute top-1 right-14 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                onClick={(e) => { e.stopPropagation(); setCropIndex(index); }}
+              >
+                <Crop className="h-3 w-3" />
+              </Button>
+
               {/* Drag Handle */}
               <div className="absolute top-1 right-8 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 backdrop-blur-sm rounded p-0.5">
                 <GripVertical className="h-4 w-4 text-muted-foreground" />
