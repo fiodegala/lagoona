@@ -1,10 +1,11 @@
 import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
-import { Upload, X, Loader2, ImageIcon, GripVertical, Maximize, Minimize } from 'lucide-react';
+import { Upload, X, Loader2, ImageIcon, GripVertical, Crop } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import ImageCropModal from './ImageCropModal';
 
 interface MultiImageUploadProps {
   values: string[];
@@ -25,7 +26,7 @@ const MultiImageUpload = ({
   const [uploadingCount, setUploadingCount] = useState(0);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
-  const [objectFit, setObjectFit] = useState<'cover' | 'contain'>('cover');
+  const [cropIndex, setCropIndex] = useState<number | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -156,16 +157,24 @@ const MultiImageUpload = ({
               <img
                 src={url}
                 alt={`Galeria ${index + 1}`}
-                className={cn(
-                  "w-full h-full",
-                  objectFit === 'cover' ? 'object-cover' : 'object-contain bg-muted'
-                )}
+                className="w-full h-full object-cover"
               />
               
               {/* Order Badge */}
               <div className="absolute top-1 left-1 bg-background/80 backdrop-blur-sm text-xs font-medium px-1.5 py-0.5 rounded">
                 {index + 1}
               </div>
+
+              {/* Crop Button */}
+              <Button
+                type="button"
+                variant="secondary"
+                size="icon"
+                className="absolute top-1 right-14 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                onClick={(e) => { e.stopPropagation(); setCropIndex(index); }}
+              >
+                <Crop className="h-3 w-3" />
+              </Button>
 
               {/* Drag Handle */}
               <div className="absolute top-1 right-8 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 backdrop-blur-sm rounded p-0.5">
@@ -253,27 +262,6 @@ const MultiImageUpload = ({
             )}
           </Button>
 
-          {values.length > 0 && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setObjectFit(objectFit === 'cover' ? 'contain' : 'cover')}
-                >
-                  {objectFit === 'cover' ? (
-                    <><Minimize className="mr-1 h-4 w-4" /> Conter</>
-                  ) : (
-                    <><Maximize className="mr-1 h-4 w-4" /> Preencher</>
-                  )}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                {objectFit === 'cover' ? 'Ajustar imagem dentro da área' : 'Preencher toda a área (cortar)'}
-              </TooltipContent>
-            </Tooltip>
-          )}
         </div>
         
         <span className="text-xs text-muted-foreground">
@@ -283,8 +271,42 @@ const MultiImageUpload = ({
 
       {values.length > 1 && (
         <p className="text-xs text-muted-foreground">
-          💡 Arraste as imagens para reordená-las. A primeira será a imagem principal.
+          💡 Arraste as imagens para reordená-las. A primeira será a imagem principal. Clique no ícone ✂️ para ajustar.
         </p>
+      )}
+
+      {cropIndex !== null && values[cropIndex] && (
+        <ImageCropModal
+          open={true}
+          imageSrc={values[cropIndex]}
+          onClose={() => setCropIndex(null)}
+          onCropComplete={async (croppedBlob) => {
+            try {
+              const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.jpg`;
+              const filePath = folder ? `${folder}/${fileName}` : fileName;
+              const { error: uploadError } = await supabase.storage
+                .from(bucket)
+                .upload(filePath, croppedBlob, {
+                  cacheControl: '3600',
+                  upsert: false,
+                  contentType: 'image/jpeg',
+                });
+              if (uploadError) throw uploadError;
+              const { data: { publicUrl } } = supabase.storage
+                .from(bucket)
+                .getPublicUrl(filePath);
+              const newValues = [...values];
+              newValues[cropIndex] = publicUrl;
+              onChange(newValues);
+              toast.success('Imagem ajustada!');
+            } catch (error) {
+              console.error('Crop upload error:', error);
+              toast.error('Erro ao salvar imagem ajustada');
+            } finally {
+              setCropIndex(null);
+            }
+          }}
+        />
       )}
     </div>
   );
