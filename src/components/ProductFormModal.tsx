@@ -111,6 +111,7 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
         setVisibleInPos((product as any).visible_in_pos !== false);
         setVisibleInCatalog((product as any).visible_in_catalog !== false);
         setBarcode((product as { barcode?: string }).barcode || '');
+        setIsLagoona((product as any).is_lagoona || false);
         setWeightKg(product.weight_kg?.toString() || '');
         setWidthCm(product.width_cm?.toString() || '');
         setHeightCm(product.height_cm?.toString() || '');
