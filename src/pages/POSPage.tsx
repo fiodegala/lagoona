@@ -260,6 +260,7 @@ const POSPage = () => {
           discount_amount: 0,
           total: variationPrice,
           max_stock: variation.stock,
+          is_lagoona: product.is_lagoona || false,
         };
         setCartItems((items) => [...items, newItem]);
       }
