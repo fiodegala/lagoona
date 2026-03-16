@@ -101,6 +101,7 @@ export const productsService = {
       height_cm: input.height_cm ?? null,
       depth_cm: input.depth_cm ?? null,
       barcode: input.barcode || null,
+      is_lagoona: input.is_lagoona ?? false,
     };
 
     const { data, error } = await supabase
