@@ -194,7 +194,7 @@ const HomePage = () => {
     if (midBanners.length <= 1) return;
     const interval = setInterval(() => {
       setCurrentMidBanner(prev => (prev + 1) % midBanners.length);
-    }, 4000);
+    }, 6000);
     return () => clearInterval(interval);
   }, [midBanners.length]);
 
