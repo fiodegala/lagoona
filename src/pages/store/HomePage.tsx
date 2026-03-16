@@ -247,10 +247,21 @@ const HomePage = () => {
             {heroBanners.map((banner, index) => {
               const bannerContent = (
                 <>
-                  <div
-                    className="absolute inset-0 bg-cover bg-center"
-                    style={{ backgroundImage: `url('${getOptimizedImageUrl(banner.image_url, { width: 1920, quality: 80 })}')` }}
-                  />
+                  {banner.media_type === 'video' && banner.video_url ? (
+                    <video
+                      src={banner.video_url}
+                      autoPlay
+                      muted
+                      loop
+                      playsInline
+                      className="absolute inset-0 w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div
+                      className="absolute inset-0 bg-cover bg-center"
+                      style={{ backgroundImage: `url('${getOptimizedImageUrl(banner.image_url, { width: 1920, quality: 80 })}')` }}
+                    />
+                  )}
                   <div className="absolute inset-0 bg-store-dark/60" />
                   <div className="relative h-full flex items-center">
                     <div className="container mx-auto px-4">
