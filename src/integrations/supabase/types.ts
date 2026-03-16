@@ -1656,6 +1656,7 @@ export type Database = {
           id: string
           image_url: string | null
           is_active: boolean
+          is_lagoona: boolean
           metadata: Json | null
           min_stock: number
           name: string
@@ -1680,6 +1681,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_active?: boolean
+          is_lagoona?: boolean
           metadata?: Json | null
           min_stock?: number
           name: string
@@ -1704,6 +1706,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_active?: boolean
+          is_lagoona?: boolean
           metadata?: Json | null
           min_stock?: number
           name?: string

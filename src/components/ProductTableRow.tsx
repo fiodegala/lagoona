@@ -191,11 +191,16 @@ const ProductTableRow = ({
             </div>
           </TableCell>
           <TableCell>
-            {getCategoryName(product.category_id) ? (
-              <Badge variant="outline">{getCategoryName(product.category_id)}</Badge>
-            ) : (
-              <span className="text-muted-foreground text-sm">—</span>
-            )}
+            <div className="flex flex-wrap gap-1">
+              {getCategoryName(product.category_id) ? (
+                <Badge variant="outline">{getCategoryName(product.category_id)}</Badge>
+              ) : (
+                <span className="text-muted-foreground text-sm">—</span>
+              )}
+              {(product as any).is_lagoona && (
+                <Badge variant="secondary" className="bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 text-[10px]">Lagoona</Badge>
+              )}
+            </div>
           </TableCell>
           <TableCell className="font-medium">
             {hasVariations && priceRange && priceRange.min !== priceRange.max ? (

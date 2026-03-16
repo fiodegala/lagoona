@@ -260,6 +260,7 @@ const POSPage = () => {
           discount_amount: 0,
           total: variationPrice,
           max_stock: variation.stock,
+          is_lagoona: product.is_lagoona || false,
         };
         setCartItems((items) => [...items, newItem]);
       }
@@ -288,6 +289,7 @@ const POSPage = () => {
           discount_amount: 0,
           total: unitPrice,
           max_stock: product.stock,
+          is_lagoona: product.is_lagoona || false,
         };
         setCartItems((items) => [...items, newItem]);
       }
@@ -410,6 +412,7 @@ const POSPage = () => {
         unit_price: item.unit_price,
         original_price: item.original_price,
         is_promotional: item.is_promotional || false,
+        is_lagoona: item.is_lagoona || false,
         discount_type: item.discount_type,
         discount_value: item.discount_value,
         discount_amount: item.discount_amount,

@@ -138,6 +138,7 @@ interface SalesGoal {
 }
 
 const SITE_STORE_ID = 'e0b8ebbc-1b3b-4aec-b5f7-6925762e6ea1';
+const LAGOONA_STORE_ID = '5e76470a-609c-4e75-a8e3-1c663e66c076';
 
 const Dashboard = () => {
   const { user, profile, roles, isAdmin, userStoreId, userStore, accessibleStoreIds } = useAuth();
@@ -193,6 +194,7 @@ const Dashboard = () => {
   const activeStoreFilter = isAdmin ? (selectedStoreId === 'all' ? null : selectedStoreId) : (accessibleStoreIds.length > 1 ? (selectedStoreId === 'all' ? null : selectedStoreId) : userStoreId);
   const canAccessSiteStore = isAdmin || accessibleStoreIds.includes(SITE_STORE_ID);
   const isSiteStoreSelected = activeStoreFilter === SITE_STORE_ID;
+  const isLagoonaStoreSelected = activeStoreFilter === LAGOONA_STORE_ID;
   const isViewingAllStores = !activeStoreFilter;
   const selectedStoreType = stores.find(s => s.id === activeStoreFilter)?.type || userStore?.type || null;
 
@@ -217,10 +219,12 @@ const Dashboard = () => {
         ordersQuery = ordersQuery.eq('store_id', SITE_STORE_ID).limit(0);
       }
 
-      // POS Sales: filter by store
+      // POS Sales: filter by store (Lagoona needs all sales to filter by items)
       let posSalesQuery = supabase.from('pos_sales').select('*').order('created_at', { ascending: false });
       if (isSiteStoreSelected) {
         posSalesQuery = posSalesQuery.eq('store_id', SITE_STORE_ID).limit(0);
+      } else if (isLagoonaStoreSelected) {
+        // Fetch all POS sales - will filter client-side by is_lagoona items
       } else if (storeFilter) {
         posSalesQuery = posSalesQuery.eq('store_id', storeFilter);
       }
@@ -327,14 +331,44 @@ const Dashboard = () => {
     if (selectedSellerId !== 'all') {
       activeSales = activeSales.filter(s => s.user_id === selectedSellerId);
     }
-    if (!periodStartDate) return activeSales;
-    return activeSales.filter(s => {
-      const saleDate = new Date(s.created_at);
-      const afterStart = saleDate >= periodStartDate;
-      const beforeEnd = !periodEndDate || saleDate <= periodEndDate;
-      return afterStart && beforeEnd;
-    });
-  }, [rawPOSSales, periodStartDate, periodEndDate, selectedSellerId]);
+    if (periodStartDate) {
+      activeSales = activeSales.filter(s => {
+        const saleDate = new Date(s.created_at);
+        const afterStart = saleDate >= periodStartDate;
+        const beforeEnd = !periodEndDate || saleDate <= periodEndDate;
+        return afterStart && beforeEnd;
+      });
+    }
+
+    // Lagoona filtering: when Lagoona store is selected, only show sales with Lagoona items
+    // and recalculate totals based on those items only
+    if (isLagoonaStoreSelected) {
+      return activeSales
+        .map(sale => {
+          const lagoonaItems = (sale.items || []).filter((item: any) => item.is_lagoona);
+          if (lagoonaItems.length === 0) return null;
+          const lagoonaTotal = lagoonaItems.reduce((sum: number, item: any) => sum + (Number(item.total) || 0), 0);
+          return { ...sale, items: lagoonaItems, total: lagoonaTotal };
+        })
+        .filter(Boolean) as typeof activeSales;
+    }
+
+    // For non-Lagoona physical stores, exclude Lagoona items from totals
+    if (activeStoreFilter && activeStoreFilter !== SITE_STORE_ID && activeStoreFilter !== LAGOONA_STORE_ID) {
+      return activeSales
+        .map(sale => {
+          const hasLagoonaItems = (sale.items || []).some((item: any) => item.is_lagoona);
+          if (!hasLagoonaItems) return sale;
+          const nonLagoonaItems = (sale.items || []).filter((item: any) => !item.is_lagoona);
+          if (nonLagoonaItems.length === 0) return null;
+          const adjustedTotal = nonLagoonaItems.reduce((sum: number, item: any) => sum + (Number(item.total) || 0), 0);
+          return { ...sale, items: nonLagoonaItems, total: adjustedTotal };
+        })
+        .filter(Boolean) as typeof activeSales;
+    }
+
+    return activeSales;
+  }, [rawPOSSales, periodStartDate, periodEndDate, selectedSellerId, isLagoonaStoreSelected, activeStoreFilter]);
 
   // Calculate online stats based on filtered data
   const stats: DashboardStats | null = useMemo(() => {

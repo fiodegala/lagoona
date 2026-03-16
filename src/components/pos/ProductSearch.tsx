@@ -22,6 +22,7 @@ export interface ProductResult {
   category_name: string | null;
   image_url: string | null;
   barcode: string | null;
+  is_lagoona?: boolean;
   variations: Array<{
     id: string;
     sku: string | null;

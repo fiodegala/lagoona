@@ -70,6 +70,7 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
   const [productType, setProductType] = useState<'simple' | 'variable'>('simple');
   const [hasVariations, setHasVariations] = useState(false);
   const [barcode, setBarcode] = useState('');
+  const [isLagoona, setIsLagoona] = useState(false);
   
   // Shipping fields
   const [weightKg, setWeightKg] = useState('');
@@ -110,6 +111,7 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
         setVisibleInPos((product as any).visible_in_pos !== false);
         setVisibleInCatalog((product as any).visible_in_catalog !== false);
         setBarcode((product as { barcode?: string }).barcode || '');
+        setIsLagoona((product as any).is_lagoona || false);
         setWeightKg(product.weight_kg?.toString() || '');
         setWidthCm(product.width_cm?.toString() || '');
         setHeightCm(product.height_cm?.toString() || '');
@@ -221,6 +223,7 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
     setHeightCm('');
     setDepthCm('');
     setAutoCreatedProductId(null);
+    setIsLagoona(false);
     setStoreStockQty({});
   };
 
@@ -254,6 +257,7 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
           visible_in_pos: visibleInPos,
           visible_in_catalog: visibleInCatalog,
           barcode: barcode.trim() || undefined,
+          is_lagoona: isLagoona,
           wholesale_price: wholesalePrice ? parseFloat(wholesalePrice) : undefined,
           exclusive_price: exclusivePrice ? parseFloat(exclusivePrice) : undefined,
           promotional_price: promotionalPrice ? parseFloat(promotionalPrice) : undefined,
@@ -308,6 +312,7 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
         visible_in_pos: visibleInPos,
         visible_in_catalog: visibleInCatalog,
         barcode: barcode.trim() || undefined,
+        is_lagoona: isLagoona,
         wholesale_price: wholesalePrice ? parseFloat(wholesalePrice) : undefined,
         exclusive_price: exclusivePrice ? parseFloat(exclusivePrice) : undefined,
         promotional_price: promotionalPrice ? parseFloat(promotionalPrice) : undefined,
@@ -738,6 +743,19 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
               onChange={(e) => setDepthCm(e.target.value)}
             />
           </div>
+        </div>
+      </div>
+
+      {/* Lagoona Brand */}
+      <div className="space-y-3 rounded-lg border border-blue-200 bg-blue-50/50 dark:border-blue-800 dark:bg-blue-950/30 p-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <Label htmlFor="isLagoona" className="text-sm font-medium">Produto Lagoona</Label>
+            <p className="text-xs text-muted-foreground">
+              Vendas deste produto serão atribuídas à loja Lagoona nos relatórios
+            </p>
+          </div>
+          <Switch id="isLagoona" checked={isLagoona} onCheckedChange={setIsLagoona} />
         </div>
       </div>
 

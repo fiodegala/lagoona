@@ -38,6 +38,7 @@ export interface POSSaleItem {
   discount_value?: number;
   discount_amount: number;
   total: number;
+  is_lagoona?: boolean;
 }
 
 export interface POSSale {
