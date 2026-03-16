@@ -223,6 +223,7 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
     setHeightCm('');
     setDepthCm('');
     setAutoCreatedProductId(null);
+    setIsLagoona(false);
     setStoreStockQty({});
   };
 
