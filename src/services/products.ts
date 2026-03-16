@@ -14,6 +14,7 @@ export interface Product {
   visible_in_catalog: boolean;
   metadata: Record<string, unknown>;
   barcode: string | null;
+  is_lagoona: boolean;
   wholesale_price: number | null;
   exclusive_price: number | null;
   promotional_price: number | null;
