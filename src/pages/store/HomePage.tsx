@@ -185,7 +185,7 @@ const HomePage = () => {
     if (heroBanners.length <= 1) return;
     const interval = setInterval(() => {
       setCurrentHeroBanner(prev => (prev + 1) % heroBanners.length);
-    }, 5000);
+    }, 7000);
     return () => clearInterval(interval);
   }, [heroBanners.length]);
 
