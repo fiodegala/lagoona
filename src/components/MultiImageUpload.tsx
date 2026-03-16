@@ -223,7 +223,7 @@ const MultiImageUpload = ({
 
       {/* Upload Button & Counter */}
       <div className="flex items-center justify-between">
-        <div>
+        <div className="flex items-center gap-2">
           <input
             ref={inputRef}
             type="file"
@@ -252,6 +252,28 @@ const MultiImageUpload = ({
               </>
             )}
           </Button>
+
+          {values.length > 0 && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setObjectFit(objectFit === 'cover' ? 'contain' : 'cover')}
+                >
+                  {objectFit === 'cover' ? (
+                    <><Minimize className="mr-1 h-4 w-4" /> Conter</>
+                  ) : (
+                    <><Maximize className="mr-1 h-4 w-4" /> Preencher</>
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {objectFit === 'cover' ? 'Ajustar imagem dentro da área' : 'Preencher toda a área (cortar)'}
+              </TooltipContent>
+            </Tooltip>
+          )}
         </div>
         
         <span className="text-xs text-muted-foreground">
