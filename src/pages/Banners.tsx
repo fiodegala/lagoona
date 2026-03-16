@@ -94,8 +94,12 @@ const Banners = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.image_url) {
+    if (formData.media_type === 'image' && !formData.image_url) {
       toast.error('Selecione uma imagem');
+      return;
+    }
+    if (formData.media_type === 'video' && !formData.video_url) {
+      toast.error('Selecione um vídeo');
       return;
     }
     setIsSaving(true);
