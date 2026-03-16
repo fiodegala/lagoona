@@ -258,15 +258,46 @@ const Banners = () => {
 
             <div className="grid gap-4 py-4">
               <div className="space-y-2">
-                <Label>Imagem *</Label>
-                <ImageUpload
-                  value={formData.image_url}
-                  onChange={(url) => setFormData(prev => ({ ...prev, image_url: url || '' }))}
-                  bucket="product-images"
-                  folder="banners"
-                />
-                <p className="text-xs text-muted-foreground">Recomendado: 1920x600px para banners hero</p>
+                <Label>Tipo de mídia</Label>
+                <RadioGroup
+                  value={formData.media_type || 'image'}
+                  onValueChange={(v) => setFormData(prev => ({ ...prev, media_type: v }))}
+                  className="flex gap-4"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="image" id="media-image" />
+                    <Label htmlFor="media-image" className="cursor-pointer">Imagem</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="video" id="media-video" />
+                    <Label htmlFor="media-video" className="cursor-pointer">Vídeo</Label>
+                  </div>
+                </RadioGroup>
               </div>
+
+              {formData.media_type === 'video' ? (
+                <div className="space-y-2">
+                  <Label>Vídeo *</Label>
+                  <VideoUpload
+                    value={formData.video_url || undefined}
+                    onChange={(url) => setFormData(prev => ({ ...prev, video_url: url || '' }))}
+                    bucket="product-images"
+                    folder="banners"
+                    maxSizeMB={50}
+                  />
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <Label>Imagem *</Label>
+                  <ImageUpload
+                    value={formData.image_url}
+                    onChange={(url) => setFormData(prev => ({ ...prev, image_url: url || '' }))}
+                    bucket="product-images"
+                    folder="banners"
+                  />
+                  <p className="text-xs text-muted-foreground">Recomendado: 1920x600px para banners hero</p>
+                </div>
+              )}
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
