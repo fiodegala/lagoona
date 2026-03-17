@@ -266,10 +266,20 @@ const CheckoutPage = () => {
   };
 
   const handlePaymentSuccess = async (paymentData: any) => {
-    // Order status is updated server-side by the edge function (mercadopago-payment)
-    // and asynchronously by the webhook (mercadopago-webhook).
-    // No client-side update needed (anonymous users lack UPDATE permission).
     console.log('Payment success:', paymentData.status, paymentData.id);
+
+    // Mark abandoned cart as recovered only after payment is confirmed
+    const sessionId = getSessionId();
+    if (sessionId) {
+      try {
+        await supabase.functions.invoke('abandoned-cart', {
+          body: { action: 'recover', session_id: sessionId },
+        });
+      } catch (recoverErr) {
+        console.error('Error recovering abandoned cart:', recoverErr);
+      }
+    }
+    localStorage.removeItem(ABANDONED_CART_SESSION_KEY);
     
     // Track checkout_complete event
     trackAnalyticsEvent('checkout_complete', {
