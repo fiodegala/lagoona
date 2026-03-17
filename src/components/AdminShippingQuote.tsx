@@ -28,6 +28,7 @@ interface AdminShippingQuoteProps {
   initialLength?: number;
   initialInsuranceValue?: number;
   compact?: boolean;
+  showGenerateLabel?: boolean;
 }
 
 const AdminShippingQuote = ({
@@ -38,6 +39,7 @@ const AdminShippingQuote = ({
   initialLength = 16,
   initialInsuranceValue = 0,
   compact = false,
+  showGenerateLabel = false,
 }: AdminShippingQuoteProps) => {
   const [cep, setCep] = useState(initialCep);
   const [weight, setWeight] = useState(initialWeight);
