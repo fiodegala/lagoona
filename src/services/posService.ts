@@ -560,10 +560,16 @@ export const posService = {
     if (err1) throw err1;
 
     // Also search by variation barcode or SKU
+    // Use exact match for short queries (likely size codes like G, GG, M) to avoid
+    // "G" matching "GG". For longer queries use partial match.
+    const isShortQuery = query.trim().length <= 3;
+    const variationFilter = isShortQuery
+      ? `barcode.eq.${query},sku.eq.${query}`
+      : `barcode.ilike.%${query}%,sku.ilike.%${query}%`;
     const { data: variationMatches, error: err2 } = await supabase
       .from('product_variations')
       .select('id, product_id')
-      .or(`barcode.ilike.%${query}%,sku.ilike.%${query}%`)
+      .or(variationFilter)
       .limit(limit);
 
     if (err2) throw err2;
