@@ -256,18 +256,6 @@ const CheckoutPage = () => {
 
       setOrderId(newOrderId);
       setStep('payment');
-
-      // Mark abandoned cart as recovered immediately when order is created
-      if (sessionId) {
-        try {
-          await supabase.functions.invoke('abandoned-cart', {
-            body: { action: 'recover', session_id: sessionId },
-          });
-        } catch (recoverErr) {
-          console.error('Error recovering abandoned cart:', recoverErr);
-        }
-      }
-      localStorage.removeItem(ABANDONED_CART_SESSION_KEY);
       toast.success('Pedido criado! Agora escolha a forma de pagamento.');
     } catch (error) {
       console.error('Error creating order:', error);
