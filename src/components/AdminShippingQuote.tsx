@@ -224,7 +224,7 @@ const AdminShippingQuote = ({
           </div>
         )}
 
-        {selectedService && (
+        {showGenerateLabel && selectedService && (
           <Button
             onClick={() => handleGenerateLabel(selectedService)}
             disabled={isGenerating}
@@ -239,7 +239,13 @@ const AdminShippingQuote = ({
           </Button>
         )}
 
-        {labelUrl && (
+        {!showGenerateLabel && services && services.length > 0 && (
+          <p className="text-xs text-muted-foreground">
+            A etiqueta deve ser gerada a partir de um pedido com os dados completos do destinatário.
+          </p>
+        )}
+
+        {showGenerateLabel && labelUrl && (
           <div className="flex items-center gap-2 p-2 rounded-lg bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800">
             <CheckCircle2 className="h-4 w-4 text-green-600" />
             <a href={labelUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-green-700 dark:text-green-400 hover:underline">
