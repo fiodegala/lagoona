@@ -61,7 +61,7 @@ const CheckoutPage = () => {
 
   // Save/update abandoned cart when form data or items change
   useEffect(() => {
-    if (items.length === 0 || orderComplete) return;
+    if (items.length === 0 || orderComplete || step === 'payment') return;
     const hasData = formData.name || formData.email || formData.phone;
     if (!hasData && abandonedCartSaved) return;
     if (!hasData) return;
