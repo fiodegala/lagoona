@@ -153,7 +153,7 @@ const CheckoutPage = () => {
       return;
     }
 
-    if (!formData.name || !formData.email || !formData.phone || !formData.address || !formData.number || !formData.city || !formData.state || !formData.zipCode) {
+    if (!formData.name || !formData.email || !formData.phone || !formData.document || !formData.address || !formData.number || !formData.city || !formData.state || !formData.zipCode) {
       toast.error('Preencha todos os campos obrigatórios');
       return;
     }
@@ -423,8 +423,8 @@ const CheckoutPage = () => {
                       <Input id="phone" name="phone" type="tel" placeholder="(00) 00000-0000" value={formData.phone} onChange={handleInputChange} required />
                     </div>
                     <div>
-                      <Label htmlFor="document">CPF / CNPJ</Label>
-                      <Input id="document" name="document" placeholder="000.000.000-00" value={formData.document} onChange={handleInputChange} />
+                      <Label htmlFor="document">CPF / CNPJ *</Label>
+                      <Input id="document" name="document" placeholder="000.000.000-00" value={formData.document} onChange={handleInputChange} required />
                     </div>
                   </CardContent>
                 </Card>
