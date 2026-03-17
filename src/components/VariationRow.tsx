@@ -275,7 +275,10 @@ const VariationRow = ({ variation, stores, storeStock, onUpdate, onUpdateStoreSt
 
         {/* Store stocks */}
         {stores.map((store) => (
-          <div key={store.id} className="shrink-0">
+          <div key={store.id} className="shrink-0 flex flex-col items-center gap-0.5">
+            <span className="text-[10px] text-muted-foreground leading-none truncate max-w-[80px]" title={store.name}>
+              {store.name}
+            </span>
             <Input
               type="number"
               value={storeStock[store.id] ?? 0}
