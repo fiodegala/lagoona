@@ -119,12 +119,27 @@ const OrderDetailModal = ({ open, onOpenChange, order }: OrderDetailModalProps) 
             {/* Cliente */}
             <div>
               <h4 className="text-sm font-semibold mb-2 flex items-center gap-1.5">
-                <Mail className="h-3.5 w-3.5 text-muted-foreground" />
+                <User className="h-3.5 w-3.5 text-muted-foreground" />
                 Cliente
               </h4>
-              <div className="text-sm space-y-0.5">
+              <div className="text-sm space-y-1.5">
                 <p className="font-medium">{order.customer_name || '—'}</p>
-                <p className="text-muted-foreground">{order.customer_email}</p>
+                <div className="flex items-center gap-1.5 text-muted-foreground">
+                  <Mail className="h-3 w-3 shrink-0" />
+                  <span>{order.customer_email}</span>
+                </div>
+                {(addr.phone || meta.customer_phone) && (
+                  <div className="flex items-center gap-1.5 text-muted-foreground">
+                    <Phone className="h-3 w-3 shrink-0" />
+                    <span>{addr.phone || meta.customer_phone}</span>
+                  </div>
+                )}
+                {meta.customer_document && (
+                  <div className="flex items-center gap-1.5 text-muted-foreground">
+                    <FileText className="h-3 w-3 shrink-0" />
+                    <span>CPF/CNPJ: {meta.customer_document}</span>
+                  </div>
+                )}
               </div>
             </div>
 
