@@ -247,6 +247,8 @@ const CheckoutPage = () => {
           metadata: {
             ...(sessionId ? { abandoned_cart_session_id: sessionId } : {}),
             ...(getAffiliateCode() ? { affiliate_code: getAffiliateCode() } : {}),
+            ...(formData.document ? { customer_document: formData.document } : {}),
+            ...(formData.phone ? { customer_phone: formData.phone } : {}),
           },
         });
 
