@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
-import { Package, Mail, MapPin, CreditCard, Clock, Truck } from 'lucide-react';
+import { Package, Mail, MapPin, CreditCard, Clock, Truck, User, Phone, FileText } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import AdminShippingQuote from '@/components/AdminShippingQuote';
