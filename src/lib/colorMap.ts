@@ -59,6 +59,14 @@ export const COLOR_MAP: Record<string, string> = {
   navy: '#1E3A5F', marinho: '#1E3A5F',
   'marinho noite': '#0F1F3D',
   jeans: '#4A6FA5',
+  'jeans claro': '#A8C4E0',
+  'jeans clara': '#A8C4E0',
+  'jeans medio': '#5B7EA1',
+  'jeans médio': '#5B7EA1',
+  'jeans média': '#5B7EA1',
+  'jeans media': '#5B7EA1',
+  'jeans escuro': '#2C3E56',
+  'jeans escura': '#2C3E56',
 
   // Tons de verde
   'verde militar': '#4B5320',
