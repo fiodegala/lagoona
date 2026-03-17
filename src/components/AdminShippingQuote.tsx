@@ -376,7 +376,7 @@ const AdminShippingQuote = ({
               ))}
             </div>
 
-            {selectedService && (
+            {showGenerateLabel && selectedService && (
               <div className="flex items-center gap-3 pt-2">
                 <Button
                   onClick={() => handleGenerateLabel(selectedService)}
@@ -391,7 +391,13 @@ const AdminShippingQuote = ({
               </div>
             )}
 
-            {labelUrl && (
+            {!showGenerateLabel && (
+              <p className="text-sm text-muted-foreground pt-2">
+                A etiqueta deve ser gerada a partir de um pedido com os dados completos do destinatário.
+              </p>
+            )}
+
+            {showGenerateLabel && labelUrl && (
               <div className="flex items-center gap-2 p-3 rounded-lg bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800">
                 <CheckCircle2 className="h-5 w-5 text-green-600" />
                 <div>
