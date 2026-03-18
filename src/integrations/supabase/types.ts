@@ -874,6 +874,48 @@ export type Database = {
         }
         Relationships: []
       }
+      instagram_integrations: {
+        Row: {
+          access_token: string
+          connected_at: string
+          expires_at: string | null
+          id: string
+          instagram_user_id: string | null
+          instagram_username: string | null
+          scopes: string[] | null
+          status: string
+          token_type: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          access_token: string
+          connected_at?: string
+          expires_at?: string | null
+          id?: string
+          instagram_user_id?: string | null
+          instagram_username?: string | null
+          scopes?: string[] | null
+          status?: string
+          token_type?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          access_token?: string
+          connected_at?: string
+          expires_at?: string | null
+          id?: string
+          instagram_user_id?: string | null
+          instagram_username?: string | null
+          scopes?: string[] | null
+          status?: string
+          token_type?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       job_applications: {
         Row: {
           created_at: string

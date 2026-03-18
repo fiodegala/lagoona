@@ -21,6 +21,7 @@ import LowStockAlertSettings from '@/components/settings/LowStockAlertSettings';
 import AITryOnSettings from '@/components/settings/AITryOnSettings';
 import PushNotificationSettings from '@/components/settings/PushNotificationSettings';
 import CustomerFeedbackSettings from '@/components/settings/CustomerFeedbackSettings';
+import InstagramIntegrationSettings from '@/components/settings/InstagramIntegrationSettings';
 
 const Settings = () => {
   const { profile, isAdmin, user } = useAuth();
@@ -226,6 +227,7 @@ const Settings = () => {
             <WhatsAppTemplatesSettings />
             <LowStockAlertSettings />
             <AITryOnSettings />
+            <InstagramIntegrationSettings />
           </>
         )}
 
