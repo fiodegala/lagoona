@@ -29,9 +29,9 @@ const InstagramIntegrationSettings = () => {
   const [integration, setIntegration] = useState<IntegrationInfo | null>(null);
   const [showToken, setShowToken] = useState(false);
   const [fullToken, setFullToken] = useState<string | null>(null);
+  const [manualAuthUrl, setManualAuthUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    // Handle callback results
     const igResult = searchParams.get('instagram');
     if (igResult === 'success') {
       toast.success('Instagram conectado com sucesso!');
@@ -66,8 +66,31 @@ const InstagramIntegrationSettings = () => {
     }
   };
 
+  const handleCopyAuthUrl = async () => {
+    if (!manualAuthUrl) return;
+
+    await navigator.clipboard.writeText(manualAuthUrl);
+    toast.success('Link de autenticação copiado!');
+  };
+
+  const handleManualOpen = () => {
+    if (!manualAuthUrl) return;
+
+    const popup = window.open('about:blank', '_blank');
+    if (!popup) {
+      toast.error('Seu navegador bloqueou a nova aba. Cole o link copiado manualmente.');
+      return;
+    }
+
+    popup.location.assign(manualAuthUrl);
+  };
+
   const handleConnect = async () => {
     setIsConnecting(true);
+    setManualAuthUrl(null);
+
+    const popup = window.open('about:blank', '_blank');
+
     try {
       const { data, error } = await supabase.functions.invoke('instagram-auth');
       if (error) throw error;
@@ -83,17 +106,20 @@ const InstagramIntegrationSettings = () => {
         throw new Error('URL de redirecionamento inválida');
       }
 
-      // Always open in new tab - works reliably from iframes and normal windows
-      const newWindow = window.open(data.authUrl, '_blank', 'noopener,noreferrer');
-      if (!newWindow) {
-        toast.error('Pop-up bloqueado! Permita pop-ups para este site e tente novamente.');
+      if (popup && !popup.closed) {
+        popup.location.assign(data.authUrl);
+        toast.info('A autenticação foi aberta em uma nova aba.');
       } else {
-        toast.info('Uma nova aba foi aberta para autenticação. Conclua o login e volte aqui.');
+        setManualAuthUrl(data.authUrl);
+        toast.error('A nova aba foi bloqueada. Use o link manual abaixo.');
       }
-      setIsConnecting(false);
     } catch (err) {
+      if (popup && !popup.closed) {
+        popup.close();
+      }
       console.error('Error starting Instagram auth:', err);
       toast.error('Erro ao iniciar conexão com Instagram');
+    } finally {
       setIsConnecting(false);
     }
   };
@@ -113,6 +139,7 @@ const InstagramIntegrationSettings = () => {
       setIntegration(null);
       setFullToken(null);
       setShowToken(false);
+      setManualAuthUrl(null);
     } catch (err) {
       console.error('Error disconnecting Instagram:', err);
       toast.error('Erro ao desconectar Instagram');
@@ -258,6 +285,27 @@ const InstagramIntegrationSettings = () => {
               {isConnecting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Link2 className="h-4 w-4 mr-2" />}
               Conectar Instagram
             </Button>
+
+            {manualAuthUrl && (
+              <div className="rounded-lg border border-border bg-muted/40 p-4 text-left space-y-3">
+                <p className="text-sm text-muted-foreground">
+                  Se a nova aba não abrir sozinha, use este link manual para continuar a autenticação fora do preview.
+                </p>
+                <code className="block overflow-x-auto rounded-md bg-background px-3 py-2 text-xs font-mono">
+                  {manualAuthUrl}
+                </code>
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <Button type="button" variant="outline" onClick={handleManualOpen}>
+                    <Link2 className="h-4 w-4 mr-2" />
+                    Abrir link manual
+                  </Button>
+                  <Button type="button" variant="secondary" onClick={handleCopyAuthUrl}>
+                    <Copy className="h-4 w-4 mr-2" />
+                    Copiar link
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </CardContent>
