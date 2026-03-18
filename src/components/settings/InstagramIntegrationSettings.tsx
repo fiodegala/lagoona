@@ -83,12 +83,14 @@ const InstagramIntegrationSettings = () => {
         throw new Error('URL de redirecionamento inválida');
       }
 
-      if (window.top && window.top !== window.self) {
-        window.open(data.authUrl, '_top');
-        return;
+      // Always open in new tab - works reliably from iframes and normal windows
+      const newWindow = window.open(data.authUrl, '_blank', 'noopener,noreferrer');
+      if (!newWindow) {
+        toast.error('Pop-up bloqueado! Permita pop-ups para este site e tente novamente.');
+      } else {
+        toast.info('Uma nova aba foi aberta para autenticação. Conclua o login e volte aqui.');
       }
-
-      window.location.assign(data.authUrl);
+      setIsConnecting(false);
     } catch (err) {
       console.error('Error starting Instagram auth:', err);
       toast.error('Erro ao iniciar conexão com Instagram');
