@@ -72,9 +72,23 @@ const InstagramIntegrationSettings = () => {
       const { data, error } = await supabase.functions.invoke('instagram-auth');
       if (error) throw error;
 
-      if (data.authUrl) {
-        window.location.href = data.authUrl;
+      if (!data?.authUrl) {
+        throw new Error('OAuth URL não recebida');
       }
+
+      const oauthUrl = new URL(data.authUrl);
+      const allowedHosts = ['www.facebook.com', 'facebook.com', 'm.facebook.com'];
+
+      if (!allowedHosts.includes(oauthUrl.hostname)) {
+        throw new Error('URL de redirecionamento inválida');
+      }
+
+      if (window.top && window.top !== window.self) {
+        window.open(data.authUrl, '_top');
+        return;
+      }
+
+      window.location.assign(data.authUrl);
     } catch (err) {
       console.error('Error starting Instagram auth:', err);
       toast.error('Erro ao iniciar conexão com Instagram');
