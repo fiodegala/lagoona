@@ -227,6 +227,7 @@ const Settings = () => {
             <WhatsAppTemplatesSettings />
             <LowStockAlertSettings />
             <AITryOnSettings />
+            <InstagramIntegrationSettings />
           </>
         )}
 
