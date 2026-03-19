@@ -287,7 +287,7 @@ const POSPage = () => {
       }
     } else {
       const unitPrice = resolvePrice(product);
-      const hasValidPromo = saleType === 'varejo' && product.promotional_price != null && product.promotional_price < product.price;
+      const hasValidPromo = effectivePriceType === 'varejo' && product.promotional_price != null && product.promotional_price < product.price;
       const existingItem = cartItems.find((item) => item.product_id === product.id && !item.variation_id);
 
       if (existingItem) {
