@@ -252,7 +252,7 @@ const POSPage = () => {
 
       // Determine available promotional price for this variation
       const availablePromoPrice = variation.promotional_price ?? product.promotional_price ?? null;
-      const hasValidPromo = saleType === 'varejo' && availablePromoPrice != null && availablePromoPrice < basePrice;
+      const hasValidPromo = effectivePriceType === 'varejo' && availablePromoPrice != null && availablePromoPrice < basePrice;
       const isPromotional = false; // No longer auto-apply promo
 
       const existingItem = cartItems.find((item) => item.product_id === product.id && item.variation_id === variationId);
