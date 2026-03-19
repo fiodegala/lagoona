@@ -74,6 +74,7 @@ const ProductsStep = ({
       items={cartItems}
       onUpdateQuantity={onUpdateQuantity}
       onRemoveItem={onRemoveItem}
+      onUpdatePrice={onUpdatePrice}
       onApplyItemDiscount={onApplyItemDiscount}
       onTogglePromoPrice={onTogglePromoPrice}
       generalDiscount={generalDiscount}
