@@ -54,6 +54,7 @@ interface POSCartProps {
   items: CartItem[];
   onUpdateQuantity: (itemId: string, quantity: number) => void;
   onRemoveItem: (itemId: string) => void;
+  onUpdatePrice: (itemId: string, newPrice: number) => void;
   onApplyItemDiscount: (
     itemId: string,
     discountType: 'percentage' | 'fixed' | undefined,
