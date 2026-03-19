@@ -184,6 +184,7 @@ const POSPage = () => {
       sessionId: session.id,
       currentStep,
       saleType,
+      quotePriceMode,
       selectedSeller,
       selectedCustomer,
       cartItems,
