@@ -828,6 +828,22 @@ const Stock = () => {
         stores={stores}
         onTransferComplete={loadData}
       />
+
+      {/* Image Preview Dialog */}
+      <Dialog open={!!previewImageUrl} onOpenChange={(open) => !open && setPreviewImageUrl(null)}>
+        <DialogContent className="max-w-lg p-2">
+          <DialogHeader className="sr-only">
+            <DialogTitle>Imagem da variação</DialogTitle>
+          </DialogHeader>
+          {previewImageUrl && (
+            <img
+              src={previewImageUrl}
+              alt="Variação"
+              className="w-full h-auto rounded-lg object-contain max-h-[70vh]"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </AdminLayout>
   );
 };
