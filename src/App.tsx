@@ -365,6 +365,15 @@ const App = () => (
                 }
               />
 
+              <Route
+                path="/admin/manual"
+                element={
+                  <ProtectedRoute>
+                    <Manual />
+                  </ProtectedRoute>
+                }
+              />
+
               {/* Legacy redirects for admin routes */}
               <Route path="/products" element={<Navigate to="/admin/products" replace />} />
               <Route path="/categories" element={<Navigate to="/admin/categories" replace />} />
