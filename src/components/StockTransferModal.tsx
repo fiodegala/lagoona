@@ -121,11 +121,15 @@ const StockTransferModal: React.FC<Props> = ({ open, onOpenChange, stores, onTra
     loadProducts();
   }, [open]);
 
+  // Stock map for variations in the selected source store
+  const [variationStockMap, setVariationStockMap] = useState<Record<string, number>>({});
+
   // Load variations when picker product selected
   useEffect(() => {
     if (!pickerProductId) {
       setPickerVariations([]);
       setPickerVariationId('');
+      setVariationStockMap({});
       return;
     }
     const loadVariations = async () => {
@@ -139,6 +143,7 @@ const StockTransferModal: React.FC<Props> = ({ open, onOpenChange, stores, onTra
         setPickerVariations([]);
         setPickerVariationId('');
         setVariationSearch('');
+        setVariationStockMap({});
         return;
       }
 
@@ -152,6 +157,21 @@ const StockTransferModal: React.FC<Props> = ({ open, onOpenChange, stores, onTra
           .in('variation_id', batch);
         if (vvData) allValues.push(...vvData);
       }
+
+      // Load stock from source store for all variations
+      const stockMap: Record<string, number> = {};
+      if (fromStoreId) {
+        const { data: stockData } = await supabase
+          .from('store_stock')
+          .select('variation_id, quantity')
+          .eq('store_id', fromStoreId)
+          .eq('product_id', pickerProductId)
+          .in('variation_id', varIds);
+        (stockData || []).forEach((s: any) => {
+          if (s.variation_id) stockMap[s.variation_id] = s.quantity;
+        });
+      }
+      setVariationStockMap(stockMap);
 
       const attrMap: Record<string, { name: string; value: string }[]> = {};
       allValues.forEach((pvv: any) => {
@@ -174,7 +194,7 @@ const StockTransferModal: React.FC<Props> = ({ open, onOpenChange, stores, onTra
       setVariationSearch('');
     };
     loadVariations();
-  }, [pickerProductId]);
+  }, [pickerProductId, fromStoreId]);
 
   // Load history
   useEffect(() => {
