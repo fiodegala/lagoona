@@ -32,7 +32,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowRight, Check, X, Clock, Search, Package, Undo2 } from 'lucide-react';
+import { ArrowRight, Check, X, Clock, Search, Package, Undo2, Plus, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
@@ -60,6 +60,16 @@ interface TransferRecord {
   to_store_name?: string;
 }
 
+interface TransferItem {
+  id: string; // local key
+  productId: string;
+  productName: string;
+  productImage: string | null;
+  variationId: string | null;
+  variationLabel: string | null;
+  quantity: number;
+}
+
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -74,19 +84,23 @@ const StockTransferModal: React.FC<Props> = ({ open, onOpenChange, stores, onTra
   const onlineStore = stores.find(s => s.type === 'online');
   const destinationStores = [...physicalStores, ...(onlineStore ? [onlineStore] : [])];
 
-  // New transfer form
+  // Store selection (shared for all items)
   const [fromStoreId, setFromStoreId] = useState('');
   const [toStoreId, setToStoreId] = useState('');
+  const [notes, setNotes] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Multi-item list
+  const [transferItems, setTransferItems] = useState<TransferItem[]>([]);
+
+  // Item picker state
   const [productSearch, setProductSearch] = useState('');
   const [products, setProducts] = useState<any[]>([]);
-  const [selectedProductId, setSelectedProductId] = useState('');
-  const [variations, setVariations] = useState<any[]>([]);
-  const [selectedVariationId, setSelectedVariationId] = useState('');
+  const [pickerProductId, setPickerProductId] = useState('');
+  const [pickerVariations, setPickerVariations] = useState<any[]>([]);
+  const [pickerVariationId, setPickerVariationId] = useState('');
   const [variationSearch, setVariationSearch] = useState('');
-  const [quantity, setQuantity] = useState(1);
-  const [notes, setNotes] = useState('');
-  const [availableStock, setAvailableStock] = useState<number | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [pickerQuantity, setPickerQuantity] = useState(1);
 
   // History
   const [transfers, setTransfers] = useState<TransferRecord[]>([]);
@@ -107,32 +121,29 @@ const StockTransferModal: React.FC<Props> = ({ open, onOpenChange, stores, onTra
     loadProducts();
   }, [open]);
 
-  // Load variations when product selected
+  // Load variations when picker product selected
   useEffect(() => {
-    if (!selectedProductId) {
-      setVariations([]);
-      setSelectedVariationId('');
+    if (!pickerProductId) {
+      setPickerVariations([]);
+      setPickerVariationId('');
       return;
     }
     const loadVariations = async () => {
-      // Fetch variations separately from their attribute values to avoid nested query limits
       const { data: vars } = await supabase
         .from('product_variations')
         .select('id, sku, barcode, is_active')
-        .eq('product_id', selectedProductId)
+        .eq('product_id', pickerProductId)
         .order('sort_order');
 
       if (!vars || vars.length === 0) {
-        setVariations([]);
-        setSelectedVariationId('');
+        setPickerVariations([]);
+        setPickerVariationId('');
         setVariationSearch('');
         return;
       }
 
-      // Fetch all variation values with attribute names in a separate query
       const varIds = vars.map(v => v.id);
       const allValues: any[] = [];
-      // Paginate to handle large sets
       for (let i = 0; i < varIds.length; i += 50) {
         const batch = varIds.slice(i, i + 50);
         const { data: vvData } = await supabase
@@ -142,7 +153,6 @@ const StockTransferModal: React.FC<Props> = ({ open, onOpenChange, stores, onTra
         if (vvData) allValues.push(...vvData);
       }
 
-      // Group attribute values by variation_id
       const attrMap: Record<string, { name: string; value: string }[]> = {};
       allValues.forEach((pvv: any) => {
         const vid = pvv.variation_id;
@@ -158,42 +168,13 @@ const StockTransferModal: React.FC<Props> = ({ open, onOpenChange, stores, onTra
         const label = attrs.map((a: any) => `${a.name}: ${a.value}`).join(' / ');
         return { id: v.id, label: label || v.sku || v.id.slice(0, 8), sku: v.sku, barcode: v.barcode, attrs };
       });
-      
-      setVariations(mapped);
-      setSelectedVariationId('');
+
+      setPickerVariations(mapped);
+      setPickerVariationId('');
       setVariationSearch('');
     };
     loadVariations();
-  }, [selectedProductId]);
-
-  // Check available stock when source store + product/variation selected
-  useEffect(() => {
-    if (!fromStoreId || !selectedProductId) {
-      setAvailableStock(null);
-      return;
-    }
-    const checkStock = async () => {
-      let query = supabase
-        .from('store_stock')
-        .select('quantity')
-        .eq('store_id', fromStoreId)
-        .eq('product_id', selectedProductId);
-
-      if (selectedVariationId) {
-        query = query.eq('variation_id', selectedVariationId);
-      } else if (variations.length > 0) {
-        // Product has variations but none selected yet
-        setAvailableStock(null);
-        return;
-      } else {
-        query = query.is('variation_id', null);
-      }
-
-      const { data } = await query.maybeSingle();
-      setAvailableStock(data?.quantity ?? 0);
-    };
-    checkStock();
-  }, [fromStoreId, selectedProductId, selectedVariationId, variations.length]);
+  }, [pickerProductId]);
 
   // Load history
   useEffect(() => {
@@ -210,7 +191,6 @@ const StockTransferModal: React.FC<Props> = ({ open, onOpenChange, stores, onTra
       .limit(50);
 
     if (data && data.length > 0) {
-      // Enrich with product/store names
       const productIds = [...new Set(data.map(t => t.product_id))];
       const { data: prods } = await supabase
         .from('products')
@@ -222,7 +202,6 @@ const StockTransferModal: React.FC<Props> = ({ open, onOpenChange, stores, onTra
       const storeMap: Record<string, string> = {};
       stores.forEach(s => { storeMap[s.id] = s.name; });
 
-      // Get variation labels for transfers with variation_id
       const variationIds = data.filter(t => t.variation_id).map(t => t.variation_id!);
       let varLabelMap: Record<string, string> = {};
       if (variationIds.length > 0) {
@@ -260,54 +239,94 @@ const StockTransferModal: React.FC<Props> = ({ open, onOpenChange, stores, onTra
   }, [products, productSearch]);
 
   const filteredVariations = useMemo(() => {
-    if (!variationSearch) return variations;
+    if (!variationSearch) return pickerVariations;
     const q = variationSearch.toLowerCase();
-    return variations.filter((v: any) => {
+    return pickerVariations.filter((v: any) => {
       const label = v.label?.toLowerCase() || '';
       const sku = v.sku?.toLowerCase() || '';
       const barcode = v.barcode?.toLowerCase() || '';
       return label.includes(q) || sku.includes(q) || barcode.includes(q);
     });
-  }, [variations, variationSearch]);
+  }, [pickerVariations, variationSearch]);
 
-  const handleSubmit = async () => {
-    if (!fromStoreId || !toStoreId || !selectedProductId || quantity <= 0) {
-      toast({ title: 'Preencha todos os campos obrigatórios', variant: 'destructive' });
+  const selectedPickerProduct = products.find(p => p.id === pickerProductId);
+
+  const handleAddItem = () => {
+    if (!pickerProductId) {
+      toast({ title: 'Selecione um produto', variant: 'destructive' });
       return;
     }
-    if (variations.length > 0 && !selectedVariationId) {
+    if (pickerVariations.length > 0 && !pickerVariationId) {
       toast({ title: 'Selecione uma variação', variant: 'destructive' });
       return;
     }
-    if (availableStock !== null && quantity > availableStock) {
-      toast({ title: `Estoque insuficiente. Disponível: ${availableStock}`, variant: 'destructive' });
+    if (pickerQuantity <= 0) {
+      toast({ title: 'Quantidade inválida', variant: 'destructive' });
+      return;
+    }
+
+    const product = products.find(p => p.id === pickerProductId);
+    const variation = pickerVariations.find((v: any) => v.id === pickerVariationId);
+
+    const newItem: TransferItem = {
+      id: crypto.randomUUID(),
+      productId: pickerProductId,
+      productName: product?.name || '',
+      productImage: product?.image_url || null,
+      variationId: pickerVariationId || null,
+      variationLabel: variation?.label || null,
+      quantity: pickerQuantity,
+    };
+
+    setTransferItems(prev => [...prev, newItem]);
+
+    // Reset picker
+    setPickerProductId('');
+    setPickerVariationId('');
+    setPickerVariations([]);
+    setProductSearch('');
+    setVariationSearch('');
+    setPickerQuantity(1);
+  };
+
+  const handleRemoveItem = (itemId: string) => {
+    setTransferItems(prev => prev.filter(i => i.id !== itemId));
+  };
+
+  const handleSubmit = async () => {
+    if (!fromStoreId || !toStoreId) {
+      toast({ title: 'Selecione origem e destino', variant: 'destructive' });
+      return;
+    }
+    if (transferItems.length === 0) {
+      toast({ title: 'Adicione pelo menos um item', variant: 'destructive' });
       return;
     }
 
     setIsSubmitting(true);
     try {
-      // Create transfer record
-      const { error: transferError } = await supabase
-        .from('stock_transfers')
-        .insert({
-          from_store_id: fromStoreId,
-          to_store_id: toStoreId,
-          product_id: selectedProductId,
-          variation_id: selectedVariationId || null,
-          quantity,
-          notes: notes || null,
-          requested_by: user!.id,
-          status: 'pending',
-        } as any);
+      const inserts = transferItems.map(item => ({
+        from_store_id: fromStoreId,
+        to_store_id: toStoreId,
+        product_id: item.productId,
+        variation_id: item.variationId,
+        quantity: item.quantity,
+        notes: notes || null,
+        requested_by: user!.id,
+        status: 'pending',
+      }));
 
-      if (transferError) throw transferError;
+      const { error } = await supabase
+        .from('stock_transfers')
+        .insert(inserts as any);
+
+      if (error) throw error;
 
       toast({
         title: 'Transferência solicitada!',
-        description: 'A loja de origem receberá uma notificação para aprovar a transferência.',
+        description: `${transferItems.length} item(ns) enviado(s) para aprovação.`,
       });
 
-      // Reset form
       resetForm();
       onTransferComplete();
     } catch (error: any) {
@@ -325,7 +344,6 @@ const StockTransferModal: React.FC<Props> = ({ open, onOpenChange, stores, onTra
     variationId: string | null,
     qty: number
   ) => {
-    // Decrease from source — ALWAYS, even for online destinations
     const sourceQuery = supabase
       .from('store_stock')
       .select('id, quantity')
@@ -337,7 +355,7 @@ const StockTransferModal: React.FC<Props> = ({ open, onOpenChange, stores, onTra
     const { data: source } = await sourceQuery.maybeSingle();
 
     if (!source) {
-      throw new Error('Registro de estoque não encontrado na loja de origem. Verifique se o produto possui estoque cadastrado.');
+      throw new Error('Registro de estoque não encontrado na loja de origem.');
     }
 
     if (source.quantity < qty) {
@@ -353,13 +371,10 @@ const StockTransferModal: React.FC<Props> = ({ open, onOpenChange, stores, onTra
       throw new Error('Falha ao atualizar estoque da origem: ' + updateError.message);
     }
 
-    // Check if destination is an online/website store (aggregated stock)
-    // If so, skip adding stock there — the online stock is the sum of all physical stores
     const destStore = stores.find(s => s.id === toStore);
     const isOnlineDestination = destStore?.type === 'online' || destStore?.type === 'website';
 
     if (!isOnlineDestination) {
-      // Increase at destination (physical store only)
       const destQuery = supabase
         .from('store_stock')
         .select('id, quantity')
@@ -427,7 +442,6 @@ const StockTransferModal: React.FC<Props> = ({ open, onOpenChange, stores, onTra
   const handleReverse = async (transfer: TransferRecord) => {
     if (!confirm(`Reverter transferência de ${transfer.quantity}x ${transfer.product_name}?\nIsso devolverá as peças de "${transfer.to_store_name}" para "${transfer.from_store_name}".`)) return;
     try {
-      // Execute reverse: from destination back to origin
       await executeTransfer(
         transfer.to_store_id,
         transfer.from_store_id,
@@ -452,13 +466,14 @@ const StockTransferModal: React.FC<Props> = ({ open, onOpenChange, stores, onTra
   const resetForm = () => {
     setFromStoreId('');
     setToStoreId('');
-    setSelectedProductId('');
-    setSelectedVariationId('');
+    setPickerProductId('');
+    setPickerVariationId('');
+    setPickerVariations([]);
     setVariationSearch('');
-    setQuantity(1);
+    setPickerQuantity(1);
     setNotes('');
     setProductSearch('');
-    setAvailableStock(null);
+    setTransferItems([]);
   };
 
   const statusBadge = (status: string) => {
@@ -473,8 +488,6 @@ const StockTransferModal: React.FC<Props> = ({ open, onOpenChange, stores, onTra
         return <Badge variant="secondary"><Clock className="h-3 w-3 mr-1" />Pendente</Badge>;
     }
   };
-
-  const selectedProduct = products.find(p => p.id === selectedProductId);
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) resetForm(); onOpenChange(v); }}>
@@ -526,130 +539,162 @@ const StockTransferModal: React.FC<Props> = ({ open, onOpenChange, stores, onTra
               </div>
             </div>
 
-            {/* Product selection */}
-            <div className="space-y-2">
-              <Label>Produto</Label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar produto..."
-                  value={productSearch}
-                  onChange={(e) => setProductSearch(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              {selectedProduct && (
-                <div className="flex items-center gap-2 p-2 bg-muted rounded-md">
-                  {selectedProduct.image_url && (
-                    <img src={selectedProduct.image_url} className="h-8 w-8 rounded object-cover" alt="" />
-                  )}
-                  <span className="text-sm font-medium">{selectedProduct.name}</span>
-                  <Button variant="ghost" size="sm" className="ml-auto h-6" onClick={() => { setSelectedProductId(''); setProductSearch(''); }}>
-                    <X className="h-3 w-3" />
-                  </Button>
-                </div>
-              )}
-              {!selectedProductId && productSearch && (
-                <div className="border rounded-md max-h-40 overflow-y-auto">
-                  {filteredProducts.map(p => (
-                    <button
-                      key={p.id}
-                      className="w-full text-left px-3 py-2 hover:bg-muted flex items-center gap-2 text-sm"
-                      onClick={() => { setSelectedProductId(p.id); setProductSearch(p.name); }}
-                    >
-                      {p.image_url && <img src={p.image_url} className="h-6 w-6 rounded object-cover" alt="" />}
-                      {p.name}
-                    </button>
-                  ))}
-                  {filteredProducts.length === 0 && (
-                    <p className="px-3 py-2 text-sm text-muted-foreground">Nenhum produto encontrado</p>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Variation selection */}
-            {variations.length > 0 && (
+            {/* Items list */}
+            {transferItems.length > 0 && (
               <div className="space-y-2">
-                <Label>Variação</Label>
-                {selectedVariationId ? (
-                  <div className="flex items-center gap-2 p-2.5 bg-primary/10 border border-primary/30 rounded-lg">
-                    <Package className="h-4 w-4 text-primary shrink-0" />
-                    <span className="text-sm font-medium flex-1">
-                      {variations.find((v: any) => v.id === selectedVariationId)?.label}
-                    </span>
-                    {variations.find((v: any) => v.id === selectedVariationId)?.sku && (
-                      <span className="text-xs text-muted-foreground font-mono">
-                        {variations.find((v: any) => v.id === selectedVariationId)?.sku}
-                      </span>
-                    )}
-                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => { setSelectedVariationId(''); setVariationSearch(''); }}>
-                      <X className="h-3 w-3" />
-                    </Button>
-                  </div>
-                ) : (
-                  <>
-                    <div className="relative">
-                      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                      <Input
-                        placeholder="Filtrar por cor, tamanho, SKU ou código de barras..."
-                        value={variationSearch}
-                        onChange={(e) => setVariationSearch(e.target.value)}
-                        className="pl-8 h-9 text-sm"
-                      />
-                    </div>
-                    <ScrollArea className="max-h-48">
-                      <div className="space-y-1 pt-1">
-                        {filteredVariations.length === 0 ? (
-                          <p className="text-sm text-muted-foreground text-center py-3">Nenhuma variação encontrada</p>
-                        ) : (
-                          filteredVariations.map((v: any) => (
-                            <button
-                              key={v.id}
-                              className={cn(
-                                "w-full flex items-center justify-between p-2.5 rounded-lg border text-left transition-all text-sm",
-                                "hover:border-primary/50 hover:bg-accent"
-                              )}
-                              onClick={() => setSelectedVariationId(v.id)}
-                            >
-                              <div className="flex-1 min-w-0">
-                                <span className="font-medium">{v.label}</span>
-                                {v.sku && <span className="ml-2 text-xs text-muted-foreground font-mono">SKU: {v.sku}</span>}
-                                {v.barcode && <span className="ml-2 text-xs text-muted-foreground font-mono">CB: {v.barcode}</span>}
-                              </div>
-                            </button>
-                          ))
+                <Label className="text-sm font-semibold">Itens da transferência ({transferItems.length})</Label>
+                <div className="border rounded-lg divide-y">
+                  {transferItems.map((item) => (
+                    <div key={item.id} className="flex items-center gap-3 p-2.5">
+                      {item.productImage ? (
+                        <img src={item.productImage} alt="" className="h-8 w-8 rounded object-cover shrink-0" />
+                      ) : (
+                        <div className="h-8 w-8 rounded bg-muted flex items-center justify-center shrink-0">
+                          <Package className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{item.productName}</p>
+                        {item.variationLabel && (
+                          <p className="text-xs text-muted-foreground truncate">{item.variationLabel}</p>
                         )}
                       </div>
-                    </ScrollArea>
-                  </>
-                )}
+                      <Badge variant="secondary" className="shrink-0">{item.quantity} un.</Badge>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 shrink-0 text-destructive hover:text-destructive"
+                        onClick={() => handleRemoveItem(item.id)}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 
-            {/* Quantity + stock info */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Quantidade</Label>
-                <Input
-                  type="number"
-                  min={1}
-                  max={availableStock ?? undefined}
-                  value={quantity}
-                  onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                />
+            {/* Add item picker */}
+            <div className="border rounded-lg p-3 space-y-3 bg-muted/30">
+              <Label className="text-sm font-semibold flex items-center gap-1.5">
+                <Plus className="h-3.5 w-3.5" />
+                Adicionar item
+              </Label>
+
+              {/* Product selection */}
+              <div className="space-y-1.5">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Buscar produto..."
+                    value={productSearch}
+                    onChange={(e) => setProductSearch(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                {selectedPickerProduct && (
+                  <div className="flex items-center gap-2 p-2 bg-background rounded-md border">
+                    {selectedPickerProduct.image_url && (
+                      <img src={selectedPickerProduct.image_url} className="h-8 w-8 rounded object-cover" alt="" />
+                    )}
+                    <span className="text-sm font-medium">{selectedPickerProduct.name}</span>
+                    <Button variant="ghost" size="sm" className="ml-auto h-6" onClick={() => { setPickerProductId(''); setProductSearch(''); }}>
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                )}
+                {!pickerProductId && productSearch && (
+                  <div className="border rounded-md max-h-40 overflow-y-auto bg-background">
+                    {filteredProducts.map(p => (
+                      <button
+                        key={p.id}
+                        className="w-full text-left px-3 py-2 hover:bg-muted flex items-center gap-2 text-sm"
+                        onClick={() => { setPickerProductId(p.id); setProductSearch(p.name); }}
+                      >
+                        {p.image_url && <img src={p.image_url} className="h-6 w-6 rounded object-cover" alt="" />}
+                        {p.name}
+                      </button>
+                    ))}
+                    {filteredProducts.length === 0 && (
+                      <p className="px-3 py-2 text-sm text-muted-foreground">Nenhum produto encontrado</p>
+                    )}
+                  </div>
+                )}
               </div>
-              <div className="space-y-2">
-                <Label>Estoque disponível na origem</Label>
-                <div className="h-10 flex items-center">
-                  {availableStock !== null ? (
-                    <Badge variant={availableStock === 0 ? 'destructive' : 'default'} className="text-base px-3">
-                      {availableStock} un.
-                    </Badge>
+
+              {/* Variation selection */}
+              {pickerVariations.length > 0 && (
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Variação</Label>
+                  {pickerVariationId ? (
+                    <div className="flex items-center gap-2 p-2 bg-primary/10 border border-primary/30 rounded-lg">
+                      <Package className="h-4 w-4 text-primary shrink-0" />
+                      <span className="text-sm font-medium flex-1">
+                        {pickerVariations.find((v: any) => v.id === pickerVariationId)?.label}
+                      </span>
+                      <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => { setPickerVariationId(''); setVariationSearch(''); }}>
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
                   ) : (
-                    <span className="text-sm text-muted-foreground">Selecione origem e produto</span>
+                    <>
+                      <div className="relative">
+                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                        <Input
+                          placeholder="Filtrar por cor, tamanho, SKU..."
+                          value={variationSearch}
+                          onChange={(e) => setVariationSearch(e.target.value)}
+                          className="pl-8 h-9 text-sm"
+                        />
+                      </div>
+                      <ScrollArea className="max-h-36">
+                        <div className="space-y-1 pt-1">
+                          {filteredVariations.length === 0 ? (
+                            <p className="text-sm text-muted-foreground text-center py-3">Nenhuma variação encontrada</p>
+                          ) : (
+                            filteredVariations.map((v: any) => (
+                              <button
+                                key={v.id}
+                                className={cn(
+                                  "w-full flex items-center justify-between p-2 rounded-lg border text-left transition-all text-sm",
+                                  "hover:border-primary/50 hover:bg-accent"
+                                )}
+                                onClick={() => setPickerVariationId(v.id)}
+                              >
+                                <div className="flex-1 min-w-0">
+                                  <span className="font-medium">{v.label}</span>
+                                  {v.sku && <span className="ml-2 text-xs text-muted-foreground font-mono">SKU: {v.sku}</span>}
+                                </div>
+                              </button>
+                            ))
+                          )}
+                        </div>
+                      </ScrollArea>
+                    </>
                   )}
                 </div>
+              )}
+
+              {/* Quantity + Add button */}
+              <div className="flex items-end gap-3">
+                <div className="space-y-1.5 w-28">
+                  <Label className="text-xs">Quantidade</Label>
+                  <Input
+                    type="number"
+                    min={1}
+                    value={pickerQuantity}
+                    onChange={(e) => setPickerQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={handleAddItem}
+                  disabled={!pickerProductId || (pickerVariations.length > 0 && !pickerVariationId)}
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  Adicionar
+                </Button>
               </div>
             </div>
 
@@ -659,7 +704,7 @@ const StockTransferModal: React.FC<Props> = ({ open, onOpenChange, stores, onTra
               <Textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="Ex: Peça solicitada pela vendedora Maria"
+                placeholder="Ex: Peças solicitadas pela vendedora Maria"
                 rows={2}
               />
             </div>
@@ -668,9 +713,9 @@ const StockTransferModal: React.FC<Props> = ({ open, onOpenChange, stores, onTra
               <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
               <Button
                 onClick={handleSubmit}
-                disabled={isSubmitting || !fromStoreId || !toStoreId || !selectedProductId || quantity <= 0 || (variations.length > 0 && !selectedVariationId)}
+                disabled={isSubmitting || !fromStoreId || !toStoreId || transferItems.length === 0}
               >
-                {isSubmitting ? 'Enviando...' : 'Solicitar Transferência'}
+                {isSubmitting ? 'Enviando...' : `Solicitar Transferência (${transferItems.length})`}
               </Button>
             </DialogFooter>
           </TabsContent>
