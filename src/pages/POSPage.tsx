@@ -62,6 +62,7 @@ const POSPage = () => {
   // Wizard state
   const [currentStep, setCurrentStep] = useState<WizardStep>('sale-type');
   const [saleType, setSaleType] = useState<SaleType>('varejo');
+  const [quotePriceMode, setQuotePriceMode] = useState<QuotePriceMode>('varejo');
   const [selectedSeller, setSelectedSeller] = useState<Seller | null>(null);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [customerCreditBalance, setCustomerCreditBalance] = useState(0);
