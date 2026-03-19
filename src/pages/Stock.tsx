@@ -674,6 +674,7 @@ const Stock = () => {
                                         <Table>
                                           <TableHeader>
                                             <TableRow className="bg-muted/30">
+                                              <TableHead className="text-xs h-8 w-12">Foto</TableHead>
                                               <TableHead className="text-xs h-8 w-24">Tamanho</TableHead>
                                               <TableHead className="text-xs h-8 w-24">SKU</TableHead>
                                               {physicalStores.map(store => (
@@ -688,11 +689,27 @@ const Stock = () => {
                                                 ?.filter(av => av.attribute_name.toLowerCase() !== 'cor')
                                                 .map(av => av.value)
                                                 .join(' / ') || '—';
+                                              const varImage = vd.variation.image_url;
                                               return (
                                                 <TableRow key={vd.variation.id} className={cn(
                                                   "hover:bg-muted/30 transition-colors",
                                                   matchedVariationIds.has(vd.variation.id) && "bg-primary/10 ring-1 ring-inset ring-primary/30"
                                                 )}>
+                                                  <TableCell className="py-1.5">
+                                                    {varImage ? (
+                                                      <button
+                                                        type="button"
+                                                        onClick={(e) => { e.stopPropagation(); setPreviewImageUrl(varImage); }}
+                                                        className="h-8 w-8 rounded overflow-hidden border border-border hover:ring-2 hover:ring-primary transition-all cursor-pointer"
+                                                      >
+                                                        <img src={varImage} alt="" className="h-full w-full object-cover" />
+                                                      </button>
+                                                    ) : (
+                                                      <div className="h-8 w-8 rounded bg-muted flex items-center justify-center">
+                                                        <ImageIcon className="h-3.5 w-3.5 text-muted-foreground" />
+                                                      </div>
+                                                    )}
+                                                  </TableCell>
                                                   <TableCell className="py-1.5 text-sm font-medium">{label}</TableCell>
                                                   <TableCell className="py-1.5 text-xs text-muted-foreground font-mono">{vd.variation.sku || '—'}</TableCell>
                                                   {physicalStores.map(store => (
