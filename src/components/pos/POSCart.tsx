@@ -172,11 +172,51 @@ const POSCart = ({
                         {item.sku}
                       </div>
                     )}
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-sm text-muted-foreground flex items-center gap-1">
                       {item.is_promotional && item.original_price && (
                         <span className="line-through text-xs mr-1">{formatCurrency(item.original_price)}</span>
                       )}
-                      {formatCurrency(item.unit_price)} un.
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <button
+                            type="button"
+                            className="hover:text-primary hover:underline cursor-pointer inline-flex items-center gap-0.5"
+                            title="Editar preço"
+                          >
+                            {formatCurrency(item.unit_price)} un.
+                            <DollarSign className="h-3 w-3 opacity-50" />
+                          </button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-56" align="start">
+                          <div className="space-y-3">
+                            <Label>Alterar preço unitário</Label>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              defaultValue={item.unit_price}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  const val = parseFloat((e.target as HTMLInputElement).value);
+                                  if (!isNaN(val) && val >= 0) onUpdatePrice(item.id, val);
+                                }
+                              }}
+                              placeholder="Novo preço"
+                            />
+                            <Button
+                              size="sm"
+                              className="w-full"
+                              onClick={(e) => {
+                                const input = (e.currentTarget.parentElement?.querySelector('input') as HTMLInputElement);
+                                const val = parseFloat(input?.value);
+                                if (!isNaN(val) && val >= 0) onUpdatePrice(item.id, val);
+                              }}
+                            >
+                              Aplicar
+                            </Button>
+                          </div>
+                        </PopoverContent>
+                      </Popover>
                       {item.is_promotional && (
                         <Badge variant="secondary" className="ml-1 text-[10px] bg-green-500/20 text-green-700 border-green-500/30">
                           Promo

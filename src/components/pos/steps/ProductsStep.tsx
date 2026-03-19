@@ -32,6 +32,7 @@ const ProductsStep = ({
   onProductSelect,
   onUpdateQuantity,
   onRemoveItem,
+  onUpdatePrice,
   onApplyItemDiscount,
   onTogglePromoPrice,
   generalDiscount,
