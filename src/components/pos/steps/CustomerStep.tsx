@@ -239,7 +239,9 @@ const CustomerStep = ({ selectedCustomer, onSelectCustomer, saleType, onNext, on
       <p className="text-muted-foreground mb-8">
         {isExchange
           ? 'É obrigatório selecionar um cliente para troca'
-          : 'Vincule um cliente à venda ou pule esta etapa'}
+          : isColaborador
+            ? 'Opcional — vincule o colaborador ou pule esta etapa'
+            : 'Vincule um cliente à venda ou pule esta etapa'}
       </p>
 
       <div className="w-full max-w-md space-y-4">
