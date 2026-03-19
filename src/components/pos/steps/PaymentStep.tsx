@@ -1,12 +1,15 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { ChevronLeft, User, ShoppingBag, CalendarIcon } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { ChevronLeft, User, ShoppingBag, CalendarIcon, Gift } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import PaymentPanel from '@/components/pos/PaymentPanel';
+import ProductSearch, { ProductResult } from '@/components/pos/ProductSearch';
 import { CartItem } from '@/components/pos/POSCart';
 import { Seller } from './SellerStep';
 import { Customer } from '@/components/pos/CustomerSelector';
