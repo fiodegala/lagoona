@@ -652,6 +652,9 @@ const StockTransferModal: React.FC<Props> = ({ open, onOpenChange, stores, onTra
                       <span className="text-sm font-medium flex-1">
                         {pickerVariations.find((v: any) => v.id === pickerVariationId)?.label}
                       </span>
+                      <Badge variant="secondary" className="text-xs">
+                        {variationStockMap[pickerVariationId] ?? 0} un. disponível
+                      </Badge>
                       <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => { setPickerVariationId(''); setVariationSearch(''); }}>
                         <X className="h-3 w-3" />
                       </Button>
