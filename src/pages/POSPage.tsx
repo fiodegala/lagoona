@@ -236,7 +236,7 @@ const POSPage = () => {
 
       const basePrice = variation.price ?? product.price;
       const variationPrice = (() => {
-        switch (saleType) {
+        switch (effectivePriceType) {
           case 'atacado':
             return variation.wholesale_price ?? variation.price ?? product.wholesale_price ?? product.price;
           case 'exclusivo':
