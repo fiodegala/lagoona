@@ -352,7 +352,12 @@ const CustomerStep = ({ selectedCustomer, onSelectCustomer, saleType, onNext, on
         <Button variant="outline" size="lg" onClick={onBack}>
           <ChevronLeft className="h-4 w-4 mr-2" /> Voltar
         </Button>
-        <Button size="lg" className="px-12" onClick={onNext} disabled={!selectedCustomer}>
+        {!isExchange && !selectedCustomer && (
+          <Button variant="ghost" size="lg" onClick={() => { onSelectCustomer(null); onNext(); }}>
+            <SkipForward className="h-4 w-4 mr-2" /> Pular
+          </Button>
+        )}
+        <Button size="lg" className="px-12" onClick={onNext} disabled={isExchange && !selectedCustomer}>
           Próximo
         </Button>
       </div>
