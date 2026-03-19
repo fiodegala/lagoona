@@ -83,6 +83,18 @@ const POSPage = () => {
   const isExchangeMode = saleType === 'troca';
   const isQuoteMode = isQuoteType(saleType);
 
+  // Pre-fill customer from navigation state (e.g. from Customers page)
+  const prefillAppliedRef = useRef(false);
+  useEffect(() => {
+    const state = location.state as { prefillCustomer?: Customer } | null;
+    if (state?.prefillCustomer && !prefillAppliedRef.current) {
+      prefillAppliedRef.current = true;
+      setSelectedCustomer(state.prefillCustomer);
+      // Clear the state so it doesn't re-apply on re-render
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location.state, navigate, location.pathname]);
+
   useEffect(() => {
     const unsubscribe = offlineService.onOnlineStatusChange(setIsOnline);
     return unsubscribe;
