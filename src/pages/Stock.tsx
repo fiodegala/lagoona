@@ -32,7 +32,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { Search, Package, Warehouse, AlertTriangle, Plus, Minus, Save, Download, ChevronDown, ChevronRight, ArrowLeftRight } from 'lucide-react';
+import { Search, Package, Warehouse, AlertTriangle, Plus, Minus, Save, Download, ChevronDown, ChevronRight, ArrowLeftRight, ImageIcon } from 'lucide-react';
 import StockTransferModal from '@/components/StockTransferModal';
 import PendingTransfersAlert from '@/components/PendingTransfersAlert';
 import { useToast } from '@/hooks/use-toast';
