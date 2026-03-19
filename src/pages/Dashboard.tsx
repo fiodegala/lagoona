@@ -191,7 +191,7 @@ const Dashboard = () => {
     }
   }, [isAdmin, accessibleStoreIds, userStoreId]);
   const showStoreSelector = isAdmin || accessibleStoreIds.length > 1;
-  const activeStoreFilter = isAdmin ? (selectedStoreId === 'all' ? null : selectedStoreId) : (accessibleStoreIds.length > 1 ? (selectedStoreId === 'all' ? null : selectedStoreId) : userStoreId);
+  const activeStoreFilter = isAdmin ? (selectedStoreId === 'all' ? null : selectedStoreId) : (accessibleStoreIds.length > 1 ? (selectedStoreId === 'all' ? (userStoreId || null) : selectedStoreId) : userStoreId);
   const canAccessSiteStore = isAdmin || accessibleStoreIds.includes(SITE_STORE_ID);
   const isSiteStoreSelected = activeStoreFilter === SITE_STORE_ID;
   const isLagoonaStoreSelected = activeStoreFilter === LAGOONA_STORE_ID;
