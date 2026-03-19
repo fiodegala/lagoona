@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { ShoppingBag, Package, Star, RefreshCw, FileText } from 'lucide-react';
+import { ShoppingBag, Package, Star, RefreshCw, FileText, Gift } from 'lucide-react';
 import { SaleType } from '@/components/pos/ProductSearch';
 
 export type QuotePriceMode = 'varejo' | 'atacado' | 'exclusivo';
