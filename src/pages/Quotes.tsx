@@ -170,10 +170,25 @@ const Quotes = () => {
   }, [selectedQuote]);
 
   const handleDelete = async (id: string) => {
+    // Find the quote to restore stock if it's still pending
+    const quoteToDelete = quotes.find(q => q.id === id);
     const { error } = await supabase.from('quotes').delete().eq('id', id);
     if (error) {
       toast({ title: 'Erro ao excluir', variant: 'destructive' });
     } else {
+      // Restore stock if the quote was pending (reserved stock)
+      if (quoteToDelete && quoteToDelete.status === 'pending') {
+        try {
+          const { restoreStockForQuote } = await import('@/services/quoteStockService');
+          await restoreStockForQuote((quoteToDelete.items || []).map((item: any) => ({
+            product_id: item.product_id,
+            variation_id: item.variation_id || null,
+            quantity: item.quantity || 1,
+          })));
+        } catch (err) {
+          console.error('Error restoring stock:', err);
+        }
+      }
       toast({ title: 'Orçamento excluído' });
       setQuotes(q => q.filter(x => x.id !== id));
       if (selectedQuote?.id === id) setSelectedQuote(null);
