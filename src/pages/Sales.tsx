@@ -336,9 +336,10 @@ const Sales = () => {
   });
 
   const activeSales = filteredSales.filter(s => (s as any).status !== 'cancelled');
-  const totalRevenue = activeSales.reduce((sum, s) => sum + Number(s.total), 0);
-  const totalDiscount = activeSales.reduce((sum, s) => sum + Number(s.discount_amount || 0), 0);
-  const avgTicket = activeSales.length > 0 ? totalRevenue / activeSales.length : 0;
+  const nonGiftSales = activeSales.filter(s => (s as any).sale_type !== 'brinde');
+  const totalRevenue = nonGiftSales.reduce((sum, s) => sum + Number(s.total), 0);
+  const totalDiscount = nonGiftSales.reduce((sum, s) => sum + Number(s.discount_amount || 0), 0);
+  const avgTicket = nonGiftSales.length > 0 ? totalRevenue / nonGiftSales.length : 0;
 
   const saleItems = (items: any) => {
     try {
