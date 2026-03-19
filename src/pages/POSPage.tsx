@@ -223,6 +223,7 @@ const POSPage = () => {
       case 'exclusivo':
         return product.exclusive_price ?? product.price;
       case 'troca':
+      case 'brinde':
         return 0;
       default:
         // Varejo: always use regular retail price

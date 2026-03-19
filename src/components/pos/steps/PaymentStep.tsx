@@ -216,6 +216,24 @@ const PaymentStep = ({
           disabled={cartItems.length === 0}
         />
       </div>
+
+      {/* Gift product search dialog */}
+      <Dialog open={giftDialogOpen} onOpenChange={setGiftDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Gift className="h-5 w-5" />
+              Adicionar Brinde
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-2">
+            <ProductSearch
+              onProductSelect={handleGiftProductSelect}
+              isOnline={true}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
