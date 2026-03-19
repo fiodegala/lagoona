@@ -744,6 +744,14 @@ const POSPage = () => {
           {currentStep === 'sale-type' && (
             <SaleTypeStep
               saleType={saleType}
+              quotePriceMode={quotePriceMode}
+              onQuotePriceModeSelect={(mode) => {
+                if (mode !== quotePriceMode) {
+                  setCartItems([]);
+                  setGeneralDiscount({ type: 'percentage', value: 0 });
+                }
+                setQuotePriceMode(mode);
+              }}
               onSelect={(type) => {
                 if (type !== saleType) {
                   setCartItems([]);
