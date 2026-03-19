@@ -36,10 +36,13 @@ const STEPS: { key: WizardStep; label: string }[] = [
 
 const POS_DRAFT_STORAGE_KEY = 'pos_wizard_draft_v1';
 
+type QuotePriceMode = 'varejo' | 'atacado' | 'exclusivo';
+
 interface POSDraftState {
   sessionId: string;
   currentStep: WizardStep;
   saleType: SaleType;
+  quotePriceMode: QuotePriceMode;
   selectedSeller: Seller | null;
   selectedCustomer: Customer | null;
   cartItems: CartItem[];
