@@ -27,6 +27,7 @@ interface PaymentStepProps {
   isProcessing: boolean;
   onPayment: (method: 'cash' | 'card' | 'pix' | 'mixed', amountReceived?: number, paymentDetails?: Record<string, number>, saleDate?: string) => void;
   onBack: () => void;
+  onAddGiftItem?: (product: ProductResult, variationId?: string) => void;
 }
 
 const saleTypeLabels: Record<SaleType, string> = {
