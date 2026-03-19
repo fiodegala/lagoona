@@ -534,7 +534,7 @@ const POSPage = () => {
       change_amount: amountReceived ? Math.max(0, amountReceived - total) : 0,
       notes: selectedSeller ? `Vendedor: ${selectedSeller.full_name}` : undefined,
       sale_date: saleDate,
-      sale_type: saleType as 'varejo' | 'atacado' | 'exclusivo' | 'troca',
+      sale_type: saleType as 'varejo' | 'atacado' | 'exclusivo' | 'troca' | 'brinde',
     };
 
     try {
