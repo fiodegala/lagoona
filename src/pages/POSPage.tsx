@@ -893,6 +893,7 @@ const POSPage = () => {
               isProcessing={isProcessing}
               onPayment={handlePayment}
               onBack={() => setCurrentStep('products')}
+              onAddGiftItem={handleAddGiftItem}
             />
           )}
 
@@ -908,6 +909,7 @@ const POSPage = () => {
               isProcessing={isProcessing}
               onPayment={handlePayment}
               onBack={() => setCurrentStep('products')}
+              onAddGiftItem={handleAddGiftItem}
             />
           )}
         </div>
