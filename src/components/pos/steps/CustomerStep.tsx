@@ -80,6 +80,8 @@ const emptyForm = {
 
 const CustomerStep = ({ selectedCustomer, onSelectCustomer, saleType, onNext, onBack }: CustomerStepProps) => {
   const isExchange = saleType === 'troca';
+  const isColaborador = saleType === 'colaborador';
+  const customerOptional = !isExchange || isColaborador;
 
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [stores, setStores] = useState<{ id: string; name: string; type: string }[]>([]);
@@ -237,7 +239,9 @@ const CustomerStep = ({ selectedCustomer, onSelectCustomer, saleType, onNext, on
       <p className="text-muted-foreground mb-8">
         {isExchange
           ? 'É obrigatório selecionar um cliente para troca'
-          : 'Vincule um cliente à venda ou pule esta etapa'}
+          : isColaborador
+            ? 'Opcional — vincule o colaborador ou pule esta etapa'
+            : 'Vincule um cliente à venda ou pule esta etapa'}
       </p>
 
       <div className="w-full max-w-md space-y-4">
@@ -348,7 +352,12 @@ const CustomerStep = ({ selectedCustomer, onSelectCustomer, saleType, onNext, on
         <Button variant="outline" size="lg" onClick={onBack}>
           <ChevronLeft className="h-4 w-4 mr-2" /> Voltar
         </Button>
-        <Button size="lg" className="px-12" onClick={onNext} disabled={!selectedCustomer}>
+        {!isExchange && !selectedCustomer && (
+          <Button variant="ghost" size="lg" onClick={() => { onSelectCustomer(null); onNext(); }}>
+            <SkipForward className="h-4 w-4 mr-2" /> Pular
+          </Button>
+        )}
+        <Button size="lg" className="px-12" onClick={onNext} disabled={isExchange && !selectedCustomer}>
           Próximo
         </Button>
       </div>
