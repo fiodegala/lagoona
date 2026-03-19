@@ -19,6 +19,7 @@ const saleTypes = [
   { value: 'troca' as SaleType, label: 'Troca', icon: RefreshCw, description: 'Troca de produtos com devolução e saída' },
   { value: 'orcamento' as SaleType, label: 'Orçamento', icon: FileText, description: 'Gera orçamento sem registrar venda' },
   { value: 'brinde' as SaleType, label: 'Brinde', icon: Gift, description: 'Saída de produto sem valor (cortesia)' },
+  { value: 'colaborador' as SaleType, label: 'Colaborador', icon: Users, description: 'Venda para colaboradores internos' },
 ];
 
 const quotePriceModes: { value: QuotePriceMode; label: string; icon: typeof ShoppingBag; description: string }[] = [
