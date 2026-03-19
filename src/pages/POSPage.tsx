@@ -160,6 +160,7 @@ const POSPage = () => {
       const isValidStep = STEPS.some((step) => step.key === draft.currentStep);
       setCurrentStep(isValidStep ? draft.currentStep : 'sale-type');
       setSaleType(draft.saleType || 'varejo');
+      setQuotePriceMode(draft.quotePriceMode || 'varejo');
       setSelectedSeller(draft.selectedSeller ?? null);
       setSelectedCustomer(draft.selectedCustomer ?? null);
       setCartItems(Array.isArray(draft.cartItems) ? draft.cartItems : []);
