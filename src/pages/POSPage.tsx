@@ -36,10 +36,13 @@ const STEPS: { key: WizardStep; label: string }[] = [
 
 const POS_DRAFT_STORAGE_KEY = 'pos_wizard_draft_v1';
 
+type QuotePriceMode = 'varejo' | 'atacado' | 'exclusivo';
+
 interface POSDraftState {
   sessionId: string;
   currentStep: WizardStep;
   saleType: SaleType;
+  quotePriceMode: QuotePriceMode;
   selectedSeller: Seller | null;
   selectedCustomer: Customer | null;
   cartItems: CartItem[];
@@ -59,6 +62,7 @@ const POSPage = () => {
   // Wizard state
   const [currentStep, setCurrentStep] = useState<WizardStep>('sale-type');
   const [saleType, setSaleType] = useState<SaleType>('varejo');
+  const [quotePriceMode, setQuotePriceMode] = useState<QuotePriceMode>('varejo');
   const [selectedSeller, setSelectedSeller] = useState<Seller | null>(null);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [customerCreditBalance, setCustomerCreditBalance] = useState(0);
@@ -156,6 +160,7 @@ const POSPage = () => {
       const isValidStep = STEPS.some((step) => step.key === draft.currentStep);
       setCurrentStep(isValidStep ? draft.currentStep : 'sale-type');
       setSaleType(draft.saleType || 'varejo');
+      setQuotePriceMode(draft.quotePriceMode || 'varejo');
       setSelectedSeller(draft.selectedSeller ?? null);
       setSelectedCustomer(draft.selectedCustomer ?? null);
       setCartItems(Array.isArray(draft.cartItems) ? draft.cartItems : []);
@@ -179,6 +184,7 @@ const POSPage = () => {
       sessionId: session.id,
       currentStep,
       saleType,
+      quotePriceMode,
       selectedSeller,
       selectedCustomer,
       cartItems,
@@ -191,6 +197,7 @@ const POSPage = () => {
     session,
     currentStep,
     saleType,
+    quotePriceMode,
     selectedSeller,
     selectedCustomer,
     cartItems,
@@ -206,21 +213,22 @@ const POSPage = () => {
   const totalDiscount = itemDiscounts + generalDiscountAmount;
   const total = Math.max(0, subtotal - totalDiscount);
 
+  // For quotes, use the selected quotePriceMode to determine pricing
+  const effectivePriceType = saleType === 'orcamento' ? quotePriceMode : saleType;
+
   const resolvePrice = useCallback((product: ProductResult): number => {
-    switch (saleType) {
+    switch (effectivePriceType) {
       case 'atacado':
         return product.wholesale_price ?? product.price;
       case 'exclusivo':
         return product.exclusive_price ?? product.price;
       case 'troca':
         return 0;
-      case 'orcamento':
-        return product.promotional_price ?? product.price;
       default:
         // Varejo: always use regular retail price
         return product.price;
     }
-  }, [saleType]);
+  }, [effectivePriceType]);
 
   const handleProductSelect = useCallback((product: ProductResult, variationId?: string) => {
     if (variationId) {
@@ -229,7 +237,7 @@ const POSPage = () => {
 
       const basePrice = variation.price ?? product.price;
       const variationPrice = (() => {
-        switch (saleType) {
+        switch (effectivePriceType) {
           case 'atacado':
             return variation.wholesale_price ?? variation.price ?? product.wholesale_price ?? product.price;
           case 'exclusivo':
@@ -244,7 +252,7 @@ const POSPage = () => {
 
       // Determine available promotional price for this variation
       const availablePromoPrice = variation.promotional_price ?? product.promotional_price ?? null;
-      const hasValidPromo = saleType === 'varejo' && availablePromoPrice != null && availablePromoPrice < basePrice;
+      const hasValidPromo = effectivePriceType === 'varejo' && availablePromoPrice != null && availablePromoPrice < basePrice;
       const isPromotional = false; // No longer auto-apply promo
 
       const existingItem = cartItems.find((item) => item.product_id === product.id && item.variation_id === variationId);
@@ -279,7 +287,7 @@ const POSPage = () => {
       }
     } else {
       const unitPrice = resolvePrice(product);
-      const hasValidPromo = saleType === 'varejo' && product.promotional_price != null && product.promotional_price < product.price;
+      const hasValidPromo = effectivePriceType === 'varejo' && product.promotional_price != null && product.promotional_price < product.price;
       const existingItem = cartItems.find((item) => item.product_id === product.id && !item.variation_id);
 
       if (existingItem) {
@@ -307,7 +315,7 @@ const POSPage = () => {
         setCartItems((items) => [...items, newItem]);
       }
     }
-  }, [cartItems, resolvePrice, saleType]);
+  }, [cartItems, resolvePrice, effectivePriceType]);
 
   const handleUpdateQuantity = (itemId: string, quantity: number) => {
     if (quantity < 1) return;
@@ -625,6 +633,7 @@ const POSPage = () => {
   const resetWizard = () => {
     setCurrentStep('sale-type');
     setSaleType('varejo');
+    setQuotePriceMode('varejo');
     setSelectedSeller(null);
     setSelectedCustomer(null);
     setCustomerCreditBalance(0);
@@ -736,6 +745,14 @@ const POSPage = () => {
           {currentStep === 'sale-type' && (
             <SaleTypeStep
               saleType={saleType}
+              quotePriceMode={quotePriceMode}
+              onQuotePriceModeSelect={(mode) => {
+                if (mode !== quotePriceMode) {
+                  setCartItems([]);
+                  setGeneralDiscount({ type: 'percentage', value: 0 });
+                }
+                setQuotePriceMode(mode);
+              }}
               onSelect={(type) => {
                 if (type !== saleType) {
                   setCartItems([]);
