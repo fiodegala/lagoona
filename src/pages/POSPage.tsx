@@ -48,6 +48,7 @@ interface POSDraftState {
 
 const POSPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
   const { userStoreId } = useAuth();
   const [session, setSession] = useState<POSSession | null>(null);
