@@ -672,12 +672,15 @@ const StockTransferModal: React.FC<Props> = ({ open, onOpenChange, stores, onTra
                           {filteredVariations.length === 0 ? (
                             <p className="text-sm text-muted-foreground text-center py-3">Nenhuma variação encontrada</p>
                           ) : (
-                            filteredVariations.map((v: any) => (
+                            filteredVariations.map((v: any) => {
+                              const stock = variationStockMap[v.id] ?? 0;
+                              return (
                               <button
                                 key={v.id}
                                 className={cn(
                                   "w-full flex items-center justify-between p-2 rounded-lg border text-left transition-all text-sm",
-                                  "hover:border-primary/50 hover:bg-accent"
+                                  "hover:border-primary/50 hover:bg-accent",
+                                  stock === 0 && "opacity-50"
                                 )}
                                 onClick={() => setPickerVariationId(v.id)}
                               >
@@ -685,8 +688,15 @@ const StockTransferModal: React.FC<Props> = ({ open, onOpenChange, stores, onTra
                                   <span className="font-medium">{v.label}</span>
                                   {v.sku && <span className="ml-2 text-xs text-muted-foreground font-mono">SKU: {v.sku}</span>}
                                 </div>
+                                <Badge
+                                  variant={stock === 0 ? 'destructive' : stock <= 3 ? 'secondary' : 'default'}
+                                  className="ml-2 shrink-0 text-xs"
+                                >
+                                  {stock} un.
+                                </Badge>
                               </button>
-                            ))
+                              );
+                            })
                           )}
                         </div>
                       </ScrollArea>
