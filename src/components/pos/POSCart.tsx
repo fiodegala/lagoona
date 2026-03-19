@@ -111,7 +111,7 @@ const POSCart = ({
       <div className="p-4 border-b">
         <h2 className="text-lg font-semibold">Carrinho</h2>
         <p className="text-sm text-muted-foreground">
-          {items.length} {items.length === 1 ? 'item' : 'itens'}
+          {items.reduce((sum, i) => sum + i.quantity, 0)} {items.reduce((sum, i) => sum + i.quantity, 0) === 1 ? 'peça' : 'peças'} ({items.length} {items.length === 1 ? 'item' : 'itens'})
         </p>
       </div>
 

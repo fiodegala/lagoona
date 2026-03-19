@@ -128,7 +128,7 @@ const ProductsStep = ({
                 <ShoppingCart className="h-4 w-4 mr-2" />
                 Prosseguir
                 {cartItems.length > 0 && (
-                  <Badge variant="secondary" className="ml-2">{cartItems.length}</Badge>
+                  <Badge variant="secondary" className="ml-2">{cartItems.reduce((sum, i) => sum + i.quantity, 0)}</Badge>
                 )}
               </Button>
             )}
