@@ -1687,12 +1687,20 @@ const Dashboard = () => {
                   Últimas vendas realizadas na loja física
                 </CardDescription>
               </div>
-              <Link 
-                to="/admin/pos" 
-                className="text-sm text-primary hover:underline flex items-center gap-1"
-              >
-                Ir para PDV <ArrowUpRight className="h-3 w-3" />
-              </Link>
+              <div className="flex items-center gap-3">
+                <Link 
+                  to="/admin/sales" 
+                  className="text-sm text-primary hover:underline flex items-center gap-1"
+                >
+                  Ver todas <ArrowUpRight className="h-3 w-3" />
+                </Link>
+                <Link 
+                  to="/admin/pos" 
+                  className="text-sm text-muted-foreground hover:text-primary hover:underline flex items-center gap-1"
+                >
+                  Ir para PDV <ArrowUpRight className="h-3 w-3" />
+                </Link>
+              </div>
             </CardHeader>
             <CardContent>
               {isLoading ? (
