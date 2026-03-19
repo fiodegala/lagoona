@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
+import logoEtiqueta from '@/assets/logo-etiqueta.png';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import AdminLayout from '@/components/AdminLayout';
 import { Card, CardContent, CardDescription, CardTitle } from '@/components/ui/card';
@@ -51,8 +52,22 @@ const Sales = () => {
   const [isSavingDate, setIsSavingDate] = useState(false);
   const [isConvertingToOrder, setIsConvertingToOrder] = useState(false);
   const [convertConfirm, setConvertConfirm] = useState<any>(null);
+  const [logoBase64, setLogoBase64] = useState<string>('');
 
   const WEBSITE_STORE_ID = 'e0b8ebbc-1b3b-4aec-b5f7-6925762e6ea1';
+
+  useEffect(() => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      canvas.getContext('2d')?.drawImage(img, 0, 0);
+      setLogoBase64(canvas.toDataURL('image/png'));
+    };
+    img.src = logoEtiqueta;
+  }, []);
 
   const handleConvertToSiteOrder = async () => {
     const sale = convertConfirm;
@@ -185,7 +200,7 @@ const Sales = () => {
         .totals .total-row{font-weight:bold;font-size:15px;border-top:2px solid #333;padding-top:6px;margin-top:4px}.discount{color:#dc2626}
         .notes{background:#f9f9f9;padding:8px;border-radius:4px;margin-top:8px}@media print{body{padding:12px}}
       </style></head><body>
-      <div class="header"><h1>Comprovante de Venda</h1><p>ID: ${detailSale.id}</p><p>${format(new Date(detailSale.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p></div>
+      <div class="header">${logoBase64 ? `<img src="${logoBase64}" alt="Logo" style="height:44px;margin:0 auto 8px;">` : ''}<h1>Comprovante de Venda</h1><p>ID: ${detailSale.id}</p><p>${format(new Date(detailSale.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p></div>
       <div class="section"><div class="section-title">Cliente</div><div class="grid">${customerHtml}</div></div>
       <div class="section"><div class="section-title">Itens</div><table><thead><tr><th>Produto</th><th class="text-right">Qtd</th><th class="text-right">Unit.</th><th class="text-right">Total</th></tr></thead><tbody>${itemsRows}</tbody></table></div>
       <div class="section totals">${totalsHtml}</div>
