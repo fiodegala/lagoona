@@ -72,6 +72,7 @@ const POSCart = ({
   items,
   onUpdateQuantity,
   onRemoveItem,
+  onUpdatePrice,
   onApplyItemDiscount,
   onTogglePromoPrice,
   generalDiscount,
