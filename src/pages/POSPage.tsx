@@ -632,6 +632,7 @@ const POSPage = () => {
   const resetWizard = () => {
     setCurrentStep('sale-type');
     setSaleType('varejo');
+    setQuotePriceMode('varejo');
     setSelectedSeller(null);
     setSelectedCustomer(null);
     setCustomerCreditBalance(0);
