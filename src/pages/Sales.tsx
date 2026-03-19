@@ -52,8 +52,22 @@ const Sales = () => {
   const [isSavingDate, setIsSavingDate] = useState(false);
   const [isConvertingToOrder, setIsConvertingToOrder] = useState(false);
   const [convertConfirm, setConvertConfirm] = useState<any>(null);
+  const [logoBase64, setLogoBase64] = useState<string>('');
 
   const WEBSITE_STORE_ID = 'e0b8ebbc-1b3b-4aec-b5f7-6925762e6ea1';
+
+  useEffect(() => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      canvas.getContext('2d')?.drawImage(img, 0, 0);
+      setLogoBase64(canvas.toDataURL('image/png'));
+    };
+    img.src = logoEtiqueta;
+  }, []);
 
   const handleConvertToSiteOrder = async () => {
     const sale = convertConfirm;
