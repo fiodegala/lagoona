@@ -670,8 +670,8 @@ const StockTransferModal: React.FC<Props> = ({ open, onOpenChange, stores, onTra
                           className="pl-8 h-9 text-sm"
                         />
                       </div>
-                      <ScrollArea className="max-h-[40vh]">
-                        <div className="space-y-1 pt-1">
+                      <div className="max-h-[40vh] overflow-y-auto border rounded-md p-1">
+                        <div className="space-y-1">
                           {filteredVariations.length === 0 ? (
                             <p className="text-sm text-muted-foreground text-center py-3">Nenhuma variação encontrada</p>
                           ) : (
@@ -702,7 +702,7 @@ const StockTransferModal: React.FC<Props> = ({ open, onOpenChange, stores, onTra
                             })
                           )}
                         </div>
-                      </ScrollArea>
+                      </div>
                     </>
                   )}
                 </div>
