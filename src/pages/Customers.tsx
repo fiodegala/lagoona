@@ -1142,9 +1142,30 @@ const Customers = () => {
                   </p>
                 </div>
               </div>
-              <DialogFooter>
+              <DialogFooter className="flex-col sm:flex-row gap-2">
                 <Button variant="outline" onClick={() => setIsDetailOpen(false)}>
                   Fechar
+                </Button>
+                <Button
+                  variant="default"
+                  className="gap-2"
+                  onClick={() => {
+                    setIsDetailOpen(false);
+                    navigate('/admin/pos', {
+                      state: {
+                        prefillCustomer: {
+                          id: selectedCustomer.id,
+                          name: selectedCustomer.name,
+                          email: selectedCustomer.email,
+                          phone: selectedCustomer.phone,
+                          document: selectedCustomer.document,
+                        },
+                      },
+                    });
+                  }}
+                >
+                  <ShoppingCart className="h-4 w-4" />
+                  Vender para este cliente
                 </Button>
                 <Button onClick={() => {
                   setIsDetailOpen(false);
