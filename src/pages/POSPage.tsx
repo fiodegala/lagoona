@@ -315,7 +315,7 @@ const POSPage = () => {
         setCartItems((items) => [...items, newItem]);
       }
     }
-  }, [cartItems, resolvePrice, saleType]);
+  }, [cartItems, resolvePrice, effectivePriceType]);
 
   const handleUpdateQuantity = (itemId: string, quantity: number) => {
     if (quantity < 1) return;
