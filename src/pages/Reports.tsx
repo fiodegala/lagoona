@@ -403,6 +403,7 @@ const Reports = () => {
       varejo: { count: 0, total: 0 },
       atacado: { count: 0, total: 0 },
       exclusivo: { count: 0, total: 0 },
+      colaborador: { count: 0, total: 0 },
     };
     const exchanges = { count: 0, creditGenerated: 0, cashReceived: 0 };
 
