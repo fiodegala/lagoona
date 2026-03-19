@@ -210,21 +210,22 @@ const POSPage = () => {
   const totalDiscount = itemDiscounts + generalDiscountAmount;
   const total = Math.max(0, subtotal - totalDiscount);
 
+  // For quotes, use the selected quotePriceMode to determine pricing
+  const effectivePriceType = saleType === 'orcamento' ? quotePriceMode : saleType;
+
   const resolvePrice = useCallback((product: ProductResult): number => {
-    switch (saleType) {
+    switch (effectivePriceType) {
       case 'atacado':
         return product.wholesale_price ?? product.price;
       case 'exclusivo':
         return product.exclusive_price ?? product.price;
       case 'troca':
         return 0;
-      case 'orcamento':
-        return product.promotional_price ?? product.price;
       default:
         // Varejo: always use regular retail price
         return product.price;
     }
-  }, [saleType]);
+  }, [effectivePriceType]);
 
   const handleProductSelect = useCallback((product: ProductResult, variationId?: string) => {
     if (variationId) {
