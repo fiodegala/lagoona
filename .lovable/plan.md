@@ -1,66 +1,59 @@
 
 
-# Plano: Reserva de Estoque em Orcamentos
+# Plano: Botão "Adicionar Brinde" na Etapa de Pagamento
 
 ## Resumo
 
-Quando um orcamento for criado no PDV, as pecas serao automaticamente abatidas do estoque (reservadas). Se o orcamento nao for convertido em venda apos 3 dias, o estoque sera restaurado automaticamente via um job agendado.
+Adicionar um botão na tela de pagamento (PaymentStep) que permite ao operador incluir itens como brinde (preço R$ 0,00) antes de finalizar a venda. Isso aproveita o cliente já selecionado no fluxo.
 
 ## Como Funciona
 
 ```text
-Orcamento criado → Estoque deduzido (reservado)
-                         |
-            +------------+-------------+
-            |                          |
-   Convertido em venda           3 dias sem conversao
-   (estoque ja foi deduzido,     → Job restaura estoque
-    nada mais a fazer)              e marca como "expired"
+Fluxo normal: Tipo → Vendedor → Cliente → Produtos → Pagamento
+                                                         ↑
+                                              Botão "Adicionar Brinde"
+                                              → Abre busca de produto
+                                              → Produto adicionado com preço R$ 0,00
+                                              → Aparece na lista com badge "Brinde"
 ```
 
 ## Etapas
 
-### 1. Deduzir estoque ao criar orcamento (POSPage.tsx)
+### 1. Atualizar PaymentStep com botão de brinde e busca de produto
 
-Apos inserir o orcamento na tabela `quotes`, chamar a mesma logica de deducao de estoque usada nas vendas (via `store_stock`), seguindo a prioridade de lojas (Hyper Modas 44 primeiro, depois Bernardo Sayao).
+- Adicionar botão "Adicionar Brinde" (ícone Gift) no resumo da venda
+- Ao clicar, abrir um Dialog/Sheet com busca de produto (reutilizar `ProductSearch`)
+- Produto selecionado é adicionado ao carrinho com `unit_price: 0` e flag `is_gift: true`
 
-### 2. Restaurar estoque ao cancelar/excluir orcamento (Quotes.tsx)
+### 2. Propagar callback de adição de brinde
 
-Ao deletar ou cancelar um orcamento que ainda esteja pendente, restaurar o estoque das pecas reservadas.
+- Adicionar prop `onAddGiftItem` no `PaymentStep` que recebe `(product, variationId?)` 
+- No `POSPage.tsx`, implementar handler que adiciona o item ao `cartItems` com preço zero e marcação de brinde
 
-### 3. Nao deduzir novamente ao converter em venda (Quotes.tsx)
+### 3. Identificação visual dos brindes
 
-Como o estoque ja foi deduzido na criacao do orcamento, a conversao em venda NAO deve deduzir estoque novamente. Adicionar flag ou logica para pular a deducao.
+- Na lista de itens do resumo (PaymentStep), mostrar badge "Brinde" ao lado de itens com preço zero adicionados como presente
+- No `CartItem` type, adicionar campo opcional `is_gift?: boolean`
 
-### 4. Edge Function agendada para expirar orcamentos (nova)
+### 4. Atualizar SaleType e labels (brinde standalone)
 
-Criar uma Edge Function `expire-quotes` que:
-- Busca orcamentos com `status = 'pending'` e `created_at` mais antigo que 3 dias
-- Para cada um, restaura o estoque das pecas (mesma logica de restore do `update-order-status`)
-- Atualiza o status para `expired`
+- Adicionar `'brinde'` ao type `SaleType` em `ProductSearch.tsx`
+- Adicionar opção "Brinde" no `SaleTypeStep.tsx` com ícone `Gift`
+- No `resolvePrice` do `POSPage.tsx`, retornar `0` quando `saleType === 'brinde'`
+- No `saleTypeLabels` do `PaymentStep.tsx`, adicionar entrada para brinde
+- Excluir vendas tipo brinde dos KPIs em `Sales.tsx` e `Dashboard.tsx`
 
-### 5. Agendar via pg_cron
+## Detalhes Técnicos
 
-Criar um job `pg_cron` que roda a cada hora chamando a Edge Function `expire-quotes`.
-
-## Detalhes Tecnicos
-
-### Arquivos a criar
-| Arquivo | Descricao |
+| Arquivo | Mudança |
 |---|---|
-| `supabase/functions/expire-quotes/index.ts` | Edge Function que expira orcamentos com mais de 3 dias |
+| `src/components/pos/POSCart.tsx` | Adicionar `is_gift?: boolean` ao `CartItem` |
+| `src/components/pos/ProductSearch.tsx` | Adicionar `'brinde'` ao `SaleType` |
+| `src/components/pos/steps/SaleTypeStep.tsx` | Novo botão "Brinde" com ícone Gift |
+| `src/components/pos/steps/PaymentStep.tsx` | Botão "Adicionar Brinde" + Dialog com ProductSearch + badge visual |
+| `src/pages/POSPage.tsx` | Handler `handleAddGiftItem`, `resolvePrice` para brinde, passar prop ao PaymentStep |
+| `src/pages/Sales.tsx` | Badge "Brinde" + excluir de KPIs |
+| `src/pages/Dashboard.tsx` | Excluir brindes dos totais de faturamento |
 
-### Arquivos a modificar
-| Arquivo | Mudanca |
-|---|---|
-| `src/pages/POSPage.tsx` | Apos criar orcamento, deduzir estoque via `store_stock` |
-| `src/pages/Quotes.tsx` | Ao deletar/cancelar, restaurar estoque. Ao converter, nao deduzir novamente |
-| `supabase/config.toml` | Adicionar `[functions.expire-quotes]` com `verify_jwt = false` |
-
-### Migracao SQL
-- Habilitar extensoes `pg_cron` e `pg_net` (se ainda nao ativas)
-- Criar job cron que chama `expire-quotes` a cada hora
-
-### Logica de deducao/restauracao de estoque
-Reutilizar o padrao existente em `update-order-status`: percorrer as lojas fisicas por prioridade, deduzir/restaurar quantidades na `store_stock` para cada item (considerando `product_id` e `variation_id`).
+Sem migrações SQL necessárias — `sale_type` já é texto livre na tabela `pos_sales`.
 
