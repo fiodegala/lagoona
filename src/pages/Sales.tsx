@@ -33,7 +33,7 @@ const paymentMethodLabels: Record<string, string> = {
 };
 
 const Sales = () => {
-  const { isAdmin, isManager, user } = useAuth();
+  const { isAdmin, isManager, user, userStoreId } = useAuth();
   const queryClient = useQueryClient();
   const canCancel = isAdmin || isManager;
   const [search, setSearch] = useState('');
@@ -53,8 +53,43 @@ const Sales = () => {
   const [isConvertingToOrder, setIsConvertingToOrder] = useState(false);
   const [convertConfirm, setConvertConfirm] = useState<any>(null);
   const [logoBase64, setLogoBase64] = useState<string>('');
+  const [sellerFilter, setSellerFilter] = useState('all');
+  const [storeFilter, setStoreFilter] = useState('all');
 
   const WEBSITE_STORE_ID = 'e0b8ebbc-1b3b-4aec-b5f7-6925762e6ea1';
+
+  // Fetch stores for admin filter
+  const { data: stores = [] } = useQuery({
+    queryKey: ['stores-list'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('stores')
+        .select('id, name')
+        .order('name');
+      if (error) throw error;
+      return data;
+    },
+    enabled: isAdmin,
+  });
+
+  // Fetch sellers (profiles + roles) for admin filter
+  const { data: sellers = [] } = useQuery({
+    queryKey: ['sellers-list'],
+    queryFn: async () => {
+      const { data: roles, error } = await supabase
+        .from('user_roles')
+        .select('user_id, role, store_id');
+      if (error) throw error;
+      const userIds = [...new Set(roles?.map(r => r.user_id) || [])];
+      if (userIds.length === 0) return [];
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('user_id, full_name')
+        .in('user_id', userIds);
+      return (profiles || []).map(p => ({ user_id: p.user_id, full_name: p.full_name }));
+    },
+    enabled: isAdmin,
+  });
 
   useEffect(() => {
     const img = new Image();
@@ -313,15 +348,22 @@ const Sales = () => {
     }
   }, [periodFilter, customStart, customEnd]);
 
-  const { data: sales = [], isLoading } = useQuery({
-    queryKey: ['pos-sales', dateRange.start.toISOString(), dateRange.end.toISOString()],
+   const { data: sales = [], isLoading } = useQuery({
+    queryKey: ['pos-sales', dateRange.start.toISOString(), dateRange.end.toISOString(), isAdmin, userStoreId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('pos_sales')
         .select('*')
         .gte('created_at', dateRange.start.toISOString())
         .lte('created_at', dateRange.end.toISOString())
         .order('created_at', { ascending: false });
+
+      // Non-admins only see their store's sales
+      if (!isAdmin && userStoreId) {
+        query = query.eq('store_id', userStoreId);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data;
     },
@@ -332,7 +374,12 @@ const Sales = () => {
       s.customer_name?.toLowerCase().includes(search.toLowerCase()) ||
       s.customer_document?.toLowerCase().includes(search.toLowerCase()) ||
       s.id.toLowerCase().includes(search.toLowerCase());
-    return matchesSearch;
+    
+    // Admin filters
+    const matchesSeller = sellerFilter === 'all' || s.user_id === sellerFilter;
+    const matchesStore = storeFilter === 'all' || s.store_id === storeFilter;
+    
+    return matchesSearch && matchesSeller && matchesStore;
   });
 
   const activeSales = filteredSales.filter(s => (s as any).status !== 'cancelled');
@@ -426,6 +473,34 @@ const Sales = () => {
               <span className="text-muted-foreground">até</span>
               <Input type="date" value={customEnd} onChange={e => setCustomEnd(e.target.value)} className="w-[160px]" />
             </div>
+          )}
+          {isAdmin && (
+            <>
+              <Select value={storeFilter} onValueChange={setStoreFilter}>
+                <SelectTrigger className="w-[180px]">
+                  <Building2 className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="Loja" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas as lojas</SelectItem>
+                  {stores.map(store => (
+                    <SelectItem key={store.id} value={store.id}>{store.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={sellerFilter} onValueChange={setSellerFilter}>
+                <SelectTrigger className="w-[200px]">
+                  <User className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="Vendedor" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os vendedores</SelectItem>
+                  {sellers.map(seller => (
+                    <SelectItem key={seller.user_id} value={seller.user_id}>{seller.full_name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </>
           )}
         </div>
 
