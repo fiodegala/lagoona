@@ -33,7 +33,7 @@ const paymentMethodLabels: Record<string, string> = {
 };
 
 const Sales = () => {
-  const { isAdmin, isManager, user } = useAuth();
+  const { isAdmin, isManager, user, userStoreId } = useAuth();
   const queryClient = useQueryClient();
   const canCancel = isAdmin || isManager;
   const [search, setSearch] = useState('');
@@ -53,8 +53,43 @@ const Sales = () => {
   const [isConvertingToOrder, setIsConvertingToOrder] = useState(false);
   const [convertConfirm, setConvertConfirm] = useState<any>(null);
   const [logoBase64, setLogoBase64] = useState<string>('');
+  const [sellerFilter, setSellerFilter] = useState('all');
+  const [storeFilter, setStoreFilter] = useState('all');
 
   const WEBSITE_STORE_ID = 'e0b8ebbc-1b3b-4aec-b5f7-6925762e6ea1';
+
+  // Fetch stores for admin filter
+  const { data: stores = [] } = useQuery({
+    queryKey: ['stores-list'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('stores')
+        .select('id, name')
+        .order('name');
+      if (error) throw error;
+      return data;
+    },
+    enabled: isAdmin,
+  });
+
+  // Fetch sellers (profiles + roles) for admin filter
+  const { data: sellers = [] } = useQuery({
+    queryKey: ['sellers-list'],
+    queryFn: async () => {
+      const { data: roles, error } = await supabase
+        .from('user_roles')
+        .select('user_id, role, store_id');
+      if (error) throw error;
+      const userIds = [...new Set(roles?.map(r => r.user_id) || [])];
+      if (userIds.length === 0) return [];
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('user_id, full_name')
+        .in('user_id', userIds);
+      return (profiles || []).map(p => ({ user_id: p.user_id, full_name: p.full_name }));
+    },
+    enabled: isAdmin,
+  });
 
   useEffect(() => {
     const img = new Image();
