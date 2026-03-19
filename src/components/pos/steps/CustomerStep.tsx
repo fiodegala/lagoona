@@ -94,12 +94,20 @@ const CustomerStep = ({ selectedCustomer, onSelectCustomer, saleType, onNext, on
     const fetchCustomers = async () => {
       setIsLoading(true);
       try {
-        const { data } = await supabase
+        let query = supabase
           .from('customers')
           .select('id, name, email, phone, document')
           .eq('is_active', true)
           .order('name', { ascending: true })
-          .limit(100);
+          .limit(searchQuery.trim() ? 50 : 100);
+
+        if (searchQuery.trim()) {
+          const term = `%${searchQuery.trim()}%`;
+          query = query.or(`name.ilike.${term},email.ilike.${term},phone.ilike.${term},document.ilike.${term}`);
+        }
+
+        const { data, error } = await query;
+        if (error) throw error;
         setCustomers(data || []);
       } catch (error) {
         console.error('Erro ao carregar clientes:', error);
@@ -107,6 +115,7 @@ const CustomerStep = ({ selectedCustomer, onSelectCustomer, saleType, onNext, on
         setIsLoading(false);
       }
     };
+
     const fetchStores = async () => {
       try {
         const { data } = await supabase
@@ -118,19 +127,14 @@ const CustomerStep = ({ selectedCustomer, onSelectCustomer, saleType, onNext, on
         console.error('Erro ao carregar lojas:', error);
       }
     };
-    fetchCustomers();
-    fetchStores();
-  }, []);
 
-  const filteredCustomers = customers.filter((c) => {
-    const q = searchQuery.toLowerCase();
-    return (
-      c.name.toLowerCase().includes(q) ||
-      c.email?.toLowerCase().includes(q) ||
-      c.phone?.includes(q) ||
-      c.document?.includes(q)
-    );
-  });
+    const debounce = setTimeout(fetchCustomers, 300);
+    fetchStores();
+
+    return () => clearTimeout(debounce);
+  }, [searchQuery]);
+
+  const filteredCustomers = customers;
 
   const handleSelect = (customer: Customer) => {
     onSelectCustomer(customer);
