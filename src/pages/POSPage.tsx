@@ -342,6 +342,23 @@ const POSPage = () => {
     );
   };
 
+  const handleUpdatePrice = (itemId: string, newPrice: number) => {
+    setCartItems((items) =>
+      items.map((item) => {
+        if (item.id !== itemId) return item;
+        const discountAmount = item.discount_type === 'percentage'
+          ? newPrice * item.quantity * ((item.discount_value || 0) / 100)
+          : (item.discount_value || 0);
+        return {
+          ...item,
+          unit_price: newPrice,
+          discount_amount: discountAmount,
+          total: newPrice * item.quantity - discountAmount,
+        };
+      })
+    );
+  };
+
   const handlePayment = async (method: 'cash' | 'card' | 'pix' | 'mixed', amountReceived?: number, paymentDetails?: Record<string, number>, saleDate?: string) => {
     if (cartItems.length === 0) return;
     setIsProcessing(true);
@@ -734,6 +751,7 @@ const POSPage = () => {
               onProductSelect={handleProductSelect}
               onUpdateQuantity={handleUpdateQuantity}
               onRemoveItem={handleRemoveItem}
+              onUpdatePrice={handleUpdatePrice}
               onApplyItemDiscount={handleApplyItemDiscount}
               onTogglePromoPrice={handleTogglePromoPrice}
               generalDiscount={generalDiscount}
