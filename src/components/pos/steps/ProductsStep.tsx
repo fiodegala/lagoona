@@ -106,7 +106,7 @@ const ProductsStep = ({
                     <ShoppingCart className="h-4 w-4" />
                     {cartItems.length > 0 && (
                       <Badge variant="destructive" className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center text-xs">
-                        {cartItems.length}
+                        {cartItems.reduce((sum, i) => sum + i.quantity, 0)}
                       </Badge>
                     )}
                   </Button>
@@ -128,7 +128,7 @@ const ProductsStep = ({
                 <ShoppingCart className="h-4 w-4 mr-2" />
                 Prosseguir
                 {cartItems.length > 0 && (
-                  <Badge variant="secondary" className="ml-2">{cartItems.length}</Badge>
+                  <Badge variant="secondary" className="ml-2">{cartItems.reduce((sum, i) => sum + i.quantity, 0)}</Badge>
                 )}
               </Button>
             )}
