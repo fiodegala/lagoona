@@ -528,7 +528,7 @@ const CustomerSelector = ({ selectedCustomer, onSelectCustomer }: CustomerSelect
                 {isLoading ? 'Carregando...' : 'Nenhum cliente encontrado.'}
               </CommandEmpty>
               <CommandGroup>
-                {filteredCustomers.map((customer) => (
+                {customers.map((customer) => (
                   <CommandItem
                     key={customer.id}
                     value={customer.id}
