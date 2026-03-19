@@ -348,15 +348,22 @@ const Sales = () => {
     }
   }, [periodFilter, customStart, customEnd]);
 
-  const { data: sales = [], isLoading } = useQuery({
-    queryKey: ['pos-sales', dateRange.start.toISOString(), dateRange.end.toISOString()],
+   const { data: sales = [], isLoading } = useQuery({
+    queryKey: ['pos-sales', dateRange.start.toISOString(), dateRange.end.toISOString(), isAdmin, userStoreId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('pos_sales')
         .select('*')
         .gte('created_at', dateRange.start.toISOString())
         .lte('created_at', dateRange.end.toISOString())
         .order('created_at', { ascending: false });
+
+      // Non-admins only see their store's sales
+      if (!isAdmin && userStoreId) {
+        query = query.eq('store_id', userStoreId);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data;
     },
@@ -367,7 +374,12 @@ const Sales = () => {
       s.customer_name?.toLowerCase().includes(search.toLowerCase()) ||
       s.customer_document?.toLowerCase().includes(search.toLowerCase()) ||
       s.id.toLowerCase().includes(search.toLowerCase());
-    return matchesSearch;
+    
+    // Admin filters
+    const matchesSeller = sellerFilter === 'all' || s.user_id === sellerFilter;
+    const matchesStore = storeFilter === 'all' || s.store_id === storeFilter;
+    
+    return matchesSearch && matchesSeller && matchesStore;
   });
 
   const activeSales = filteredSales.filter(s => (s as any).status !== 'cancelled');
