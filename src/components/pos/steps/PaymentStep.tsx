@@ -1,12 +1,15 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { ChevronLeft, User, ShoppingBag, CalendarIcon } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { ChevronLeft, User, ShoppingBag, CalendarIcon, Gift } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import PaymentPanel from '@/components/pos/PaymentPanel';
+import ProductSearch, { ProductResult } from '@/components/pos/ProductSearch';
 import { CartItem } from '@/components/pos/POSCart';
 import { Seller } from './SellerStep';
 import { Customer } from '@/components/pos/CustomerSelector';
@@ -24,6 +27,7 @@ interface PaymentStepProps {
   isProcessing: boolean;
   onPayment: (method: 'cash' | 'card' | 'pix' | 'mixed', amountReceived?: number, paymentDetails?: Record<string, number>, saleDate?: string) => void;
   onBack: () => void;
+  onAddGiftItem?: (product: ProductResult, variationId?: string) => void;
 }
 
 const saleTypeLabels: Record<SaleType, string> = {
@@ -32,6 +36,7 @@ const saleTypeLabels: Record<SaleType, string> = {
   exclusivo: 'Exclusivo',
   troca: 'Troca',
   orcamento: 'Orçamento',
+  brinde: 'Brinde',
 };
 
 const formatCurrency = (value: number) =>
@@ -48,14 +53,21 @@ const PaymentStep = ({
   isProcessing,
   onPayment,
   onBack,
+  onAddGiftItem,
 }: PaymentStepProps) => {
   const today = new Date();
   const [saleDate, setSaleDate] = useState<Date>(today);
   const isBackdated = saleDate.toDateString() !== today.toDateString();
+  const [giftDialogOpen, setGiftDialogOpen] = useState(false);
 
   const handlePaymentWithDate = (method: 'cash' | 'card' | 'pix' | 'mixed', amountReceived?: number, paymentDetails?: Record<string, unknown>) => {
     const saleDateISO = isBackdated ? saleDate.toISOString() : undefined;
     onPayment(method, amountReceived, paymentDetails as Record<string, number>, saleDateISO);
+  };
+
+  const handleGiftProductSelect = (product: ProductResult, variationId?: string) => {
+    onAddGiftItem?.(product, variationId);
+    setGiftDialogOpen(false);
   };
 
   return (
@@ -134,6 +146,21 @@ const PaymentStep = ({
           </div>
         )}
 
+        {/* Gift button */}
+        {onAddGiftItem && saleType !== 'brinde' && (
+          <div className="mb-4">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2"
+              onClick={() => setGiftDialogOpen(true)}
+            >
+              <Gift className="h-4 w-4" />
+              Adicionar Brinde
+            </Button>
+          </div>
+        )}
+
         {/* Items */}
         <div className="border rounded-lg overflow-hidden">
           <div className="bg-muted px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold flex">
@@ -144,7 +171,14 @@ const PaymentStep = ({
           </div>
           {cartItems.map((item) => (
             <div key={item.id} className="px-3 sm:px-4 py-2 sm:py-3 border-t flex items-center text-xs sm:text-sm">
-              <span className="flex-1 truncate">{item.name}</span>
+              <span className="flex-1 truncate flex items-center gap-2">
+                {item.name}
+                {item.is_gift && (
+                  <Badge variant="secondary" className="text-[10px] bg-purple-500/20 text-purple-700 border-purple-500/30">
+                    Brinde
+                  </Badge>
+                )}
+              </span>
               <span className="w-12 sm:w-16 text-center">{item.quantity}</span>
               <span className="w-20 sm:w-24 text-right hidden sm:block">{formatCurrency(item.unit_price)}</span>
               <span className="w-20 sm:w-24 text-right font-medium">{formatCurrency(item.total)}</span>
@@ -182,6 +216,24 @@ const PaymentStep = ({
           disabled={cartItems.length === 0}
         />
       </div>
+
+      {/* Gift product search dialog */}
+      <Dialog open={giftDialogOpen} onOpenChange={setGiftDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Gift className="h-5 w-5" />
+              Adicionar Brinde
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-2">
+            <ProductSearch
+              onProductSelect={handleGiftProductSelect}
+              isOnline={true}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

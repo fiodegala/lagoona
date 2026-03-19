@@ -223,6 +223,7 @@ const POSPage = () => {
       case 'exclusivo':
         return product.exclusive_price ?? product.price;
       case 'troca':
+      case 'brinde':
         return 0;
       default:
         // Varejo: always use regular retail price
@@ -243,6 +244,7 @@ const POSPage = () => {
           case 'exclusivo':
             return variation.exclusive_price ?? variation.price ?? product.exclusive_price ?? product.price;
           case 'troca':
+          case 'brinde':
             return 0;
           default:
             // Varejo: use regular retail price
@@ -380,6 +382,63 @@ const POSPage = () => {
     );
   };
 
+  const handleAddGiftItem = useCallback((product: ProductResult, variationId?: string) => {
+    if (variationId) {
+      const variation = product.variations.find(v => v.id === variationId);
+      if (!variation) return;
+      const label = variation.label || variation.sku || variationId.slice(0, 8);
+      const existingItem = cartItems.find(item => item.product_id === product.id && item.variation_id === variationId && item.is_gift);
+      if (existingItem) {
+        setCartItems(items => items.map(item =>
+          item.id === existingItem.id
+            ? { ...item, quantity: Math.min(item.quantity + 1, item.max_stock), total: 0 }
+            : item
+        ));
+      } else {
+        const newItem: CartItem = {
+          id: crypto.randomUUID(),
+          product_id: product.id,
+          variation_id: variationId,
+          name: `${product.name} — ${label}`,
+          sku: variation.sku || undefined,
+          image_url: variation.image_url || product.image_url || null,
+          unit_price: 0,
+          quantity: 1,
+          discount_amount: 0,
+          total: 0,
+          max_stock: variation.stock,
+          is_lagoona: product.is_lagoona || false,
+          is_gift: true,
+        };
+        setCartItems(items => [...items, newItem]);
+      }
+    } else {
+      const existingItem = cartItems.find(item => item.product_id === product.id && !item.variation_id && item.is_gift);
+      if (existingItem) {
+        setCartItems(items => items.map(item =>
+          item.id === existingItem.id
+            ? { ...item, quantity: Math.min(item.quantity + 1, item.max_stock), total: 0 }
+            : item
+        ));
+      } else {
+        const newItem: CartItem = {
+          id: crypto.randomUUID(),
+          product_id: product.id,
+          name: product.name,
+          image_url: product.image_url || null,
+          unit_price: 0,
+          quantity: 1,
+          discount_amount: 0,
+          total: 0,
+          max_stock: product.stock,
+          is_lagoona: product.is_lagoona || false,
+          is_gift: true,
+        };
+        setCartItems(items => [...items, newItem]);
+      }
+    }
+  }, [cartItems]);
+
   const handlePayment = async (method: 'cash' | 'card' | 'pix' | 'mixed', amountReceived?: number, paymentDetails?: Record<string, number>, saleDate?: string) => {
     if (cartItems.length === 0) return;
     setIsProcessing(true);
@@ -459,6 +518,7 @@ const POSPage = () => {
         original_price: item.original_price,
         is_promotional: item.is_promotional || false,
         is_lagoona: item.is_lagoona || false,
+        is_gift: item.is_gift || false,
         discount_type: item.discount_type,
         discount_value: item.discount_value,
         discount_amount: item.discount_amount,
@@ -475,7 +535,7 @@ const POSPage = () => {
       change_amount: amountReceived ? Math.max(0, amountReceived - total) : 0,
       notes: selectedSeller ? `Vendedor: ${selectedSeller.full_name}` : undefined,
       sale_date: saleDate,
-      sale_type: saleType as 'varejo' | 'atacado' | 'exclusivo' | 'troca',
+      sale_type: saleType as 'varejo' | 'atacado' | 'exclusivo' | 'troca' | 'brinde',
     };
 
     try {
@@ -834,6 +894,7 @@ const POSPage = () => {
               isProcessing={isProcessing}
               onPayment={handlePayment}
               onBack={() => setCurrentStep('products')}
+              onAddGiftItem={handleAddGiftItem}
             />
           )}
 
@@ -849,6 +910,7 @@ const POSPage = () => {
               isProcessing={isProcessing}
               onPayment={handlePayment}
               onBack={() => setCurrentStep('products')}
+              onAddGiftItem={handleAddGiftItem}
             />
           )}
         </div>

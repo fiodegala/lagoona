@@ -87,7 +87,7 @@ export interface CreateSaleData {
   coupon_code?: string;
   notes?: string;
   sale_date?: string; // ISO date string for backdating sales
-  sale_type?: 'varejo' | 'atacado' | 'exclusivo' | 'troca';
+  sale_type?: 'varejo' | 'atacado' | 'exclusivo' | 'troca' | 'brinde';
 }
 
 export const posService = {
