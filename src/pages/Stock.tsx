@@ -94,6 +94,7 @@ const Stock = () => {
   const [isLoadingExpanded, setIsLoadingExpanded] = useState(false);
   const [variationSearch, setVariationSearch] = useState('');
   const [showTransferModal, setShowTransferModal] = useState(false);
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
 
   useEffect(() => {
     loadData();
