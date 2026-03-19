@@ -1036,6 +1036,7 @@ const Reports = () => {
                           { name: 'Varejo', value: modalityStats.modalities.varejo.total, fill: 'hsl(var(--primary))' },
                           { name: 'Atacado', value: modalityStats.modalities.atacado.total, fill: 'hsl(var(--chart-2, 160 60% 45%))' },
                           { name: 'Exclusivo', value: modalityStats.modalities.exclusivo.total, fill: 'hsl(var(--chart-3, 30 80% 55%))' },
+                          { name: 'Colaborador', value: modalityStats.modalities.colaborador.total, fill: 'hsl(var(--chart-4, 210 70% 50%))' },
                         ].filter(d => d.value > 0)}
                         cx="50%"
                         cy="50%"
@@ -1048,6 +1049,7 @@ const Reports = () => {
                           { name: 'Varejo', value: modalityStats.modalities.varejo.total, fill: 'hsl(var(--primary))' },
                           { name: 'Atacado', value: modalityStats.modalities.atacado.total, fill: 'hsl(var(--chart-2, 160 60% 45%))' },
                           { name: 'Exclusivo', value: modalityStats.modalities.exclusivo.total, fill: 'hsl(var(--chart-3, 30 80% 55%))' },
+                          { name: 'Colaborador', value: modalityStats.modalities.colaborador.total, fill: 'hsl(var(--chart-4, 210 70% 50%))' },
                         ].filter(d => d.value > 0).map((entry, i) => (
                           <Cell key={i} fill={entry.fill} />
                         ))}
