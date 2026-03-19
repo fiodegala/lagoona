@@ -391,9 +391,17 @@ const Quotes = () => {
               <div className="space-y-5 py-2 px-1">
                 {/* Status e Data */}
                 <div className="flex items-center justify-between">
-                  <Badge variant={(statusMap[selectedQuote.status] || statusMap.pending).variant}>
-                    {(statusMap[selectedQuote.status] || statusMap.pending).label}
-                  </Badge>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Badge variant={(statusMap[selectedQuote.status] || statusMap.pending).variant}>
+                      {(statusMap[selectedQuote.status] || statusMap.pending).label}
+                    </Badge>
+                    {selectedQuote.status === 'pending' && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
+                        <Lock className="h-3 w-3" />
+                        Estoque Reservado
+                      </span>
+                    )}
+                  </div>
                   <div className="flex items-center gap-1 text-xs text-muted-foreground">
                     <Clock className="h-3 w-3" />
                     {format(new Date(selectedQuote.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
