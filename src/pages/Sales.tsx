@@ -478,6 +478,8 @@ const Sales = () => {
                             <Badge variant="destructive" className="text-xs">Cancelada</Badge>
                           ) : (sale as any).sale_type === 'brinde' ? (
                             <Badge variant="secondary" className="text-xs bg-purple-500/20 text-purple-700 border-purple-500/30">Brinde</Badge>
+                          ) : (sale as any).sale_type === 'colaborador' ? (
+                            <Badge variant="secondary" className="text-xs bg-blue-500/20 text-blue-700 border-blue-500/30">Colaborador</Badge>
                           ) : (
                             <Badge variant="default" className="text-xs bg-green-600">Concluída</Badge>
                           )}
