@@ -68,13 +68,19 @@ const CustomerSelector = ({ selectedCustomer, onSelectCustomer }: CustomerSelect
     const fetchCustomers = async () => {
       setIsLoading(true);
       try {
-        const { data, error } = await supabase
+        let query = supabase
           .from('customers')
           .select('id, name, email, phone, document')
           .eq('is_active', true)
           .order('name', { ascending: true })
-          .limit(100);
+          .limit(50);
 
+        if (searchQuery.trim()) {
+          const term = `%${searchQuery.trim()}%`;
+          query = query.or(`name.ilike.${term},phone.ilike.${term},document.ilike.${term},email.ilike.${term}`);
+        }
+
+        const { data, error } = await query;
         if (error) throw error;
         setCustomers(data || []);
       } catch (error) {
@@ -85,19 +91,10 @@ const CustomerSelector = ({ selectedCustomer, onSelectCustomer }: CustomerSelect
     };
 
     if (open && !showForm) {
-      fetchCustomers();
+      const debounce = setTimeout(fetchCustomers, 300);
+      return () => clearTimeout(debounce);
     }
-  }, [open, showForm]);
-
-  const filteredCustomers = customers.filter((customer) => {
-    const query = searchQuery.toLowerCase();
-    return (
-      customer.name.toLowerCase().includes(query) ||
-      customer.email?.toLowerCase().includes(query) ||
-      customer.phone?.includes(query) ||
-      customer.document?.includes(query)
-    );
-  });
+  }, [open, showForm, searchQuery]);
 
   const handleSelect = (customer: Customer) => {
     onSelectCustomer(customer);
