@@ -53,14 +53,21 @@ const PaymentStep = ({
   isProcessing,
   onPayment,
   onBack,
+  onAddGiftItem,
 }: PaymentStepProps) => {
   const today = new Date();
   const [saleDate, setSaleDate] = useState<Date>(today);
   const isBackdated = saleDate.toDateString() !== today.toDateString();
+  const [giftDialogOpen, setGiftDialogOpen] = useState(false);
 
   const handlePaymentWithDate = (method: 'cash' | 'card' | 'pix' | 'mixed', amountReceived?: number, paymentDetails?: Record<string, unknown>) => {
     const saleDateISO = isBackdated ? saleDate.toISOString() : undefined;
     onPayment(method, amountReceived, paymentDetails as Record<string, number>, saleDateISO);
+  };
+
+  const handleGiftProductSelect = (product: ProductResult, variationId?: string) => {
+    onAddGiftItem?.(product, variationId);
+    setGiftDialogOpen(false);
   };
 
   return (
