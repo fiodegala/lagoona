@@ -382,6 +382,63 @@ const POSPage = () => {
     );
   };
 
+  const handleAddGiftItem = useCallback((product: ProductResult, variationId?: string) => {
+    if (variationId) {
+      const variation = product.variations.find(v => v.id === variationId);
+      if (!variation) return;
+      const label = variation.label || variation.sku || variationId.slice(0, 8);
+      const existingItem = cartItems.find(item => item.product_id === product.id && item.variation_id === variationId && item.is_gift);
+      if (existingItem) {
+        setCartItems(items => items.map(item =>
+          item.id === existingItem.id
+            ? { ...item, quantity: Math.min(item.quantity + 1, item.max_stock), total: 0 }
+            : item
+        ));
+      } else {
+        const newItem: CartItem = {
+          id: crypto.randomUUID(),
+          product_id: product.id,
+          variation_id: variationId,
+          name: `${product.name} — ${label}`,
+          sku: variation.sku || undefined,
+          image_url: variation.image_url || product.image_url || null,
+          unit_price: 0,
+          quantity: 1,
+          discount_amount: 0,
+          total: 0,
+          max_stock: variation.stock,
+          is_lagoona: product.is_lagoona || false,
+          is_gift: true,
+        };
+        setCartItems(items => [...items, newItem]);
+      }
+    } else {
+      const existingItem = cartItems.find(item => item.product_id === product.id && !item.variation_id && item.is_gift);
+      if (existingItem) {
+        setCartItems(items => items.map(item =>
+          item.id === existingItem.id
+            ? { ...item, quantity: Math.min(item.quantity + 1, item.max_stock), total: 0 }
+            : item
+        ));
+      } else {
+        const newItem: CartItem = {
+          id: crypto.randomUUID(),
+          product_id: product.id,
+          name: product.name,
+          image_url: product.image_url || null,
+          unit_price: 0,
+          quantity: 1,
+          discount_amount: 0,
+          total: 0,
+          max_stock: product.stock,
+          is_lagoona: product.is_lagoona || false,
+          is_gift: true,
+        };
+        setCartItems(items => [...items, newItem]);
+      }
+    }
+  }, [cartItems]);
+
   const handlePayment = async (method: 'cash' | 'card' | 'pix' | 'mixed', amountReceived?: number, paymentDetails?: Record<string, number>, saleDate?: string) => {
     if (cartItems.length === 0) return;
     setIsProcessing(true);
