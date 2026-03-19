@@ -121,11 +121,15 @@ const StockTransferModal: React.FC<Props> = ({ open, onOpenChange, stores, onTra
     loadProducts();
   }, [open]);
 
+  // Stock map for variations in the selected source store
+  const [variationStockMap, setVariationStockMap] = useState<Record<string, number>>({});
+
   // Load variations when picker product selected
   useEffect(() => {
     if (!pickerProductId) {
       setPickerVariations([]);
       setPickerVariationId('');
+      setVariationStockMap({});
       return;
     }
     const loadVariations = async () => {
@@ -139,6 +143,7 @@ const StockTransferModal: React.FC<Props> = ({ open, onOpenChange, stores, onTra
         setPickerVariations([]);
         setPickerVariationId('');
         setVariationSearch('');
+        setVariationStockMap({});
         return;
       }
 
@@ -152,6 +157,21 @@ const StockTransferModal: React.FC<Props> = ({ open, onOpenChange, stores, onTra
           .in('variation_id', batch);
         if (vvData) allValues.push(...vvData);
       }
+
+      // Load stock from source store for all variations
+      const stockMap: Record<string, number> = {};
+      if (fromStoreId) {
+        const { data: stockData } = await supabase
+          .from('store_stock')
+          .select('variation_id, quantity')
+          .eq('store_id', fromStoreId)
+          .eq('product_id', pickerProductId)
+          .in('variation_id', varIds);
+        (stockData || []).forEach((s: any) => {
+          if (s.variation_id) stockMap[s.variation_id] = s.quantity;
+        });
+      }
+      setVariationStockMap(stockMap);
 
       const attrMap: Record<string, { name: string; value: string }[]> = {};
       allValues.forEach((pvv: any) => {
@@ -174,7 +194,7 @@ const StockTransferModal: React.FC<Props> = ({ open, onOpenChange, stores, onTra
       setVariationSearch('');
     };
     loadVariations();
-  }, [pickerProductId]);
+  }, [pickerProductId, fromStoreId]);
 
   // Load history
   useEffect(() => {
@@ -632,6 +652,9 @@ const StockTransferModal: React.FC<Props> = ({ open, onOpenChange, stores, onTra
                       <span className="text-sm font-medium flex-1">
                         {pickerVariations.find((v: any) => v.id === pickerVariationId)?.label}
                       </span>
+                      <Badge variant="secondary" className="text-xs">
+                        {variationStockMap[pickerVariationId] ?? 0} un. disponível
+                      </Badge>
                       <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => { setPickerVariationId(''); setVariationSearch(''); }}>
                         <X className="h-3 w-3" />
                       </Button>
@@ -652,12 +675,15 @@ const StockTransferModal: React.FC<Props> = ({ open, onOpenChange, stores, onTra
                           {filteredVariations.length === 0 ? (
                             <p className="text-sm text-muted-foreground text-center py-3">Nenhuma variação encontrada</p>
                           ) : (
-                            filteredVariations.map((v: any) => (
+                            filteredVariations.map((v: any) => {
+                              const stock = variationStockMap[v.id] ?? 0;
+                              return (
                               <button
                                 key={v.id}
                                 className={cn(
                                   "w-full flex items-center justify-between p-2 rounded-lg border text-left transition-all text-sm",
-                                  "hover:border-primary/50 hover:bg-accent"
+                                  "hover:border-primary/50 hover:bg-accent",
+                                  stock === 0 && "opacity-50"
                                 )}
                                 onClick={() => setPickerVariationId(v.id)}
                               >
@@ -665,8 +691,15 @@ const StockTransferModal: React.FC<Props> = ({ open, onOpenChange, stores, onTra
                                   <span className="font-medium">{v.label}</span>
                                   {v.sku && <span className="ml-2 text-xs text-muted-foreground font-mono">SKU: {v.sku}</span>}
                                 </div>
+                                <Badge
+                                  variant={stock === 0 ? 'destructive' : stock <= 3 ? 'secondary' : 'default'}
+                                  className="ml-2 shrink-0 text-xs"
+                                >
+                                  {stock} un.
+                                </Badge>
                               </button>
-                            ))
+                              );
+                            })
                           )}
                         </div>
                       </ScrollArea>
