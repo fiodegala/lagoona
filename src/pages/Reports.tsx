@@ -1026,7 +1026,7 @@ const Reports = () => {
                 <CardDescription>Proporção de receita por tipo de venda</CardDescription>
               </CardHeader>
               <CardContent>
-                {(modalityStats.modalities.varejo.total + modalityStats.modalities.atacado.total + modalityStats.modalities.exclusivo.total) === 0 ? (
+                {(modalityStats.modalities.varejo.total + modalityStats.modalities.atacado.total + modalityStats.modalities.exclusivo.total + modalityStats.modalities.colaborador.total) === 0 ? (
                   <p className="text-muted-foreground text-center py-8">Sem dados no período</p>
                 ) : (
                   <ResponsiveContainer width="100%" height={280}>
