@@ -22,6 +22,7 @@ import {
   Sparkles,
   FileText,
   Handshake,
+  BookOpen,
 } from 'lucide-react';
 
 export interface MenuItem {
