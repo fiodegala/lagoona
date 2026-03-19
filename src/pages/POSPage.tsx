@@ -414,6 +414,14 @@ const POSPage = () => {
 
         await supabase.from('quotes').insert(quoteData as never);
 
+        // Deduct stock for quote reservation
+        const { deductStockForQuote } = await import('@/services/quoteStockService');
+        await deductStockForQuote(cartItems.map(item => ({
+          product_id: item.product_id,
+          variation_id: item.variation_id || null,
+          quantity: item.quantity,
+        })));
+
         toast({ title: 'Orçamento gerado!', description: `Total: R$ ${total.toFixed(2)}${selectedCustomer ? ` • Cliente: ${selectedCustomer.name}` : ''}` });
         resetWizard();
       } catch (error) {

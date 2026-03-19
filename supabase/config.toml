@@ -65,3 +65,9 @@ verify_jwt = false
 
 [functions.instagram-disconnect]
 verify_jwt = false
+
+[functions.expire-quotes]
+verify_jwt = false
+
+[functions.update-order-status]
+verify_jwt = false
