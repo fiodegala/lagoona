@@ -43,6 +43,7 @@ const AdminAssistant = lazy(() => import("./pages/AdminAssistant"));
 const Quotes = lazy(() => import("./pages/Quotes"));
 const Affiliates = lazy(() => import("./pages/Affiliates"));
 const DataImport = lazy(() => import("./pages/DataImport"));
+const Manual = lazy(() => import("./pages/Manual"));
 
 // Lazy-loaded Store Pages
 const HomePage = lazy(() => import("./pages/store/HomePage"));
@@ -360,6 +361,15 @@ const App = () => (
                 element={
                   <ProtectedRoute requiredRole="admin">
                     <DataImport />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/admin/manual"
+                element={
+                  <ProtectedRoute>
+                    <Manual />
                   </ProtectedRoute>
                 }
               />
