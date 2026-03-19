@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import AdminLayout from '@/components/AdminLayout';
 import { Button } from '@/components/ui/button';
@@ -32,7 +33,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Search, Pencil, Trash2, UserPlus, Loader2, Phone, Mail, MapPin, History, Check, X, Eye, User, Building2, Store } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2, UserPlus, Loader2, Phone, Mail, MapPin, History, Check, X, Eye, User, Building2, Store, ShoppingCart } from 'lucide-react';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import CustomerPurchaseHistory from '@/components/customers/CustomerPurchaseHistory';
@@ -105,6 +106,7 @@ const emptyFormData: CustomerFormData = {
 };
 
 const Customers = () => {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
@@ -1141,9 +1143,30 @@ const Customers = () => {
                   </p>
                 </div>
               </div>
-              <DialogFooter>
+              <DialogFooter className="flex-col sm:flex-row gap-2">
                 <Button variant="outline" onClick={() => setIsDetailOpen(false)}>
                   Fechar
+                </Button>
+                <Button
+                  variant="default"
+                  className="gap-2"
+                  onClick={() => {
+                    setIsDetailOpen(false);
+                    navigate('/admin/pos', {
+                      state: {
+                        prefillCustomer: {
+                          id: selectedCustomer.id,
+                          name: selectedCustomer.name,
+                          email: selectedCustomer.email,
+                          phone: selectedCustomer.phone,
+                          document: selectedCustomer.document,
+                        },
+                      },
+                    });
+                  }}
+                >
+                  <ShoppingCart className="h-4 w-4" />
+                  Vender para este cliente
                 </Button>
                 <Button onClick={() => {
                   setIsDetailOpen(false);

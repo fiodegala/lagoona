@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import POSLayout from '@/components/pos/POSLayout';
 import { ProductResult, SaleType } from '@/components/pos/ProductSearch';
@@ -48,6 +48,7 @@ interface POSDraftState {
 
 const POSPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
   const { userStoreId } = useAuth();
   const [session, setSession] = useState<POSSession | null>(null);
@@ -81,6 +82,18 @@ const POSPage = () => {
   const hasRestoredDraftRef = useRef(false);
   const isExchangeMode = saleType === 'troca';
   const isQuoteMode = isQuoteType(saleType);
+
+  // Pre-fill customer from navigation state (e.g. from Customers page)
+  const prefillAppliedRef = useRef(false);
+  useEffect(() => {
+    const state = location.state as { prefillCustomer?: Customer } | null;
+    if (state?.prefillCustomer && !prefillAppliedRef.current) {
+      prefillAppliedRef.current = true;
+      setSelectedCustomer(state.prefillCustomer);
+      // Clear the state so it doesn't re-apply on re-render
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location.state, navigate, location.pathname]);
 
   useEffect(() => {
     const unsubscribe = offlineService.onOnlineStatusChange(setIsOnline);
