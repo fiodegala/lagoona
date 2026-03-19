@@ -200,7 +200,7 @@ const Sales = () => {
         .totals .total-row{font-weight:bold;font-size:15px;border-top:2px solid #333;padding-top:6px;margin-top:4px}.discount{color:#dc2626}
         .notes{background:#f9f9f9;padding:8px;border-radius:4px;margin-top:8px}@media print{body{padding:12px}}
       </style></head><body>
-      <div class="header"><h1>Comprovante de Venda</h1><p>ID: ${detailSale.id}</p><p>${format(new Date(detailSale.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p></div>
+      <div class="header">${logoBase64 ? `<img src="${logoBase64}" alt="Logo" style="height:44px;margin:0 auto 8px;">` : ''}<h1>Comprovante de Venda</h1><p>ID: ${detailSale.id}</p><p>${format(new Date(detailSale.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p></div>
       <div class="section"><div class="section-title">Cliente</div><div class="grid">${customerHtml}</div></div>
       <div class="section"><div class="section-title">Itens</div><table><thead><tr><th>Produto</th><th class="text-right">Qtd</th><th class="text-right">Unit.</th><th class="text-right">Total</th></tr></thead><tbody>${itemsRows}</tbody></table></div>
       <div class="section totals">${totalsHtml}</div>
