@@ -48,6 +48,7 @@ export interface CartItem {
   total: number;
   max_stock: number;
   is_lagoona?: boolean;
+  is_gift?: boolean;
 }
 
 interface POSCartProps {

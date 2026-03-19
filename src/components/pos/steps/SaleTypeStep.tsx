@@ -18,6 +18,7 @@ const saleTypes = [
   { value: 'exclusivo' as SaleType, label: 'Exclusivo', icon: Star, description: 'Preço exclusivo para clientes selecionados' },
   { value: 'troca' as SaleType, label: 'Troca', icon: RefreshCw, description: 'Troca de produtos com devolução e saída' },
   { value: 'orcamento' as SaleType, label: 'Orçamento', icon: FileText, description: 'Gera orçamento sem registrar venda' },
+  { value: 'brinde' as SaleType, label: 'Brinde', icon: Gift, description: 'Saída de produto sem valor (cortesia)' },
 ];
 
 const quotePriceModes: { value: QuotePriceMode; label: string; icon: typeof ShoppingBag; description: string }[] = [

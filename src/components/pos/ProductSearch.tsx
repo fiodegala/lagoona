@@ -8,7 +8,7 @@ import { posService } from '@/services/posService';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 
-export type SaleType = 'varejo' | 'atacado' | 'exclusivo' | 'troca' | 'orcamento';
+export type SaleType = 'varejo' | 'atacado' | 'exclusivo' | 'troca' | 'orcamento' | 'brinde';
 
 export interface ProductResult {
   id: string;
