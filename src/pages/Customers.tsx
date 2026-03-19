@@ -106,6 +106,7 @@ const emptyFormData: CustomerFormData = {
 };
 
 const Customers = () => {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
