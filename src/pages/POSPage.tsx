@@ -58,6 +58,7 @@ const POSPage = () => {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
+  const isProcessingRef = useRef(false);
 
   // Wizard state
   const [currentStep, setCurrentStep] = useState<WizardStep>('sale-type');
