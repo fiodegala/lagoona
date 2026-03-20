@@ -120,21 +120,44 @@ const PendingTransferModal: React.FC = () => {
   }, [transfers.length, playAlertSound]);
 
   const loadPendingForMyStore = async () => {
+    if (!userStoreId) {
+      setTransfers([]);
+      return;
+    }
+
     // Fetch stores fresh each time to avoid stale closures
     const { data: storesData } = await supabase.from('stores').select('id, name, type');
     const freshStoreMap: Record<string, string> = {};
-    (storesData || []).forEach(s => { freshStoreMap[s.id] = s.name; });
+    const storeTypeMap: Record<string, string> = {};
+    (storesData || []).forEach(s => { freshStoreMap[s.id] = s.name; storeTypeMap[s.id] = s.type; });
 
-    // Admins/managers see all pending transfers; physical store users see only theirs
+    // Only show transfers where the origin is a physical store the user belongs to
+    // Online/website store users should NOT see transfers between physical stores
+    const userStoreType = storeTypeMap[userStoreId];
+    if (userStoreType === 'online' || userStoreType === 'website') {
+      setTransfers([]);
+      return;
+    }
+
+    // Filter by from_store_id matching user's store (physical stores only)
+    const storeIds = accessibleStoreIds.length > 0
+      ? accessibleStoreIds.filter(id => {
+          const t = storeTypeMap[id];
+          return t !== 'online' && t !== 'website';
+        })
+      : [userStoreId];
+
+    if (storeIds.length === 0) {
+      setTransfers([]);
+      return;
+    }
+
     let query = supabase
       .from('stock_transfers')
       .select('*')
       .eq('status', 'pending')
+      .in('from_store_id', storeIds)
       .order('created_at', { ascending: true });
-
-    if (!isAdmin && !isManager && userStoreId) {
-      query = query.eq('from_store_id', userStoreId);
-    }
 
     const { data } = await query;
 
