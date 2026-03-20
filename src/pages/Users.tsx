@@ -230,12 +230,19 @@ const UsersPage = () => {
 
   const updateRoleMutation = useMutation({
     mutationFn: async ({ userId, role, store_id, allowed_menus }: { userId: string; role: AppRole; store_id: string | null; allowed_menus: string[] }) => {
-      const { error } = await supabase
+      // Delete all existing roles for this user, then insert the new one
+      const { error: deleteError } = await supabase
         .from('user_roles')
-        .update({ role, store_id } as never)
+        .delete()
         .eq('user_id', userId);
 
-      if (error) throw error;
+      if (deleteError) throw deleteError;
+
+      const { error: insertError } = await supabase
+        .from('user_roles')
+        .insert({ user_id: userId, role, store_id } as never);
+
+      if (insertError) throw insertError;
 
       // Upsert menu permissions
       const { error: menuError } = await supabase
