@@ -95,6 +95,15 @@ const POSPage = () => {
     if (state?.prefillCustomer && !prefillAppliedRef.current) {
       prefillAppliedRef.current = true;
       setSelectedCustomer(state.prefillCustomer);
+      // Reset wizard to sale-type step so user must choose the sale modality first
+      setCurrentStep('sale-type');
+      setSaleType('varejo');
+      setCartItems([]);
+      setGeneralDiscount({ type: 'percentage', value: 0 });
+      setSelectedSeller(null);
+      // Clear draft so it doesn't override
+      window.sessionStorage.removeItem(POS_DRAFT_STORAGE_KEY);
+      hasRestoredDraftRef.current = true;
       // Clear the state so it doesn't re-apply on re-render
       navigate(location.pathname, { replace: true, state: {} });
     }
