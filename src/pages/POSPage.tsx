@@ -508,6 +508,7 @@ const POSPage = () => {
         console.error('Error creating quote:', error);
         toast({ title: 'Erro ao gerar orçamento', variant: 'destructive' });
       } finally {
+        isProcessingRef.current = false;
         setIsProcessing(false);
       }
       return;
