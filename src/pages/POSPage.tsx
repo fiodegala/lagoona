@@ -701,6 +701,7 @@ const POSPage = () => {
       console.error('Error processing exchange:', error);
       toast({ title: 'Erro ao processar troca', variant: 'destructive' });
     } finally {
+      isProcessingRef.current = false;
       setIsProcessing(false);
     }
   };
