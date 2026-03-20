@@ -23,6 +23,7 @@ import {
   FileText,
   Handshake,
   BookOpen,
+  DollarSign,
 } from 'lucide-react';
 
 export interface MenuItem {
@@ -37,6 +38,7 @@ export const navItems: MenuItem[] = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/admin', menuKey: 'dashboard' },
   { icon: Monitor, label: 'PDV', path: '/admin/pos', menuKey: 'pos' },
   { icon: Package, label: 'Produtos', path: '/admin/products', menuKey: 'products', requireAdmin: true },
+  { icon: DollarSign, label: 'Valores de Produtos', path: '/admin/valores-produtos', menuKey: 'product-pricing', requireAdmin: true },
   { icon: FolderTree, label: 'Categorias', path: '/admin/categories', menuKey: 'categories', requireAdmin: true },
   { icon: Warehouse, label: 'Estoque', path: '/admin/stock', menuKey: 'stock' },
   { icon: UserPlus, label: 'Clientes', path: '/admin/customers', menuKey: 'customers' },
