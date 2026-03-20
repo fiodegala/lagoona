@@ -1,0 +1,1 @@
+DROP FUNCTION IF EXISTS public.merge_imported_duplicate_sales()

@@ -2639,15 +2639,6 @@ export type Database = {
       }
       is_admin_or_manager: { Args: { _user_id: string }; Returns: boolean }
       is_online_store_user: { Args: { _user_id: string }; Returns: boolean }
-      merge_imported_duplicate_sales: {
-        Args: never
-        Returns: {
-          deleted_count: number
-          kept_id: string
-          merged_customer: string
-          merged_date: string
-        }[]
-      }
       user_accessible_store_ids: {
         Args: { _user_id: string }
         Returns: string[]
