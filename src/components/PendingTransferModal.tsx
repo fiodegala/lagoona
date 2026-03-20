@@ -96,7 +96,7 @@ const PendingTransferModal: React.FC = () => {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [userStoreId]);
+  }, [userStoreId, accessibleStoreIds]);
 
   // Repeating sound alert every 15s while there are pending transfers
   useEffect(() => {
