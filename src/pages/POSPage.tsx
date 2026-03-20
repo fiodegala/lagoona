@@ -580,6 +580,7 @@ const POSPage = () => {
       console.error('Error processing sale:', error);
       toast({ title: 'Erro ao processar venda', variant: 'destructive' });
     } finally {
+      isProcessingRef.current = false;
       setIsProcessing(false);
     }
   };
