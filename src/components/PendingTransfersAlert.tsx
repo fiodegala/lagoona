@@ -44,7 +44,7 @@ interface Props {
 }
 
 const PendingTransfersAlert: React.FC<Props> = ({ stores, onTransferProcessed }) => {
-  const { user, userStoreId } = useAuth();
+  const { user, userStoreId, accessibleStoreIds } = useAuth();
   const { toast } = useToast();
   const [pendingTransfers, setPendingTransfers] = useState<PendingTransfer[]>([]);
   const [confirmTransfer, setConfirmTransfer] = useState<PendingTransfer | null>(null);
@@ -55,10 +55,21 @@ const PendingTransfersAlert: React.FC<Props> = ({ stores, onTransferProcessed })
   stores.forEach(s => { storeMap[s.id] = s.name; });
 
   const loadPendingTransfers = async () => {
+    // Only show pending transfers where the origin store (from_store_id) is the current user's store
+    // This ensures only users from the origin store can approve/reject
+    if (!userStoreId) {
+      setPendingTransfers([]);
+      return;
+    }
+
+    // Get all store IDs this user has access to (for online store users, includes website store)
+    const accessibleIds = accessibleStoreIds.length > 0 ? accessibleStoreIds : [userStoreId];
+
     const { data } = await supabase
       .from('stock_transfers')
       .select('*')
       .eq('status', 'pending')
+      .in('from_store_id', accessibleIds)
       .order('created_at', { ascending: false });
 
     if (!data || data.length === 0) {
@@ -130,7 +141,7 @@ const PendingTransfersAlert: React.FC<Props> = ({ stores, onTransferProcessed })
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [userStoreId]);
+  }, [userStoreId, accessibleStoreIds]);
 
 
   const handleApprove = async (transfer: PendingTransfer) => {
