@@ -58,6 +58,7 @@ const POSPage = () => {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
+  const isProcessingRef = useRef(false);
 
   // Wizard state
   const [currentStep, setCurrentStep] = useState<WizardStep>('sale-type');
@@ -94,6 +95,15 @@ const POSPage = () => {
     if (state?.prefillCustomer && !prefillAppliedRef.current) {
       prefillAppliedRef.current = true;
       setSelectedCustomer(state.prefillCustomer);
+      // Reset wizard to sale-type step so user must choose the sale modality first
+      setCurrentStep('sale-type');
+      setSaleType('varejo');
+      setCartItems([]);
+      setGeneralDiscount({ type: 'percentage', value: 0 });
+      setSelectedSeller(null);
+      // Clear draft so it doesn't override
+      window.sessionStorage.removeItem(POS_DRAFT_STORAGE_KEY);
+      hasRestoredDraftRef.current = true;
       // Clear the state so it doesn't re-apply on re-render
       navigate(location.pathname, { replace: true, state: {} });
     }
@@ -441,6 +451,9 @@ const POSPage = () => {
 
   const handlePayment = async (method: 'cash' | 'card' | 'pix' | 'mixed', amountReceived?: number, paymentDetails?: Record<string, number>, saleDate?: string) => {
     if (cartItems.length === 0) return;
+    // Guard against double-clicks / re-entrant calls
+    if (isProcessingRef.current) return;
+    isProcessingRef.current = true;
     setIsProcessing(true);
 
     // If it's a quote, save to quotes table instead
@@ -495,6 +508,7 @@ const POSPage = () => {
         console.error('Error creating quote:', error);
         toast({ title: 'Erro ao gerar orçamento', variant: 'destructive' });
       } finally {
+        isProcessingRef.current = false;
         setIsProcessing(false);
       }
       return;
@@ -566,6 +580,7 @@ const POSPage = () => {
       console.error('Error processing sale:', error);
       toast({ title: 'Erro ao processar venda', variant: 'destructive' });
     } finally {
+      isProcessingRef.current = false;
       setIsProcessing(false);
     }
   };
@@ -686,6 +701,7 @@ const POSPage = () => {
       console.error('Error processing exchange:', error);
       toast({ title: 'Erro ao processar troca', variant: 'destructive' });
     } finally {
+      isProcessingRef.current = false;
       setIsProcessing(false);
     }
   };
