@@ -36,7 +36,7 @@ interface EnrichedTransfer extends TransferData {
 }
 
 const PendingTransferModal: React.FC = () => {
-  const { user, userStoreId, isAdmin, isManager } = useAuth();
+  const { user, userStoreId, isAdmin, isManager, accessibleStoreIds } = useAuth();
   const { toast } = useToast();
   const [transfers, setTransfers] = useState<EnrichedTransfer[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
