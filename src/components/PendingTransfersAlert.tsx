@@ -141,7 +141,7 @@ const PendingTransfersAlert: React.FC<Props> = ({ stores, onTransferProcessed })
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [userStoreId]);
+  }, [userStoreId, accessibleStoreIds]);
 
 
   const handleApprove = async (transfer: PendingTransfer) => {
