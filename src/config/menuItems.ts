@@ -23,6 +23,7 @@ import {
   FileText,
   Handshake,
   BookOpen,
+  DollarSign,
 } from 'lucide-react';
 
 export interface MenuItem {
