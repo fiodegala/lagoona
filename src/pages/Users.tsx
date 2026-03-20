@@ -249,8 +249,9 @@ const UsersPage = () => {
       toast({ title: 'Permissão atualizada!' });
       handleCloseForm();
     },
-    onError: () => {
-      toast({ title: 'Erro ao atualizar permissão', variant: 'destructive' });
+    onError: (error: Error) => {
+      console.error('updateRoleMutation error:', error);
+      toast({ title: 'Erro ao atualizar permissão', description: error.message, variant: 'destructive' });
     },
   });
 
