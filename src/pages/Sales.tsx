@@ -414,7 +414,7 @@ const Sales = () => {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Faturamento</p>
-                <p className="text-xl font-bold">R$ {totalRevenue.toFixed(2)}</p>
+                <p className="text-xl font-bold">R$ {totalRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
               </div>
             </CardContent>
           </Card>
