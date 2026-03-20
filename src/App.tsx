@@ -165,6 +165,7 @@ const App = () => (
                     <ProductPricing />
                   </ProtectedRoute>
                 }
+              />
               <Route
                 path="/admin/categories"
                 element={
