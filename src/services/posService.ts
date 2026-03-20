@@ -264,6 +264,26 @@ export const posService = {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Usuário não autenticado');
 
+    // Generate dedup hash to prevent duplicate sales
+    const dedupHash = `${saleData.local_id}_${user.id}_${saleData.total}_${Date.now()}`;
+
+    // Check for existing sale with the same local_id (duplicate prevention)
+    const { data: existingSale } = await supabase
+      .from('pos_sales')
+      .select('id')
+      .eq('local_id', saleData.local_id)
+      .maybeSingle();
+
+    if (existingSale) {
+      // Return the existing sale instead of creating a duplicate
+      const { data: fullSale } = await supabase
+        .from('pos_sales')
+        .select('*')
+        .eq('id', existingSale.id)
+        .single();
+      return fullSale as unknown as POSSale;
+    }
+
     const insertData = {
       local_id: saleData.local_id,
       session_id: saleData.session_id || null,
@@ -287,6 +307,7 @@ export const posService = {
       notes: saleData.notes || null,
       synced: true,
       sale_type: saleData.sale_type || 'varejo',
+      dedup_hash: dedupHash,
       ...(saleData.sale_date ? { created_at: saleData.sale_date } : {}),
     };
 
