@@ -44,7 +44,7 @@ interface Props {
 }
 
 const PendingTransfersAlert: React.FC<Props> = ({ stores, onTransferProcessed }) => {
-  const { user, userStoreId } = useAuth();
+  const { user, userStoreId, accessibleStoreIds } = useAuth();
   const { toast } = useToast();
   const [pendingTransfers, setPendingTransfers] = useState<PendingTransfer[]>([]);
   const [confirmTransfer, setConfirmTransfer] = useState<PendingTransfer | null>(null);
