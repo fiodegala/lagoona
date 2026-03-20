@@ -159,6 +159,13 @@ const App = () => (
                 }
               />
               <Route
+                path="/admin/valores-produtos"
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <ProductPricing />
+                  </ProtectedRoute>
+                }
+              <Route
                 path="/admin/categories"
                 element={
                   <ProtectedRoute requiredRole="admin">
