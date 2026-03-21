@@ -258,15 +258,20 @@ const QuoteEditModal = ({ quote, open, onOpenChange, onSaved }: QuoteEditModalPr
           image_url: product.image_url,
           barcode: product.barcode,
           stock: product.stock,
-          variations: (allVariations || []).map(v => ({
-            id: v.id,
-            sku: v.sku,
-            price: v.price,
-            stock: stockByVar.get(v.id) || 0,
-            is_active: v.is_active,
-            image_url: v.image_url,
-            label: labels.get(v.id) || v.sku || v.id.slice(0, 8),
-          })),
+          variations: (allVariations || []).map(v => {
+            const storeStockQty = stockByVar.get(v.id);
+            // Use store_stock if available, otherwise fall back to variation's own stock field
+            const finalStock = storeStockQty !== undefined ? storeStockQty : v.stock;
+            return {
+              id: v.id,
+              sku: v.sku,
+              price: v.price,
+              stock: finalStock,
+              is_active: v.is_active,
+              image_url: v.image_url,
+              label: labels.get(v.id) || v.sku || v.id.slice(0, 8),
+            };
+          }),
         };
         
         // If only one active variation with stock, add directly
