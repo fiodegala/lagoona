@@ -235,7 +235,16 @@ const QuoteEditModal = ({ quote, open, onOpenChange, onSaved }: QuoteEditModalPr
               label: v.label,
             })),
           };
-          setVariationPickerProduct(enrichedProduct);
+          
+          // If only one active variation with stock, add directly
+          const activeWithStock = enrichedProduct.variations.filter(v => v.is_active && v.stock > 0);
+          if (activeWithStock.length === 1) {
+            addItemFromProduct(enrichedProduct, activeWithStock[0].id);
+          } else if (enrichedProduct.variations.filter(v => v.is_active).length > 0) {
+            setVariationPickerProduct(enrichedProduct);
+          } else {
+            toast({ title: 'Nenhuma variação ativa disponível', variant: 'destructive' });
+          }
         }
       } catch (error) {
         console.error('Error fetching variations:', error);
@@ -251,13 +260,16 @@ const QuoteEditModal = ({ quote, open, onOpenChange, onSaved }: QuoteEditModalPr
   };
 
   const addItemFromProduct = (product: SearchResult, variationId?: string) => {
+    // Normalize variationId: treat null and undefined the same
+    const normalizedVariationId = variationId || undefined;
+
     let name = product.name;
     let price = product.price;
     let sku: string | undefined;
     let image = product.image_url || undefined;
 
-    if (variationId) {
-      const variation = product.variations.find(v => v.id === variationId);
+    if (normalizedVariationId) {
+      const variation = product.variations.find(v => v.id === normalizedVariationId);
       if (variation) {
         name = variation.label ? `${product.name} — ${variation.label}` : product.name;
         price = variation.price ?? product.price;
@@ -266,9 +278,9 @@ const QuoteEditModal = ({ quote, open, onOpenChange, onSaved }: QuoteEditModalPr
       }
     }
 
-    // Check if item already exists
+    // Check if item already exists - use == to handle null/undefined comparison
     const existingIdx = items.findIndex(
-      i => i.product_id === product.id && i.variation_id === variationId
+      i => i.product_id === product.id && (i.variation_id || undefined) === normalizedVariationId
     );
 
     if (existingIdx >= 0) {
@@ -277,7 +289,7 @@ const QuoteEditModal = ({ quote, open, onOpenChange, onSaved }: QuoteEditModalPr
     } else {
       const newItem: QuoteItem = {
         product_id: product.id,
-        variation_id: variationId,
+        variation_id: normalizedVariationId,
         name,
         sku,
         image_url: image,
