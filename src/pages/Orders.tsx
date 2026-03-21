@@ -438,6 +438,10 @@ const Orders = () => {
                             <Eye className="h-3 w-3 mr-1" />
                             Detalhes
                           </Button>
+                          <Button variant="outline" size="sm" onClick={() => setEditOrder(order)}>
+                            <Pencil className="h-3 w-3 mr-1" />
+                            Editar
+                          </Button>
                           <Button variant="outline" size="sm" onClick={() => openTrackingModal(order)}>
                             <Truck className="h-3 w-3 mr-1" />
                             Rastreio
