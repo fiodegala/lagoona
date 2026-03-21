@@ -41,7 +41,7 @@ const ProductDetails = () => {
   const [selectedVariation, setSelectedVariation] = useState<ProductVariation | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [isWishlisted, setIsWishlisted] = useState(false);
+  const { isFavorite, toggleFavorite } = useFavorites();
   const [showVideoPopup, setShowVideoPopup] = useState(false);
   const [productHasVariations, setProductHasVariations] = useState(false);
   const [upsellHasSelection, setUpsellHasSelection] = useState(false);
