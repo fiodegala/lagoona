@@ -503,7 +503,7 @@ const CheckoutPage = () => {
             ) : (
               orderId && (
                 <MercadoPagoPayment
-                  amount={total}
+                  amount={grandTotal}
                   orderId={orderId}
                   customerEmail={formData.email}
                   customerName={formData.name}
