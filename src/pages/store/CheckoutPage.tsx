@@ -247,7 +247,7 @@ const CheckoutPage = () => {
             phone: formData.phone,
           },
           items: orderItems,
-          total: total,
+          total: grandTotal,
           status: 'pending',
           payment_status: 'pending',
           store_id: 'e0b8ebbc-1b3b-4aec-b5f7-6925762e6ea1', // Site store
