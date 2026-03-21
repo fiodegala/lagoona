@@ -208,43 +208,75 @@ const QuoteEditModal = ({ quote, open, onOpenChange, onSaved }: QuoteEditModalPr
       setSearchQuery('');
       setLoadingVariations(true);
       try {
-        // Fetch full product with all variations
-        const { data: fullProduct } = await supabase
-          .from('products')
-          .select('*, product_variations(*)')
-          .eq('id', product.id)
-          .single();
+        // Fetch ALL variations separately (avoids PostgREST embedded resource limits)
+        const { data: allVariations } = await supabase
+          .from('product_variations')
+          .select('*')
+          .eq('product_id', product.id)
+          .order('sort_order', { ascending: true });
 
-        if (fullProduct) {
-          // Enrich with labels using posService
-          const [enriched] = await posService._enrichWithLabels([fullProduct]);
-          const enrichedProduct: SearchResult = {
-            id: enriched.id,
-            name: enriched.name,
-            price: enriched.price,
-            image_url: enriched.image_url,
-            barcode: enriched.barcode,
-            stock: enriched.stock,
-            variations: (enriched.product_variations || []).map((v: any) => ({
-              id: v.id,
-              sku: v.sku,
-              price: v.price,
-              stock: v.stock,
-              is_active: v.is_active,
-              image_url: v.image_url,
-              label: v.label,
-            })),
-          };
-          
-          // If only one active variation with stock, add directly
-          const activeWithStock = enrichedProduct.variations.filter(v => v.is_active && v.stock > 0);
-          if (activeWithStock.length === 1) {
-            addItemFromProduct(enrichedProduct, activeWithStock[0].id);
-          } else if (enrichedProduct.variations.filter(v => v.is_active).length > 0) {
-            setVariationPickerProduct(enrichedProduct);
-          } else {
-            toast({ title: 'Nenhuma variação ativa disponível', variant: 'destructive' });
+        // Fetch variation attribute labels
+        const variationIds = (allVariations || []).map(v => v.id);
+        let labels = new Map<string, string>();
+        if (variationIds.length > 0) {
+          // Batch in chunks of 200 to avoid .in() limits
+          for (let i = 0; i < variationIds.length; i += 200) {
+            const chunk = variationIds.slice(i, i + 200);
+            const { data: vvData } = await supabase
+              .from('product_variation_values')
+              .select('variation_id, product_attribute_values(value, product_attributes(name))')
+              .in('variation_id', chunk);
+            for (const vv of vvData || []) {
+              const attrValue = (vv as any).product_attribute_values as any;
+              if (attrValue) {
+                const val = attrValue.value || '';
+                const existing = labels.get(vv.variation_id);
+                labels.set(vv.variation_id, existing ? `${existing} / ${val}` : val);
+              }
+            }
           }
+        }
+
+        // Fetch stock from store_stock
+        const { data: stockData } = await supabase
+          .from('store_stock')
+          .select('variation_id, quantity')
+          .eq('product_id', product.id)
+          .not('variation_id', 'is', null);
+
+        const stockByVar = new Map<string, number>();
+        for (const s of stockData || []) {
+          if (s.variation_id) {
+            stockByVar.set(s.variation_id, (stockByVar.get(s.variation_id) || 0) + s.quantity);
+          }
+        }
+
+        const enrichedProduct: SearchResult = {
+          id: product.id,
+          name: product.name,
+          price: product.price,
+          image_url: product.image_url,
+          barcode: product.barcode,
+          stock: product.stock,
+          variations: (allVariations || []).map(v => ({
+            id: v.id,
+            sku: v.sku,
+            price: v.price,
+            stock: stockByVar.get(v.id) || 0,
+            is_active: v.is_active,
+            image_url: v.image_url,
+            label: labels.get(v.id) || v.sku || v.id.slice(0, 8),
+          })),
+        };
+        
+        // If only one active variation with stock, add directly
+        const activeWithStock = enrichedProduct.variations.filter(v => v.is_active && v.stock > 0);
+        if (activeWithStock.length === 1) {
+          addItemFromProduct(enrichedProduct, activeWithStock[0].id);
+        } else if (enrichedProduct.variations.filter(v => v.is_active).length > 0) {
+          setVariationPickerProduct(enrichedProduct);
+        } else {
+          toast({ title: 'Nenhuma variação ativa disponível', variant: 'destructive' });
         }
       } catch (error) {
         console.error('Error fetching variations:', error);
