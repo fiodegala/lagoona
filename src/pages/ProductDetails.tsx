@@ -24,11 +24,13 @@ import RelatedProducts from '@/components/store/RelatedProducts';
 import ProductAITryOn from '@/components/store/ProductAITryOn';
 import UpsellSection from '@/components/store/UpsellSection';
 import { useCart } from '@/contexts/CartContext';
+import { useFavorites } from '@/contexts/FavoritesContext';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { getOptimizedImageUrl } from '@/lib/imageUtils';
 import { trackMetaViewContent } from '@/lib/metaPixel';
+import { Bookmark } from 'lucide-react';
 
 const ProductDetails = () => {
   const { id } = useParams<{ id: string }>();
