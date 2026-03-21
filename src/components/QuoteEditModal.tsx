@@ -110,7 +110,7 @@ const QuoteEditModal = ({ quote, open, onOpenChange, onSaved }: QuoteEditModalPr
       setCustomerName(quote.customer_name || '');
       setCustomerDocument(quote.customer_document || '');
       setCustomerPhone(quote.customer_phone || '');
-      setItems((quote.items || []).map(item => ({ ...item })));
+      setItems((quote.items || []).map(item => ({ ...item, variation_id: item.variation_id || undefined })));
       setNotes(quote.notes || '');
       setPaymentMethod(quote.payment_method || '');
       // Restore card details from payment_details
@@ -235,7 +235,16 @@ const QuoteEditModal = ({ quote, open, onOpenChange, onSaved }: QuoteEditModalPr
               label: v.label,
             })),
           };
-          setVariationPickerProduct(enrichedProduct);
+          
+          // If only one active variation with stock, add directly
+          const activeWithStock = enrichedProduct.variations.filter(v => v.is_active && v.stock > 0);
+          if (activeWithStock.length === 1) {
+            addItemFromProduct(enrichedProduct, activeWithStock[0].id);
+          } else if (enrichedProduct.variations.filter(v => v.is_active).length > 0) {
+            setVariationPickerProduct(enrichedProduct);
+          } else {
+            toast({ title: 'Nenhuma variação ativa disponível', variant: 'destructive' });
+          }
         }
       } catch (error) {
         console.error('Error fetching variations:', error);
@@ -251,13 +260,16 @@ const QuoteEditModal = ({ quote, open, onOpenChange, onSaved }: QuoteEditModalPr
   };
 
   const addItemFromProduct = (product: SearchResult, variationId?: string) => {
+    // Normalize variationId: treat null and undefined the same
+    const normalizedVariationId = variationId || undefined;
+
     let name = product.name;
     let price = product.price;
     let sku: string | undefined;
     let image = product.image_url || undefined;
 
-    if (variationId) {
-      const variation = product.variations.find(v => v.id === variationId);
+    if (normalizedVariationId) {
+      const variation = product.variations.find(v => v.id === normalizedVariationId);
       if (variation) {
         name = variation.label ? `${product.name} — ${variation.label}` : product.name;
         price = variation.price ?? product.price;
@@ -266,9 +278,9 @@ const QuoteEditModal = ({ quote, open, onOpenChange, onSaved }: QuoteEditModalPr
       }
     }
 
-    // Check if item already exists
+    // Check if item already exists - use == to handle null/undefined comparison
     const existingIdx = items.findIndex(
-      i => i.product_id === product.id && i.variation_id === variationId
+      i => i.product_id === product.id && (i.variation_id || undefined) === normalizedVariationId
     );
 
     if (existingIdx >= 0) {
@@ -277,7 +289,7 @@ const QuoteEditModal = ({ quote, open, onOpenChange, onSaved }: QuoteEditModalPr
     } else {
       const newItem: QuoteItem = {
         product_id: product.id,
-        variation_id: variationId,
+        variation_id: normalizedVariationId,
         name,
         sku,
         image_url: image,
@@ -336,6 +348,7 @@ const QuoteEditModal = ({ quote, open, onOpenChange, onSaved }: QuoteEditModalPr
     try {
       const updatedItems = items.map(item => ({
         ...item,
+        variation_id: item.variation_id || null, // normalize for JSON storage
         total: item.quantity * item.unit_price - (item.discount_amount || 0),
       }));
 
@@ -349,23 +362,30 @@ const QuoteEditModal = ({ quote, open, onOpenChange, onSaved }: QuoteEditModalPr
         };
       }
 
+      const updatePayload = {
+        customer_name: customerName.trim() || null,
+        customer_document: customerDocument.trim() || null,
+        customer_phone: customerPhone.trim() || null,
+        items: updatedItems as unknown as Record<string, unknown>[],
+        subtotal,
+        discount_amount: itemDiscounts,
+        total,
+        notes: notes.trim() || null,
+        payment_method: paymentMethod || null,
+        payment_details: paymentDetails || {},
+      };
+
+      console.log('[QuoteEdit] Saving quote', quote.id, 'with', updatedItems.length, 'items, total:', total);
+
       const { error } = await supabase
         .from('quotes')
-        .update({
-          customer_name: customerName.trim() || null,
-          customer_document: customerDocument.trim() || null,
-          customer_phone: customerPhone.trim() || null,
-          items: updatedItems as unknown as Record<string, unknown>[],
-          subtotal,
-          discount_amount: itemDiscounts,
-          total,
-          notes: notes.trim() || null,
-          payment_method: paymentMethod || null,
-          payment_details: paymentDetails || {},
-        } as never)
+        .update(updatePayload as never)
         .eq('id', quote.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('[QuoteEdit] Save error:', error);
+        throw error;
+      }
 
       // Log history entry
       const changes: Record<string, unknown> = {};
@@ -373,6 +393,7 @@ const QuoteEditModal = ({ quote, open, onOpenChange, onSaved }: QuoteEditModalPr
       if (notes.trim() !== (quote.notes || '')) changes.notes = { from: quote.notes, to: notes.trim() };
       if (paymentMethod !== (quote.payment_method || '')) changes.payment_method = { from: quote.payment_method, to: paymentMethod };
       if (Math.abs(total - quote.total) > 0.01) changes.total = { from: quote.total, to: total };
+      if (items.length !== (quote.items || []).length) changes.items_count = { from: (quote.items || []).length, to: items.length };
 
       await supabase.from('quote_history' as any).insert({
         quote_id: quote.id,
@@ -385,9 +406,9 @@ const QuoteEditModal = ({ quote, open, onOpenChange, onSaved }: QuoteEditModalPr
       toast({ title: 'Orçamento atualizado!' });
       onSaved();
       onOpenChange(false);
-    } catch (err) {
-      console.error(err);
-      toast({ title: 'Erro ao salvar', variant: 'destructive' });
+    } catch (err: any) {
+      console.error('[QuoteEdit] Error:', err);
+      toast({ title: 'Erro ao salvar', description: err?.message || 'Erro desconhecido', variant: 'destructive' });
     } finally {
       setSaving(false);
     }
