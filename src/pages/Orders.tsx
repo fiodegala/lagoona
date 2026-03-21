@@ -22,6 +22,7 @@ import {
 import { ShoppingCart, Truck, ExternalLink, Package, Search, MessageCircle, Clock, CheckCircle2, XCircle, Printer, Eye, Trash2 } from 'lucide-react';
 import ShippingLabelModal from '@/components/ShippingLabelModal';
 import OrderDetailModal from '@/components/OrderDetailModal';
+import OrderEditModal from '@/components/OrderEditModal';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
