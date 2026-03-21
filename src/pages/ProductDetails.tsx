@@ -819,6 +819,17 @@ const ProductDetails = () => {
           <p className="text-lg font-bold text-primary">{formatPrice(currentPrice)}</p>
         </div>
         <Button
+          size="icon"
+          variant="ghost"
+          className={cn("shrink-0 h-11 w-11", isFavorite(product.id) && "text-store-primary")}
+          onClick={() => {
+            toggleFavorite(product.id);
+            toast.success(isFavorite(product.id) ? 'Removido dos favoritos' : 'Salvo nos favoritos!');
+          }}
+        >
+          <Heart className={cn("h-5 w-5", isFavorite(product.id) && "fill-current")} />
+        </Button>
+        <Button
           size="lg"
           className="gap-2 bg-store-primary text-store-accent hover:bg-store-primary/90 font-semibold shrink-0"
           onClick={upsellHasSelection && upsellBuyTogether ? upsellBuyTogether : handleAddToCart}
