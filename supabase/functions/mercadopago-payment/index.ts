@@ -87,9 +87,13 @@ Deno.serve(async (req) => {
           );
         }
 
-        // Validate amount matches order total (tolerance for rounding)
-        const amountDiff = Math.abs(Number(body.transaction_amount) - Number(order.total));
-        if (amountDiff > 0.01) {
+        // Validate amount matches order total (tolerance for rounding + PIX discount)
+        const roundedAmount = Math.round(Number(body.transaction_amount) * 100) / 100;
+        const orderTotal = Math.round(Number(order.total) * 100) / 100;
+        const amountDiff = Math.abs(roundedAmount - orderTotal);
+        // Allow up to 10% difference to accommodate PIX discounts
+        const maxAllowedDiff = orderTotal * 0.10;
+        if (amountDiff > maxAllowedDiff) {
           return new Response(
             JSON.stringify({ error: 'Amount mismatch' }),
             { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
