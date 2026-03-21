@@ -84,7 +84,7 @@ const MercadoPagoPayment = ({
   const [cardBrand, setCardBrand] = useState('');
   const [isCardFlipped, setIsCardFlipped] = useState(false);
 
-  // PIX discount
+  // PIX discount — 5% off for instant payment
   const PIX_DISCOUNT_PERCENT = 5;
   const pixDiscountAmount = Math.round(amount * PIX_DISCOUNT_PERCENT) / 100;
   const pixAmount = Math.round((amount - pixDiscountAmount) * 100) / 100;
