@@ -152,7 +152,8 @@ const ProductDetails = () => {
   }, [product]);
 
   const basePrice = selectedVariation?.price ?? product?.price ?? 0;
-  const promotionalPrice = selectedVariation?.promotional_price ?? product?.promotional_price ?? null;
+  const rawPromoPrice = selectedVariation?.promotional_price ?? product?.promotional_price ?? null;
+  const promotionalPrice = rawPromoPrice != null && rawPromoPrice > 0 ? rawPromoPrice : null;
   const currentPrice = promotionalPrice && promotionalPrice < basePrice ? promotionalPrice : basePrice;
   const hasRealDiscount = promotionalPrice !== null && promotionalPrice < basePrice;
   const currentStock = selectedVariation?.stock ?? product?.stock ?? 0;

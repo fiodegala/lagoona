@@ -73,12 +73,13 @@ const ProductCard = memo(forwardRef<HTMLAnchorElement, ProductCardProps>(({ prod
     fetchProductMeta();
   }, [product.id, meta]);
 
-  // Desconto real baseado em promotional_price
-  const hasRealDiscount = (product as any).promotional_price != null && (product as any).promotional_price < product.price;
+  // Desconto real baseado em promotional_price (só quando > 0 e < preço de varejo)
+  const promoPrice = (product as any).promotional_price;
+  const hasRealDiscount = promoPrice != null && promoPrice > 0 && promoPrice < product.price;
   const discountPercent = hasRealDiscount
-    ? Math.round(((product.price - (product as any).promotional_price) / product.price) * 100)
+    ? Math.round(((product.price - promoPrice) / product.price) * 100)
     : 0;
-  const displayPrice = hasRealDiscount ? (product as any).promotional_price : product.price;
+  const displayPrice = hasRealDiscount ? promoPrice : product.price;
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('pt-BR', {
