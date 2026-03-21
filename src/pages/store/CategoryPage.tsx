@@ -144,15 +144,15 @@ const CategoryPage = () => {
         {/* Sort */}
         <div className="flex justify-end mb-6">
           <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="w-48">
+            <SelectTrigger className="w-full sm:w-48 h-12 md:h-10 text-base md:text-sm">
               <SelectValue placeholder="Ordenar por" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="recentes">Mais Recentes</SelectItem>
-              <SelectItem value="preco-menor">Menor Preço</SelectItem>
-              <SelectItem value="preco-maior">Maior Preço</SelectItem>
-              <SelectItem value="nome-az">Nome A-Z</SelectItem>
-              <SelectItem value="nome-za">Nome Z-A</SelectItem>
+              <SelectItem value="recentes" className="py-3 md:py-1.5 text-base md:text-sm">Mais Recentes</SelectItem>
+              <SelectItem value="preco-menor" className="py-3 md:py-1.5 text-base md:text-sm">Menor Preço</SelectItem>
+              <SelectItem value="preco-maior" className="py-3 md:py-1.5 text-base md:text-sm">Maior Preço</SelectItem>
+              <SelectItem value="nome-az" className="py-3 md:py-1.5 text-base md:text-sm">Nome A-Z</SelectItem>
+              <SelectItem value="nome-za" className="py-3 md:py-1.5 text-base md:text-sm">Nome Z-A</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -173,6 +173,7 @@ const CategoryPage = () => {
                   variant="outline"
                   disabled={currentPage === 1}
                   onClick={() => setCurrentPage(p => p - 1)}
+                  className="h-12 md:h-10 px-5 md:px-4 text-base md:text-sm"
                 >
                   Anterior
                 </Button>
@@ -183,6 +184,7 @@ const CategoryPage = () => {
                   variant="outline"
                   disabled={currentPage === totalPages}
                   onClick={() => setCurrentPage(p => p + 1)}
+                  className="h-12 md:h-10 px-5 md:px-4 text-base md:text-sm"
                 >
                   Próxima
                 </Button>
