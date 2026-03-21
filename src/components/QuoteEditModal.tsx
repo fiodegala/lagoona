@@ -574,7 +574,7 @@ const QuoteEditModal = ({ quote, open, onOpenChange, onSaved }: QuoteEditModalPr
                   </Button>
                 </div>
                 <p className="text-xs text-muted-foreground">Selecione a variação:</p>
-                <ScrollArea className="max-h-48">
+                <ScrollArea className="max-h-72">
                   <div className="space-y-1.5">
                     {variationPickerProduct.variations.filter(v => v.is_active).map((variation) => {
                       const hasStock = variation.stock > 0;
