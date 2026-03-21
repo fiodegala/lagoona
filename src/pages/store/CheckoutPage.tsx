@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Loader2, Package, CheckCircle, ShieldCheck, Lock } from 'lucide-react';
+import { ArrowLeft, Loader2, Package, CheckCircle, ShieldCheck, Lock, Percent } from 'lucide-react';
 import ShippingCalculator from '@/components/store/ShippingCalculator';
 import MercadoPagoPayment from '@/components/store/MercadoPagoPayment';
 import { Button } from '@/components/ui/button';
@@ -111,6 +111,13 @@ const CheckoutPage = () => {
   };
 
   const total = getTotal();
+  const shippingPrice = shippingResult?.price || 0;
+  const grandTotal = total + shippingPrice;
+
+  // PIX discount constants (must match MercadoPagoPayment)
+  const PIX_DISCOUNT_PERCENT = 5;
+  const pixDiscountAmount = Math.round(grandTotal * PIX_DISCOUNT_PERCENT) / 100;
+  const pixGrandTotal = Math.round((grandTotal - pixDiscountAmount) * 100) / 100;
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -240,7 +247,7 @@ const CheckoutPage = () => {
             phone: formData.phone,
           },
           items: orderItems,
-          total: total,
+          total: grandTotal,
           status: 'pending',
           payment_status: 'pending',
           store_id: 'e0b8ebbc-1b3b-4aec-b5f7-6925762e6ea1', // Site store
@@ -496,7 +503,7 @@ const CheckoutPage = () => {
             ) : (
               orderId && (
                 <MercadoPagoPayment
-                  amount={total}
+                  amount={grandTotal}
                   orderId={orderId}
                   customerEmail={formData.email}
                   customerName={formData.name}
@@ -553,13 +560,31 @@ const CheckoutPage = () => {
                       {!shippingResult ? 'Calcule o frete' : shippingResult.price === 0 ? 'Grátis' : formatPrice(shippingResult.price)}
                     </span>
                   </div>
+                  {step === 'payment' && (
+                    <div className="flex justify-between text-sm text-emerald-600">
+                      <span className="flex items-center gap-1">
+                        <Percent className="h-3 w-3" />
+                        Desconto PIX (5%)
+                      </span>
+                      <span>-{formatPrice(pixDiscountAmount)}</span>
+                    </div>
+                  )}
                 </div>
 
                 <Separator />
 
                 <div className="flex justify-between font-semibold text-lg">
                   <span>Total</span>
-                  <span className="text-primary">{formatPrice(total + (shippingResult?.price || 0))}</span>
+                  {step === 'payment' ? (
+                    <div className="text-right">
+                      <div className="text-sm text-muted-foreground line-through font-normal">
+                        {formatPrice(grandTotal)}
+                      </div>
+                      <span className="text-emerald-600">{formatPrice(pixGrandTotal)}</span>
+                    </div>
+                  ) : (
+                    <span className="text-primary">{formatPrice(grandTotal)}</span>
+                  )}
                 </div>
               </CardContent>
               {step === 'info' && (
