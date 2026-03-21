@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Loader2, Package, CheckCircle, ShieldCheck, Lock } from 'lucide-react';
+import { ArrowLeft, Loader2, Package, CheckCircle, ShieldCheck, Lock, Percent } from 'lucide-react';
 import ShippingCalculator from '@/components/store/ShippingCalculator';
 import MercadoPagoPayment from '@/components/store/MercadoPagoPayment';
 import { Button } from '@/components/ui/button';
