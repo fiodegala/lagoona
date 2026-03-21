@@ -191,8 +191,7 @@ const CatalogPage = () => {
       list = list.filter((p) => p.category_id === selectedCategory);
     }
     if (search.trim()) {
-      const q = search.toLowerCase();
-      list = list.filter((p) => p.name.toLowerCase().includes(q));
+      list = fuzzyFilterProducts(list, search);
     }
     return list;
   }, [products, selectedCategory, search]);
