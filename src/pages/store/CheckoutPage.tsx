@@ -111,6 +111,13 @@ const CheckoutPage = () => {
   };
 
   const total = getTotal();
+  const shippingPrice = shippingResult?.price || 0;
+  const grandTotal = total + shippingPrice;
+
+  // PIX discount constants (must match MercadoPagoPayment)
+  const PIX_DISCOUNT_PERCENT = 5;
+  const pixDiscountAmount = Math.round(grandTotal * PIX_DISCOUNT_PERCENT) / 100;
+  const pixGrandTotal = Math.round((grandTotal - pixDiscountAmount) * 100) / 100;
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
