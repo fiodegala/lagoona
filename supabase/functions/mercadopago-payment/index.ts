@@ -146,7 +146,7 @@ async function createPayment(body: any, accessToken: string) {
     );
   }
 
-  const amount = Number(transaction_amount);
+  const amount = Math.round(Number(transaction_amount) * 100) / 100;
   if (isNaN(amount) || amount <= 0 || amount > 100000) {
     return new Response(
       JSON.stringify({ error: 'Invalid transaction amount' }),
