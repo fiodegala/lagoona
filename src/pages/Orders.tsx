@@ -80,6 +80,7 @@ const Orders = () => {
   const [detailOrder, setDetailOrder] = useState<any>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [deleteConfirm, setDeleteConfirm] = useState<{ type: 'single' | 'bulk'; id?: string } | null>(null);
+  const [editOrder, setEditOrder] = useState<any>(null);
 
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ['orders'],
