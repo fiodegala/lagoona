@@ -578,6 +578,14 @@ const Orders = () => {
         onOpenChange={(open) => !open && setDetailOrder(null)}
         order={detailOrder}
       />
+
+      <OrderEditModal
+        open={!!editOrder}
+        onOpenChange={(open) => !open && setEditOrder(null)}
+        order={editOrder}
+        onSaved={() => queryClient.invalidateQueries({ queryKey: ['orders'] })}
+      />
+
       {/* Delete Confirmation */}
       <AlertDialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
         <AlertDialogContent>
