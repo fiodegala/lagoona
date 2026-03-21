@@ -61,6 +61,7 @@ export interface CreateCouponData {
   applicable_categories?: string[];
   applicable_products?: string[];
   applicable_shipping_zones?: string[];
+  applicable_to_combos?: boolean;
   show_in_wheel?: boolean;
   progressive_tiers?: ProgressiveConfig | null;
 }

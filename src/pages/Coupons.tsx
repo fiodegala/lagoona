@@ -911,6 +911,20 @@ const Coupons = () => {
 
             <div className="flex items-center justify-between rounded-lg border p-3">
               <div>
+                <Label htmlFor="applicable_to_combos" className="font-medium">Aplicável em Combos</Label>
+                <p className="text-sm text-muted-foreground">
+                  Permitir que este cupom seja usado junto com combos de produtos
+                </p>
+              </div>
+              <Switch
+                id="applicable_to_combos"
+                checked={formData.applicable_to_combos ?? false}
+                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, applicable_to_combos: checked }))}
+              />
+            </div>
+
+            <div className="flex items-center justify-between rounded-lg border p-3">
+              <div>
                 <Label htmlFor="show_in_wheel" className="font-medium">Exibir na Roleta</Label>
                 <p className="text-sm text-muted-foreground">
                   Mostrar este cupom na roleta de prêmios da loja
