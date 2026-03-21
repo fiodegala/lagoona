@@ -12,6 +12,7 @@ import { Slider } from '@/components/ui/slider';
 import StoreLayout from '@/components/store/StoreLayout';
 import ProductCard from '@/components/store/ProductCard';
 import { productsService, Product } from '@/services/products';
+import { fuzzyFilterProducts } from '@/lib/searchUtils';
 import DealsCountdownSection from '@/components/store/DealsCountdownSection';
 import { categoriesService, Category } from '@/services/categories';
 import { enrichProductsWithStock } from '@/services/stockService';
@@ -121,11 +122,7 @@ const StorePage = () => {
     let result = [...products];
 
     if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      result = result.filter(
-        p => p.name.toLowerCase().includes(query) || 
-             p.description?.toLowerCase().includes(query)
-      );
+      result = fuzzyFilterProducts(result, searchQuery);
     }
 
     if (selectedCategories.length > 0) {

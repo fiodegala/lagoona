@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import StoreLayout from '@/components/store/StoreLayout';
 import { productsService, Product } from '@/services/products';
 import { categoriesService, Category } from '@/services/categories';
+import { fuzzyFilterProducts } from '@/lib/searchUtils';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -140,8 +141,7 @@ const ResellerCatalogPage = () => {
     let list = products;
     if (selectedCategory) list = list.filter((p) => p.category_id === selectedCategory);
     if (search.trim()) {
-      const q = search.toLowerCase();
-      list = list.filter((p) => p.name.toLowerCase().includes(q));
+      list = fuzzyFilterProducts(list, search);
     }
     return list;
   }, [products, selectedCategory, search]);
