@@ -654,19 +654,37 @@ const ProductDetails = () => {
                 size="lg"
                 className={cn(
                   "px-4",
-                  isWishlisted && "bg-store-primary/10 border-store-primary text-store-primary"
+                  product && isFavorite(product.id) && "bg-store-primary/10 border-store-primary text-store-primary"
                 )}
                 onClick={() => {
-                  setIsWishlisted(!isWishlisted);
-                  toast.success(isWishlisted ? 'Removido dos favoritos' : 'Adicionado aos favoritos');
+                  if (!product) return;
+                  toggleFavorite(product.id);
+                  toast.success(isFavorite(product.id) ? 'Removido dos favoritos' : 'Adicionado aos favoritos');
                 }}
               >
-                <Heart className={cn("h-5 w-5", isWishlisted && "fill-current")} />
+                <Heart className={cn("h-5 w-5", product && isFavorite(product.id) && "fill-current")} />
               </Button>
               <Button variant="outline" size="lg" className="px-4" onClick={handleShare}>
                 <Share2 className="h-5 w-5" />
               </Button>
             </div>
+
+            {/* Save for Later CTA — visible when product is NOT yet favorited */}
+            {product && !isFavorite(product.id) && (
+              <button
+                onClick={() => {
+                  toggleFavorite(product.id);
+                  toast.success('Salvo! Acesse seus favoritos a qualquer momento pelo ❤️ no menu.');
+                }}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg border border-dashed border-store-primary/40 bg-store-primary/5 hover:bg-store-primary/10 transition-colors group"
+              >
+                <Bookmark className="h-5 w-5 text-store-primary shrink-0 group-hover:scale-110 transition-transform" />
+                <div className="text-left">
+                  <span className="text-sm font-medium text-foreground">Ainda não decidiu?</span>
+                  <span className="text-xs text-muted-foreground ml-1">Salve para depois e compare com calma.</span>
+                </div>
+              </button>
+            )}
 
             <Separator />
 
