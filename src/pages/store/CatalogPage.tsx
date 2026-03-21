@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import StoreLayout from '@/components/store/StoreLayout';
 import { productsService, Product } from '@/services/products';
 import { categoriesService, Category } from '@/services/categories';
+import { fuzzyFilterProducts } from '@/lib/searchUtils';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
