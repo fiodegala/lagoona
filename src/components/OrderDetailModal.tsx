@@ -253,7 +253,8 @@ const OrderDetailModal = ({ open, onOpenChange, order }: OrderDetailModalProps) 
                         <img
                           src={item.image_url || item.imageUrl || '/placeholder.svg'}
                           alt={item.name || 'Produto'}
-                          className="h-12 w-12 rounded-md object-cover shrink-0 border bg-muted"
+                          className="h-12 w-12 rounded-md object-cover shrink-0 border bg-muted cursor-pointer hover:opacity-80 transition-opacity"
+                          onClick={() => setLightboxImage(item.image_url || item.imageUrl || '/placeholder.svg')}
                         />
                         <div className="min-w-0">
                           <p className="font-medium truncate">{item.name || item.product_name || 'Produto'}</p>
