@@ -122,11 +122,7 @@ const StorePage = () => {
     let result = [...products];
 
     if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      result = result.filter(
-        p => p.name.toLowerCase().includes(query) || 
-             p.description?.toLowerCase().includes(query)
-      );
+      result = fuzzyFilterProducts(result, searchQuery);
     }
 
     if (selectedCategories.length > 0) {
