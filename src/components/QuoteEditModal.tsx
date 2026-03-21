@@ -110,7 +110,7 @@ const QuoteEditModal = ({ quote, open, onOpenChange, onSaved }: QuoteEditModalPr
       setCustomerName(quote.customer_name || '');
       setCustomerDocument(quote.customer_document || '');
       setCustomerPhone(quote.customer_phone || '');
-      setItems((quote.items || []).map(item => ({ ...item })));
+      setItems((quote.items || []).map(item => ({ ...item, variation_id: item.variation_id || undefined })));
       setNotes(quote.notes || '');
       setPaymentMethod(quote.payment_method || '');
       // Restore card details from payment_details
