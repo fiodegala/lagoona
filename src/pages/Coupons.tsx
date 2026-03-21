@@ -81,6 +81,7 @@ const Coupons = () => {
     expires_at: undefined,
     is_active: true,
     show_in_wheel: false,
+    applicable_to_combos: false,
     progressive_tiers: null,
     applicable_shipping_zones: [],
   });
