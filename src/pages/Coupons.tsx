@@ -150,6 +150,7 @@ const Coupons = () => {
         expires_at: coupon.expires_at ? coupon.expires_at.split('T')[0] : undefined,
         is_active: coupon.is_active,
         show_in_wheel: coupon.show_in_wheel ?? false,
+        applicable_to_combos: coupon.applicable_to_combos ?? false,
         progressive_tiers: coupon.progressive_tiers || null,
         applicable_shipping_zones: coupon.applicable_shipping_zones || [],
       });
