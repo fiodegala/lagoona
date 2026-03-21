@@ -1,0 +1,1 @@
+ALTER TABLE public.coupons ADD COLUMN applicable_to_combos boolean NOT NULL DEFAULT false;

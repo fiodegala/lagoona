@@ -81,6 +81,7 @@ const Coupons = () => {
     expires_at: undefined,
     is_active: true,
     show_in_wheel: false,
+    applicable_to_combos: false,
     progressive_tiers: null,
     applicable_shipping_zones: [],
   });
@@ -126,6 +127,7 @@ const Coupons = () => {
       expires_at: undefined,
       is_active: true,
       show_in_wheel: false,
+      applicable_to_combos: false,
       progressive_tiers: null,
       applicable_shipping_zones: [],
     });
@@ -148,6 +150,7 @@ const Coupons = () => {
         expires_at: coupon.expires_at ? coupon.expires_at.split('T')[0] : undefined,
         is_active: coupon.is_active,
         show_in_wheel: coupon.show_in_wheel ?? false,
+        applicable_to_combos: coupon.applicable_to_combos ?? false,
         progressive_tiers: coupon.progressive_tiers || null,
         applicable_shipping_zones: coupon.applicable_shipping_zones || [],
       });
@@ -903,6 +906,20 @@ const Coupons = () => {
                 id="is_active"
                 checked={formData.is_active}
                 onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_active: checked }))}
+              />
+            </div>
+
+            <div className="flex items-center justify-between rounded-lg border p-3">
+              <div>
+                <Label htmlFor="applicable_to_combos" className="font-medium">Aplicável em Combos</Label>
+                <p className="text-sm text-muted-foreground">
+                  Permitir que este cupom seja usado junto com combos de produtos
+                </p>
+              </div>
+              <Switch
+                id="applicable_to_combos"
+                checked={formData.applicable_to_combos ?? false}
+                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, applicable_to_combos: checked }))}
               />
             </div>
 

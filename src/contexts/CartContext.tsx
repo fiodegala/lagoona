@@ -269,6 +269,10 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       const productIds = items.map(item => item.productId);
       const result = await couponsService.validateCoupon(code, subtotal, customerEmail, productIds);
       if (result.valid && result.coupon && result.discount !== undefined) {
+        // Block coupon if combos are active and coupon is not applicable to combos
+        if (appliedCombos.length > 0 && !result.coupon.applicable_to_combos) {
+          return { valid: false, error: 'Este cupom não pode ser usado junto com combos' };
+        }
         setAppliedCoupon({ coupon: result.coupon, discount: result.discount });
       }
       return result;
