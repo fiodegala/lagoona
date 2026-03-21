@@ -420,6 +420,7 @@ const StorePage = () => {
                       variant="outline"
                       disabled={currentPage === 1}
                       onClick={() => setCurrentPage(p => p - 1)}
+                      className="h-12 md:h-10 px-5 md:px-4 text-base md:text-sm"
                     >
                       Anterior
                     </Button>
@@ -441,6 +442,7 @@ const StorePage = () => {
                             variant={currentPage === page ? 'default' : 'outline'}
                             size="icon"
                             onClick={() => setCurrentPage(page)}
+                            className="h-12 w-12 md:h-10 md:w-10 text-base md:text-sm"
                           >
                             {page}
                           </Button>
@@ -451,6 +453,7 @@ const StorePage = () => {
                       variant="outline"
                       disabled={currentPage === totalPages}
                       onClick={() => setCurrentPage(p => p + 1)}
+                      className="h-12 md:h-10 px-5 md:px-4 text-base md:text-sm"
                     >
                       Próxima
                     </Button>

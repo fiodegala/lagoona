@@ -135,7 +135,7 @@ const ProductCard = memo(forwardRef<HTMLAnchorElement, ProductCardProps>(({ prod
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="relative bg-card rounded-none border overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-store-gold/30">
+        <div className="relative bg-card rounded-none border overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-store-gold/30">
         {/* Image Container */}
         <div className="relative aspect-[4/5] overflow-hidden bg-store-secondary/30">
           {product.image_url ? (
@@ -203,7 +203,7 @@ const ProductCard = memo(forwardRef<HTMLAnchorElement, ProductCardProps>(({ prod
             </div>
           )}
 
-          {/* Add to Cart Button - always visible on mobile */}
+          {/* Add to Cart Button - always visible on mobile, larger touch target */}
           <div className={cn(
             "absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-store-dark/80 to-transparent transition-all duration-300",
             isMobile ? "opacity-100 translate-y-0" : (isHovered ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4")
@@ -211,9 +211,9 @@ const ProductCard = memo(forwardRef<HTMLAnchorElement, ProductCardProps>(({ prod
             <Button
               onClick={handleAddToCart}
               disabled={isOutOfStock}
-              className="w-full gap-2 bg-store-gold hover:bg-store-gold/90 text-store-dark font-semibold"
+              className="w-full gap-2 bg-store-gold hover:bg-store-gold/90 text-store-dark font-semibold h-12 md:h-10 text-base md:text-sm"
             >
-              <ShoppingCart className="h-4 w-4" />
+              <ShoppingCart className="h-5 w-5 md:h-4 md:w-4" />
               Adicionar
             </Button>
           </div>
