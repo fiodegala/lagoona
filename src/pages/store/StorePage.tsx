@@ -289,29 +289,29 @@ const StorePage = () => {
 
         {/* Filters bar */}
         <div className="flex flex-col sm:flex-row gap-3 mb-4 p-4 bg-card rounded-xl border">
-          {/* Search */}
+          {/* Search - larger on mobile */}
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 md:h-4 md:w-4 text-muted-foreground" />
             <Input
               type="search"
               placeholder="Buscar nesta lista..."
               value={localSearch}
               onChange={(e) => handleSearchChange(e.target.value)}
-              className="pl-10"
+              className="pl-10 h-12 md:h-10 text-base md:text-sm"
             />
           </div>
 
-          {/* Sort */}
+          {/* Sort - larger on mobile */}
           <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="w-full sm:w-52">
+            <SelectTrigger className="w-full sm:w-52 h-12 md:h-10 text-base md:text-sm">
               <SelectValue placeholder="Ordenar por" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="recentes">Mais Recentes</SelectItem>
-              <SelectItem value="preco-menor">Menor Preço</SelectItem>
-              <SelectItem value="preco-maior">Maior Preço</SelectItem>
-              <SelectItem value="nome-az">Nome A-Z</SelectItem>
-              <SelectItem value="nome-za">Nome Z-A</SelectItem>
+              <SelectItem value="recentes" className="py-3 md:py-1.5 text-base md:text-sm">Mais Recentes</SelectItem>
+              <SelectItem value="preco-menor" className="py-3 md:py-1.5 text-base md:text-sm">Menor Preço</SelectItem>
+              <SelectItem value="preco-maior" className="py-3 md:py-1.5 text-base md:text-sm">Maior Preço</SelectItem>
+              <SelectItem value="nome-az" className="py-3 md:py-1.5 text-base md:text-sm">Nome A-Z</SelectItem>
+              <SelectItem value="nome-za" className="py-3 md:py-1.5 text-base md:text-sm">Nome Z-A</SelectItem>
             </SelectContent>
           </Select>
 
@@ -335,11 +335,11 @@ const StorePage = () => {
             </Button>
           </div>
 
-          {/* Mobile filters button */}
+          {/* Mobile filters button - larger touch target */}
           <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
             <SheetTrigger asChild className="lg:hidden">
-              <Button variant="outline" className="gap-2">
-                <SlidersHorizontal className="h-4 w-4" />
+              <Button variant="outline" className="gap-2 h-12 md:h-10 text-base md:text-sm">
+                <SlidersHorizontal className="h-5 w-5 md:h-4 md:w-4" />
                 Filtros
                 {activeFiltersCount > 0 && (
                   <Badge variant="secondary" className="ml-1">{activeFiltersCount}</Badge>
