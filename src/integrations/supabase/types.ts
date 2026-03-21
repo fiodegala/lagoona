@@ -508,6 +508,7 @@ export type Database = {
           applicable_categories: string[] | null
           applicable_products: string[] | null
           applicable_shipping_zones: string[] | null
+          applicable_to_combos: boolean
           code: string
           created_at: string
           description: string | null
@@ -530,6 +531,7 @@ export type Database = {
           applicable_categories?: string[] | null
           applicable_products?: string[] | null
           applicable_shipping_zones?: string[] | null
+          applicable_to_combos?: boolean
           code: string
           created_at?: string
           description?: string | null
@@ -552,6 +554,7 @@ export type Database = {
           applicable_categories?: string[] | null
           applicable_products?: string[] | null
           applicable_shipping_zones?: string[] | null
+          applicable_to_combos?: boolean
           code?: string
           created_at?: string
           description?: string | null
