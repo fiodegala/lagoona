@@ -335,7 +335,7 @@ const MercadoPagoPayment = ({
         body: {
           action: 'create_payment',
           payment_method_id: 'pix',
-          transaction_amount: amount,
+          transaction_amount: pixAmount,
           description,
           order_id: orderId,
           payer: {
