@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { CreditCard, QrCode, Barcode, Loader2, Copy, Check, ExternalLink } from 'lucide-react';
+import { CreditCard, QrCode, Barcode, Loader2, Copy, Check, ExternalLink, Percent } from 'lucide-react';
 import CreditCardMockup from './CreditCardMockup';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -84,6 +84,10 @@ const MercadoPagoPayment = ({
   const [cardBrand, setCardBrand] = useState('');
   const [isCardFlipped, setIsCardFlipped] = useState(false);
 
+  // PIX discount
+  const PIX_DISCOUNT_PERCENT = 5;
+  const pixDiscountAmount = Math.round(amount * PIX_DISCOUNT_PERCENT) / 100;
+  const pixAmount = Math.round((amount - pixDiscountAmount) * 100) / 100;
   // Initialize MercadoPago SDK
   useEffect(() => {
     let cancelled = false;
@@ -331,7 +335,7 @@ const MercadoPagoPayment = ({
         body: {
           action: 'create_payment',
           payment_method_id: 'pix',
-          transaction_amount: amount,
+          transaction_amount: pixAmount,
           description,
           order_id: orderId,
           payer: {
@@ -565,19 +569,33 @@ const MercadoPagoPayment = ({
           <TabsContent value="pix" className="mt-4 space-y-4">
             {!pixData ? (
               <div className="text-center space-y-4">
-                <div className="p-4 bg-muted rounded-lg">
-                  <p className="text-sm text-muted-foreground">
+                <div className="p-4 bg-emerald-50 dark:bg-emerald-950/30 rounded-lg border border-emerald-200 dark:border-emerald-800">
+                  <div className="flex items-center justify-center gap-2 mb-1">
+                    <Percent className="h-4 w-4 text-emerald-600" />
+                    <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">
+                      5% de desconto no PIX!
+                    </p>
+                  </div>
+                  <p className="text-xs text-muted-foreground text-center">
                     Pagamento instantâneo via PIX. O QR Code será gerado após clicar no botão abaixo.
                   </p>
                 </div>
-                <div className="text-2xl font-bold text-primary">
-                  {formatPrice(amount)}
+                <div className="text-center">
+                  <div className="text-sm text-muted-foreground line-through">
+                    {formatPrice(amount)}
+                  </div>
+                  <div className="text-2xl font-bold text-emerald-600">
+                    {formatPrice(pixAmount)}
+                  </div>
+                  <div className="text-xs text-emerald-600 font-medium">
+                    Economia de {formatPrice(pixDiscountAmount)}
+                  </div>
                 </div>
                 <Button onClick={handlePixPayment} disabled={isProcessing} className="w-full" size="lg">
                   {isProcessing ? (
                     <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Gerando PIX...</>
                   ) : (
-                    'Gerar QR Code PIX'
+                    `Pagar ${formatPrice(pixAmount)} com PIX`
                   )}
                 </Button>
               </div>
