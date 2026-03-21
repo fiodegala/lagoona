@@ -19,7 +19,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { ShoppingCart, Truck, ExternalLink, Package, Search, MessageCircle, Clock, CheckCircle2, XCircle, Printer, Eye, Trash2 } from 'lucide-react';
+import { ShoppingCart, Truck, ExternalLink, Package, Search, MessageCircle, Clock, CheckCircle2, XCircle, Printer, Eye, Trash2, Pencil } from 'lucide-react';
 import ShippingLabelModal from '@/components/ShippingLabelModal';
 import OrderDetailModal from '@/components/OrderDetailModal';
 import OrderEditModal from '@/components/OrderEditModal';
