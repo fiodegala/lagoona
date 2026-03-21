@@ -37,6 +37,7 @@ interface OrderDetailModalProps {
 
 const OrderDetailModal = ({ open, onOpenChange, order }: OrderDetailModalProps) => {
   const [showQuote, setShowQuote] = useState(false);
+  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
 
   if (!order) return null;
 
