@@ -19,9 +19,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { ShoppingCart, Truck, ExternalLink, Package, Search, MessageCircle, Clock, CheckCircle2, XCircle, Printer, Eye, Trash2 } from 'lucide-react';
+import { ShoppingCart, Truck, ExternalLink, Package, Search, MessageCircle, Clock, CheckCircle2, XCircle, Printer, Eye, Trash2, Pencil } from 'lucide-react';
 import ShippingLabelModal from '@/components/ShippingLabelModal';
 import OrderDetailModal from '@/components/OrderDetailModal';
+import OrderEditModal from '@/components/OrderEditModal';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
@@ -79,6 +80,7 @@ const Orders = () => {
   const [detailOrder, setDetailOrder] = useState<any>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [deleteConfirm, setDeleteConfirm] = useState<{ type: 'single' | 'bulk'; id?: string } | null>(null);
+  const [editOrder, setEditOrder] = useState<any>(null);
 
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ['orders'],
@@ -436,6 +438,10 @@ const Orders = () => {
                             <Eye className="h-3 w-3 mr-1" />
                             Detalhes
                           </Button>
+                          <Button variant="outline" size="sm" onClick={() => setEditOrder(order)}>
+                            <Pencil className="h-3 w-3 mr-1" />
+                            Editar
+                          </Button>
                           <Button variant="outline" size="sm" onClick={() => openTrackingModal(order)}>
                             <Truck className="h-3 w-3 mr-1" />
                             Rastreio
@@ -572,6 +578,14 @@ const Orders = () => {
         onOpenChange={(open) => !open && setDetailOrder(null)}
         order={detailOrder}
       />
+
+      <OrderEditModal
+        open={!!editOrder}
+        onOpenChange={(open) => !open && setEditOrder(null)}
+        order={editOrder}
+        onSaved={() => queryClient.invalidateQueries({ queryKey: ['orders'] })}
+      />
+
       {/* Delete Confirmation */}
       <AlertDialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
         <AlertDialogContent>
