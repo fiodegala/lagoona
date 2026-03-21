@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { X } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -36,6 +37,7 @@ interface OrderDetailModalProps {
 
 const OrderDetailModal = ({ open, onOpenChange, order }: OrderDetailModalProps) => {
   const [showQuote, setShowQuote] = useState(false);
+  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
 
   if (!order) return null;
 
@@ -251,7 +253,8 @@ const OrderDetailModal = ({ open, onOpenChange, order }: OrderDetailModalProps) 
                         <img
                           src={item.image_url || item.imageUrl || '/placeholder.svg'}
                           alt={item.name || 'Produto'}
-                          className="h-12 w-12 rounded-md object-cover shrink-0 border bg-muted"
+                          className="h-12 w-12 rounded-md object-cover shrink-0 border bg-muted cursor-pointer hover:opacity-80 transition-opacity"
+                          onClick={() => setLightboxImage(item.image_url || item.imageUrl || '/placeholder.svg')}
                         />
                         <div className="min-w-0">
                           <p className="font-medium truncate">{item.name || item.product_name || 'Produto'}</p>
@@ -292,6 +295,27 @@ const OrderDetailModal = ({ open, onOpenChange, order }: OrderDetailModalProps) 
           </div>
         </ScrollArea>
       </DialogContent>
+
+      {/* Lightbox */}
+      {lightboxImage && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 cursor-pointer"
+          onClick={() => setLightboxImage(null)}
+        >
+          <button
+            className="absolute top-4 right-4 text-white hover:text-white/80 transition-colors"
+            onClick={() => setLightboxImage(null)}
+          >
+            <X className="h-8 w-8" />
+          </button>
+          <img
+            src={lightboxImage}
+            alt="Produto ampliado"
+            className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
     </Dialog>
   );
 };
