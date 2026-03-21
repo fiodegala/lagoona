@@ -214,13 +214,13 @@ const StorePage = () => {
     <div className="space-y-6">
       {/* Price Range */}
       <div className="space-y-4">
-        <h4 className="font-semibold">Faixa de Preço</h4>
+        <h4 className="font-semibold text-base">Faixa de Preço</h4>
         <Slider
           value={priceRange}
           onValueChange={(value) => setPriceRange(value as [number, number])}
           max={10000}
           step={50}
-          className="w-full"
+          className="w-full [&_[role=slider]]:h-6 [&_[role=slider]]:w-6 md:[&_[role=slider]]:h-5 md:[&_[role=slider]]:w-5"
         />
         <div className="flex items-center justify-between text-sm text-muted-foreground">
           <span>{formatPrice(priceRange[0])}</span>
@@ -230,16 +230,17 @@ const StorePage = () => {
 
       {/* Categories */}
       <div className="space-y-3">
-        <h4 className="font-semibold">Categorias</h4>
-        <div className="space-y-2 max-h-48 overflow-y-auto">
+        <h4 className="font-semibold text-base">Categorias</h4>
+        <div className="space-y-1 max-h-48 overflow-y-auto">
           {categories.map((category) => (
-            <div key={category.id} className="flex items-center gap-2">
+            <div key={category.id} className="flex items-center gap-3 py-2 md:py-1">
               <Checkbox
                 id={`cat-${category.id}`}
                 checked={selectedCategories.includes(category.id)}
                 onCheckedChange={() => toggleCategory(category.id)}
+                className="h-5 w-5 md:h-4 md:w-4"
               />
-              <Label htmlFor={`cat-${category.id}`} className="cursor-pointer text-sm">
+              <Label htmlFor={`cat-${category.id}`} className="cursor-pointer text-base md:text-sm flex-1">
                 {category.name}
               </Label>
             </div>
@@ -249,22 +250,23 @@ const StorePage = () => {
 
       {/* Stock filter */}
       <div className="space-y-3">
-        <h4 className="font-semibold">Disponibilidade</h4>
-        <div className="flex items-center gap-2">
+        <h4 className="font-semibold text-base">Disponibilidade</h4>
+        <div className="flex items-center gap-3 py-2 md:py-1">
           <Checkbox
             id="in-stock"
             checked={showInStock}
             onCheckedChange={(checked) => setShowInStock(checked as boolean)}
+            className="h-5 w-5 md:h-4 md:w-4"
           />
-          <Label htmlFor="in-stock" className="cursor-pointer text-sm">
+          <Label htmlFor="in-stock" className="cursor-pointer text-base md:text-sm">
             Apenas em estoque
           </Label>
         </div>
       </div>
 
-      {/* Clear filters */}
+      {/* Clear filters - larger on mobile */}
       {activeFiltersCount > 0 && (
-        <Button variant="outline" onClick={clearFilters} className="w-full">
+        <Button variant="outline" onClick={clearFilters} className="w-full h-12 md:h-10 text-base md:text-sm">
           Limpar Filtros ({activeFiltersCount})
         </Button>
       )}
