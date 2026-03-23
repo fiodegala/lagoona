@@ -160,13 +160,23 @@ const CheckoutPage = () => {
       return;
     }
 
-    if (!formData.name || !formData.email || !formData.phone || !formData.document || !formData.address || !formData.number || !formData.city || !formData.state || !formData.zipCode) {
+    const trimmedName = formData.name.trim();
+    const trimmedEmail = formData.email.trim();
+    const trimmedPhone = formData.phone.trim();
+    const trimmedDocument = formData.document.trim();
+    const trimmedAddress = formData.address.trim();
+    const trimmedNumber = formData.number.trim();
+    const trimmedCity = formData.city.trim();
+    const trimmedState = formData.state.trim();
+    const trimmedZipCode = formData.zipCode.trim();
+
+    if (!trimmedName || !trimmedEmail || !trimmedPhone || !trimmedDocument || !trimmedAddress || !trimmedNumber || !trimmedCity || !trimmedState || !trimmedZipCode) {
       toast.error('Preencha todos os campos obrigatórios');
       return;
     }
 
     // Validate CPF/CNPJ format
-    const docDigits = formData.document.replace(/\D/g, '');
+    const docDigits = trimmedDocument.replace(/\D/g, '');
     if (docDigits.length !== 11 && docDigits.length !== 14) {
       toast.error('CPF deve ter 11 dígitos ou CNPJ deve ter 14 dígitos');
       return;
@@ -261,8 +271,8 @@ const CheckoutPage = () => {
           metadata: {
             ...(sessionId ? { abandoned_cart_session_id: sessionId } : {}),
             ...(getAffiliateCode() ? { affiliate_code: getAffiliateCode() } : {}),
-            ...(formData.document ? { customer_document: formData.document } : {}),
-            ...(formData.phone ? { customer_phone: formData.phone } : {}),
+            customer_document: formData.document.trim(),
+            customer_phone: formData.phone.trim(),
           },
         });
 
