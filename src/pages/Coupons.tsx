@@ -475,7 +475,21 @@ const Coupons = () => {
             <CardContent>
               <div className="text-2xl font-bold text-muted-foreground">
                 {coupons.length - activeCoupons}
-              </div>
+        </div>
+
+        {/* Bulk Actions */}
+        {selectedIds.size > 0 && (
+          <div className="flex items-center gap-4 p-3 bg-muted rounded-lg">
+            <span className="text-sm font-medium">{selectedIds.size} cupom(ns) selecionado(s)</span>
+            <Button variant="destructive" size="sm" onClick={() => setBulkDeleteConfirm(true)}>
+              <Trash2 className="h-4 w-4 mr-2" />
+              Excluir selecionados
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => setSelectedIds(new Set())}>
+              Limpar seleção
+            </Button>
+          </div>
+        )}
             </CardContent>
           </Card>
         </div>
