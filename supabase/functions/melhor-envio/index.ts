@@ -9,6 +9,23 @@ const corsHeaders = {
 
 const ME_API_URL = "https://melhorenvio.com.br/api/v2";
 
+function normalizeDigits(value?: string | null) {
+  return (value || "").replace(/\D/g, "");
+}
+
+function splitDocument(value?: string | null) {
+  const digits = normalizeDigits(value);
+
+  return {
+    document: digits.length === 11 ? digits : "",
+    company_document: digits.length === 14 ? digits : "",
+  };
+}
+
+function sanitizeComplement(value?: string | null) {
+  return (value || "").trim().slice(0, 64);
+}
+
 async function getMelhorEnvioToken(): Promise<string> {
   const token = Deno.env.get("MELHOR_ENVIO_ACCESS_TOKEN");
   if (!token) {
@@ -100,6 +117,8 @@ serve(async (req) => {
 
         const { from, to, products, insurance_value } = order_data;
         const pkg = order_data.package || { weight: 0.3, width: 11, height: 2, length: 16 };
+        const fromDocuments = splitDocument(from.document);
+        const toDocuments = splitDocument(to.document);
 
         // Step 1: Add to cart
         const cartBody = {
@@ -108,12 +127,12 @@ serve(async (req) => {
             name: from.name,
             phone: from.phone,
             email: from.email,
-            document: from.document?.length === 11 ? from.document : "",
-            company_document: from.document?.length === 14 ? from.document : "",
+            document: fromDocuments.document,
+            company_document: fromDocuments.company_document,
             state_register: from.state_register || "",
             address: from.address,
             number: from.number,
-            complement: from.complement || "",
+            complement: sanitizeComplement(from.complement),
             district: from.neighborhood,
             city: from.city,
             state_abbr: from.state_abbr,
@@ -123,12 +142,12 @@ serve(async (req) => {
             name: to.name,
             phone: to.phone,
             email: to.email,
-            document: to.document?.length === 11 ? to.document : "",
-            company_document: to.document?.length === 14 ? to.document : "",
+            document: toDocuments.document,
+            company_document: toDocuments.company_document,
             state_register: to.state_register || "",
             address: to.address,
             number: to.number,
-            complement: to.complement || "",
+            complement: sanitizeComplement(to.complement),
             district: to.neighborhood,
             city: to.city,
             state_abbr: to.state_abbr,
