@@ -171,6 +171,23 @@ const MercadoPagoPayment = ({
               }
               cardFormMountedRef.current = true;
 
+              // Limit installments to 6x max
+              const installmentsSelect = document.getElementById('mp-installments') as HTMLSelectElement | null;
+              if (installmentsSelect) {
+                const filterInstallments = () => {
+                  const options = installmentsSelect.querySelectorAll('option');
+                  options.forEach((opt) => {
+                    const val = parseInt(opt.value, 10);
+                    if (!isNaN(val) && val > 6) {
+                      opt.remove();
+                    }
+                  });
+                };
+                filterInstallments();
+                const observer = new MutationObserver(() => filterInstallments());
+                observer.observe(installmentsSelect, { childList: true });
+              }
+
               // Listen to cardholder name input changes
               const nameInput = document.getElementById('mp-cardholder-name') as HTMLInputElement;
               if (nameInput) {
