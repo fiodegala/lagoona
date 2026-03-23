@@ -273,6 +273,39 @@ const Coupons = () => {
     }
   };
 
+  const toggleSelectAll = () => {
+    if (selectedIds.size === filteredCoupons.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredCoupons.map(c => c.id)));
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const handleBulkDelete = async () => {
+    try {
+      setIsSubmitting(true);
+      await Promise.all(Array.from(selectedIds).map(id => couponsService.delete(id)));
+      toast.success(`${selectedIds.size} cupons excluídos com sucesso!`);
+      setSelectedIds(new Set());
+      setBulkDeleteConfirm(false);
+      loadCoupons();
+    } catch (error) {
+      console.error('Error bulk deleting coupons:', error);
+      toast.error('Erro ao excluir cupons');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const copyCode = (code: string) => {
     navigator.clipboard.writeText(code);
     toast.success('Código copiado!');
