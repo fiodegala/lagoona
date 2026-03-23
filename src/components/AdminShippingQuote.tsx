@@ -141,6 +141,10 @@ const AdminShippingQuote = ({
       toast.error('Dados do pedido são necessários para gerar a etiqueta.');
       return;
     }
+    if (!orderData.recipientDocument) {
+      toast.error('CPF/CNPJ do destinatário é obrigatório para gerar etiqueta.');
+      return;
+    }
 
     setIsGenerating(true);
     setSelectedService(service);
