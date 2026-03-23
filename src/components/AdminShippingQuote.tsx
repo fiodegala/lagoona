@@ -20,6 +20,23 @@ interface ShippingService {
   company: { id: number; name: string; picture: string };
 }
 
+interface OrderData {
+  orderId: string;
+  recipientName: string;
+  recipientEmail: string;
+  recipientPhone: string;
+  recipientDocument: string;
+  address: string;
+  number: string;
+  complement: string;
+  neighborhood: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  total: number;
+  items: any[];
+}
+
 interface AdminShippingQuoteProps {
   initialCep?: string;
   initialWeight?: number;
@@ -29,6 +46,7 @@ interface AdminShippingQuoteProps {
   initialInsuranceValue?: number;
   compact?: boolean;
   showGenerateLabel?: boolean;
+  orderData?: OrderData;
 }
 
 const AdminShippingQuote = ({
@@ -40,6 +58,7 @@ const AdminShippingQuote = ({
   initialInsuranceValue = 0,
   compact = false,
   showGenerateLabel = false,
+  orderData,
 }: AdminShippingQuoteProps) => {
   const [cep, setCep] = useState(initialCep);
   const [weight, setWeight] = useState(initialWeight);
