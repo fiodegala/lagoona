@@ -233,6 +233,23 @@ const OrderDetailModal = ({ open, onOpenChange, order }: OrderDetailModalProps) 
                   compact
                   initialCep={addr.zip_code?.replace(/\D/g, '') || ''}
                   initialInsuranceValue={Number(order.total) || 0}
+                  showGenerateLabel={!!(addr.address && addr.city && addr.zip_code)}
+                  orderData={{
+                    orderId: order.id,
+                    recipientName: addr.recipient_name || order.customer_name || '',
+                    recipientEmail: order.customer_email || '',
+                    recipientPhone: addr.phone || (order.metadata as any)?.customer_phone || '',
+                    recipientDocument: (order.metadata as any)?.customer_document || '',
+                    address: addr.address || '',
+                    number: addr.number || 'S/N',
+                    complement: addr.complement || '',
+                    neighborhood: addr.neighborhood || '',
+                    city: addr.city || '',
+                    state: addr.state || '',
+                    zipCode: addr.zip_code || '',
+                    total: Number(order.total) || 0,
+                    items: items,
+                  }}
                 />
               )}
             </div>
