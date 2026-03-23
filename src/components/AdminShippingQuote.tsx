@@ -155,7 +155,7 @@ const AdminShippingQuote = ({
               name: 'FDG - Fio de Gala',
               phone: '62999999999',
               email: 'contato@fiodegala.com.br',
-              document: '00000000000000',
+              document: '07950021000117',
               address: 'Rua Exemplo',
               number: '100',
               complement: '',
