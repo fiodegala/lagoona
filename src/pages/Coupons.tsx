@@ -67,6 +67,8 @@ const Coupons = () => {
   const [editingCoupon, setEditingCoupon] = useState<Coupon | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<Coupon | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
 
   const [formData, setFormData] = useState<CreateCouponData>({
     code: '',
@@ -271,6 +273,39 @@ const Coupons = () => {
     }
   };
 
+  const toggleSelectAll = () => {
+    if (selectedIds.size === filteredCoupons.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredCoupons.map(c => c.id)));
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const handleBulkDelete = async () => {
+    try {
+      setIsSubmitting(true);
+      await Promise.all(Array.from(selectedIds).map(id => couponsService.delete(id)));
+      toast.success(`${selectedIds.size} cupons excluídos com sucesso!`);
+      setSelectedIds(new Set());
+      setBulkDeleteConfirm(false);
+      loadCoupons();
+    } catch (error) {
+      console.error('Error bulk deleting coupons:', error);
+      toast.error('Erro ao excluir cupons');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const copyCode = (code: string) => {
     navigator.clipboard.writeText(code);
     toast.success('Código copiado!');
@@ -440,7 +475,21 @@ const Coupons = () => {
             <CardContent>
               <div className="text-2xl font-bold text-muted-foreground">
                 {coupons.length - activeCoupons}
-              </div>
+        </div>
+
+        {/* Bulk Actions */}
+        {selectedIds.size > 0 && (
+          <div className="flex items-center gap-4 p-3 bg-muted rounded-lg">
+            <span className="text-sm font-medium">{selectedIds.size} cupom(ns) selecionado(s)</span>
+            <Button variant="destructive" size="sm" onClick={() => setBulkDeleteConfirm(true)}>
+              <Trash2 className="h-4 w-4 mr-2" />
+              Excluir selecionados
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => setSelectedIds(new Set())}>
+              Limpar seleção
+            </Button>
+          </div>
+        )}
             </CardContent>
           </Card>
         </div>
@@ -488,6 +537,12 @@ const Coupons = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-10">
+                      <Checkbox
+                        checked={filteredCoupons.length > 0 && selectedIds.size === filteredCoupons.length}
+                        onCheckedChange={toggleSelectAll}
+                      />
+                    </TableHead>
                     <TableHead>Código</TableHead>
                     <TableHead>Tipo / Desconto</TableHead>
                     <TableHead>Usos</TableHead>
@@ -500,7 +555,13 @@ const Coupons = () => {
                   {filteredCoupons.map((coupon) => {
                     const status = getCouponStatus(coupon);
                     return (
-                      <TableRow key={coupon.id}>
+                      <TableRow key={coupon.id} data-state={selectedIds.has(coupon.id) ? 'selected' : undefined}>
+                        <TableCell>
+                          <Checkbox
+                            checked={selectedIds.has(coupon.id)}
+                            onCheckedChange={() => toggleSelect(coupon.id)}
+                          />
+                        </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
                             <code className="bg-muted px-2 py-1 rounded font-mono text-sm font-bold">
@@ -975,6 +1036,28 @@ const Coupons = () => {
             <Button variant="destructive" onClick={handleDelete} disabled={isSubmitting}>
               {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Trash2 className="h-4 w-4 mr-2" />}
               Excluir
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk Delete Confirmation */}
+      <Dialog open={bulkDeleteConfirm} onOpenChange={setBulkDeleteConfirm}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Excluir Cupons em Massa</DialogTitle>
+            <DialogDescription>
+              Tem certeza que deseja excluir <strong>{selectedIds.size}</strong> cupom(ns)? 
+              Esta ação não pode ser desfeita.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBulkDeleteConfirm(false)}>
+              Cancelar
+            </Button>
+            <Button variant="destructive" onClick={handleBulkDelete} disabled={isSubmitting}>
+              {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Trash2 className="h-4 w-4 mr-2" />}
+              Excluir {selectedIds.size} cupom(ns)
             </Button>
           </DialogFooter>
         </DialogContent>
