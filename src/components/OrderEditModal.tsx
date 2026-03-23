@@ -45,6 +45,10 @@ const OrderEditModal = ({ open, onOpenChange, order, onSaved }: OrderEditModalPr
   const [paymentStatus, setPaymentStatus] = useState('pending');
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
+  const [customerName, setCustomerName] = useState('');
+  const [customerEmail, setCustomerEmail] = useState('');
+  const [customerDocument, setCustomerDocument] = useState('');
+  const [customerPhone, setCustomerPhone] = useState('');
 
   useEffect(() => {
     if (!order) return;
@@ -67,6 +71,10 @@ const OrderEditModal = ({ open, onOpenChange, order, onSaved }: OrderEditModalPr
     setShippingCost(Number(meta.shipping_cost || 0));
     setPaymentStatus(order.payment_status || 'pending');
     setNotes(order.notes || '');
+    setCustomerName(order.customer_name || '');
+    setCustomerEmail(order.customer_email || '');
+    setCustomerDocument(meta.customer_document || '');
+    setCustomerPhone(meta.customer_phone || '');
   }, [order]);
 
   if (!order) return null;
@@ -101,6 +109,8 @@ const OrderEditModal = ({ open, onOpenChange, order, onSaved }: OrderEditModalPr
         edit_discount_type: discountType,
         edit_discount_value: discountValue,
         shipping_cost: shippingCost,
+        customer_document: customerDocument,
+        customer_phone: customerPhone,
         edited_at: new Date().toISOString(),
       };
 
@@ -111,6 +121,8 @@ const OrderEditModal = ({ open, onOpenChange, order, onSaved }: OrderEditModalPr
           total: Math.round(total * 100) / 100,
           payment_status: paymentStatus,
           notes,
+          customer_name: customerName,
+          customer_email: customerEmail,
           metadata: newMetadata as any,
         })
         .eq('id', order.id);
@@ -138,6 +150,51 @@ const OrderEditModal = ({ open, onOpenChange, order, onSaved }: OrderEditModalPr
 
         <ScrollArea className="flex-1 min-h-0 pr-2 overflow-y-auto" style={{ maxHeight: 'calc(90vh - 140px)' }}>
           <div className="space-y-5 py-2">
+            {/* Customer Data */}
+            <div>
+              <h4 className="text-sm font-semibold mb-3">Dados do Cliente</h4>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs">Nome</Label>
+                  <Input
+                    value={customerName}
+                    onChange={e => setCustomerName(e.target.value)}
+                    className="h-8 text-sm"
+                    placeholder="Nome do cliente"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">E-mail</Label>
+                  <Input
+                    value={customerEmail}
+                    onChange={e => setCustomerEmail(e.target.value)}
+                    className="h-8 text-sm"
+                    placeholder="email@exemplo.com"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">CPF / CNPJ</Label>
+                  <Input
+                    value={customerDocument}
+                    onChange={e => setCustomerDocument(e.target.value)}
+                    className="h-8 text-sm"
+                    placeholder="000.000.000-00"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">Telefone</Label>
+                  <Input
+                    value={customerPhone}
+                    onChange={e => setCustomerPhone(e.target.value)}
+                    className="h-8 text-sm"
+                    placeholder="(00) 00000-0000"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <Separator />
+
             {/* Items */}
             <div>
               <div className="flex items-center justify-between mb-3">
