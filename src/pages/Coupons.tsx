@@ -1040,6 +1040,28 @@ const Coupons = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Bulk Delete Confirmation */}
+      <Dialog open={bulkDeleteConfirm} onOpenChange={setBulkDeleteConfirm}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Excluir Cupons em Massa</DialogTitle>
+            <DialogDescription>
+              Tem certeza que deseja excluir <strong>{selectedIds.size}</strong> cupom(ns)? 
+              Esta ação não pode ser desfeita.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBulkDeleteConfirm(false)}>
+              Cancelar
+            </Button>
+            <Button variant="destructive" onClick={handleBulkDelete} disabled={isSubmitting}>
+              {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Trash2 className="h-4 w-4 mr-2" />}
+              Excluir {selectedIds.size} cupom(ns)
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AdminLayout>
   );
 };
