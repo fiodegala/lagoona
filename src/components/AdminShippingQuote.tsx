@@ -137,52 +137,78 @@ const AdminShippingQuote = ({
   };
 
   const handleGenerateLabel = async (service: ShippingService) => {
+    if (!orderData) {
+      toast.error('Dados do pedido são necessários para gerar a etiqueta.');
+      return;
+    }
+
     setIsGenerating(true);
     setSelectedService(service);
     try {
-      // Step 1: Generate (add to cart)
-      const { data: genData, error: genErr } = await supabase.functions.invoke('melhor-envio', {
+      const { data, error } = await supabase.functions.invoke('melhor-envio', {
         body: {
-          action: 'generate',
+          action: 'generate_label',
           service_id: service.id,
-          from_zip: '74550020',
-          to_zip: cep.replace(/\D/g, ''),
-          weight,
-          width,
-          height,
-          length,
-          insurance_value: insuranceValue,
+          order_data: {
+            order_id: orderData.orderId,
+            from: {
+              name: 'FDG - Fio de Gala',
+              phone: '62999999999',
+              email: 'contato@fiodegala.com.br',
+              document: '00000000000000',
+              address: 'Rua Exemplo',
+              number: '100',
+              complement: '',
+              neighborhood: 'Centro',
+              city: 'Goiânia',
+              state_abbr: 'GO',
+              postal_code: '74550020',
+            },
+            to: {
+              name: orderData.recipientName,
+              phone: orderData.recipientPhone,
+              email: orderData.recipientEmail,
+              document: orderData.recipientDocument,
+              address: orderData.address,
+              number: orderData.number,
+              complement: orderData.complement,
+              neighborhood: orderData.neighborhood,
+              city: orderData.city,
+              state_abbr: orderData.state,
+              postal_code: orderData.zipCode.replace(/\D/g, ''),
+            },
+            products: [{
+              name: orderData.items.map((i: any) => i.name || i.product_name).join(', ').slice(0, 100) || 'Pedido',
+              quantity: 1,
+              unitary_value: orderData.total,
+            }],
+            package: {
+              weight,
+              width,
+              height,
+              length,
+            },
+            insurance_value: insuranceValue || orderData.total,
+          },
         },
       });
 
-      if (genErr || !genData?.order_id) {
+      if (error) {
+        console.error('Generate label error:', error);
         toast.error('Erro ao gerar etiqueta');
         return;
       }
 
-      // Step 2: Checkout (buy label)
-      const { error: checkErr } = await supabase.functions.invoke('melhor-envio', {
-        body: { action: 'checkout', order_ids: [genData.order_id] },
-      });
-
-      if (checkErr) {
-        toast.error('Erro ao comprar etiqueta');
-        return;
+      if (data?.label_url) {
+        setLabelUrl(data.label_url);
+        toast.success('Etiqueta gerada com sucesso!');
+      } else if (data?.error) {
+        toast.error(data.error);
+      } else {
+        toast.error('Resposta inesperada ao gerar etiqueta');
       }
-
-      // Step 3: Print (get label URL)
-      const { data: printData, error: printErr } = await supabase.functions.invoke('melhor-envio', {
-        body: { action: 'print', order_ids: [genData.order_id] },
-      });
-
-      if (printErr || !printData?.url) {
-        toast.error('Erro ao obter URL da etiqueta');
-        return;
-      }
-
-      setLabelUrl(printData.url);
-      toast.success('Etiqueta gerada com sucesso!');
-    } catch {
+    } catch (err) {
+      console.error('Label generation error:', err);
       toast.error('Erro ao gerar etiqueta');
     } finally {
       setIsGenerating(false);

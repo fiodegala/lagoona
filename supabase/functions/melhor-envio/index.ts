@@ -90,8 +90,149 @@ serve(async (req) => {
         return jsonResponse({ services: available });
       }
 
+      case "generate_label": {
+        const token = await getMelhorEnvioToken();
+        const { service_id, order_data } = params;
+
+        if (!service_id || !order_data) {
+          return jsonError("Missing service_id or order_data", 400);
+        }
+
+        const { from, to, products, insurance_value } = order_data;
+        const pkg = order_data.package || { weight: 0.3, width: 11, height: 2, length: 16 };
+
+        // Step 1: Add to cart
+        const cartBody = {
+          service: service_id,
+          from: {
+            name: from.name,
+            phone: from.phone,
+            email: from.email,
+            document: from.document,
+            address: from.address,
+            number: from.number,
+            complement: from.complement || "",
+            district: from.neighborhood,
+            city: from.city,
+            state_abbr: from.state_abbr,
+            postal_code: from.postal_code,
+          },
+          to: {
+            name: to.name,
+            phone: to.phone,
+            email: to.email,
+            document: to.document,
+            address: to.address,
+            number: to.number,
+            complement: to.complement || "",
+            district: to.neighborhood,
+            city: to.city,
+            state_abbr: to.state_abbr,
+            postal_code: to.postal_code,
+          },
+          products: products || [{ name: "Pedido", quantity: 1, unitary_value: insurance_value || 0 }],
+          volumes: [{
+            weight: pkg.weight,
+            width: pkg.width,
+            height: pkg.height,
+            length: pkg.length,
+          }],
+          options: {
+            insurance_value: insurance_value || 0,
+            receipt: false,
+            own_hand: false,
+          },
+        };
+
+        console.log("Adding to cart:", JSON.stringify(cartBody));
+
+        const cartResponse = await fetch(`${ME_API_URL}/me/cart`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            "User-Agent": "FDG contato@fiodegala.com.br",
+          },
+          body: JSON.stringify(cartBody),
+        });
+
+        const cartData = await cartResponse.json();
+        console.log("Cart response:", JSON.stringify(cartData));
+
+        if (!cartResponse.ok) {
+          const errorMsg = cartData?.message || cartData?.errors
+            ? JSON.stringify(cartData.errors || cartData.message)
+            : "Failed to add to cart";
+          return jsonError(errorMsg, 502);
+        }
+
+        const orderId = cartData.id;
+        if (!orderId) {
+          return jsonError("No order ID returned from cart", 502);
+        }
+
+        // Step 2: Checkout (pay for label)
+        const checkoutResponse = await fetch(`${ME_API_URL}/me/shipment/checkout`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            "User-Agent": "FDG contato@fiodegala.com.br",
+          },
+          body: JSON.stringify({ orders: [orderId] }),
+        });
+
+        const checkoutData = await checkoutResponse.json();
+        console.log("Checkout response:", JSON.stringify(checkoutData));
+
+        if (!checkoutResponse.ok) {
+          return jsonError(`Checkout failed: ${JSON.stringify(checkoutData)}`, 502);
+        }
+
+        // Step 3: Generate label
+        const generateResponse = await fetch(`${ME_API_URL}/me/shipment/generate`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            "User-Agent": "FDG contato@fiodegala.com.br",
+          },
+          body: JSON.stringify({ orders: [orderId] }),
+        });
+
+        const generateData = await generateResponse.json();
+        console.log("Generate response:", JSON.stringify(generateData));
+
+        // Step 4: Get print URL
+        const printResponse = await fetch(`${ME_API_URL}/me/shipment/print`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            "User-Agent": "FDG contato@fiodegala.com.br",
+          },
+          body: JSON.stringify({ orders: [orderId], mode: "public" }),
+        });
+
+        const printData = await printResponse.json();
+        console.log("Print response:", JSON.stringify(printData));
+
+        const labelUrl = printData?.url || null;
+
+        return jsonResponse({
+          order_id: orderId,
+          label_url: labelUrl,
+          checkout: checkoutData,
+          print: printData,
+        });
+      }
+
       case "generate": {
-        // Generate shipping label
+        // Legacy: simple cart add
         const token = await getMelhorEnvioToken();
         const { order } = params;
 
@@ -99,7 +240,6 @@ serve(async (req) => {
           return jsonError("Missing order data", 400);
         }
 
-        // Step 1: Add to cart
         const cartResponse = await fetch(`${ME_API_URL}/me/cart`, {
           method: "POST",
           headers: {
