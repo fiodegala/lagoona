@@ -165,6 +165,13 @@ const CheckoutPage = () => {
       return;
     }
 
+    // Validate CPF/CNPJ format
+    const docDigits = formData.document.replace(/\D/g, '');
+    if (docDigits.length !== 11 && docDigits.length !== 14) {
+      toast.error('CPF deve ter 11 dígitos ou CNPJ deve ter 14 dígitos');
+      return;
+    }
+
     setIsSubmitting(true);
 
     // Track checkout_start event
