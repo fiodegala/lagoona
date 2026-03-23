@@ -14,7 +14,7 @@ import WhatsAppTemplatesSettings from '@/components/settings/WhatsAppTemplatesSe
 import DealsCountdownSettings from '@/components/settings/DealsCountdownSettings';
 import FeaturedProductSettings from '@/components/settings/FeaturedProductSettings';
 import VideoTestimonialsSettings from '@/components/settings/VideoTestimonialsSettings';
-import RecoveryCouponSettings from '@/components/settings/RecoveryCouponSettings';
+
 import SpinWheelSettings from '@/components/settings/SpinWheelSettings';
 import WholesaleVideoSettings from '@/components/settings/WholesaleVideoSettings';
 import LowStockAlertSettings from '@/components/settings/LowStockAlertSettings';
