@@ -555,7 +555,13 @@ const Coupons = () => {
                   {filteredCoupons.map((coupon) => {
                     const status = getCouponStatus(coupon);
                     return (
-                      <TableRow key={coupon.id}>
+                      <TableRow key={coupon.id} data-state={selectedIds.has(coupon.id) ? 'selected' : undefined}>
+                        <TableCell>
+                          <Checkbox
+                            checked={selectedIds.has(coupon.id)}
+                            onCheckedChange={() => toggleSelect(coupon.id)}
+                          />
+                        </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
                             <code className="bg-muted px-2 py-1 rounded font-mono text-sm font-bold">
