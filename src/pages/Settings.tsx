@@ -222,7 +222,7 @@ const Settings = () => {
             <VideoTestimonialsSettings />
             <CustomerFeedbackSettings />
             <SpinWheelSettings />
-            <RecoveryCouponSettings />
+            
             <WholesaleVideoSettings />
             <WhatsAppTemplatesSettings />
             <LowStockAlertSettings />
