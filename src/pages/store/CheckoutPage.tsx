@@ -446,7 +446,10 @@ const CheckoutPage = () => {
                     </div>
                     <div>
                       <Label htmlFor="document">CPF / CNPJ *</Label>
-                      <Input id="document" name="document" placeholder="000.000.000-00" value={formData.document} onChange={handleInputChange} required />
+                      <Input id="document" name="document" placeholder="000.000.000-00" value={formData.document} onChange={handleInputChange} required minLength={11} />
+                      {formData.document && formData.document.replace(/\D/g, '').length > 0 && formData.document.replace(/\D/g, '').length !== 11 && formData.document.replace(/\D/g, '').length !== 14 && (
+                        <p className="text-xs text-destructive mt-1">CPF deve ter 11 dígitos ou CNPJ 14 dígitos</p>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
