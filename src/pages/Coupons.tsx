@@ -67,6 +67,8 @@ const Coupons = () => {
   const [editingCoupon, setEditingCoupon] = useState<Coupon | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<Coupon | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
 
   const [formData, setFormData] = useState<CreateCouponData>({
     code: '',
