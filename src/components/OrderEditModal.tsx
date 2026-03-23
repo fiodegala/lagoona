@@ -109,6 +109,8 @@ const OrderEditModal = ({ open, onOpenChange, order, onSaved }: OrderEditModalPr
         edit_discount_type: discountType,
         edit_discount_value: discountValue,
         shipping_cost: shippingCost,
+        customer_document: customerDocument,
+        customer_phone: customerPhone,
         edited_at: new Date().toISOString(),
       };
 
@@ -119,6 +121,8 @@ const OrderEditModal = ({ open, onOpenChange, order, onSaved }: OrderEditModalPr
           total: Math.round(total * 100) / 100,
           payment_status: paymentStatus,
           notes,
+          customer_name: customerName,
+          customer_email: customerEmail,
           metadata: newMetadata as any,
         })
         .eq('id', order.id);
