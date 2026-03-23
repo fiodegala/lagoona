@@ -537,6 +537,12 @@ const Coupons = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-10">
+                      <Checkbox
+                        checked={filteredCoupons.length > 0 && selectedIds.size === filteredCoupons.length}
+                        onCheckedChange={toggleSelectAll}
+                      />
+                    </TableHead>
                     <TableHead>Código</TableHead>
                     <TableHead>Tipo / Desconto</TableHead>
                     <TableHead>Usos</TableHead>
