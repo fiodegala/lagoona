@@ -45,6 +45,10 @@ const OrderEditModal = ({ open, onOpenChange, order, onSaved }: OrderEditModalPr
   const [paymentStatus, setPaymentStatus] = useState('pending');
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
+  const [customerName, setCustomerName] = useState('');
+  const [customerEmail, setCustomerEmail] = useState('');
+  const [customerDocument, setCustomerDocument] = useState('');
+  const [customerPhone, setCustomerPhone] = useState('');
 
   useEffect(() => {
     if (!order) return;
@@ -67,6 +71,10 @@ const OrderEditModal = ({ open, onOpenChange, order, onSaved }: OrderEditModalPr
     setShippingCost(Number(meta.shipping_cost || 0));
     setPaymentStatus(order.payment_status || 'pending');
     setNotes(order.notes || '');
+    setCustomerName(order.customer_name || '');
+    setCustomerEmail(order.customer_email || '');
+    setCustomerDocument(meta.customer_document || '');
+    setCustomerPhone(meta.customer_phone || '');
   }, [order]);
 
   if (!order) return null;
