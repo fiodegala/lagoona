@@ -122,23 +122,7 @@ serve(async (req) => {
           currency: "BRL",
         }).format(cart.subtotal || 0);
 
-        // Auto-generate a unique recovery coupon (if enabled)
-        let couponCode = "";
-        if (couponConfig.enabled) {
-          couponCode = generateCouponCode(couponConfig.prefix, couponConfig.discount_value);
-
-          const expiresAt = new Date(Date.now() + couponConfig.expiration_hours * 60 * 60 * 1000).toISOString();
-          await supabase.from("coupons").insert({
-            code: couponCode,
-            description: `Cupom de recuperação - Carrinho abandonado (${name})`,
-            discount_type: couponConfig.discount_type,
-            discount_value: couponConfig.discount_value,
-            max_uses: 1,
-            max_uses_per_customer: 1,
-            is_active: true,
-            expires_at: expiresAt,
-          });
-        }
+        const couponCode = "";
 
         const message = messageTemplate
           .replaceAll("{nome}", name)
