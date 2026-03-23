@@ -204,7 +204,11 @@ const Orders = () => {
     setCustomUrl(order.tracking_url || '');
     
     let phone = '';
-    if (order.customer_id) {
+    const orderMeta = order.metadata || {};
+    const orderAddr = order.shipping_address || {};
+    // Prioridade: telefone do pedido (metadata/endereço) > cadastro do cliente
+    phone = orderMeta.customer_phone || orderAddr.phone || '';
+    if (!phone && order.customer_id) {
       const { data: customer } = await supabase.from('customers').select('phone').eq('id', order.customer_id).single();
       phone = customer?.phone || '';
     }
