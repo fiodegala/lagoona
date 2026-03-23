@@ -101,20 +101,7 @@ serve(async (req) => {
       console.error("Failed to load custom template:", e);
     }
 
-    // Load recovery coupon configuration
-    let couponConfig: RecoveryCouponConfig = { ...DEFAULT_COUPON_CONFIG };
-    try {
-      const { data: couponConfigData } = await supabase
-        .from("store_config")
-        .select("value")
-        .eq("key", "recovery_coupon_config")
-        .maybeSingle();
-      if (couponConfigData?.value && typeof couponConfigData.value === "object") {
-        couponConfig = { ...DEFAULT_COUPON_CONFIG, ...(couponConfigData.value as Record<string, unknown>) } as RecoveryCouponConfig;
-      }
-    } catch (e) {
-      console.error("Failed to load coupon config:", e);
-    }
+    // Coupon creation disabled — all coupons are now created manually
 
     for (const cart of carts) {
       try {
