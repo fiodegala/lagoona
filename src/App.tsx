@@ -385,6 +385,24 @@ const App = () => (
                 }
               />
 
+              <Route
+                path="/admin/ordens-servico"
+                element={
+                  <ProtectedRoute>
+                    <ServiceOrders />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/admin/comunicados"
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <AdminAnnouncements />
+                  </ProtectedRoute>
+                }
+              />
+
               {/* Legacy redirects for admin routes */}
               <Route path="/products" element={<Navigate to="/admin/products" replace />} />
               <Route path="/categories" element={<Navigate to="/admin/categories" replace />} />
