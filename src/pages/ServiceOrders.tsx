@@ -7,15 +7,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { Plus, MessageSquare, Clock, CheckCircle2, XCircle, Search, Filter } from 'lucide-react';
+import { Plus, MessageSquare, Clock, CheckCircle2, XCircle, Search, Filter, Settings2, Pencil, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 
-const DEPARTMENTS = ['Compras', 'TI / Tecnologia', 'Marketing', 'Financeiro / RH'];
 const PRIORITIES = [
   { value: 'low', label: 'Baixa', color: 'bg-muted text-muted-foreground' },
   { value: 'normal', label: 'Normal', color: 'bg-primary/10 text-primary' },
@@ -36,11 +35,29 @@ const ServiceOrders = () => {
   const queryClient = useQueryClient();
   const [showCreate, setShowCreate] = useState(false);
   const [showDetail, setShowDetail] = useState<string | null>(null);
+  const [showDeptManager, setShowDeptManager] = useState(false);
   const [filterDept, setFilterDept] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
   const [search, setSearch] = useState('');
   const [newComment, setNewComment] = useState('');
   const [form, setForm] = useState({ title: '', description: '', department: '', priority: 'normal' });
+  const [deptForm, setDeptForm] = useState({ name: '', editingId: '' });
+
+  // Fetch departments from DB
+  const { data: departments = [] } = useQuery({
+    queryKey: ['service-order-departments'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('service_order_departments')
+        .select('*')
+        .eq('is_active', true)
+        .order('name');
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const departmentNames = departments.map((d: any) => d.name as string);
 
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ['service-orders'],
@@ -64,7 +81,6 @@ const ServiceOrders = () => {
   });
 
   const profileMap = Object.fromEntries(profiles.map((p: any) => [p.user_id, p.full_name]));
-
   const selectedOrder = orders.find((o: any) => o.id === showDetail);
 
   const { data: comments = [] } = useQuery({
@@ -81,6 +97,7 @@ const ServiceOrders = () => {
     },
   });
 
+  // --- Mutations ---
   const createMutation = useMutation({
     mutationFn: async () => {
       const { error } = await supabase.from('service_orders').insert({
@@ -136,6 +153,44 @@ const ServiceOrders = () => {
     },
   });
 
+  // Department CRUD mutations
+  const saveDeptMutation = useMutation({
+    mutationFn: async () => {
+      if (deptForm.editingId) {
+        const { error } = await supabase
+          .from('service_order_departments')
+          .update({ name: deptForm.name.trim() })
+          .eq('id', deptForm.editingId);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('service_order_departments')
+          .insert({ name: deptForm.name.trim() });
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['service-order-departments'] });
+      setDeptForm({ name: '', editingId: '' });
+      toast.success(deptForm.editingId ? 'Departamento atualizado!' : 'Departamento criado!');
+    },
+    onError: () => toast.error('Erro ao salvar departamento'),
+  });
+
+  const deleteDeptMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('service_order_departments')
+        .update({ is_active: false })
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['service-order-departments'] });
+      toast.success('Departamento removido!');
+    },
+  });
+
   const filtered = orders.filter((o: any) => {
     if (filterDept !== 'all' && o.department !== filterDept) return false;
     if (filterStatus !== 'all' && o.status !== filterStatus) return false;
@@ -171,9 +226,16 @@ const ServiceOrders = () => {
             <h1 className="text-2xl font-bold">Ordens de Serviço</h1>
             <p className="text-muted-foreground">Gerencie solicitações entre departamentos</p>
           </div>
-          <Button onClick={() => setShowCreate(true)}>
-            <Plus className="h-4 w-4 mr-2" /> Nova OS
-          </Button>
+          <div className="flex gap-2">
+            {isAdmin && (
+              <Button variant="outline" onClick={() => setShowDeptManager(true)}>
+                <Settings2 className="h-4 w-4 mr-2" /> Departamentos
+              </Button>
+            )}
+            <Button onClick={() => setShowCreate(true)}>
+              <Plus className="h-4 w-4 mr-2" /> Nova OS
+            </Button>
+          </div>
         </div>
 
         {/* Filters */}
@@ -186,7 +248,7 @@ const ServiceOrders = () => {
             <SelectTrigger className="w-[200px]"><Filter className="h-4 w-4 mr-2" /><SelectValue placeholder="Departamento" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos os setores</SelectItem>
-              {DEPARTMENTS.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+              {departmentNames.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
             </SelectContent>
           </Select>
           <Select value={filterStatus} onValueChange={setFilterStatus}>
@@ -239,7 +301,7 @@ const ServiceOrders = () => {
               <div><Label>Departamento</Label>
                 <Select value={form.department} onValueChange={(v) => setForm({ ...form, department: v })}>
                   <SelectTrigger><SelectValue placeholder="Selecione o setor" /></SelectTrigger>
-                  <SelectContent>{DEPARTMENTS.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}</SelectContent>
+                  <SelectContent>{departmentNames.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div><Label>Prioridade</Label>
@@ -265,9 +327,7 @@ const ServiceOrders = () => {
             {selectedOrder && (
               <>
                 <DialogHeader>
-                  <DialogTitle className="flex items-center gap-2">
-                    {selectedOrder.title}
-                  </DialogTitle>
+                  <DialogTitle className="flex items-center gap-2">{selectedOrder.title}</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4">
                   <div className="flex flex-wrap gap-2">
@@ -283,7 +343,6 @@ const ServiceOrders = () => {
                   </div>
                   <Card><CardContent className="p-4 whitespace-pre-wrap text-sm">{selectedOrder.description}</CardContent></Card>
 
-                  {/* Status actions (admin only) */}
                   {isAdmin && getNextStatuses(selectedOrder.status).length > 0 && (
                     <div className="flex gap-2">
                       <span className="text-sm font-medium self-center">Alterar status:</span>
@@ -298,7 +357,6 @@ const ServiceOrders = () => {
                     </div>
                   )}
 
-                  {/* Comments */}
                   <div>
                     <h3 className="font-semibold flex items-center gap-2 mb-3"><MessageSquare className="h-4 w-4" /> Comentários</h3>
                     <div className="space-y-3 max-h-60 overflow-y-auto">
@@ -324,6 +382,45 @@ const ServiceOrders = () => {
                 </div>
               </>
             )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Department Manager Dialog (Admin only) */}
+        <Dialog open={showDeptManager} onOpenChange={setShowDeptManager}>
+          <DialogContent className="max-w-md">
+            <DialogHeader><DialogTitle>Gerenciar Departamentos</DialogTitle></DialogHeader>
+            <div className="space-y-4">
+              <div className="flex gap-2">
+                <Input
+                  value={deptForm.name}
+                  onChange={(e) => setDeptForm({ ...deptForm, name: e.target.value })}
+                  placeholder="Nome do departamento"
+                  onKeyDown={(e) => e.key === 'Enter' && deptForm.name.trim() && saveDeptMutation.mutate()}
+                />
+                <Button onClick={() => saveDeptMutation.mutate()} disabled={!deptForm.name.trim() || saveDeptMutation.isPending}>
+                  {deptForm.editingId ? 'Salvar' : 'Adicionar'}
+                </Button>
+                {deptForm.editingId && (
+                  <Button variant="ghost" onClick={() => setDeptForm({ name: '', editingId: '' })}>Cancelar</Button>
+                )}
+              </div>
+              <div className="space-y-2 max-h-60 overflow-y-auto">
+                {departments.map((dept: any) => (
+                  <div key={dept.id} className="flex items-center justify-between bg-muted/50 rounded-lg px-3 py-2">
+                    <span className="text-sm font-medium">{dept.name}</span>
+                    <div className="flex gap-1">
+                      <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setDeptForm({ name: dept.name, editingId: dept.id })}>
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" onClick={() => deleteDeptMutation.mutate(dept.id)}>
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+                {departments.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">Nenhum departamento cadastrado.</p>}
+              </div>
+            </div>
           </DialogContent>
         </Dialog>
       </div>
