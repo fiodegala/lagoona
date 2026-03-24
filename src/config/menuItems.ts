@@ -24,6 +24,8 @@ import {
   Handshake,
   BookOpen,
   DollarSign,
+  ClipboardList,
+  Megaphone,
 } from 'lucide-react';
 
 export interface MenuItem {
@@ -62,6 +64,8 @@ export const navItems: MenuItem[] = [
   { icon: Upload, label: 'Importar Legado', path: '/admin/importar-legado', menuKey: 'import-legacy', requireAdmin: true },
   { icon: Upload, label: 'Importar Dados (BI)', path: '/admin/importar-dados', menuKey: 'import-data', requireAdmin: true },
   { icon: BookOpen, label: 'Manual', path: '/admin/manual', menuKey: 'manual' },
+  { icon: ClipboardList, label: 'Ordens de Serviço', path: '/admin/ordens-servico', menuKey: 'service-orders' },
+  { icon: Megaphone, label: 'Comunicados', path: '/admin/comunicados', menuKey: 'announcements', requireAdmin: true },
 ];
 
 export const settingsItems: MenuItem[] = [

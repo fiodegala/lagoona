@@ -45,6 +45,8 @@ const Affiliates = lazy(() => import("./pages/Affiliates"));
 const DataImport = lazy(() => import("./pages/DataImport"));
 const Manual = lazy(() => import("./pages/Manual"));
 const ProductPricing = lazy(() => import("./pages/ProductPricing"));
+const ServiceOrders = lazy(() => import("./pages/ServiceOrders"));
+const AdminAnnouncements = lazy(() => import("./pages/AdminAnnouncements"));
 
 // Lazy-loaded Store Pages
 const HomePage = lazy(() => import("./pages/store/HomePage"));
@@ -379,6 +381,24 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <Manual />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/admin/ordens-servico"
+                element={
+                  <ProtectedRoute>
+                    <ServiceOrders />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/admin/comunicados"
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <AdminAnnouncements />
                   </ProtectedRoute>
                 }
               />
