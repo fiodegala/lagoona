@@ -11,6 +11,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { Plus, MessageSquare, Clock, CheckCircle2, XCircle, Search, Filter, Settings2, Pencil, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
@@ -30,20 +31,26 @@ const STATUSES = [
   { value: 'cancelled', label: 'Cancelada', icon: XCircle, color: 'bg-destructive/10 text-destructive' },
 ];
 
+const TAB_FILTERS: Record<string, string[]> = {
+  all: [],
+  pending: ['open', 'awaiting_approval'],
+  in_progress: ['approved', 'in_progress'],
+  done: ['completed', 'cancelled'],
+};
+
 const ServiceOrders = () => {
   const { user, profile, isAdmin } = useAuth();
   const queryClient = useQueryClient();
   const [showCreate, setShowCreate] = useState(false);
   const [showDetail, setShowDetail] = useState<string | null>(null);
   const [showDeptManager, setShowDeptManager] = useState(false);
+  const [activeTab, setActiveTab] = useState('all');
   const [filterDept, setFilterDept] = useState('all');
-  const [filterStatus, setFilterStatus] = useState('all');
   const [search, setSearch] = useState('');
   const [newComment, setNewComment] = useState('');
   const [form, setForm] = useState({ title: '', description: '', department: '', priority: 'normal' });
   const [deptForm, setDeptForm] = useState({ name: '', editingId: '' });
 
-  // Fetch departments from DB
   const { data: departments = [] } = useQuery({
     queryKey: ['service-order-departments'],
     queryFn: async () => {
@@ -97,7 +104,6 @@ const ServiceOrders = () => {
     },
   });
 
-  // --- Mutations ---
   const createMutation = useMutation({
     mutationFn: async () => {
       const { error } = await supabase.from('service_orders').insert({
@@ -110,11 +116,26 @@ const ServiceOrders = () => {
       });
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ['service-orders'] });
       setShowCreate(false);
+      const createdTitle = form.title.trim();
+      const createdDept = form.department;
       setForm({ title: '', description: '', department: '', priority: 'normal' });
       toast.success('Ordem de serviço criada!');
+
+      // Notify admins via push
+      try {
+        await supabase.functions.invoke('send-push', {
+          body: {
+            title: 'Nova Ordem de Serviço',
+            message: `${profile?.full_name || 'Usuário'} abriu uma OS: "${createdTitle}" - ${createdDept}`,
+            type: 'service_order',
+          },
+        });
+      } catch (e) {
+        // silent - notification is best-effort
+      }
     },
     onError: () => toast.error('Erro ao criar OS'),
   });
@@ -153,7 +174,6 @@ const ServiceOrders = () => {
     },
   });
 
-  // Department CRUD mutations
   const saveDeptMutation = useMutation({
     mutationFn: async () => {
       if (deptForm.editingId) {
@@ -192,11 +212,18 @@ const ServiceOrders = () => {
   });
 
   const filtered = orders.filter((o: any) => {
+    const tabStatuses = TAB_FILTERS[activeTab];
+    if (tabStatuses && tabStatuses.length > 0 && !tabStatuses.includes(o.status)) return false;
     if (filterDept !== 'all' && o.department !== filterDept) return false;
-    if (filterStatus !== 'all' && o.status !== filterStatus) return false;
     if (search && !o.title.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
   });
+
+  const countByTab = (tab: string) => {
+    const statuses = TAB_FILTERS[tab];
+    if (!statuses || statuses.length === 0) return orders.length;
+    return orders.filter((o: any) => statuses.includes(o.status)).length;
+  };
 
   const getStatusBadge = (status: string) => {
     const s = STATUSES.find((st) => st.value === status);
@@ -216,6 +243,37 @@ const ServiceOrders = () => {
       in_progress: ['completed', 'cancelled'],
     };
     return flow[current] || [];
+  };
+
+  const renderOrdersList = () => {
+    if (isLoading) return <p className="text-muted-foreground py-8 text-center">Carregando...</p>;
+    if (filtered.length === 0) return <Card><CardContent className="py-12 text-center text-muted-foreground">Nenhuma ordem de serviço encontrada.</CardContent></Card>;
+    return (
+      <div className="space-y-3">
+        {filtered.map((order: any) => (
+          <Card key={order.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setShowDetail(order.id)}>
+            <CardContent className="p-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div className="space-y-1">
+                  <p className="font-semibold">{order.title}</p>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <span>{order.department}</span>
+                    <span>•</span>
+                    <span>{profileMap[order.created_by] || 'Usuário'}</span>
+                    <span>•</span>
+                    <span>{format(new Date(order.created_at), 'dd/MM/yyyy HH:mm')}</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  {getPriorityBadge(order.priority)}
+                  {getStatusBadge(order.status)}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
   };
 
   return (
@@ -238,59 +296,35 @@ const ServiceOrders = () => {
           </div>
         </div>
 
-        {/* Filters */}
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Buscar por título..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
-          </div>
-          <Select value={filterDept} onValueChange={setFilterDept}>
-            <SelectTrigger className="w-[200px]"><Filter className="h-4 w-4 mr-2" /><SelectValue placeholder="Departamento" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos os setores</SelectItem>
-              {departmentNames.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <Select value={filterStatus} onValueChange={setFilterStatus}>
-            <SelectTrigger className="w-[200px]"><SelectValue placeholder="Status" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos os status</SelectItem>
-              {STATUSES.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </div>
+        {/* Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList>
+            <TabsTrigger value="all">Todas ({countByTab('all')})</TabsTrigger>
+            <TabsTrigger value="pending">Pendentes ({countByTab('pending')})</TabsTrigger>
+            <TabsTrigger value="in_progress">Em Andamento ({countByTab('in_progress')})</TabsTrigger>
+            <TabsTrigger value="done">Concluídas ({countByTab('done')})</TabsTrigger>
+          </TabsList>
 
-        {/* List */}
-        {isLoading ? (
-          <p className="text-muted-foreground">Carregando...</p>
-        ) : filtered.length === 0 ? (
-          <Card><CardContent className="py-12 text-center text-muted-foreground">Nenhuma ordem de serviço encontrada.</CardContent></Card>
-        ) : (
-          <div className="space-y-3">
-            {filtered.map((order: any) => (
-              <Card key={order.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setShowDetail(order.id)}>
-                <CardContent className="p-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                    <div className="space-y-1">
-                      <p className="font-semibold">{order.title}</p>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <span>{order.department}</span>
-                        <span>•</span>
-                        <span>{profileMap[order.created_by] || 'Usuário'}</span>
-                        <span>•</span>
-                        <span>{format(new Date(order.created_at), 'dd/MM/yyyy HH:mm')}</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {getPriorityBadge(order.priority)}
-                      {getStatusBadge(order.status)}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+          {/* Filters */}
+          <div className="flex flex-col sm:flex-row gap-3 mt-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input placeholder="Buscar por título..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
+            </div>
+            <Select value={filterDept} onValueChange={setFilterDept}>
+              <SelectTrigger className="w-[200px]"><Filter className="h-4 w-4 mr-2" /><SelectValue placeholder="Departamento" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os setores</SelectItem>
+                {departmentNames.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+              </SelectContent>
+            </Select>
           </div>
-        )}
+
+          <TabsContent value="all">{renderOrdersList()}</TabsContent>
+          <TabsContent value="pending">{renderOrdersList()}</TabsContent>
+          <TabsContent value="in_progress">{renderOrdersList()}</TabsContent>
+          <TabsContent value="done">{renderOrdersList()}</TabsContent>
+        </Tabs>
 
         {/* Create Dialog */}
         <Dialog open={showCreate} onOpenChange={setShowCreate}>
@@ -385,7 +419,7 @@ const ServiceOrders = () => {
           </DialogContent>
         </Dialog>
 
-        {/* Department Manager Dialog (Admin only) */}
+        {/* Department Manager Dialog */}
         <Dialog open={showDeptManager} onOpenChange={setShowDeptManager}>
           <DialogContent className="max-w-md">
             <DialogHeader><DialogTitle>Gerenciar Departamentos</DialogTitle></DialogHeader>
