@@ -18,6 +18,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import PendingTransferModal from '@/components/PendingTransferModal';
+import AnnouncementPopup from '@/components/AnnouncementPopup';
 import {
   DropdownMenu,
   DropdownMenuContent,
