@@ -116,11 +116,26 @@ const ServiceOrders = () => {
       });
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ['service-orders'] });
       setShowCreate(false);
+      const createdTitle = form.title.trim();
+      const createdDept = form.department;
       setForm({ title: '', description: '', department: '', priority: 'normal' });
       toast.success('Ordem de serviço criada!');
+
+      // Notify admins via push
+      try {
+        await supabase.functions.invoke('send-push', {
+          body: {
+            title: 'Nova Ordem de Serviço',
+            message: `${profile?.full_name || 'Usuário'} abriu uma OS: "${createdTitle}" - ${createdDept}`,
+            type: 'service_order',
+          },
+        });
+      } catch (e) {
+        // silent - notification is best-effort
+      }
     },
     onError: () => toast.error('Erro ao criar OS'),
   });
