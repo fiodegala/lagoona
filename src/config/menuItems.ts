@@ -24,6 +24,8 @@ import {
   Handshake,
   BookOpen,
   DollarSign,
+  ClipboardList,
+  Megaphone,
 } from 'lucide-react';
 
 export interface MenuItem {
