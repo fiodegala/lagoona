@@ -169,7 +169,7 @@ const AdminAnnouncements = () => {
             <div className="space-y-4">
               <div><Label>Título *</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Título do comunicado" /></div>
               <div><Label>Mensagem *</Label><Textarea value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} placeholder="Conteúdo do comunicado..." rows={4} /></div>
-              <div><Label>Imagem (opcional)</Label><ImageUpload value={form.image_url} onChange={(url) => setForm({ ...form, image_url: url })} /></div>
+              <div><Label>Imagem (opcional)</Label><ImageUpload value={form.image_url} onChange={(url) => setForm({ ...form, image_url: url || '' })} bucket="product-images" folder="announcements" /></div>
               <div className="grid grid-cols-2 gap-3">
                 <div><Label>URL do link (opcional)</Label><Input value={form.link_url} onChange={(e) => setForm({ ...form, link_url: e.target.value })} placeholder="https://..." /></div>
                 <div><Label>Texto do botão</Label><Input value={form.link_text} onChange={(e) => setForm({ ...form, link_text: e.target.value })} placeholder="Saiba mais" /></div>
