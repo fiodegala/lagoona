@@ -82,6 +82,10 @@ export const olistService = {
     return callOlist('save-config', config as Record<string, unknown>);
   },
 
+  async pushProducts(): Promise<{ processed: number; failed: number; total: number; created: number; updated: number }> {
+    return callOlist('push-products');
+  },
+
   async syncProducts(): Promise<{ processed: number; failed: number; total: number }> {
     return callOlist('sync-products');
   },
