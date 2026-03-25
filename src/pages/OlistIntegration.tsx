@@ -190,7 +190,7 @@ const OlistIntegration = () => {
         </div>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           <Card>
             <CardContent className="pt-6">
               <div className="flex flex-col items-center text-center gap-3">
@@ -204,14 +204,27 @@ const OlistIntegration = () => {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border-primary/30 bg-primary/5">
             <CardContent className="pt-6">
               <div className="flex flex-col items-center text-center gap-3">
                 <Package className="h-8 w-8 text-primary" />
-                <p className="font-medium">Sincronizar Produtos</p>
+                <p className="font-medium">Enviar para Olist</p>
+                <Button onClick={pushProducts} disabled={isPushingProducts} className="w-full">
+                  {isPushingProducts ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Zap className="h-4 w-4 mr-2" />}
+                  Enviar Produtos
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex flex-col items-center text-center gap-3">
+                <Package className="h-8 w-8 text-muted-foreground" />
+                <p className="font-medium">Importar do Olist</p>
                 <Button onClick={syncProducts} disabled={isSyncingProducts} className="w-full" variant="outline">
                   {isSyncingProducts ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <RefreshCw className="h-4 w-4 mr-2" />}
-                  Sincronizar
+                  Importar
                 </Button>
               </div>
             </CardContent>
