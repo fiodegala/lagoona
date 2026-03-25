@@ -26,6 +26,7 @@ import {
   DollarSign,
   ClipboardList,
   Megaphone,
+  Zap,
 } from 'lucide-react';
 
 export interface MenuItem {
