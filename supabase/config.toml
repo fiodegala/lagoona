@@ -69,3 +69,6 @@ verify_jwt = false
 
 [functions.update-order-status]
 verify_jwt = false
+
+[functions.olist-webhooks]
+verify_jwt = false
