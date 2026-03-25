@@ -213,63 +213,20 @@ const PendingTransferModal: React.FC = () => {
     setIsProcessing(true);
 
     try {
-      const sourceQuery = supabase
-        .from('store_stock')
-        .select('id, quantity')
-        .eq('store_id', transfer.from_store_id)
-        .eq('product_id', transfer.product_id);
-      if (transfer.variation_id) sourceQuery.eq('variation_id', transfer.variation_id);
-      else sourceQuery.is('variation_id', null);
+      const { data, error } = await supabase.rpc('process_stock_transfer', {
+        _transfer_id: transfer.id,
+        _action: 'approve',
+        _user_id: user!.id,
+      });
 
-      const { data: source } = await sourceQuery.maybeSingle();
+      if (error) throw error;
 
-      if (!source || source.quantity < transfer.quantity) {
-        toast({ title: 'Estoque insuficiente na origem', variant: 'destructive' });
+      const result = data as any;
+      if (!result?.success) {
+        toast({ title: 'Erro ao aprovar', description: result?.error || 'Erro desconhecido', variant: 'destructive' });
         setIsProcessing(false);
         return;
       }
-
-      await supabase
-        .from('store_stock')
-        .update({ quantity: Math.max(0, source.quantity - transfer.quantity), updated_at: new Date().toISOString() } as any)
-        .eq('id', source.id);
-
-      // Check if destination is an online/website store (aggregated stock)
-      // If so, skip adding stock — online stock = sum of physical stores
-      const { data: destStoreData } = await supabase.from('stores').select('type').eq('id', transfer.to_store_id).single();
-      const isOnlineDestination = destStoreData?.type === 'online' || destStoreData?.type === 'website';
-
-      if (!isOnlineDestination) {
-        const destQuery = supabase
-          .from('store_stock')
-          .select('id, quantity')
-          .eq('store_id', transfer.to_store_id)
-          .eq('product_id', transfer.product_id);
-        if (transfer.variation_id) destQuery.eq('variation_id', transfer.variation_id);
-        else destQuery.is('variation_id', null);
-
-        const { data: dest } = await destQuery.maybeSingle();
-        if (dest) {
-          await supabase
-            .from('store_stock')
-            .update({ quantity: dest.quantity + transfer.quantity, updated_at: new Date().toISOString() } as any)
-            .eq('id', dest.id);
-        } else {
-          await supabase
-            .from('store_stock')
-            .insert({
-              store_id: transfer.to_store_id,
-              product_id: transfer.product_id,
-              variation_id: transfer.variation_id,
-              quantity: transfer.quantity,
-            } as any);
-        }
-      }
-
-      await supabase
-        .from('stock_transfers')
-        .update({ status: 'completed', approved_by: user!.id } as any)
-        .eq('id', transfer.id);
 
       toast({ title: 'Transferência aprovada!', description: 'O estoque foi atualizado.' });
       await loadPendingForMyStore();
