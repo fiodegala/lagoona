@@ -32,6 +32,7 @@ const OlistIntegration = () => {
   const [logs, setLogs] = useState<OlistSyncLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isTesting, setIsTesting] = useState(false);
+  const [isPushingProducts, setIsPushingProducts] = useState(false);
   const [isSyncingProducts, setIsSyncingProducts] = useState(false);
   const [isSyncingOrders, setIsSyncingOrders] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<'unknown' | 'connected' | 'error'>('unknown');
