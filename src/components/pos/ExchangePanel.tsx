@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
+import VariationPickerModal from './VariationPickerModal';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
@@ -78,6 +79,8 @@ const ExchangePanel = ({
   const [useCredit, setUseCredit] = useState(true);
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card' | 'pix' | null>(null);
   const [cashReceived, setCashReceived] = useState('');
+  const [variationPickerProduct, setVariationPickerProduct] = useState<ProductResult | null>(null);
+  const [variationPickerTarget, setVariationPickerTarget] = useState<'returned' | 'new'>('new');
 
   const calcItemTotal = (item: ExchangeItem) => {
     const gross = item.unit_price * item.quantity;
@@ -107,9 +110,12 @@ const ExchangePanel = ({
     }
   }, []);
 
-  const handleAddReturnedProduct = useCallback((product: ProductResult) => {
-    const unitPrice = resolvePrice(product, returnedItemsPriceType);
-    const existing = returnedItems.find(i => i.product_id === product.id && !i.variation_id);
+  const addReturnedWithVariation = useCallback((product: ProductResult, variationId?: string) => {
+    const variation = variationId ? product.variations.find(v => v.id === variationId) : undefined;
+    const basePrice = variation?.price ?? resolvePrice(product, returnedItemsPriceType);
+    const itemName = variation?.label ? `${product.name} — ${variation.label}` : product.name;
+    const existingKey = `${product.id}_${variationId || ''}`;
+    const existing = returnedItems.find(i => `${i.product_id}_${i.variation_id || ''}` === existingKey);
     if (existing) {
       setReturnedItems(items =>
         items.map(i => i.id === existing.id ? { ...i, quantity: i.quantity + 1 } : i)
@@ -118,17 +124,23 @@ const ExchangePanel = ({
       setReturnedItems(items => [...items, {
         id: crypto.randomUUID(),
         product_id: product.id,
-        name: product.name,
-        unit_price: unitPrice,
+        variation_id: variationId,
+        name: itemName,
+        sku: variation?.sku || undefined,
+        unit_price: basePrice,
         quantity: 1,
         max_stock: 999,
       }]);
     }
   }, [returnedItems, returnedItemsPriceType, resolvePrice]);
 
-  const handleAddNewProduct = useCallback((product: ProductResult) => {
-    const unitPrice = resolvePrice(product, newItemsPriceType);
-    const existing = newItems.find(i => i.product_id === product.id && !i.variation_id);
+  const addNewWithVariation = useCallback((product: ProductResult, variationId?: string) => {
+    const variation = variationId ? product.variations.find(v => v.id === variationId) : undefined;
+    const basePrice = variation?.price ?? resolvePrice(product, newItemsPriceType);
+    const itemName = variation?.label ? `${product.name} — ${variation.label}` : product.name;
+    const stock = variation ? variation.stock : product.stock;
+    const existingKey = `${product.id}_${variationId || ''}`;
+    const existing = newItems.find(i => `${i.product_id}_${i.variation_id || ''}` === existingKey);
     if (existing) {
       setNewItems(items =>
         items.map(i => i.id === existing.id
@@ -140,13 +152,45 @@ const ExchangePanel = ({
       setNewItems(items => [...items, {
         id: crypto.randomUUID(),
         product_id: product.id,
-        name: product.name,
-        unit_price: unitPrice,
+        variation_id: variationId,
+        name: itemName,
+        sku: variation?.sku || undefined,
+        unit_price: basePrice,
         quantity: 1,
-        max_stock: product.stock,
+        max_stock: stock,
       }]);
     }
   }, [newItems, newItemsPriceType, resolvePrice]);
+
+  const handleProductSelectForTarget = useCallback((target: 'returned' | 'new', product: ProductResult, variationId?: string) => {
+    if (variationId) {
+      target === 'returned' ? addReturnedWithVariation(product, variationId) : addNewWithVariation(product, variationId);
+      return;
+    }
+    const activeVariations = product.variations.filter(v => v.is_active && v.stock > 0);
+    if (activeVariations.length > 1) {
+      setVariationPickerTarget(target);
+      setVariationPickerProduct(product);
+    } else if (activeVariations.length === 1) {
+      target === 'returned' ? addReturnedWithVariation(product, activeVariations[0].id) : addNewWithVariation(product, activeVariations[0].id);
+    } else {
+      target === 'returned' ? addReturnedWithVariation(product) : addNewWithVariation(product);
+    }
+  }, [addReturnedWithVariation, addNewWithVariation]);
+
+  const handleAddReturnedProduct = useCallback((product: ProductResult, variationId?: string) => {
+    handleProductSelectForTarget('returned', product, variationId);
+  }, [handleProductSelectForTarget]);
+
+  const handleAddNewProduct = useCallback((product: ProductResult, variationId?: string) => {
+    handleProductSelectForTarget('new', product, variationId);
+  }, [handleProductSelectForTarget]);
+
+  const handleVariationSelected = useCallback((product: ProductResult, variationId: string) => {
+    variationPickerTarget === 'returned'
+      ? addReturnedWithVariation(product, variationId)
+      : addNewWithVariation(product, variationId);
+  }, [variationPickerTarget, addReturnedWithVariation, addNewWithVariation]);
 
   const updateReturnedQty = (id: string, qty: number) => {
     if (qty < 1) return;
@@ -546,6 +590,13 @@ const ExchangePanel = ({
           )}
         </Button>
       </div>
+
+      <VariationPickerModal
+        open={!!variationPickerProduct}
+        onOpenChange={(open) => !open && setVariationPickerProduct(null)}
+        product={variationPickerProduct}
+        onSelectVariation={handleVariationSelected}
+      />
     </div>
   );
 };
