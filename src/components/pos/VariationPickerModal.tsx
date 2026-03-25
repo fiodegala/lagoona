@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
@@ -25,20 +24,12 @@ const VariationPickerModal = ({
   onSelectVariation,
 }: VariationPickerModalProps) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const variationSource = product?.variations ?? [];
-
-  useEffect(() => {
-    if (!open) {
-      setSearchTerm('');
-    }
-  }, [open, product?.id]);
-
-  if (!product) return null;
 
   const activeVariations = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase();
+    const variations = product?.variations ?? [];
 
-    return variationSource.filter((variation) => {
+    return variations.filter((variation) => {
       if (!variation.is_active) return false;
       if (!normalizedSearch) return true;
 
@@ -46,7 +37,13 @@ const VariationPickerModal = ({
         .filter(Boolean)
         .some((value) => value!.toLowerCase().includes(normalizedSearch));
     });
-  }, [searchTerm, variationSource]);
+  }, [product, searchTerm]);
+
+  useEffect(() => {
+    if (!open) {
+      setSearchTerm('');
+    }
+  }, [open, product?.id]);
 
   if (!product) return null;
 
