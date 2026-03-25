@@ -67,6 +67,7 @@ export const navItems: MenuItem[] = [
   { icon: BookOpen, label: 'Manual', path: '/admin/manual', menuKey: 'manual' },
   { icon: ClipboardList, label: 'Ordens de Serviço', path: '/admin/ordens-servico', menuKey: 'service-orders' },
   { icon: Megaphone, label: 'Comunicados', path: '/admin/comunicados', menuKey: 'announcements', requireAdmin: true },
+  { icon: Zap, label: 'Olist', path: '/admin/olist', menuKey: 'olist', requireAdmin: true },
 ];
 
 export const settingsItems: MenuItem[] = [
