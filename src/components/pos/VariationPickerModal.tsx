@@ -12,6 +12,7 @@ interface VariationPickerModalProps {
   onOpenChange: (open: boolean) => void;
   product: ProductResult | null;
   onSelectVariation: (product: ProductResult, variationId: string) => void;
+  allowOutOfStock?: boolean;
 }
 
 const formatCurrency = (value: number) =>
@@ -22,6 +23,7 @@ const VariationPickerModal = ({
   onOpenChange,
   product,
   onSelectVariation,
+  allowOutOfStock = false,
 }: VariationPickerModalProps) => {
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -33,7 +35,7 @@ const VariationPickerModal = ({
       if (!variation.is_active) return false;
       if (!normalizedSearch) return true;
 
-      return [variation.label, variation.sku, variation.id]
+      return [variation.label, variation.sku, variation.barcode, variation.id]
         .filter(Boolean)
         .some((value) => value!.toLowerCase().includes(normalizedSearch));
     });
@@ -70,7 +72,7 @@ const VariationPickerModal = ({
           <Input
             value={searchTerm}
             onChange={(event) => setSearchTerm(event.target.value)}
-            placeholder="Buscar variação por nome, SKU ou código..."
+              placeholder="Buscar variação por nome, SKU, código de barras ou código..."
             className="pl-9"
           />
         </div>
@@ -83,6 +85,7 @@ const VariationPickerModal = ({
               </div>
             ) : activeVariations.map((variation) => {
               const hasStock = variation.stock > 0;
+              const isSelectable = allowOutOfStock || hasStock;
               const price = variation.price ?? product.price;
 
               return (
@@ -90,35 +93,39 @@ const VariationPickerModal = ({
                   key={variation.id}
                   className={cn(
                     'w-full flex items-center justify-between p-3 rounded-lg border transition-all text-left',
-                    hasStock
+                     isSelectable
                       ? 'hover:border-primary/50 hover:bg-accent cursor-pointer'
                       : 'opacity-50 cursor-not-allowed',
                   )}
                   onClick={() => {
-                    if (hasStock) {
+                    if (isSelectable) {
                       onSelectVariation(product, variation.id);
                       onOpenChange(false);
                     }
                   }}
-                  disabled={!hasStock}
+                  disabled={!isSelectable}
                 >
                   <div className="flex-1 min-w-0">
                     <div className="font-medium text-sm">
                       {variation.label || variation.sku || variation.id.slice(0, 8)}
                     </div>
-                    {variation.sku && variation.label && (
-                      <div className="text-xs text-muted-foreground">SKU: {variation.sku}</div>
+                    {(variation.sku || variation.barcode) && (
+                      <div className="text-xs text-muted-foreground">
+                        {[variation.sku ? `SKU: ${variation.sku}` : null, variation.barcode ? `CB: ${variation.barcode}` : null]
+                          .filter(Boolean)
+                          .join(' • ')}
+                      </div>
                     )}
                   </div>
                   <div className="flex items-center gap-3 ml-3">
                     <Badge
-                      variant={hasStock ? (variation.stock <= 3 ? 'secondary' : 'outline') : 'destructive'}
+                      variant={hasStock ? (variation.stock <= 3 ? 'secondary' : 'outline') : (allowOutOfStock ? 'outline' : 'destructive')}
                       className={cn(
                         'text-xs',
                         variation.stock <= 3 && hasStock && 'bg-warning/20 text-warning border-warning/30',
                       )}
                     >
-                      {hasStock ? `${variation.stock} un.` : 'Sem estoque'}
+                      {hasStock ? `${variation.stock} un.` : (allowOutOfStock ? '0 un.' : 'Sem estoque')}
                     </Badge>
                     <span className="font-semibold text-sm text-primary whitespace-nowrap">
                       {formatCurrency(price)}

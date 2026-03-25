@@ -162,21 +162,28 @@ const ExchangePanel = ({
     }
   }, [newItems, newItemsPriceType, resolvePrice]);
 
+  const getSelectableVariations = useCallback((target: 'returned' | 'new', product: ProductResult) => {
+    return product.variations.filter((variation) => {
+      if (!variation.is_active) return false;
+      return target === 'returned' ? true : variation.stock > 0;
+    });
+  }, []);
+
   const handleProductSelectForTarget = useCallback((target: 'returned' | 'new', product: ProductResult, variationId?: string) => {
     if (variationId) {
       target === 'returned' ? addReturnedWithVariation(product, variationId) : addNewWithVariation(product, variationId);
       return;
     }
-    const activeVariations = product.variations.filter(v => v.is_active && v.stock > 0);
-    if (activeVariations.length > 1) {
+    const selectableVariations = getSelectableVariations(target, product);
+    if (selectableVariations.length > 1) {
       setVariationPickerTarget(target);
       setVariationPickerProduct(product);
-    } else if (activeVariations.length === 1) {
-      target === 'returned' ? addReturnedWithVariation(product, activeVariations[0].id) : addNewWithVariation(product, activeVariations[0].id);
+    } else if (selectableVariations.length === 1) {
+      target === 'returned' ? addReturnedWithVariation(product, selectableVariations[0].id) : addNewWithVariation(product, selectableVariations[0].id);
     } else {
       target === 'returned' ? addReturnedWithVariation(product) : addNewWithVariation(product);
     }
-  }, [addReturnedWithVariation, addNewWithVariation]);
+  }, [addReturnedWithVariation, addNewWithVariation, getSelectableVariations]);
 
   const handleAddReturnedProduct = useCallback((product: ProductResult, variationId?: string) => {
     handleProductSelectForTarget('returned', product, variationId);
@@ -596,6 +603,7 @@ const ExchangePanel = ({
         onOpenChange={(open) => !open && setVariationPickerProduct(null)}
         product={variationPickerProduct}
         onSelectVariation={handleVariationSelected}
+        allowOutOfStock={variationPickerTarget === 'returned'}
       />
     </div>
   );
