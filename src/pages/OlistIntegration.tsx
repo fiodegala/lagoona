@@ -76,11 +76,24 @@ const OlistIntegration = () => {
     }
   };
 
+  const pushProducts = async () => {
+    setIsPushingProducts(true);
+    try {
+      const result = await olistService.pushProducts();
+      toast.success(`Enviados para Olist: ${result.created} novos, ${result.updated} atualizados, ${result.failed} falhas`);
+      loadData();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Erro ao enviar produtos para Olist');
+    } finally {
+      setIsPushingProducts(false);
+    }
+  };
+
   const syncProducts = async () => {
     setIsSyncingProducts(true);
     try {
       const result = await olistService.syncProducts();
-      toast.success(`Produtos sincronizados: ${result.processed} processados, ${result.failed} falhas`);
+      toast.success(`Produtos importados: ${result.processed} processados, ${result.failed} falhas`);
       loadData();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Erro ao sincronizar produtos');
