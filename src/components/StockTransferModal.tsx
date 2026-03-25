@@ -424,18 +424,19 @@ const StockTransferModal: React.FC<Props> = ({ open, onOpenChange, stores, onTra
 
   const handleApprove = async (transfer: TransferRecord) => {
     try {
-      await executeTransfer(
-        transfer.from_store_id,
-        transfer.to_store_id,
-        transfer.product_id,
-        transfer.variation_id,
-        transfer.quantity
-      );
+      const { data, error } = await supabase.rpc('process_stock_transfer', {
+        _transfer_id: transfer.id,
+        _action: 'approve',
+        _user_id: user!.id,
+      });
 
-      await supabase
-        .from('stock_transfers')
-        .update({ status: 'completed', approved_by: user!.id } as any)
-        .eq('id', transfer.id);
+      if (error) throw error;
+
+      const result = data as any;
+      if (!result?.success) {
+        toast({ title: 'Erro ao aprovar', description: result?.error || 'Erro desconhecido', variant: 'destructive' });
+        return;
+      }
 
       toast({ title: 'Transferência aprovada e executada!' });
       loadHistory();
