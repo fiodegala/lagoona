@@ -17,6 +17,8 @@ const getVariationMatchScore = (
   return 3;
 };
 
+const escapeIlike = (value: string) => value.replace(/[%,]/g, '').trim();
+
 export interface POSSession {
   id: string;
   user_id: string;
@@ -549,11 +551,13 @@ export const posService = {
 
   // Product lookup - returns product and optionally the matched variation ID
   async getProductByBarcode(barcode: string): Promise<{ product: any; matchedVariationId?: string } | null> {
+    const normalizedBarcode = barcode.trim();
+
     // First try product-level barcode
     const { data: productByBarcode, error: err1 } = await supabase
       .from('products')
       .select('*, product_variations(*)')
-      .eq('barcode', barcode)
+      .eq('barcode', normalizedBarcode)
       .maybeSingle();
 
     if (err1) throw err1;
@@ -566,12 +570,12 @@ export const posService = {
     const { data: variationMatch, error: err2 } = await supabase
       .from('product_variations')
       .select('id, product_id, sku, barcode')
-      .or(`barcode.eq.${barcode},sku.eq.${barcode}`)
+      .or(`barcode.eq.${normalizedBarcode},sku.eq.${normalizedBarcode}`)
       .limit(10);
 
     if (err2) throw err2;
     const bestVariationMatch = (variationMatch || [])
-      .sort((a, b) => getVariationMatchScore(barcode, a) - getVariationMatchScore(barcode, b))[0];
+      .sort((a, b) => getVariationMatchScore(normalizedBarcode, a) - getVariationMatchScore(normalizedBarcode, b))[0];
 
     if (bestVariationMatch) {
       const { data: product, error: err3 } = await supabase
@@ -591,12 +595,21 @@ export const posService = {
 
   async searchProducts(query: string, limit = 20): Promise<{ products: any[]; matchedVariationMap: Record<string, string> }> {
     const trimmedQuery = query.trim();
+    const sanitizedQuery = escapeIlike(trimmedQuery);
+    const normalizedQuery = trimmedQuery.toLowerCase();
+
+    if (!sanitizedQuery) {
+      return {
+        products: [],
+        matchedVariationMap: {},
+      };
+    }
 
     // Search products by name or barcode
     const { data: directMatches, error: err1 } = await supabase
       .from('products')
       .select('*, product_variations(*)')
-      .or(`name.ilike.%${trimmedQuery}%,barcode.ilike.%${trimmedQuery}%`)
+      .or(`name.ilike.%${sanitizedQuery}%,barcode.ilike.%${sanitizedQuery}%`)
       .limit(limit);
 
     if (err1) throw err1;
@@ -604,23 +617,47 @@ export const posService = {
     // Also search by variation barcode or SKU
     // Use exact match for short queries (likely size codes like G, GG, M) to avoid
     // "G" matching "GG". For longer queries use partial match.
-    const isShortQuery = trimmedQuery.length <= 3;
-    const variationFilter = isShortQuery
-      ? `barcode.eq.${trimmedQuery},sku.eq.${trimmedQuery}`
-      : `barcode.ilike.%${trimmedQuery}%,sku.ilike.%${trimmedQuery}%`;
-    const { data: variationMatches, error: err2 } = await supabase
+    const exactVariationMatchesPromise = supabase
       .from('product_variations')
       .select('id, product_id, sku, barcode')
-      .or(variationFilter)
+      .or(`barcode.eq.${trimmedQuery},sku.eq.${trimmedQuery}`)
       .limit(limit);
 
-    if (err2) throw err2;
+    const partialVariationMatchesPromise = supabase
+      .from('product_variations')
+      .select('id, product_id, sku, barcode')
+      .or(`barcode.ilike.%${sanitizedQuery}%,sku.ilike.%${sanitizedQuery}%`)
+      .limit(limit);
+
+    const [exactVariationMatchesRes, partialVariationMatchesRes] = await Promise.all([
+      exactVariationMatchesPromise,
+      partialVariationMatchesPromise,
+    ]);
+
+    if (exactVariationMatchesRes.error) throw exactVariationMatchesRes.error;
+    if (partialVariationMatchesRes.error) throw partialVariationMatchesRes.error;
+
+    const variationById = new Map<string, any>();
+    [...(exactVariationMatchesRes.data || []), ...(partialVariationMatchesRes.data || [])].forEach((variation) => {
+      variationById.set(variation.id, variation);
+    });
+
+    const variationMatches = [...variationById.values()]
+      .filter((variation) => getVariationMatchScore(trimmedQuery, variation) < 3)
+      .sort((a, b) => {
+        const scoreDiff = getVariationMatchScore(trimmedQuery, a) - getVariationMatchScore(trimmedQuery, b);
+        if (scoreDiff !== 0) return scoreDiff;
+
+        const aExactBarcode = normalizeSearchValue(a.barcode) === normalizedQuery ? 0 : 1;
+        const bExactBarcode = normalizeSearchValue(b.barcode) === normalizedQuery ? 0 : 1;
+        if (aExactBarcode !== bExactBarcode) return aExactBarcode - bExactBarcode;
+
+        return normalizeSearchValue(a.sku).localeCompare(normalizeSearchValue(b.sku));
+      });
 
     // Build a map: product_id → matched variation_id
     const matchedVariationMap: Record<string, string> = {};
-    const sortedVariationMatches = [...(variationMatches || [])].sort(
-      (a, b) => getVariationMatchScore(trimmedQuery, a) - getVariationMatchScore(trimmedQuery, b)
-    );
+    const sortedVariationMatches = variationMatches;
 
     for (const v of sortedVariationMatches) {
       if (!matchedVariationMap[v.product_id]) {
