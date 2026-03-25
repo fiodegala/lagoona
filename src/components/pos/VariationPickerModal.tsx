@@ -25,6 +25,7 @@ const VariationPickerModal = ({
   onSelectVariation,
 }: VariationPickerModalProps) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const variationSource = product?.variations ?? [];
 
   useEffect(() => {
     if (!open) {
@@ -37,7 +38,7 @@ const VariationPickerModal = ({
   const activeVariations = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase();
 
-    return product.variations.filter((variation) => {
+    return variationSource.filter((variation) => {
       if (!variation.is_active) return false;
       if (!normalizedSearch) return true;
 
@@ -45,7 +46,9 @@ const VariationPickerModal = ({
         .filter(Boolean)
         .some((value) => value!.toLowerCase().includes(normalizedSearch));
     });
-  }, [product.variations, searchTerm]);
+  }, [searchTerm, variationSource]);
+
+  if (!product) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -115,7 +118,7 @@ const VariationPickerModal = ({
                       variant={hasStock ? (variation.stock <= 3 ? 'secondary' : 'outline') : 'destructive'}
                       className={cn(
                         'text-xs',
-                        variation.stock <= 3 && hasStock && 'bg-orange-500/20 text-orange-700 border-orange-500/30',
+                        variation.stock <= 3 && hasStock && 'bg-warning/20 text-warning border-warning/30',
                       )}
                     >
                       {hasStock ? `${variation.stock} un.` : 'Sem estoque'}

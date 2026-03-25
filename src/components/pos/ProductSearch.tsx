@@ -317,7 +317,7 @@ const ProductSearch = ({ onProductSelect, isOnline }: ProductSearchProps) => {
                       display.stock <= 0 
                         ? 'text-destructive' 
                         : display.stock <= 5 
-                          ? 'text-orange-500' 
+                          ? 'text-warning' 
                           : 'text-muted-foreground'
                     )}>
                       {display.stock <= 0 ? 'Sem estoque' : `${display.stock} em estoque`}
