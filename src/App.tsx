@@ -47,6 +47,7 @@ const Manual = lazy(() => import("./pages/Manual"));
 const ProductPricing = lazy(() => import("./pages/ProductPricing"));
 const ServiceOrders = lazy(() => import("./pages/ServiceOrders"));
 const AdminAnnouncements = lazy(() => import("./pages/AdminAnnouncements"));
+const OlistIntegration = lazy(() => import("./pages/OlistIntegration"));
 
 // Lazy-loaded Store Pages
 const HomePage = lazy(() => import("./pages/store/HomePage"));
