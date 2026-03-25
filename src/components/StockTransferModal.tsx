@@ -448,10 +448,19 @@ const StockTransferModal: React.FC<Props> = ({ open, onOpenChange, stores, onTra
 
   const handleReject = async (transfer: TransferRecord) => {
     try {
-      await supabase
-        .from('stock_transfers')
-        .update({ status: 'rejected', approved_by: user!.id } as any)
-        .eq('id', transfer.id);
+      const { data, error } = await supabase.rpc('process_stock_transfer', {
+        _transfer_id: transfer.id,
+        _action: 'reject',
+        _user_id: user!.id,
+      });
+
+      if (error) throw error;
+
+      const result = data as any;
+      if (!result?.success) {
+        toast({ title: 'Erro ao rejeitar', description: result?.error || 'Erro desconhecido', variant: 'destructive' });
+        return;
+      }
 
       toast({ title: 'Transferência rejeitada' });
       loadHistory();
