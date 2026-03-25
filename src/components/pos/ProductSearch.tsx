@@ -26,6 +26,7 @@ export interface ProductResult {
   variations: Array<{
     id: string;
     sku: string | null;
+    barcode?: string | null;
     price: number | null;
     wholesale_price?: number | null;
     exclusive_price?: number | null;
@@ -81,6 +82,7 @@ const ProductSearch = ({ onProductSelect, isOnline }: ProductSearchProps) => {
           variations: (p.product_variations || []).map((v: Record<string, unknown>) => ({
             id: v.id as string,
             sku: v.sku as string | null,
+              barcode: v.barcode as string | null,
             price: v.price as number | null,
             wholesale_price: v.wholesale_price as number | null,
             exclusive_price: v.exclusive_price as number | null,
@@ -133,6 +135,7 @@ const ProductSearch = ({ onProductSelect, isOnline }: ProductSearchProps) => {
             variations: (data.product_variations || []).map((v: Record<string, unknown>) => ({
               id: v.id as string,
               sku: v.sku as string | null,
+                barcode: v.barcode as string | null,
               price: v.price as number | null,
               wholesale_price: v.wholesale_price as number | null,
               exclusive_price: v.exclusive_price as number | null,
@@ -217,6 +220,7 @@ const ProductSearch = ({ onProductSelect, isOnline }: ProductSearchProps) => {
           stock: variation.stock,
           label: variation.label ? `${product.name} — ${variation.label}` : product.name,
           sku: variation.sku,
+          barcode: variation.barcode,
         };
       }
     }
@@ -226,6 +230,7 @@ const ProductSearch = ({ onProductSelect, isOnline }: ProductSearchProps) => {
       stock: product.stock,
       label: product.name,
       sku: null,
+      barcode: product.barcode,
     };
   };
 
@@ -300,8 +305,8 @@ const ProductSearch = ({ onProductSelect, isOnline }: ProductSearchProps) => {
                   <div className="flex-1 min-w-0">
                     <div className="font-medium truncate">{display.label}</div>
                     <div className="text-sm text-muted-foreground flex items-center gap-2">
-                      {(display.sku || product.barcode) && (
-                        <span className="font-mono">{display.sku || product.barcode}</span>
+                      {(display.sku || display.barcode || product.barcode) && (
+                        <span className="font-mono">{display.sku || display.barcode || product.barcode}</span>
                       )}
                       {product.category_name && (
                         <span>• {product.category_name}</span>
