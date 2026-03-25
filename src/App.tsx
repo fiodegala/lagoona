@@ -402,7 +402,6 @@ const App = () => (
                     <AdminAnnouncements />
                   </ProtectedRoute>
                 }
-                />
               />
 
               <Route
@@ -412,7 +411,7 @@ const App = () => (
                     <OlistIntegration />
                   </ProtectedRoute>
                 }
-
+              />
               {/* Legacy redirects for admin routes */}
               <Route path="/products" element={<Navigate to="/admin/products" replace />} />
               <Route path="/categories" element={<Navigate to="/admin/categories" replace />} />
