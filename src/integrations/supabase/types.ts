@@ -1088,6 +1088,190 @@ export type Database = {
         }
         Relationships: []
       }
+      olist_integration: {
+        Row: {
+          api_token: string | null
+          auto_sync_interval_minutes: number
+          created_at: string
+          environment: string
+          id: string
+          is_active: boolean
+          last_error: string | null
+          last_order_sync_at: string | null
+          last_product_sync_at: string | null
+          metadata: Json | null
+          sync_invoices: boolean
+          sync_orders: boolean
+          sync_products: boolean
+          updated_at: string
+        }
+        Insert: {
+          api_token?: string | null
+          auto_sync_interval_minutes?: number
+          created_at?: string
+          environment?: string
+          id?: string
+          is_active?: boolean
+          last_error?: string | null
+          last_order_sync_at?: string | null
+          last_product_sync_at?: string | null
+          metadata?: Json | null
+          sync_invoices?: boolean
+          sync_orders?: boolean
+          sync_products?: boolean
+          updated_at?: string
+        }
+        Update: {
+          api_token?: string | null
+          auto_sync_interval_minutes?: number
+          created_at?: string
+          environment?: string
+          id?: string
+          is_active?: boolean
+          last_error?: string | null
+          last_order_sync_at?: string | null
+          last_product_sync_at?: string | null
+          metadata?: Json | null
+          sync_invoices?: boolean
+          sync_orders?: boolean
+          sync_products?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      olist_order_mappings: {
+        Row: {
+          created_at: string
+          id: string
+          invoice_key: string | null
+          invoice_number: string | null
+          last_synced_at: string | null
+          local_order_id: string | null
+          metadata: Json | null
+          olist_order_code: string
+          olist_status: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          invoice_key?: string | null
+          invoice_number?: string | null
+          last_synced_at?: string | null
+          local_order_id?: string | null
+          metadata?: Json | null
+          olist_order_code: string
+          olist_status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          invoice_key?: string | null
+          invoice_number?: string | null
+          last_synced_at?: string | null
+          local_order_id?: string | null
+          metadata?: Json | null
+          olist_order_code?: string
+          olist_status?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "olist_order_mappings_local_order_id_fkey"
+            columns: ["local_order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      olist_product_mappings: {
+        Row: {
+          created_at: string
+          id: string
+          last_synced_at: string | null
+          local_product_id: string
+          metadata: Json | null
+          olist_product_id: string
+          olist_sku: string | null
+          sync_status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_synced_at?: string | null
+          local_product_id: string
+          metadata?: Json | null
+          olist_product_id: string
+          olist_sku?: string | null
+          sync_status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_synced_at?: string | null
+          local_product_id?: string
+          metadata?: Json | null
+          olist_product_id?: string
+          olist_sku?: string | null
+          sync_status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "olist_product_mappings_local_product_id_fkey"
+            columns: ["local_product_id"]
+            isOneToOne: true
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      olist_sync_logs: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          details: Json | null
+          direction: string
+          error_message: string | null
+          id: string
+          records_failed: number
+          records_processed: number
+          started_at: string
+          status: string
+          sync_type: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          details?: Json | null
+          direction?: string
+          error_message?: string | null
+          id?: string
+          records_failed?: number
+          records_processed?: number
+          started_at?: string
+          status?: string
+          sync_type: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          details?: Json | null
+          direction?: string
+          error_message?: string | null
+          id?: string
+          records_failed?: number
+          records_processed?: number
+          started_at?: string
+          status?: string
+          sync_type?: string
+        }
+        Relationships: []
+      }
       orders: {
         Row: {
           created_at: string
