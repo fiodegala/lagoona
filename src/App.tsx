@@ -47,6 +47,7 @@ const Manual = lazy(() => import("./pages/Manual"));
 const ProductPricing = lazy(() => import("./pages/ProductPricing"));
 const ServiceOrders = lazy(() => import("./pages/ServiceOrders"));
 const AdminAnnouncements = lazy(() => import("./pages/AdminAnnouncements"));
+const OlistIntegration = lazy(() => import("./pages/OlistIntegration"));
 
 // Lazy-loaded Store Pages
 const HomePage = lazy(() => import("./pages/store/HomePage"));
@@ -403,6 +404,14 @@ const App = () => (
                 }
               />
 
+              <Route
+                path="/admin/olist"
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <OlistIntegration />
+                  </ProtectedRoute>
+                }
+              />
               {/* Legacy redirects for admin routes */}
               <Route path="/products" element={<Navigate to="/admin/products" replace />} />
               <Route path="/categories" element={<Navigate to="/admin/categories" replace />} />
