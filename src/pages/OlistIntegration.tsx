@@ -124,7 +124,7 @@ const OlistIntegration = () => {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'success':
-        return <Badge className="bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20"><CheckCircle className="h-3 w-3 mr-1" />Sucesso</Badge>;
+        return <Badge className="bg-success/10 text-success hover:bg-success/20"><CheckCircle className="h-3 w-3 mr-1" />Sucesso</Badge>;
       case 'error':
         return <Badge variant="destructive"><XCircle className="h-3 w-3 mr-1" />Erro</Badge>;
       case 'running':
