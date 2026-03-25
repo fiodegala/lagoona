@@ -1,5 +1,22 @@
 import { supabase } from '@/integrations/supabase/client';
 
+const normalizeSearchValue = (value: string | null | undefined) => (value ?? '').trim().toLowerCase();
+
+const getVariationMatchScore = (
+  query: string,
+  variation: { sku?: string | null; barcode?: string | null }
+) => {
+  const normalizedQuery = normalizeSearchValue(query);
+  const candidates = [variation.sku, variation.barcode]
+    .map(normalizeSearchValue)
+    .filter(Boolean);
+
+  if (candidates.some((candidate) => candidate === normalizedQuery)) return 0;
+  if (candidates.some((candidate) => candidate.startsWith(normalizedQuery))) return 1;
+  if (candidates.some((candidate) => candidate.includes(normalizedQuery))) return 2;
+  return 3;
+};
+
 export interface POSSession {
   id: string;
   user_id: string;
@@ -548,22 +565,24 @@ export const posService = {
     // Then try variation-level barcode or SKU
     const { data: variationMatch, error: err2 } = await supabase
       .from('product_variations')
-      .select('id, product_id')
+      .select('id, product_id, sku, barcode')
       .or(`barcode.eq.${barcode},sku.eq.${barcode}`)
-      .limit(1)
-      .maybeSingle();
+      .limit(10);
 
     if (err2) throw err2;
-    if (variationMatch) {
+    const bestVariationMatch = (variationMatch || [])
+      .sort((a, b) => getVariationMatchScore(barcode, a) - getVariationMatchScore(barcode, b))[0];
+
+    if (bestVariationMatch) {
       const { data: product, error: err3 } = await supabase
         .from('products')
         .select('*, product_variations(*)')
-        .eq('id', variationMatch.product_id)
+        .eq('id', bestVariationMatch.product_id)
         .maybeSingle();
       if (err3) throw err3;
       if (product) {
         const [enriched] = await this._enrichWithLabels([product]);
-        return { product: enriched, matchedVariationId: variationMatch.id };
+        return { product: enriched, matchedVariationId: bestVariationMatch.id };
       }
     }
 
@@ -571,11 +590,13 @@ export const posService = {
   },
 
   async searchProducts(query: string, limit = 20): Promise<{ products: any[]; matchedVariationMap: Record<string, string> }> {
+    const trimmedQuery = query.trim();
+
     // Search products by name or barcode
     const { data: directMatches, error: err1 } = await supabase
       .from('products')
       .select('*, product_variations(*)')
-      .or(`name.ilike.%${query}%,barcode.ilike.%${query}%`)
+      .or(`name.ilike.%${trimmedQuery}%,barcode.ilike.%${trimmedQuery}%`)
       .limit(limit);
 
     if (err1) throw err1;
@@ -583,13 +604,13 @@ export const posService = {
     // Also search by variation barcode or SKU
     // Use exact match for short queries (likely size codes like G, GG, M) to avoid
     // "G" matching "GG". For longer queries use partial match.
-    const isShortQuery = query.trim().length <= 3;
+    const isShortQuery = trimmedQuery.length <= 3;
     const variationFilter = isShortQuery
-      ? `barcode.eq.${query},sku.eq.${query}`
-      : `barcode.ilike.%${query}%,sku.ilike.%${query}%`;
+      ? `barcode.eq.${trimmedQuery},sku.eq.${trimmedQuery}`
+      : `barcode.ilike.%${trimmedQuery}%,sku.ilike.%${trimmedQuery}%`;
     const { data: variationMatches, error: err2 } = await supabase
       .from('product_variations')
-      .select('id, product_id')
+      .select('id, product_id, sku, barcode')
       .or(variationFilter)
       .limit(limit);
 
@@ -597,14 +618,18 @@ export const posService = {
 
     // Build a map: product_id → matched variation_id
     const matchedVariationMap: Record<string, string> = {};
-    for (const v of variationMatches || []) {
+    const sortedVariationMatches = [...(variationMatches || [])].sort(
+      (a, b) => getVariationMatchScore(trimmedQuery, a) - getVariationMatchScore(trimmedQuery, b)
+    );
+
+    for (const v of sortedVariationMatches) {
       if (!matchedVariationMap[v.product_id]) {
         matchedVariationMap[v.product_id] = v.id;
       }
     }
 
     const directIds = new Set((directMatches || []).map((p: any) => p.id));
-    const extraIds = (variationMatches || [])
+    const extraIds = sortedVariationMatches
       .map((v: any) => v.product_id)
       .filter((id: string) => !directIds.has(id));
 

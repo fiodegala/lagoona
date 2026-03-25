@@ -22,6 +22,7 @@ interface POSDatabase extends DBSchema {
       variations: Array<{
         id: string;
         sku: string | null;
+        barcode: string | null;
         price: number | null;
         wholesale_price: number | null;
         exclusive_price: number | null;
@@ -124,6 +125,7 @@ export const offlineService = {
         variations: (product.product_variations || []).map((v: Record<string, unknown>) => ({
           id: v.id as string,
           sku: v.sku as string | null,
+          barcode: v.barcode as string | null,
           price: v.price as number | null,
           wholesale_price: v.wholesale_price as number | null,
           exclusive_price: v.exclusive_price as number | null,
@@ -145,22 +147,78 @@ export const offlineService = {
     return database.getAll('products');
   },
 
-  async getCachedProductByBarcode(barcode: string): Promise<POSDatabase['products']['value'] | undefined> {
+  async getCachedProductByBarcode(barcode: string): Promise<{ product: POSDatabase['products']['value']; matchedVariationId?: string } | null> {
     const database = await this.getDB();
     const index = database.transaction('products', 'readonly').store.index('by-barcode');
-    return index.get(barcode);
+    const productMatch = await index.get(barcode);
+
+    if (productMatch) {
+      return { product: productMatch };
+    }
+
+    const normalizedBarcode = barcode.trim().toLowerCase();
+    const allProducts = await database.getAll('products');
+
+    for (const product of allProducts) {
+      const matchedVariation = product.variations.find((variation) =>
+        [variation.barcode, variation.sku]
+          .filter(Boolean)
+          .some((value) => value!.trim().toLowerCase() === normalizedBarcode)
+      );
+
+      if (matchedVariation) {
+        return {
+          product,
+          matchedVariationId: matchedVariation.id,
+        };
+      }
+    }
+
+    return null;
   },
 
-  async searchCachedProducts(query: string): Promise<POSDatabase['products']['value'][]> {
+  async searchCachedProducts(query: string): Promise<{ products: POSDatabase['products']['value'][]; matchedVariationMap: Record<string, string> }> {
     const database = await this.getDB();
     const allProducts = await database.getAll('products');
     const lowerQuery = query.toLowerCase();
 
-    return allProducts.filter(
-      (p) =>
-        p.name.toLowerCase().includes(lowerQuery) ||
-        (p.barcode && p.barcode.toLowerCase().includes(lowerQuery))
-    );
+    const getVariationMatchScore = (variation: POSDatabase['products']['value']['variations'][number]) => {
+      const candidates = [variation.sku, variation.barcode, variation.label]
+        .map((value) => value?.toLowerCase().trim() || '')
+        .filter(Boolean);
+
+      if (candidates.some((candidate) => candidate === lowerQuery)) return 0;
+      if (candidates.some((candidate) => candidate.startsWith(lowerQuery))) return 1;
+      if (candidates.some((candidate) => candidate.includes(lowerQuery))) return 2;
+      return 3;
+    };
+
+    const matchedVariationMap: Record<string, string> = {};
+
+    const products = allProducts.filter((product) => {
+      const matchedVariations = product.variations
+        .filter((variation) =>
+          [variation.sku, variation.barcode, variation.label]
+            .filter(Boolean)
+            .some((value) => value!.toLowerCase().includes(lowerQuery))
+        )
+        .sort((a, b) => getVariationMatchScore(a) - getVariationMatchScore(b));
+
+      if (matchedVariations[0]) {
+        matchedVariationMap[product.id] = matchedVariations[0].id;
+      }
+
+      return (
+        product.name.toLowerCase().includes(lowerQuery) ||
+        (product.barcode && product.barcode.toLowerCase().includes(lowerQuery)) ||
+        matchedVariations.length > 0
+      );
+    });
+
+    return {
+      products,
+      matchedVariationMap,
+    };
   },
 
   // Pending sales management

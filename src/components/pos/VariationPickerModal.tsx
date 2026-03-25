@@ -1,9 +1,11 @@
+import { useEffect, useMemo, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { ProductResult } from '@/components/pos/ProductSearch';
+import { Search } from 'lucide-react';
 
 interface VariationPickerModalProps {
   open: boolean;
@@ -21,9 +23,29 @@ const VariationPickerModal = ({
   product,
   onSelectVariation,
 }: VariationPickerModalProps) => {
-  if (!product) return null;
+  const [searchTerm, setSearchTerm] = useState('');
 
-  const activeVariations = product.variations.filter((v) => v.is_active);
+  const activeVariations = useMemo(() => {
+    const normalizedSearch = searchTerm.trim().toLowerCase();
+    const variations = product?.variations ?? [];
+
+    return variations.filter((variation) => {
+      if (!variation.is_active) return false;
+      if (!normalizedSearch) return true;
+
+      return [variation.label, variation.sku, variation.id]
+        .filter(Boolean)
+        .some((value) => value!.toLowerCase().includes(normalizedSearch));
+    });
+  }, [product, searchTerm]);
+
+  useEffect(() => {
+    if (!open) {
+      setSearchTerm('');
+    }
+  }, [open, product?.id]);
+
+  if (!product) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -43,9 +65,23 @@ const VariationPickerModal = ({
 
         <p className="text-sm text-muted-foreground">Selecione a variação:</p>
 
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={searchTerm}
+            onChange={(event) => setSearchTerm(event.target.value)}
+            placeholder="Buscar variação por nome, SKU ou código..."
+            className="pl-9"
+          />
+        </div>
+
         <ScrollArea className="max-h-80">
           <div className="space-y-2">
-            {activeVariations.map((variation) => {
+            {activeVariations.length === 0 ? (
+              <div className="rounded-lg border border-dashed p-4 text-center text-sm text-muted-foreground">
+                Nenhuma variação encontrada.
+              </div>
+            ) : activeVariations.map((variation) => {
               const hasStock = variation.stock > 0;
               const price = variation.price ?? product.price;
 
@@ -79,7 +115,7 @@ const VariationPickerModal = ({
                       variant={hasStock ? (variation.stock <= 3 ? 'secondary' : 'outline') : 'destructive'}
                       className={cn(
                         'text-xs',
-                        variation.stock <= 3 && hasStock && 'bg-orange-500/20 text-orange-700 border-orange-500/30',
+                        variation.stock <= 3 && hasStock && 'bg-warning/20 text-warning border-warning/30',
                       )}
                     >
                       {hasStock ? `${variation.stock} un.` : 'Sem estoque'}
