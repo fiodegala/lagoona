@@ -22,6 +22,90 @@ function isOlistRateLimitMessage(message: string) {
   return normalized.includes("api bloqueada") || normalized.includes("excedido o número de acessos") || normalized.includes("excedido o numero de acessos");
 }
 
+function toPositiveNumber(value: unknown): number | undefined {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
+}
+
+function toNonNegativeNumber(value: unknown, fallback = 0): number {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : fallback;
+}
+
+function normalizeText(value: unknown): string | undefined {
+  if (typeof value !== "string") return undefined;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+}
+
+function extractGalleryImages(metadata: Record<string, any> | null | undefined): string[] {
+  const gallery = metadata?.gallery_images;
+  if (!Array.isArray(gallery)) return [];
+
+  return gallery
+    .map((item) => (typeof item === "string" ? item.trim() : ""))
+    .filter(Boolean);
+}
+
+function collectProductImages(product: Record<string, any>, variations: Record<string, any>[]) {
+  const images = [
+    normalizeText(product.image_url),
+    ...extractGalleryImages(product.metadata),
+    ...variations.map((variation) => normalizeText(variation.image_url)),
+  ].filter(Boolean) as string[];
+
+  return Array.from(new Set(images));
+}
+
+function extractOlistProductId(payload: any): string | null {
+  const candidates = [
+    payload?.id,
+    payload?.produto?.id,
+    payload?.registro?.id,
+    payload?.registros?.registro?.id,
+    Array.isArray(payload?.registros) ? payload.registros[0]?.registro?.id : undefined,
+  ];
+
+  for (const candidate of candidates) {
+    if (candidate !== null && candidate !== undefined && String(candidate).trim()) {
+      return String(candidate).trim();
+    }
+  }
+
+  return null;
+}
+
+function extractProductCode(product: Record<string, any>, variations: Record<string, any>[]) {
+  return (
+    normalizeText(product.barcode) ||
+    normalizeText(variations.find((variation) => normalizeText(variation.sku))?.sku) ||
+    normalizeText(variations.find((variation) => normalizeText(variation.barcode))?.barcode) ||
+    product.id
+  );
+}
+
+async function findOlistProductIdByCode(code: string): Promise<string | null> {
+  for (let attempt = 0; attempt < 4; attempt++) {
+    const result = await olistPost("produtos.pesquisa.php", { pesquisa: code });
+    const products = Array.isArray(result?.produtos) ? result.produtos : [];
+
+    const match = products.find((item: any) => {
+      const product = item?.produto || item;
+      const candidateCode = String(product?.codigo ?? product?.codigo_sku ?? "").trim();
+      return candidateCode === code;
+    });
+
+    const matchedId = extractOlistProductId(match?.produto || match);
+    if (matchedId) return matchedId;
+
+    if (attempt < 3) {
+      await sleep(2000 * (attempt + 1));
+    }
+  }
+
+  return null;
+}
+
 function getSupabaseClient() {
   return createClient(
     Deno.env.get("SUPABASE_URL") ?? "",
@@ -106,10 +190,52 @@ async function pushProducts(supabase: ReturnType<typeof getSupabaseClient>) {
     }
 
     let processed = 0, failed = 0, created = 0, updated = 0;
+    const failureDetails: Array<{ product_id: string; product_name: string; error: string }> = [];
 
     for (const product of products) {
       try {
         await sleep(OLIST_REQUEST_DELAY_MS);
+
+        const variations = Array.isArray(product.product_variations)
+          ? product.product_variations.filter((variation: any) => variation?.is_active !== false)
+          : [];
+
+        const productCode = extractProductCode(product, variations);
+        const images = collectProductImages(product, variations);
+        const existingPrice = toNonNegativeNumber(product.promotional_price ?? product.price);
+        const productPayload: Record<string, any> = {
+          codigo: productCode,
+          nome: product.name,
+          unidade: "UN",
+          preco: existingPrice,
+          estoque_atual: toNonNegativeNumber(product.stock),
+          situacao: "A",
+        };
+
+        const description = normalizeText(product.description);
+        if (description) productPayload.descricao_complementar = description;
+
+        const promotionalPrice = toPositiveNumber(product.promotional_price);
+        if (promotionalPrice !== undefined) productPayload.preco_promocional = promotionalPrice;
+
+        const weight = toPositiveNumber(product.weight_kg);
+        if (weight !== undefined) {
+          productPayload.peso_bruto = weight;
+          productPayload.peso_liquido = weight;
+        }
+
+        const width = toPositiveNumber(product.width_cm);
+        if (width !== undefined) productPayload.largura = width;
+
+        const height = toPositiveNumber(product.height_cm);
+        if (height !== undefined) productPayload.altura = height;
+
+        const depth = toPositiveNumber(product.depth_cm);
+        if (depth !== undefined) productPayload.comprimento = depth;
+
+        if (images.length > 0) {
+          productPayload.imagens_externas = images.map((url) => ({ url }));
+        }
 
         const { data: existing } = await supabase
           .from("olist_product_mappings")
@@ -117,83 +243,62 @@ async function pushProducts(supabase: ReturnType<typeof getSupabaseClient>) {
           .eq("local_product_id", product.id)
           .maybeSingle();
 
-        // Build produto XML-like JSON for API v2
-        const produto: Record<string, any> = {
-          sequencia: 1,
-          codigo: product.sku || product.id,
-          nome: product.name,
-          unidade: "UN",
-          preco: product.price || 0,
-          preco_custo: product.cost_price || 0,
-          preco_promocional: product.promotional_price || 0,
-          peso_bruto: product.weight || 0,
-          peso_liquido: product.weight || 0,
-          classe_produto: "P",
-          situacao: "A", // Ativo
-          descricao_complementar: product.description || "",
-        };
-
-        if (product.width) produto.largura = product.width;
-        if (product.height) produto.altura = product.height;
-        if (product.length) produto.comprimento = product.length;
-
-        // Add images
-        if (product.images && Array.isArray(product.images)) {
-          produto.imagens_externas = product.images.map((url: string) => ({ url }));
+        let existingOlistId = normalizeText(existing?.olist_product_id);
+        if (!existingOlistId && existing) {
+          existingOlistId = await findOlistProductIdByCode(productCode);
         }
 
-        // Add variations
-        const variations = product.product_variations || [];
-        if (variations.length > 0) {
-          produto.variacoes = variations.map((v: any) => {
-            const variacao: Record<string, any> = {
-              codigo: v.sku || `${product.sku || product.id}-${v.id?.slice(0, 6)}`,
-              preco: v.retail_price || v.price || product.price || 0,
-              grade: {},
-            };
-            if (v.color) variacao.grade.Cor = v.color;
-            if (v.size) variacao.grade.Tamanho = v.size;
-            return { variacao };
-          });
-        }
-
-        const produtoJson = JSON.stringify({ produtos: [{ produto }] });
-
-        if (existing?.olist_product_id) {
+        if (existingOlistId) {
           // Update: use alterar endpoint
           await olistPost("produto.alterar.php", {
             produto: JSON.stringify({
-              ...produto,
-              id: existing.olist_product_id,
+              ...productPayload,
+              id: existingOlistId,
             }),
           });
 
           await supabase.from("olist_product_mappings").update({
+            olist_product_id: existingOlistId,
             last_synced_at: new Date().toISOString(),
             sync_status: "synced",
-          }).eq("id", existing.id);
+          }).eq("id", existing!.id);
           updated++;
         } else {
           // Create: use incluir endpoint
           const result = await olistPost("produto.incluir.php", {
-            produto: JSON.stringify(produto),
+            produto: JSON.stringify(productPayload),
           });
 
-          const olistId = String(result.registros?.registro?.id || result.id || "");
+          const olistId = extractOlistProductId(result) || await findOlistProductIdByCode(productCode);
+          if (!olistId) {
+            throw new Error(`Olist não retornou ID para o produto ${product.name} (${productCode})`);
+          }
 
-          await supabase.from("olist_product_mappings").insert({
+          const mappingPayload = {
             local_product_id: product.id,
             olist_product_id: olistId,
-            olist_sku: produto.codigo,
+            olist_sku: productCode,
             sync_status: "synced",
             last_synced_at: new Date().toISOString(),
             metadata: result,
-          });
+          };
+
+          if (existing) {
+            await supabase.from("olist_product_mappings").update(mappingPayload).eq("id", existing.id);
+          } else {
+            await supabase.from("olist_product_mappings").insert(mappingPayload);
+          }
+
           created++;
         }
         processed++;
       } catch (e) {
         failed++;
+        failureDetails.push({
+          product_id: product.id,
+          product_name: product.name,
+          error: e instanceof Error ? e.message : "Unknown error",
+        });
         console.error(`Error pushing product ${product.name}:`, e);
       }
     }
@@ -205,11 +310,17 @@ async function pushProducts(supabase: ReturnType<typeof getSupabaseClient>) {
         total: products.length,
         created,
         updated,
+        failures: failureDetails.slice(0, 10),
         message: failed > 0
           ? "Parte dos produtos falhou, provavelmente por limitação temporária da API do Olist. Tente novamente em alguns minutos."
           : "Todos os produtos foram enviados com sucesso",
       },
     }).eq("id", logId);
+
+    await supabase.from("olist_integration").update({
+      last_product_sync_at: new Date().toISOString(),
+      last_error: failed > 0 ? `${failed} produto(s) falharam na sincronização` : null,
+    }).neq("id", "00000000-0000-0000-0000-000000000000");
 
     return { processed, failed, total: products.length, created, updated };
   } catch (error) {
@@ -217,6 +328,7 @@ async function pushProducts(supabase: ReturnType<typeof getSupabaseClient>) {
     await supabase.from("olist_sync_logs").update({
       status: "error", error_message: errorMsg, completed_at: new Date().toISOString(),
     }).eq("id", logId);
+    await supabase.from("olist_integration").update({ last_error: errorMsg }).neq("id", "00000000-0000-0000-0000-000000000000");
     throw error;
   }
 }
@@ -519,7 +631,7 @@ serve(async (req) => {
         break;
       }
       case "get-product-mappings": {
-        const { data: mappings } = await supabase.from("olist_product_mappings").select("*, products:local_product_id(id, name, sku)").order("created_at", { ascending: false });
+        const { data: mappings } = await supabase.from("olist_product_mappings").select("*, products:local_product_id(id, name, barcode)").order("created_at", { ascending: false });
         result = mappings;
         break;
       }
