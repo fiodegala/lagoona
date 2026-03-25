@@ -79,6 +79,8 @@ const ExchangePanel = ({
   const [useCredit, setUseCredit] = useState(true);
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card' | 'pix' | null>(null);
   const [cashReceived, setCashReceived] = useState('');
+  const [variationPickerProduct, setVariationPickerProduct] = useState<ProductResult | null>(null);
+  const [variationPickerTarget, setVariationPickerTarget] = useState<'returned' | 'new'>('new');
 
   const calcItemTotal = (item: ExchangeItem) => {
     const gross = item.unit_price * item.quantity;
