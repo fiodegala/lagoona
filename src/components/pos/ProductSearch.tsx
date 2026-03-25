@@ -93,7 +93,8 @@ const ProductSearch = ({ onProductSelect, isOnline }: ProductSearchProps) => {
         }));
       } else {
         const cached = await offlineService.searchCachedProducts(searchQuery);
-        products = cached;
+        products = cached.products;
+        varMap = cached.matchedVariationMap;
       }
       
       setResults(products);
@@ -144,7 +145,11 @@ const ProductSearch = ({ onProductSelect, isOnline }: ProductSearchProps) => {
           };
         }
       } else {
-        product = await offlineService.getCachedProductByBarcode(result.code);
+        const match = await offlineService.getCachedProductByBarcode(result.code);
+        if (match) {
+          product = match.product;
+          matchedVariationId = match.matchedVariationId;
+        }
       }
       
       if (product) {
@@ -232,7 +237,7 @@ const ProductSearch = ({ onProductSelect, isOnline }: ProductSearchProps) => {
           <Input
             ref={inputRef}
             type="text"
-            placeholder="Buscar produto por nome ou código de barras..."
+            placeholder="Buscar produto por nome, SKU ou código de barras..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onFocus={() => query && setShowResults(true)}
