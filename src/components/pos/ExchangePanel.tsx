@@ -590,6 +590,13 @@ const ExchangePanel = ({
           )}
         </Button>
       </div>
+
+      <VariationPickerModal
+        open={!!variationPickerProduct}
+        onOpenChange={(open) => !open && setVariationPickerProduct(null)}
+        product={variationPickerProduct}
+        onSelectVariation={handleVariationSelected}
+      />
     </div>
   );
 };
