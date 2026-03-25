@@ -3010,6 +3010,10 @@ export type Database = {
       }
       is_admin_or_manager: { Args: { _user_id: string }; Returns: boolean }
       is_online_store_user: { Args: { _user_id: string }; Returns: boolean }
+      process_stock_transfer: {
+        Args: { _action: string; _transfer_id: string; _user_id: string }
+        Returns: Json
+      }
       user_accessible_store_ids: {
         Args: { _user_id: string }
         Returns: string[]
