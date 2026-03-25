@@ -86,7 +86,18 @@ function extractProductCode(product: Record<string, any>, variations: Record<str
 
 async function findOlistProductIdByCode(code: string): Promise<string | null> {
   for (let attempt = 0; attempt < 4; attempt++) {
-    const result = await olistPost("produtos.pesquisa.php", { pesquisa: code });
+    let result: any;
+
+    try {
+      result = await olistPost("produtos.pesquisa.php", { pesquisa: code });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (message.toLowerCase().includes("a consulta não retornou registros") || message.toLowerCase().includes("a consulta nao retornou registros")) {
+        return null;
+      }
+      throw error;
+    }
+
     const products = Array.isArray(result?.produtos) ? result.produtos : [];
 
     const match = products.find((item: any) => {
@@ -264,10 +275,57 @@ async function pushProducts(supabase: ReturnType<typeof getSupabaseClient>) {
           }).eq("id", existing!.id);
           updated++;
         } else {
-          // Create: use incluir endpoint
-          const result = await olistPost("produto.incluir.php", {
-            produto: JSON.stringify(productPayload),
-          });
+          // Create first; only search if Olist reports duplicate/already exists
+          let result: any;
+
+          try {
+            result = await olistPost("produto.incluir.php", {
+              produto: JSON.stringify(productPayload),
+            });
+          } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            const normalizedMessage = message.toLowerCase();
+            const looksLikeDuplicate = normalizedMessage.includes("já cadastrado") ||
+              normalizedMessage.includes("ja cadastrado") ||
+              normalizedMessage.includes("já existe") ||
+              normalizedMessage.includes("ja existe") ||
+              normalizedMessage.includes("duplic");
+
+            if (!looksLikeDuplicate) {
+              throw error;
+            }
+
+            const foundOlistId = await findOlistProductIdByCode(productCode);
+            if (!foundOlistId) {
+              throw error;
+            }
+
+            await olistPost("produto.alterar.php", {
+              produto: JSON.stringify({
+                ...productPayload,
+                id: foundOlistId,
+              }),
+            });
+
+            const mappingPayload = {
+              local_product_id: product.id,
+              olist_product_id: foundOlistId,
+              olist_sku: productCode,
+              sync_status: "synced",
+              last_synced_at: new Date().toISOString(),
+              metadata: { duplicate_detected: true, message },
+            };
+
+            if (existing) {
+              await supabase.from("olist_product_mappings").update(mappingPayload).eq("id", existing.id);
+            } else {
+              await supabase.from("olist_product_mappings").insert(mappingPayload);
+            }
+
+            updated++;
+            processed++;
+            continue;
+          }
 
           const olistId = extractOlistProductId(result) || await findOlistProductIdByCode(productCode);
           if (!olistId) {
