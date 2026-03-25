@@ -9,6 +9,18 @@ const corsHeaders = {
 
 // Olist/Tiny ERP API v2
 const OLIST_API_BASE = "https://api.tiny.com.br/api2";
+const OLIST_REQUEST_DELAY_MS = 800;
+const OLIST_RATE_LIMIT_MAX_RETRIES = 5;
+const OLIST_RATE_LIMIT_BASE_DELAY_MS = 4000;
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function isOlistRateLimitMessage(message: string) {
+  const normalized = message.toLowerCase();
+  return normalized.includes("api bloqueada") || normalized.includes("excedido o número de acessos") || normalized.includes("excedido o numero de acessos");
+}
 
 function getSupabaseClient() {
   return createClient(
@@ -26,28 +38,49 @@ function getOlistToken(): string {
 // Olist API v2 uses POST with form-encoded token + formato=JSON
 async function olistPost(endpoint: string, extraParams: Record<string, string> = {}) {
   const token = getOlistToken();
-  const url = `${OLIST_API_BASE}/${endpoint}`;
-  const params = new URLSearchParams({ token, formato: "JSON", ...extraParams });
+  let lastError: Error | null = null;
 
-  const response = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: params.toString(),
-  });
+  for (let attempt = 0; attempt <= OLIST_RATE_LIMIT_MAX_RETRIES; attempt++) {
+    const url = `${OLIST_API_BASE}/${endpoint}`;
+    const params = new URLSearchParams({ token, formato: "JSON", ...extraParams });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Olist API error [${response.status}]: ${errorText}`);
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: params.toString(),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      const error = new Error(`Olist API error [${response.status}]: ${errorText}`);
+
+      if (attempt < OLIST_RATE_LIMIT_MAX_RETRIES && isOlistRateLimitMessage(error.message)) {
+        await sleep(OLIST_RATE_LIMIT_BASE_DELAY_MS * (attempt + 1));
+        continue;
+      }
+
+      throw error;
+    }
+
+    const data = await response.json();
+
+    // API v2 returns { retorno: { status: "OK"|"Erro", ... } }
+    if (data.retorno?.status === "Erro") {
+      const error = new Error(`Olist: ${data.retorno.erros?.[0]?.erro || JSON.stringify(data.retorno)}`);
+      lastError = error;
+
+      if (attempt < OLIST_RATE_LIMIT_MAX_RETRIES && isOlistRateLimitMessage(error.message)) {
+        await sleep(OLIST_RATE_LIMIT_BASE_DELAY_MS * (attempt + 1));
+        continue;
+      }
+
+      throw error;
+    }
+
+    return data.retorno;
   }
 
-  const data = await response.json();
-
-  // API v2 returns { retorno: { status: "OK"|"Erro", ... } }
-  if (data.retorno?.status === "Erro") {
-    throw new Error(`Olist: ${data.retorno.erros?.[0]?.erro || JSON.stringify(data.retorno)}`);
-  }
-
-  return data.retorno;
+  throw lastError ?? new Error("Olist: limite de API excedido");
 }
 
 // ── Push local products to Olist ERP ──
@@ -76,6 +109,8 @@ async function pushProducts(supabase: ReturnType<typeof getSupabaseClient>) {
 
     for (const product of products) {
       try {
+        await sleep(OLIST_REQUEST_DELAY_MS);
+
         const { data: existing } = await supabase
           .from("olist_product_mappings")
           .select("id, olist_product_id")
@@ -164,9 +199,16 @@ async function pushProducts(supabase: ReturnType<typeof getSupabaseClient>) {
     }
 
     await supabase.from("olist_sync_logs").update({
-      status: "success", records_processed: processed, records_failed: failed,
+      status: failed > 0 ? "partial_success" : "success", records_processed: processed, records_failed: failed,
       completed_at: new Date().toISOString(),
-      details: { total: products.length, created, updated },
+      details: {
+        total: products.length,
+        created,
+        updated,
+        message: failed > 0
+          ? "Parte dos produtos falhou, provavelmente por limitação temporária da API do Olist. Tente novamente em alguns minutos."
+          : "Todos os produtos foram enviados com sucesso",
+      },
     }).eq("id", logId);
 
     return { processed, failed, total: products.length, created, updated };
