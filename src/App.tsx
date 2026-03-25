@@ -402,7 +402,16 @@ const App = () => (
                     <AdminAnnouncements />
                   </ProtectedRoute>
                 }
+                />
               />
+
+              <Route
+                path="/admin/olist"
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <OlistIntegration />
+                  </ProtectedRoute>
+                }
 
               {/* Legacy redirects for admin routes */}
               <Route path="/products" element={<Navigate to="/admin/products" replace />} />
