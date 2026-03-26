@@ -113,10 +113,31 @@ const StockTransferModal: React.FC<Props> = ({ open, onOpenChange, stores, onTra
     const loadProducts = async () => {
       const { data } = await supabase
         .from('products')
-        .select('id, name, image_url')
+        .select('id, name, image_url, barcode')
         .eq('is_active', true)
         .order('name');
-      setProducts(data || []);
+
+      // Also load variation SKUs/barcodes to enable search by variation code
+      const { data: varData } = await supabase
+        .from('product_variations')
+        .select('product_id, sku, barcode')
+        .eq('is_active', true);
+      const varSearchMap: Record<string, string[]> = {};
+      (varData || []).forEach((v: any) => {
+        if (!varSearchMap[v.product_id]) varSearchMap[v.product_id] = [];
+        if (v.sku) varSearchMap[v.product_id].push(v.sku.toLowerCase());
+        if (v.barcode) varSearchMap[v.product_id].push(v.barcode.toLowerCase());
+      });
+
+      const enriched = (data || []).map(p => ({
+        ...p,
+        _searchCodes: [
+          p.name?.toLowerCase() || '',
+          p.barcode?.toLowerCase() || '',
+          ...(varSearchMap[p.id] || []),
+        ].filter(Boolean),
+      }));
+      setProducts(enriched);
     };
     loadProducts();
   }, [open]);
@@ -255,7 +276,9 @@ const StockTransferModal: React.FC<Props> = ({ open, onOpenChange, stores, onTra
   const filteredProducts = useMemo(() => {
     if (!productSearch) return products.slice(0, 20);
     const q = productSearch.toLowerCase();
-    return products.filter(p => p.name.toLowerCase().includes(q)).slice(0, 20);
+    return products.filter(p =>
+      (p._searchCodes || [p.name?.toLowerCase()]).some((code: string) => code.includes(q))
+    ).slice(0, 20);
   }, [products, productSearch]);
 
   const filteredVariations = useMemo(() => {
