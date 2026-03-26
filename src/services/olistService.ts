@@ -30,18 +30,6 @@ export interface OlistSyncLog {
   created_at: string;
 }
 
-async function invokeOlist(action: string, body?: Record<string, unknown>) {
-  const { data, error } = await supabase.functions.invoke('olist-sync', {
-    body: body || {},
-    headers: { 'Content-Type': 'application/json' },
-  });
-
-  // The action is passed as query param, but supabase.functions.invoke doesn't support query params directly
-  // So we use the body to pass the action
-  return { data, error };
-}
-
-// We need to call with URL params, so let's use fetch directly
 async function callOlist(action: string, body?: Record<string, unknown>) {
   const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
   const url = `https://${projectId}.supabase.co/functions/v1/olist-sync?action=${action}`;
@@ -82,22 +70,28 @@ export const olistService = {
     return callOlist('save-config', config as Record<string, unknown>);
   },
 
-  async pushProducts(): Promise<{ processed: number; failed: number; total: number; created: number; updated: number }> {
+  async pushProducts(productIds?: string[]): Promise<{ processed: number; failed: number; total: number; created: number; updated: number; queued: number }> {
     let offset = 0;
     let logId: string | undefined;
-    let aggregate = { processed: 0, failed: 0, total: 0, created: 0, updated: 0 };
+    let aggregate = { processed: 0, failed: 0, total: 0, created: 0, updated: 0, queued: 0 };
 
     while (true) {
-      const result = await callOlist('push-products', {
+      const requestBody: Record<string, unknown> = {
         offset,
         limit: 10,
         logId,
-      }) as {
+      };
+      if (productIds && productIds.length > 0) {
+        requestBody.productIds = productIds;
+      }
+
+      const result = await callOlist('push-products', requestBody) as {
         processed: number;
         failed: number;
         total: number;
         created: number;
         updated: number;
+        queued: number;
         hasMore?: boolean;
         nextOffset?: number;
         logId?: string;
@@ -110,6 +104,7 @@ export const olistService = {
         total: result.total,
         created: result.created,
         updated: result.updated,
+        queued: result.queued || 0,
       };
 
       if (!result.hasMore) {
@@ -118,6 +113,10 @@ export const olistService = {
 
       offset = result.nextOffset ?? offset + 10;
     }
+  },
+
+  async reconcileProducts(): Promise<{ resolved: number; pending: number; total: number }> {
+    return callOlist('reconcile-products');
   },
 
   async syncProducts(): Promise<{ processed: number; failed: number; total: number }> {
