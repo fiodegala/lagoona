@@ -137,7 +137,7 @@ const StockTransferModal: React.FC<Props> = ({ open, onOpenChange, stores, onTra
           ...(varSearchMap[p.id] || []),
         ].filter(Boolean),
       }));
-      setProducts(data || []);
+      setProducts(enriched);
     };
     loadProducts();
   }, [open]);
