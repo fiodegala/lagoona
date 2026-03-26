@@ -111,17 +111,29 @@ const StockTransferModal: React.FC<Props> = ({ open, onOpenChange, stores, onTra
   useEffect(() => {
     if (!open) return;
     const loadProducts = async () => {
-      const { data } = await supabase
-        .from('products')
-        .select('id, name, image_url, barcode')
-        .eq('is_active', true)
-        .order('name');
+      const [{ data: productData }, { data: varData }, { data: stockData }] = await Promise.all([
+        supabase
+          .from('products')
+          .select('id, name, image_url, barcode, is_active')
+          .order('name'),
+        supabase
+          .from('product_variations')
+          .select('product_id, sku, barcode')
+          .eq('is_active', true),
+        fromStoreId
+          ? supabase
+              .from('store_stock')
+              .select('product_id, quantity')
+              .eq('store_id', fromStoreId)
+          : Promise.resolve({ data: [] as any[] }),
+      ]);
 
-      // Also load variation SKUs/barcodes to enable search by variation code
-      const { data: varData } = await supabase
-        .from('product_variations')
-        .select('product_id, sku, barcode')
-        .eq('is_active', true);
+      const stockedProductIds = new Set(
+        (stockData || [])
+          .filter((item: any) => (item.quantity ?? 0) > 0)
+          .map((item: any) => item.product_id)
+      );
+
       const varSearchMap: Record<string, string[]> = {};
       (varData || []).forEach((v: any) => {
         if (!varSearchMap[v.product_id]) varSearchMap[v.product_id] = [];
@@ -129,18 +141,21 @@ const StockTransferModal: React.FC<Props> = ({ open, onOpenChange, stores, onTra
         if (v.barcode) varSearchMap[v.product_id].push(v.barcode.toLowerCase());
       });
 
-      const enriched = (data || []).map(p => ({
-        ...p,
-        _searchCodes: [
-          p.name?.toLowerCase() || '',
-          p.barcode?.toLowerCase() || '',
-          ...(varSearchMap[p.id] || []),
-        ].filter(Boolean),
-      }));
+      const enriched = (productData || [])
+        .filter((p: any) => p.is_active || stockedProductIds.has(p.id))
+        .map((p: any) => ({
+          ...p,
+          _searchCodes: [
+            p.name?.toLowerCase() || '',
+            p.barcode?.toLowerCase() || '',
+            ...(varSearchMap[p.id] || []),
+          ].filter(Boolean),
+        }));
+
       setProducts(enriched);
     };
     loadProducts();
-  }, [open]);
+  }, [open, fromStoreId]);
 
   // Stock map for variations in the selected source store
   const [variationStockMap, setVariationStockMap] = useState<Record<string, number>>({});
