@@ -134,9 +134,17 @@ const OlistIntegration = () => {
       const parts = [];
       if (result.created > 0) parts.push(`${result.created} criados`);
       if (result.updated > 0) parts.push(`${result.updated} atualizados`);
-      if (result.queued > 0) parts.push(`${result.queued} na fila do Tiny`);
+      if (result.queued > 0) parts.push(`${result.queued} pendentes de confirmação no Tiny`);
       if (result.failed > 0) parts.push(`${result.failed} falhas`);
-      toast.success(`Envio concluído: ${parts.join(', ') || 'Nenhum produto processado'}`);
+
+      if (result.queued > 0 && result.created === 0 && result.updated === 0) {
+        toast.error(`O Tiny aceitou a requisição, mas não confirmou o cadastro: ${parts.join(', ')}`);
+      } else if (result.failed > 0) {
+        toast.error(`Envio parcial: ${parts.join(', ')}`);
+      } else {
+        toast.success(`Envio concluído: ${parts.join(', ') || 'Nenhum produto processado'}`);
+      }
+
       loadData();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Erro ao enviar produtos');
