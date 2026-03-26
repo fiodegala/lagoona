@@ -64,9 +64,25 @@ const CSV_HEADERS = [
 ];
 
 function escapeCSV(value: string): string {
+  if (value === null || value === undefined || value === 'null' || value === 'undefined') return '""';
   if (!value) return '""';
-  const escaped = value.replace(/"/g, '""');
+  const escaped = String(value).replace(/"/g, '""');
   return `"${escaped}"`;
+}
+
+function formatPrice(value: number | null | undefined): string {
+  if (!value && value !== 0) return '';
+  return value.toFixed(2).replace('.', ',');
+}
+
+function formatWeight(value: number | null | undefined): string {
+  if (!value || value === 0) return '';
+  return String(value).replace('.', ',');
+}
+
+function formatDimension(value: number | null | undefined): string {
+  if (!value || value === 0) return '';
+  return String(value);
 }
 
 function generateSKU(name: string): string {
