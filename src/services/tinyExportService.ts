@@ -138,7 +138,7 @@ function buildParentRow(
   row[16] = product.min_stock ? String(product.min_stock) : ''; // Estoque mín
   row[17] = formatWeight(product.weight_kg); // Peso líq
   row[18] = formatWeight(product.weight_kg); // Peso bruto
-  row[19] = product.barcode && product.barcode !== 'null' ? product.barcode : ''; // GTIN
+  row[19] = formatGTIN(product.barcode); // GTIN
   row[20] = ''; // GTIN tributável
   row[21] = product.description || ''; // Desc complementar
   row[22] = ''; // CEST
