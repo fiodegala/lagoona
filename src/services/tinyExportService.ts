@@ -169,7 +169,9 @@ function buildVariationRow(
   categoryName: string | null,
 ): string[] {
   const row = new Array(CSV_HEADERS.length).fill('');
-  const varSku = variation.sku || `${parentSku}-${variationValues.map(v => v.attribute_value).join('-')}`;
+  const varSku = variation.sku && variation.sku !== 'null' 
+    ? variation.sku 
+    : `${parentSku}-${variationValues.map(v => v.attribute_value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '').toUpperCase()).join('-')}`;
   const varDesc = variationValues.map(v => v.attribute_value).join(' ');
   
   row[0] = ''; // ID
@@ -177,25 +179,25 @@ function buildVariationRow(
   row[2] = `${product.name} - ${varDesc}`; // Descrição
   row[3] = 'Un';
   row[5] = '0';
-  row[6] = (variation.price || product.price).toFixed(2);
+  row[6] = formatPrice(variation.price || product.price);
   row[9] = variation.is_active ? 'Ativo' : 'Inativo';
-  row[10] = String(variation.stock);
-  row[17] = product.weight_kg ? String(product.weight_kg) : '0';
-  row[18] = product.weight_kg ? String(product.weight_kg) : '0';
-  row[19] = variation.barcode || '';
+  row[10] = String(variation.stock || 0);
+  row[17] = formatWeight(product.weight_kg);
+  row[18] = formatWeight(product.weight_kg);
+  row[19] = variation.barcode && variation.barcode !== 'null' ? variation.barcode : '';
   row[21] = product.description || '';
   row[24] = 'Pacote / Caixa';
-  row[25] = product.width_cm ? String(product.width_cm) : '0';
-  row[26] = product.height_cm ? String(product.height_cm) : '0';
-  row[27] = product.depth_cm ? String(product.depth_cm) : '0';
-  row[28] = '0';
+  row[25] = formatDimension(product.width_cm);
+  row[26] = formatDimension(product.height_cm);
+  row[27] = formatDimension(product.depth_cm);
+  row[28] = '';
   row[29] = 'S'; // Tipo variação
-  if (variation.image_url) row[30] = variation.image_url;
+  if (variation.image_url && variation.image_url !== 'null') row[30] = variation.image_url;
   row[36] = buildCategoryPath(categoryName);
   row[37] = parentSku; // Código do pai
-  row[38] = variationValues.map(v => `${v.attribute_name}:${v.attribute_value}`).join('||'); // Variações
+  row[38] = variationValues.map(v => `${v.attribute_name}:${v.attribute_value}`).join('||');
   row[41] = 'Não';
-  row[42] = variation.promotional_price ? variation.promotional_price.toFixed(2) : '';
+  row[42] = formatPrice(variation.promotional_price);
   row[62] = 'Sim';
   return row;
 }
