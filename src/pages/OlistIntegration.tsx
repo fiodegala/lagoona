@@ -97,6 +97,15 @@ const OlistIntegration = () => {
     );
   }, [products, productSearch]);
 
+  const exportFilteredProducts = useMemo(() => {
+    if (!exportSearch.trim()) return products;
+    const q = exportSearch.toLowerCase();
+    return products.filter(p =>
+      p.name.toLowerCase().includes(q) ||
+      (p.barcode && p.barcode.toLowerCase().includes(q))
+    );
+  }, [products, exportSearch]);
+
   const handleSelectAll = (checked: boolean) => {
     setSelectAll(checked);
     if (checked) {
