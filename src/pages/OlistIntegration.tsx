@@ -438,7 +438,59 @@ const OlistIntegration = () => {
             </Card>
           </TabsContent>
 
-          <TabsContent value="config" className="space-y-4">
+          {/* Export CSV Tab */}
+          <TabsContent value="export" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span>Exportar Produtos para CSV (Formato Tiny ERP)</span>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      onClick={async () => {
+                        setIsExporting(true);
+                        try {
+                          const ids = selectedProductIds.size > 0 ? Array.from(selectedProductIds) : undefined;
+                          const csv = await exportProductsToTinyCSV(ids);
+                          const date = new Date().toISOString().slice(0, 10);
+                          downloadCSV(csv, `produtos-tiny-${date}.csv`);
+                          toast.success(`CSV exportado com sucesso!`);
+                        } catch (err: unknown) {
+                          toast.error((err as Error).message || 'Erro ao exportar');
+                        } finally {
+                          setIsExporting(false);
+                        }
+                      }}
+                      disabled={isExporting}
+                      size="sm"
+                    >
+                      {isExporting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Download className="h-4 w-4 mr-2" />}
+                      {selectedProductIds.size > 0 ? `Exportar ${selectedProductIds.size} Selecionados` : 'Exportar Todos'}
+                    </Button>
+                  </div>
+                </CardTitle>
+                <CardDescription>
+                  Gera um arquivo CSV no formato aceito pelo Tiny ERP para importação manual. Produtos com variações serão exportados no formato pai/filho (Código do pai + Variações).
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="bg-muted/50 rounded-lg p-4 text-sm space-y-2">
+                    <p className="font-medium">📋 Estrutura do CSV exportado:</p>
+                    <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                      <li><strong>Produtos simples</strong> (sem variações): exportados como tipo "S"</li>
+                      <li><strong>Produtos com variações</strong>: linha pai tipo "V" + linhas filhas tipo "S" com <code>Código do pai</code> e <code>Variações</code> (ex: Cor:Branca||Tamanho:M)</li>
+                      <li>Inclui: SKU, preço, estoque, descrição, peso, dimensões, imagens, código de barras</li>
+                      <li>Preço promocional exportado quando disponível</li>
+                    </ul>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    💡 Para exportar apenas alguns produtos, selecione-os na aba "Enviar Produtos" antes de exportar.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
             <Card>
               <CardHeader>
                 <CardTitle>Módulos de Sincronização</CardTitle>
