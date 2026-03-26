@@ -3,11 +3,10 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
 };
 
-// Olist/Tiny ERP API v2
 const OLIST_API_BASE = "https://api.tiny.com.br/api2";
 const OLIST_REQUEST_DELAY_MS = 800;
 const OLIST_RATE_LIMIT_MAX_RETRIES = 5;
@@ -41,29 +40,30 @@ function normalizeText(value: unknown): string | undefined {
 function extractGalleryImages(metadata: Record<string, any> | null | undefined): string[] {
   const gallery = metadata?.gallery_images;
   if (!Array.isArray(gallery)) return [];
-
-  return gallery
-    .map((item) => (typeof item === "string" ? item.trim() : ""))
-    .filter(Boolean);
+  return gallery.map((item) => (typeof item === "string" ? item.trim() : "")).filter(Boolean);
 }
 
 function collectProductImages(product: Record<string, any>, variations: Record<string, any>[]) {
-  const images = [
-    normalizeText(product.image_url),
-    ...extractGalleryImages(product.metadata),
-    ...variations.map((variation) => normalizeText(variation.image_url)),
-  ].filter(Boolean) as string[];
-
-  return Array.from(new Set(images));
+  const images: string[] = [];
+  if (product.image_url) images.push(product.image_url);
+  images.push(...extractGalleryImages(product.metadata));
+  for (const v of variations) {
+    if (v.image_url && !images.includes(v.image_url)) images.push(v.image_url);
+  }
+  return images.slice(0, 6);
 }
 
 function extractOlistProductId(payload: any): string | null {
+  if (!payload) return null;
+  
   const candidates = [
     payload?.id,
     payload?.produto?.id,
     payload?.registro?.id,
     payload?.registros?.registro?.id,
-    Array.isArray(payload?.registros) ? payload.registros[0]?.registro?.id : undefined,
+    Array.isArray(payload?.registros) && payload.registros.length > 0 
+      ? (payload.registros[0]?.registro?.id || payload.registros[0]?.id) 
+      : undefined,
   ];
 
   for (const candidate of candidates) {
@@ -78,28 +78,30 @@ function extractOlistProductId(payload: any): string | null {
 function extractProductCode(product: Record<string, any>, variations: Record<string, any>[]) {
   return (
     normalizeText(product.barcode) ||
-    normalizeText(variations.find((variation) => normalizeText(variation.sku))?.sku) ||
-    normalizeText(variations.find((variation) => normalizeText(variation.barcode))?.barcode) ||
+    normalizeText(variations.find((v) => normalizeText(v.sku))?.sku) ||
+    normalizeText(variations.find((v) => normalizeText(v.barcode))?.barcode) ||
     product.id
   );
 }
 
 async function findOlistProductIdByCode(code: string): Promise<string | null> {
-  for (let attempt = 0; attempt < 4; attempt++) {
+  for (let attempt = 0; attempt < 3; attempt++) {
     let result: any;
-
     try {
       result = await olistPost("produtos.pesquisa.php", { pesquisa: code });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       if (message.toLowerCase().includes("a consulta não retornou registros") || message.toLowerCase().includes("a consulta nao retornou registros")) {
+        if (attempt < 2) {
+          await sleep(3000 * (attempt + 1));
+          continue;
+        }
         return null;
       }
       throw error;
     }
 
     const products = Array.isArray(result?.produtos) ? result.produtos : [];
-
     const match = products.find((item: any) => {
       const product = item?.produto || item;
       const candidateCode = String(product?.codigo ?? product?.codigo_sku ?? "").trim();
@@ -109,11 +111,10 @@ async function findOlistProductIdByCode(code: string): Promise<string | null> {
     const matchedId = extractOlistProductId(match?.produto || match);
     if (matchedId) return matchedId;
 
-    if (attempt < 3) {
-      await sleep(2000 * (attempt + 1));
+    if (attempt < 2) {
+      await sleep(3000 * (attempt + 1));
     }
   }
-
   return null;
 }
 
@@ -130,7 +131,6 @@ function getOlistToken(): string {
   return token;
 }
 
-// Olist API v2 uses POST with form-encoded token + formato=JSON
 async function olistPost(endpoint: string, extraParams: Record<string, string> = {}) {
   const token = getOlistToken();
   let lastError: Error | null = null;
@@ -148,27 +148,22 @@ async function olistPost(endpoint: string, extraParams: Record<string, string> =
     if (!response.ok) {
       const errorText = await response.text();
       const error = new Error(`Olist API error [${response.status}]: ${errorText}`);
-
       if (attempt < OLIST_RATE_LIMIT_MAX_RETRIES && isOlistRateLimitMessage(error.message)) {
         await sleep(OLIST_RATE_LIMIT_BASE_DELAY_MS * (attempt + 1));
         continue;
       }
-
       throw error;
     }
 
     const data = await response.json();
 
-    // API v2 returns { retorno: { status: "OK"|"Erro", ... } }
     if (data.retorno?.status === "Erro") {
       const error = new Error(`Olist: ${data.retorno.erros?.[0]?.erro || JSON.stringify(data.retorno)}`);
       lastError = error;
-
       if (attempt < OLIST_RATE_LIMIT_MAX_RETRIES && isOlistRateLimitMessage(error.message)) {
         await sleep(OLIST_RATE_LIMIT_BASE_DELAY_MS * (attempt + 1));
         continue;
       }
-
       throw error;
     }
 
@@ -181,11 +176,12 @@ async function olistPost(endpoint: string, extraParams: Record<string, string> =
 // ── Push local products to Olist ERP ──
 async function pushProducts(
   supabase: ReturnType<typeof getSupabaseClient>,
-  options: { offset?: number; limit?: number; logId?: string } = {}
+  options: { offset?: number; limit?: number; logId?: string; productIds?: string[] } = {}
 ) {
   const offset = Math.max(0, Number(options.offset ?? 0));
   const limit = Math.min(20, Math.max(1, Number(options.limit ?? 10)));
   const logId = normalizeText(options.logId) || crypto.randomUUID();
+  const productIds = Array.isArray(options.productIds) && options.productIds.length > 0 ? options.productIds : null;
 
   const { data: existingLog } = await supabase
     .from("olist_sync_logs")
@@ -201,54 +197,76 @@ async function pushProducts(
       status: "running",
       records_processed: 0,
       records_failed: 0,
-      details: { total: 0, created: 0, updated: 0, failures: [] },
+      details: { total: 0, created: 0, updated: 0, queued: 0, failures: [] },
     });
   }
 
   try {
-    const { count: totalProducts, error: countErr } = await supabase
-      .from("products")
-      .select("id", { count: "exact", head: true })
-      .eq("is_active", true);
+    let total = 0;
+    let productsQuery;
 
-    if (countErr) throw new Error(`DB error: ${countErr.message}`);
+    if (productIds) {
+      // Send specific products
+      const { count, error: countErr } = await supabase
+        .from("products")
+        .select("id", { count: "exact", head: true })
+        .in("id", productIds);
+      if (countErr) throw new Error(`DB error: ${countErr.message}`);
+      total = count ?? 0;
 
-    const total = totalProducts ?? 0;
+      const { data: products, error: prodErr } = await supabase
+        .from("products")
+        .select("*, product_variations(*)")
+        .in("id", productIds)
+        .range(offset, offset + limit - 1);
+      if (prodErr) throw new Error(`DB error: ${prodErr.message}`);
+      productsQuery = products;
+    } else {
+      // Send all active products
+      const { count, error: countErr } = await supabase
+        .from("products")
+        .select("id", { count: "exact", head: true })
+        .eq("is_active", true);
+      if (countErr) throw new Error(`DB error: ${countErr.message}`);
+      total = count ?? 0;
+
+      const { data: products, error: prodErr } = await supabase
+        .from("products")
+        .select("*, product_variations(*)")
+        .eq("is_active", true)
+        .range(offset, offset + limit - 1);
+      if (prodErr) throw new Error(`DB error: ${prodErr.message}`);
+      productsQuery = products;
+    }
+
     if (total === 0) {
       await supabase.from("olist_sync_logs").update({
         status: "success",
         records_processed: 0,
         records_failed: 0,
         completed_at: new Date().toISOString(),
-        details: { total: 0, created: 0, updated: 0, failures: [], message: "Nenhum produto ativo encontrado" },
+        details: { total: 0, created: 0, updated: 0, queued: 0, failures: [], message: "Nenhum produto encontrado" },
       }).eq("id", logId);
-
-      return { processed: 0, failed: 0, total: 0, created: 0, updated: 0, hasMore: false, nextOffset: offset, logId };
+      return { processed: 0, failed: 0, total: 0, created: 0, updated: 0, queued: 0, hasMore: false, nextOffset: offset, logId };
     }
 
-    const { data: products, error: prodErr } = await supabase
-      .from("products")
-      .select("*, product_variations(*)")
-      .eq("is_active", true)
-      .range(offset, offset + limit - 1);
-
-    if (prodErr) throw new Error(`DB error: ${prodErr.message}`);
-
+    const products = productsQuery || [];
     const previousDetails = (existingLog?.details as Record<string, any> | null) || {};
     let processed = toNonNegativeNumber(previousDetails.processed, 0);
     let failed = toNonNegativeNumber(previousDetails.failed, 0);
     let created = toNonNegativeNumber(previousDetails.created, 0);
     let updated = toNonNegativeNumber(previousDetails.updated, 0);
+    let queued = toNonNegativeNumber(previousDetails.queued, 0);
     const failureDetails: Array<{ product_id: string; product_name: string; error: string }> = Array.isArray(previousDetails.failures)
       ? previousDetails.failures.slice(0, 50)
       : [];
 
-    for (const product of products || []) {
+    for (const product of products) {
       try {
         await sleep(OLIST_REQUEST_DELAY_MS);
 
         const variations = Array.isArray(product.product_variations)
-          ? product.product_variations.filter((variation: any) => variation?.is_active !== false)
+          ? product.product_variations.filter((v: any) => v?.is_active !== false)
           : [];
 
         const productCode = extractProductCode(product, variations);
@@ -274,13 +292,10 @@ async function pushProducts(
           productPayload.peso_bruto = weight;
           productPayload.peso_liquido = weight;
         }
-
         const width = toPositiveNumber(product.width_cm);
         if (width !== undefined) productPayload.largura = width;
-
         const height = toPositiveNumber(product.height_cm);
         if (height !== undefined) productPayload.altura = height;
-
         const depth = toPositiveNumber(product.depth_cm);
         if (depth !== undefined) productPayload.comprimento = depth;
 
@@ -295,16 +310,17 @@ async function pushProducts(
           .maybeSingle();
 
         let existingOlistId = normalizeText(existing?.olist_product_id);
+        // Skip "pending" IDs - they need to be resolved
+        if (existingOlistId === "pending") existingOlistId = undefined;
+        
         if (!existingOlistId && existing) {
           existingOlistId = await findOlistProductIdByCode(productCode);
         }
 
         if (existingOlistId) {
+          // UPDATE existing product
           await olistPost("produto.alterar.php", {
-            produto: JSON.stringify({
-              ...productPayload,
-              id: existingOlistId,
-            }),
+            produto: JSON.stringify({ ...productPayload, id: existingOlistId }),
           });
 
           await supabase.from("olist_product_mappings").update({
@@ -315,12 +331,16 @@ async function pushProducts(
           }).eq("id", existing!.id);
           updated++;
         } else {
+          // CREATE new product
           let result: any;
+          let createdSuccessfully = false;
 
           try {
             result = await olistPost("produto.incluir.php", {
               produto: JSON.stringify(productPayload),
             });
+            createdSuccessfully = true;
+            console.log(`Tiny response for ${product.name}:`, JSON.stringify(result));
           } catch (error) {
             const message = error instanceof Error ? error.message : String(error);
             const normalizedMessage = message.toLowerCase();
@@ -334,25 +354,52 @@ async function pushProducts(
               throw error;
             }
 
+            // Product already exists - find it
             const foundOlistId = await findOlistProductIdByCode(productCode);
-            if (!foundOlistId) {
+            if (foundOlistId) {
+              await olistPost("produto.alterar.php", {
+                produto: JSON.stringify({ ...productPayload, id: foundOlistId }),
+              });
+              const mappingPayload = {
+                local_product_id: product.id,
+                olist_product_id: foundOlistId,
+                olist_sku: productCode,
+                sync_status: "synced",
+                last_synced_at: new Date().toISOString(),
+                metadata: { duplicate_detected: true, message },
+              };
+              if (existing) {
+                await supabase.from("olist_product_mappings").update(mappingPayload).eq("id", existing.id);
+              } else {
+                await supabase.from("olist_product_mappings").insert(mappingPayload);
+              }
+              updated++;
+              processed++;
+              continue;
+            } else {
               throw error;
             }
+          }
 
-            await olistPost("produto.alterar.php", {
-              produto: JSON.stringify({
-                ...productPayload,
-                id: foundOlistId,
-              }),
-            });
+          if (createdSuccessfully) {
+            // Tiny API v2 returns status OK but registros:[] (async queue processing)
+            // Try to extract ID from response, if not available save as "queued"
+            const olistId = extractOlistProductId(result);
+            
+            // Also try searching after a short delay
+            let resolvedId = olistId;
+            if (!resolvedId) {
+              await sleep(2000);
+              resolvedId = await findOlistProductIdByCode(productCode);
+            }
 
             const mappingPayload = {
               local_product_id: product.id,
-              olist_product_id: foundOlistId,
+              olist_product_id: resolvedId || "pending",
               olist_sku: productCode,
-              sync_status: "synced",
+              sync_status: resolvedId ? "synced" : "queued",
               last_synced_at: new Date().toISOString(),
-              metadata: { duplicate_detected: true, message },
+              metadata: { response: result, status_processamento: result?.status_processamento },
             };
 
             if (existing) {
@@ -361,32 +408,12 @@ async function pushProducts(
               await supabase.from("olist_product_mappings").insert(mappingPayload);
             }
 
-            updated++;
-            processed++;
-            continue;
+            if (resolvedId) {
+              created++;
+            } else {
+              queued++;
+            }
           }
-
-          const olistId = extractOlistProductId(result) || await findOlistProductIdByCode(productCode);
-          if (!olistId) {
-            throw new Error(`Olist não retornou ID para o produto ${product.name} (${productCode})`);
-          }
-
-          const mappingPayload = {
-            local_product_id: product.id,
-            olist_product_id: olistId,
-            olist_sku: productCode,
-            sync_status: "synced",
-            last_synced_at: new Date().toISOString(),
-            metadata: result,
-          };
-
-          if (existing) {
-            await supabase.from("olist_product_mappings").update(mappingPayload).eq("id", existing.id);
-          } else {
-            await supabase.from("olist_product_mappings").insert(mappingPayload);
-          }
-
-          created++;
         }
 
         processed++;
@@ -401,7 +428,7 @@ async function pushProducts(
       }
     }
 
-    const nextOffset = offset + (products?.length || 0);
+    const nextOffset = offset + products.length;
     const hasMore = nextOffset < total;
     const details = {
       total,
@@ -409,12 +436,15 @@ async function pushProducts(
       failed,
       created,
       updated,
+      queued,
       failures: failureDetails.slice(0, 10),
       message: hasMore
         ? `Enviando lote ${Math.floor(offset / limit) + 1}. ${nextOffset} de ${total} produtos processados.`
         : failed > 0
-          ? "Parte dos produtos falhou, provavelmente por limitação temporária da API do Olist. Tente novamente em alguns minutos."
-          : "Todos os produtos foram enviados com sucesso",
+          ? `${queued > 0 ? queued + " produto(s) na fila de processamento do Tiny. " : ""}Parte dos produtos falhou. Tente novamente.`
+          : queued > 0
+            ? `${created} criados, ${updated} atualizados, ${queued} na fila de processamento do Tiny ERP.`
+            : "Todos os produtos foram enviados com sucesso",
     };
 
     await supabase.from("olist_sync_logs").update({
@@ -432,7 +462,7 @@ async function pushProducts(
       }).neq("id", "00000000-0000-0000-0000-000000000000");
     }
 
-    return { processed, failed, total, created, updated, hasMore, nextOffset, logId };
+    return { processed, failed, total, created, updated, queued, hasMore, nextOffset, logId };
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : "Unknown error";
     await supabase.from("olist_sync_logs").update({
@@ -443,6 +473,46 @@ async function pushProducts(
     await supabase.from("olist_integration").update({ last_error: errorMsg }).neq("id", "00000000-0000-0000-0000-000000000000");
     throw error;
   }
+}
+
+// ── Reconcile queued products (find IDs for pending mappings) ──
+async function reconcileProducts(supabase: ReturnType<typeof getSupabaseClient>) {
+  const { data: pendingMappings } = await supabase
+    .from("olist_product_mappings")
+    .select("id, local_product_id, olist_sku, olist_product_id")
+    .or("sync_status.eq.queued,olist_product_id.eq.pending")
+    .limit(50);
+
+  if (!pendingMappings || pendingMappings.length === 0) {
+    return { resolved: 0, pending: 0, total: 0 };
+  }
+
+  let resolved = 0;
+  let stillPending = 0;
+
+  for (const mapping of pendingMappings) {
+    try {
+      await sleep(OLIST_REQUEST_DELAY_MS);
+      const code = mapping.olist_sku || mapping.local_product_id;
+      const olistId = await findOlistProductIdByCode(code);
+      
+      if (olistId) {
+        await supabase.from("olist_product_mappings").update({
+          olist_product_id: olistId,
+          sync_status: "synced",
+          last_synced_at: new Date().toISOString(),
+        }).eq("id", mapping.id);
+        resolved++;
+      } else {
+        stillPending++;
+      }
+    } catch (e) {
+      stillPending++;
+      console.error(`Error reconciling mapping ${mapping.id}:`, e);
+    }
+  }
+
+  return { resolved, pending: stillPending, total: pendingMappings.length };
 }
 
 // ── Pull products from Olist ──
@@ -533,7 +603,6 @@ async function syncOrders(supabase: ReturnType<typeof getSupabaseClient>) {
             metadata: oo,
           }).eq("id", existing.id);
         } else {
-          // Fetch full order details
           let orderDetail = oo;
           try {
             const detail = await olistPost("pedido.obter.php", { id: String(oo.id) });
@@ -550,9 +619,7 @@ async function syncOrders(supabase: ReturnType<typeof getSupabaseClient>) {
             };
           });
 
-          const total = orderItems.reduce(
-            (sum: number, i: any) => sum + i.price * i.quantity, 0
-          );
+          const total = orderItems.reduce((sum: number, i: any) => sum + i.price * i.quantity, 0);
 
           const { data: newOrder } = await supabase.from("orders").insert({
             customer_email: orderDetail.cliente?.email || "olist@pedido.com",
@@ -610,7 +677,6 @@ async function sendInvoice(
   });
 
   try {
-    // First get the nota fiscal id from the order
     await olistPost("nota.fiscal.incluir.php", {
       nota: JSON.stringify({
         tipo: "S",
@@ -694,19 +760,23 @@ serve(async (req) => {
 
     let result;
 
-      switch (action) {
-        case "push-products":
-          result = await pushProducts(supabase, {
-            offset: body.offset,
-            limit: body.limit,
-            logId: body.logId,
-          });
-          break;
+    switch (action) {
+      case "push-products":
+        result = await pushProducts(supabase, {
+          offset: body.offset,
+          limit: body.limit,
+          logId: body.logId,
+          productIds: body.productIds,
+        });
+        break;
       case "sync-products":
         result = await syncProducts(supabase);
         break;
       case "sync-orders":
         result = await syncOrders(supabase);
+        break;
+      case "reconcile-products":
+        result = await reconcileProducts(supabase);
         break;
       case "send-invoice":
         if (!body.order_code || !body.key || !body.number) {
@@ -758,7 +828,7 @@ serve(async (req) => {
       }
       default:
         return new Response(
-          JSON.stringify({ error: "Ação inválida. Use: push-products, sync-products, sync-orders, send-invoice, test-connection" }),
+          JSON.stringify({ error: "Ação inválida" }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
     }
