@@ -54,6 +54,7 @@ const OlistIntegration = () => {
   const [isSyncingOrders, setIsSyncingOrders] = useState(false);
   const [isReconciling, setIsReconciling] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [isExportingTikTok, setIsExportingTikTok] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<'unknown' | 'connected' | 'error'>('unknown');
 
   // Product selection state
