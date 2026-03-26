@@ -644,6 +644,11 @@ const OlistIntegration = () => {
                         const file = e.target.files?.[0];
                         if (file) {
                           setTiktokTemplateFile(file);
+                          const buf = await file.arrayBuffer();
+                          setTiktokTemplateBuffer(buf);
+                          const cats = readTikTokTemplateCategories(buf);
+                          setTiktokCategories(cats);
+                          if (cats.length > 0) setTiktokSelectedCategory(cats[0]);
                         }
                       }}
                     />
