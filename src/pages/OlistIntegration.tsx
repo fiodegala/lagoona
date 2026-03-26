@@ -659,23 +659,42 @@ const OlistIntegration = () => {
                     )}
                   </div>
 
-                  {/* Step 2: Select products */}
+                  {/* Step 2: Select TikTok category */}
+                  {tiktokCategories.length > 0 && (
+                    <div className="bg-muted/50 rounded-lg p-4 space-y-3">
+                      <p className="font-medium text-sm">📂 Passo 2: Selecione a categoria do TikTok</p>
+                      <select
+                        className="w-full border rounded-md p-2 text-sm bg-background"
+                        value={tiktokSelectedCategory}
+                        onChange={(e) => setTiktokSelectedCategory(e.target.value)}
+                      >
+                        {tiktokCategories.map((cat) => (
+                          <option key={cat} value={cat}>{cat}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  {/* Step 3: Select products */}
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <p className="font-medium text-sm">📦 Passo 2: Selecione os produtos</p>
+                      <p className="font-medium text-sm">📦 Passo 3: Selecione os produtos</p>
                       <div className="flex items-center gap-2">
                         <Badge variant="outline">{tiktokSelectedIds.size} selecionados</Badge>
                         <Button
                           onClick={async () => {
-                            if (!tiktokTemplateFile) {
+                            if (!tiktokTemplateBuffer) {
                               toast.error('Faça upload do template do TikTok primeiro!');
+                              return;
+                            }
+                            if (!tiktokSelectedCategory) {
+                              toast.error('Selecione uma categoria do TikTok!');
                               return;
                             }
                             setIsExportingTikTok(true);
                             try {
-                              const buffer = await tiktokTemplateFile.arrayBuffer();
                               const ids = tiktokSelectedIds.size > 0 ? Array.from(tiktokSelectedIds) : undefined;
-                              await exportProductsToTikTokXLSX(buffer, ids);
+                              await exportProductsToTikTokXLSX(tiktokTemplateBuffer, tiktokSelectedCategory, ids);
                               toast.success('XLSX para TikTok Shop exportado com sucesso!');
                             } catch (err: unknown) {
                               toast.error((err as Error).message || 'Erro ao exportar');
@@ -683,7 +702,7 @@ const OlistIntegration = () => {
                               setIsExportingTikTok(false);
                             }
                           }}
-                          disabled={isExportingTikTok || !tiktokTemplateFile}
+                          disabled={isExportingTikTok || !tiktokTemplateBuffer || !tiktokSelectedCategory}
                           size="sm"
                         >
                           {isExportingTikTok ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Download className="h-4 w-4 mr-2" />}
