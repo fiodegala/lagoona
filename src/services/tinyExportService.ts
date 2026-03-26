@@ -321,9 +321,6 @@ export async function exportProductsToTinyCSV(productIds?: string[]): Promise<st
         rows.push(buildVariationRow(product, variation, sku, values, categoryName));
       }
     }
-
-    // Blank separator row
-    rows.push(new Array(CSV_HEADERS.length).fill(''));
   }
 
   // 7. Convert to CSV string
