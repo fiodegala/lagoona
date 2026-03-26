@@ -126,28 +126,38 @@ const COL_LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').concat(
 const NUM_COLS = 28;
 
 /**
+ * Reads available categories from the TikTok template's "Category" sheet.
+ */
+export function readTikTokTemplateCategories(templateBuffer: ArrayBuffer): string[] {
+  const wb = XLSX.read(templateBuffer, { type: 'array' });
+  const cs = wb.Sheets['Category'];
+  if (!cs) return [];
+  const categories: string[] = [];
+  const range = XLSX.utils.decode_range(cs['!ref'] || 'A1');
+  for (let r = range.s.r; r <= range.e.r; r++) {
+    const cell = cs[XLSX.utils.encode_cell({ r, c: 0 })];
+    if (cell && cell.v) categories.push(String(cell.v));
+  }
+  return categories;
+}
+
+/**
  * Exports products into a TikTok Seller Center XLSX template.
  * The user must provide the template file (ArrayBuffer) downloaded from TikTok
- * for their specific product category.
+ * for their specific product category, and select a valid TikTok category.
  */
 export async function exportProductsToTikTokXLSX(
   templateBuffer: ArrayBuffer,
+  tiktokCategory: string,
   productIds?: string[],
 ): Promise<void> {
-  const { products, categoryMap, variations, variationValuesMap } = await loadExportData(productIds);
+  const { products, variations, variationValuesMap } = await loadExportData(productIds);
 
   const wb = XLSX.read(templateBuffer, { type: 'array' });
   const ws = wb.Sheets['Template'];
   if (!ws) throw new Error('Aba "Template" não encontrada no arquivo. Verifique se é o template correto do TikTok.');
 
-  // Detect where data starts: find the row with internal keys (row 1 has "category")
-  // Template structure: row1=keys, row2=version, row3=headers, row4=required, row5=instructions, row6+=example/data
-  // We clear from row 6 onwards and write our data there
   const startRow = 6;
-
-  // Preserve the template's category value from row 6 (example row) before clearing
-  const templateCategoryCell = ws['A' + startRow];
-  const templateCategory = templateCategoryCell ? String(templateCategoryCell.v || '') : '';
 
   // Clear existing example/data rows
   const currentRef = ws['!ref'] || 'A1:AB6';
@@ -162,14 +172,13 @@ export async function exportProductsToTikTokXLSX(
   const dataRows: (string | number | null)[][] = [];
 
   for (const product of products) {
-    const categoryName = product.category_id ? (categoryMap[product.category_id] || '') : '';
     const productVariations = variations.filter(v => v.product_id === product.id);
     const images = getProductImages(product);
     const weightGrams = product.weight_kg ? Math.round(product.weight_kg * 1000) : 200;
     const baseSku = generateSKU(product.name);
 
     const fillBase = (row: (string | number | null)[]) => {
-      row[COL.category] = templateCategory;
+      row[COL.category] = tiktokCategory;
       row[COL.brand] = '';
       row[COL.product_name] = product.name;
       row[COL.product_description] = product.description || product.name;
@@ -237,7 +246,7 @@ export async function exportProductsToTikTokXLSX(
   }
 
   const lastRow = startRow + dataRows.length - 1;
-  ws['!ref'] = `A1:AB${Math.max(lastRow, 6)}`;
+  ws['!ref'] = `A1:AD${Math.max(lastRow, 6)}`;
 
   const date = new Date().toISOString().slice(0, 10);
   XLSX.writeFile(wb, `tiktokshop-produtos-${date}.xlsx`);
