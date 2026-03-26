@@ -145,6 +145,10 @@ export async function exportProductsToTikTokXLSX(
   // We clear from row 6 onwards and write our data there
   const startRow = 6;
 
+  // Preserve the template's category value from row 6 (example row) before clearing
+  const templateCategoryCell = ws['A' + startRow];
+  const templateCategory = templateCategoryCell ? String(templateCategoryCell.v || '') : '';
+
   // Clear existing example/data rows
   const currentRef = ws['!ref'] || 'A1:AB6';
   const lastExistingRow = XLSX.utils.decode_range(currentRef).e.r + 1;
