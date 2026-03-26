@@ -83,7 +83,41 @@ export const olistService = {
   },
 
   async pushProducts(): Promise<{ processed: number; failed: number; total: number; created: number; updated: number }> {
-    return callOlist('push-products');
+    let offset = 0;
+    let logId: string | undefined;
+    let aggregate = { processed: 0, failed: 0, total: 0, created: 0, updated: 0 };
+
+    while (true) {
+      const result = await callOlist('push-products', {
+        offset,
+        limit: 10,
+        logId,
+      }) as {
+        processed: number;
+        failed: number;
+        total: number;
+        created: number;
+        updated: number;
+        hasMore?: boolean;
+        nextOffset?: number;
+        logId?: string;
+      };
+
+      logId = result.logId || logId;
+      aggregate = {
+        processed: result.processed,
+        failed: result.failed,
+        total: result.total,
+        created: result.created,
+        updated: result.updated,
+      };
+
+      if (!result.hasMore) {
+        return aggregate;
+      }
+
+      offset = result.nextOffset ?? offset + 10;
+    }
   },
 
   async syncProducts(): Promise<{ processed: number; failed: number; total: number }> {

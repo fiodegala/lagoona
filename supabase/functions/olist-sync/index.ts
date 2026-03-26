@@ -694,10 +694,14 @@ serve(async (req) => {
 
     let result;
 
-    switch (action) {
-      case "push-products":
-        result = await pushProducts(supabase);
-        break;
+      switch (action) {
+        case "push-products":
+          result = await pushProducts(supabase, {
+            offset: body.offset,
+            limit: body.limit,
+            logId: body.logId,
+          });
+          break;
       case "sync-products":
         result = await syncProducts(supabase);
         break;
