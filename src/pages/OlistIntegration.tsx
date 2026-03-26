@@ -113,6 +113,15 @@ const OlistIntegration = () => {
     );
   }, [products, exportSearch]);
 
+  const tiktokFilteredProducts = useMemo(() => {
+    if (!tiktokSearch.trim()) return products;
+    const q = tiktokSearch.toLowerCase();
+    return products.filter(p =>
+      p.name.toLowerCase().includes(q) ||
+      (p.barcode && p.barcode.toLowerCase().includes(q))
+    );
+  }, [products, tiktokSearch]);
+
   const handleSelectAll = (checked: boolean) => {
     setSelectAll(checked);
     if (checked) {
