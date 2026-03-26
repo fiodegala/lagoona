@@ -64,9 +64,25 @@ const CSV_HEADERS = [
 ];
 
 function escapeCSV(value: string): string {
+  if (value === null || value === undefined || value === 'null' || value === 'undefined') return '""';
   if (!value) return '""';
-  const escaped = value.replace(/"/g, '""');
+  const escaped = String(value).replace(/"/g, '""');
   return `"${escaped}"`;
+}
+
+function formatPrice(value: number | null | undefined): string {
+  if (!value && value !== 0) return '';
+  return value.toFixed(2).replace('.', ',');
+}
+
+function formatWeight(value: number | null | undefined): string {
+  if (!value || value === 0) return '';
+  return String(value).replace('.', ',');
+}
+
+function formatDimension(value: number | null | undefined): string {
+  if (!value || value === 0) return '';
+  return String(value);
 }
 
 function generateSKU(name: string): string {
@@ -98,39 +114,38 @@ function buildParentRow(
   row[3] = 'Un'; // Unidade
   row[4] = ''; // NCM
   row[5] = '0'; // Origem
-  row[6] = product.price.toFixed(2); // Preço
+  row[6] = formatPrice(product.price); // Preço
   row[7] = ''; // IPI
   row[8] = ''; // Observações
   row[9] = product.is_active ? 'Ativo' : 'Inativo'; // Situação
-  row[10] = String(product.stock); // Estoque
+  row[10] = String(product.stock || 0); // Estoque
   row[11] = ''; // Preço custo
   row[12] = ''; // Cód fornecedor
   row[13] = ''; // Fornecedor
   row[14] = ''; // Localização
   row[15] = ''; // Estoque máx
-  row[16] = String(product.min_stock || ''); // Estoque mín
-  row[17] = product.weight_kg ? String(product.weight_kg) : '0'; // Peso líq
-  row[18] = product.weight_kg ? String(product.weight_kg) : '0'; // Peso bruto
-  row[19] = product.barcode || ''; // GTIN
+  row[16] = product.min_stock ? String(product.min_stock) : ''; // Estoque mín
+  row[17] = formatWeight(product.weight_kg); // Peso líq
+  row[18] = formatWeight(product.weight_kg); // Peso bruto
+  row[19] = product.barcode && product.barcode !== 'null' ? product.barcode : ''; // GTIN
   row[20] = ''; // GTIN tributável
   row[21] = product.description || ''; // Desc complementar
   row[22] = ''; // CEST
   row[23] = ''; // Enquadramento IPI
   row[24] = 'Pacote / Caixa'; // Formato embalagem
-  row[25] = product.width_cm ? String(product.width_cm) : '0'; // Largura
-  row[26] = product.height_cm ? String(product.height_cm) : '0'; // Altura
-  row[27] = product.depth_cm ? String(product.depth_cm) : '0'; // Comprimento
-  row[28] = '0'; // Diâmetro
-  row[29] = 'V'; // Tipo produto (V = com variações, S = simples/variação)
-  // Images (positions 30-35)
+  row[25] = formatDimension(product.width_cm); // Largura
+  row[26] = formatDimension(product.height_cm); // Altura
+  row[27] = formatDimension(product.depth_cm); // Comprimento
+  row[28] = ''; // Diâmetro
+  row[29] = 'V'; // Tipo produto
   images.forEach((img, i) => { if (i < 6) row[30 + i] = img; });
   row[36] = buildCategoryPath(categoryName); // Categoria
-  row[37] = ''; // Código do pai (vazio para pai)
+  row[37] = ''; // Código do pai
   row[38] = ''; // Variações
   row[39] = ''; // Marca
   row[40] = ''; // Garantia
   row[41] = 'Não'; // Sob encomenda
-  row[42] = product.promotional_price ? product.promotional_price.toFixed(2) : ''; // Preço promo
+  row[42] = formatPrice(product.promotional_price); // Preço promo
   row[62] = 'Sim'; // Permitir inclusão nas vendas
   return row;
 }
@@ -142,7 +157,7 @@ function buildSimpleRow(
   images: string[],
 ): string[] {
   const row = buildParentRow(product, sku, categoryName, images);
-  row[29] = 'S'; // Tipo simples (sem variações)
+  row[29] = 'S';
   return row;
 }
 
@@ -154,7 +169,9 @@ function buildVariationRow(
   categoryName: string | null,
 ): string[] {
   const row = new Array(CSV_HEADERS.length).fill('');
-  const varSku = variation.sku || `${parentSku}-${variationValues.map(v => v.attribute_value).join('-')}`;
+  const varSku = variation.sku && variation.sku !== 'null' 
+    ? variation.sku 
+    : `${parentSku}-${variationValues.map(v => v.attribute_value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '').toUpperCase()).join('-')}`;
   const varDesc = variationValues.map(v => v.attribute_value).join(' ');
   
   row[0] = ''; // ID
@@ -162,25 +179,25 @@ function buildVariationRow(
   row[2] = `${product.name} - ${varDesc}`; // Descrição
   row[3] = 'Un';
   row[5] = '0';
-  row[6] = (variation.price || product.price).toFixed(2);
+  row[6] = formatPrice(variation.price || product.price);
   row[9] = variation.is_active ? 'Ativo' : 'Inativo';
-  row[10] = String(variation.stock);
-  row[17] = product.weight_kg ? String(product.weight_kg) : '0';
-  row[18] = product.weight_kg ? String(product.weight_kg) : '0';
-  row[19] = variation.barcode || '';
+  row[10] = String(variation.stock || 0);
+  row[17] = formatWeight(product.weight_kg);
+  row[18] = formatWeight(product.weight_kg);
+  row[19] = variation.barcode && variation.barcode !== 'null' ? variation.barcode : '';
   row[21] = product.description || '';
   row[24] = 'Pacote / Caixa';
-  row[25] = product.width_cm ? String(product.width_cm) : '0';
-  row[26] = product.height_cm ? String(product.height_cm) : '0';
-  row[27] = product.depth_cm ? String(product.depth_cm) : '0';
-  row[28] = '0';
+  row[25] = formatDimension(product.width_cm);
+  row[26] = formatDimension(product.height_cm);
+  row[27] = formatDimension(product.depth_cm);
+  row[28] = '';
   row[29] = 'S'; // Tipo variação
-  if (variation.image_url) row[30] = variation.image_url;
+  if (variation.image_url && variation.image_url !== 'null') row[30] = variation.image_url;
   row[36] = buildCategoryPath(categoryName);
   row[37] = parentSku; // Código do pai
-  row[38] = variationValues.map(v => `${v.attribute_name}:${v.attribute_value}`).join('||'); // Variações
+  row[38] = variationValues.map(v => `${v.attribute_name}:${v.attribute_value}`).join('||');
   row[41] = 'Não';
-  row[42] = variation.promotional_price ? variation.promotional_price.toFixed(2) : '';
+  row[42] = formatPrice(variation.promotional_price);
   row[62] = 'Sim';
   return row;
 }
