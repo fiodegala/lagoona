@@ -72,6 +72,7 @@ const OlistIntegration = () => {
   const [tiktokSelectedIds, setTiktokSelectedIds] = useState<Set<string>>(new Set());
   const [tiktokSearch, setTiktokSearch] = useState('');
   const [tiktokSelectAll, setTiktokSelectAll] = useState(false);
+  const [tiktokTemplateFile, setTiktokTemplateFile] = useState<File | null>(null);
 
   useEffect(() => {
     loadData();
@@ -620,120 +621,149 @@ const OlistIntegration = () => {
           <TabsContent value="tiktok" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <span>Exportar Produtos para TikTok Shop (XLSX)</span>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline">{tiktokSelectedIds.size} selecionados</Badge>
-                    <Button
-                      onClick={async () => {
-                        setIsExportingTikTok(true);
-                        try {
-                          const ids = tiktokSelectedIds.size > 0 ? Array.from(tiktokSelectedIds) : undefined;
-                          await exportProductsToTikTokXLSX(ids);
-                          toast.success('XLSX para TikTok Shop exportado com sucesso!');
-                        } catch (err: unknown) {
-                          toast.error((err as Error).message || 'Erro ao exportar');
-                        } finally {
-                          setIsExportingTikTok(false);
-                        }
-                      }}
-                      disabled={isExportingTikTok}
-                      size="sm"
-                    >
-                      {isExportingTikTok ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Download className="h-4 w-4 mr-2" />}
-                      {tiktokSelectedIds.size > 0 ? `Exportar ${tiktokSelectedIds.size} Selecionados` : 'Exportar Todos'}
-                    </Button>
-                  </div>
-                </CardTitle>
+                <CardTitle>Exportar Produtos para TikTok Shop (XLSX)</CardTitle>
                 <CardDescription>
-                  Selecione os produtos e gere um arquivo XLSX no formato aceito pelo TikTok Seller Center para upload em lote.
+                  Faça upload do template baixado do TikTok Seller Center (para a categoria desejada), selecione os produtos e gere o XLSX preenchido.
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  <div className="flex items-center gap-4">
-                    <div className="relative flex-1">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        placeholder="Buscar por nome ou código..."
-                        value={tiktokSearch}
-                        onChange={(e) => setTiktokSearch(e.target.value)}
-                        className="pl-9"
-                      />
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Checkbox
-                        checked={tiktokSelectAll}
-                        onCheckedChange={(checked) => handleTiktokSelectAll(!!checked)}
-                      />
-                      <Label className="text-sm cursor-pointer" onClick={() => handleTiktokSelectAll(!tiktokSelectAll)}>
-                        Selecionar todos
-                      </Label>
-                    </div>
+                  {/* Step 1: Upload template */}
+                  <div className="bg-muted/50 rounded-lg p-4 space-y-3">
+                    <p className="font-medium text-sm">📥 Passo 1: Faça upload do template do TikTok</p>
+                    <p className="text-xs text-muted-foreground">
+                      No TikTok Seller Center, vá em Produtos → Upload em lote → Baixar modelo (para a categoria desejada). Depois faça upload aqui.
+                    </p>
+                    <Input
+                      type="file"
+                      accept=".xlsx,.xls"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setTiktokTemplateFile(file);
+                        }
+                      }}
+                    />
+                    {tiktokTemplateFile && (
+                      <Badge variant="outline" className="text-xs">
+                        ✅ Template carregado: {tiktokTemplateFile.name}
+                      </Badge>
+                    )}
                   </div>
 
-                  <div className="border rounded-lg max-h-[400px] overflow-y-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="w-12"></TableHead>
-                          <TableHead>Produto</TableHead>
-                          <TableHead>Código</TableHead>
-                          <TableHead className="text-right">Preço</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {tiktokFilteredProducts.length === 0 ? (
+                  {/* Step 2: Select products */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <p className="font-medium text-sm">📦 Passo 2: Selecione os produtos</p>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline">{tiktokSelectedIds.size} selecionados</Badge>
+                        <Button
+                          onClick={async () => {
+                            if (!tiktokTemplateFile) {
+                              toast.error('Faça upload do template do TikTok primeiro!');
+                              return;
+                            }
+                            setIsExportingTikTok(true);
+                            try {
+                              const buffer = await tiktokTemplateFile.arrayBuffer();
+                              const ids = tiktokSelectedIds.size > 0 ? Array.from(tiktokSelectedIds) : undefined;
+                              await exportProductsToTikTokXLSX(buffer, ids);
+                              toast.success('XLSX para TikTok Shop exportado com sucesso!');
+                            } catch (err: unknown) {
+                              toast.error((err as Error).message || 'Erro ao exportar');
+                            } finally {
+                              setIsExportingTikTok(false);
+                            }
+                          }}
+                          disabled={isExportingTikTok || !tiktokTemplateFile}
+                          size="sm"
+                        >
+                          {isExportingTikTok ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Download className="h-4 w-4 mr-2" />}
+                          {tiktokSelectedIds.size > 0 ? `Exportar ${tiktokSelectedIds.size}` : 'Exportar Todos'}
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-4">
+                      <div className="relative flex-1">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          placeholder="Buscar por nome ou código..."
+                          value={tiktokSearch}
+                          onChange={(e) => setTiktokSearch(e.target.value)}
+                          className="pl-9"
+                        />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Checkbox
+                          checked={tiktokSelectAll}
+                          onCheckedChange={(checked) => handleTiktokSelectAll(!!checked)}
+                        />
+                        <Label className="text-sm cursor-pointer" onClick={() => handleTiktokSelectAll(!tiktokSelectAll)}>
+                          Todos
+                        </Label>
+                      </div>
+                    </div>
+
+                    <div className="border rounded-lg max-h-[400px] overflow-y-auto">
+                      <Table>
+                        <TableHeader>
                           <TableRow>
-                            <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
-                              Nenhum produto encontrado
-                            </TableCell>
+                            <TableHead className="w-12"></TableHead>
+                            <TableHead>Produto</TableHead>
+                            <TableHead>Código</TableHead>
+                            <TableHead className="text-right">Preço</TableHead>
                           </TableRow>
-                        ) : (
-                          tiktokFilteredProducts.map((product) => (
-                            <TableRow
-                              key={product.id}
-                              className="cursor-pointer hover:bg-muted/50"
-                              onClick={() => toggleTiktokProduct(product.id)}
-                            >
-                              <TableCell>
-                                <Checkbox
-                                  checked={tiktokSelectedIds.has(product.id)}
-                                  onCheckedChange={() => toggleTiktokProduct(product.id)}
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <div className="flex items-center gap-3">
-                                  {product.image_url ? (
-                                    <img src={product.image_url} alt="" className="h-8 w-8 rounded object-cover" />
-                                  ) : (
-                                    <div className="h-8 w-8 rounded bg-muted flex items-center justify-center">
-                                      <Package className="h-4 w-4 text-muted-foreground" />
-                                    </div>
-                                  )}
-                                  <span className="font-medium text-sm">{product.name}</span>
-                                </div>
-                              </TableCell>
-                              <TableCell className="text-sm text-muted-foreground">
-                                {product.barcode || '-'}
-                              </TableCell>
-                              <TableCell className="text-right text-sm">
-                                R$ {product.price?.toFixed(2) || '0,00'}
+                        </TableHeader>
+                        <TableBody>
+                          {tiktokFilteredProducts.length === 0 ? (
+                            <TableRow>
+                              <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                                Nenhum produto encontrado
                               </TableCell>
                             </TableRow>
-                          ))
-                        )}
-                      </TableBody>
-                    </Table>
+                          ) : (
+                            tiktokFilteredProducts.map((product) => (
+                              <TableRow
+                                key={product.id}
+                                className="cursor-pointer hover:bg-muted/50"
+                                onClick={() => toggleTiktokProduct(product.id)}
+                              >
+                                <TableCell>
+                                  <Checkbox
+                                    checked={tiktokSelectedIds.has(product.id)}
+                                    onCheckedChange={() => toggleTiktokProduct(product.id)}
+                                  />
+                                </TableCell>
+                                <TableCell>
+                                  <div className="flex items-center gap-3">
+                                    {product.image_url ? (
+                                      <img src={product.image_url} alt="" className="h-8 w-8 rounded object-cover" />
+                                    ) : (
+                                      <div className="h-8 w-8 rounded bg-muted flex items-center justify-center">
+                                        <Package className="h-4 w-4 text-muted-foreground" />
+                                      </div>
+                                    )}
+                                    <span className="font-medium text-sm">{product.name}</span>
+                                  </div>
+                                </TableCell>
+                                <TableCell className="text-sm text-muted-foreground">{product.barcode || '-'}</TableCell>
+                                <TableCell className="text-right text-sm">R$ {product.price?.toFixed(2) || '0,00'}</TableCell>
+                              </TableRow>
+                            ))
+                          )}
+                        </TableBody>
+                      </Table>
+                    </div>
                   </div>
 
                   <div className="bg-muted/50 rounded-lg p-4 text-sm space-y-2">
-                    <p className="font-medium">📋 Formato TikTok Seller Center:</p>
+                    <p className="font-medium">💡 Como funciona:</p>
                     <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                      <li><strong>Produtos simples</strong>: uma linha por produto</li>
-                      <li><strong>Produtos com variações</strong>: uma linha por variação com nome/valor da variação principal e secundária</li>
-                      <li>Inclui: nome, descrição, imagens (até 9), peso, dimensões, preço, estoque, SKU, GTIN</li>
-                      <li>O arquivo XLSX gerado pode ser importado diretamente no TikTok Seller Center → Upload em lote</li>
+                      <li>Baixe o template no TikTok Seller Center para a <strong>categoria correta</strong> dos seus produtos</li>
+                      <li>Faça upload do template aqui e selecione os produtos</li>
+                      <li>O sistema preenche o template com os dados e gera o XLSX para upload no TikTok</li>
+                      <li>Variações são exportadas como linhas separadas com cor/tamanho</li>
                     </ul>
                   </div>
                 </div>
