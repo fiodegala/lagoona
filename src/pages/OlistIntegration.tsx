@@ -640,7 +640,7 @@ const OlistIntegration = () => {
                     <Input
                       type="file"
                       accept=".xlsx,.xls"
-                      onChange={(e) => {
+                      onChange={async (e) => {
                         const file = e.target.files?.[0];
                         if (file) {
                           setTiktokTemplateFile(file);
