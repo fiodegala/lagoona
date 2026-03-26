@@ -84,6 +84,83 @@ function extractProductCode(product: Record<string, any>, variations: Record<str
   );
 }
 
+function buildProductPayload(
+  product: Record<string, any>,
+  variations: Record<string, any>[],
+  mode: "minimal" | "full" = "full"
+) {
+  const payload: Record<string, any> = {
+    codigo: extractProductCode(product, variations),
+    nome: product.name,
+    unidade: "UN",
+    preco: toNonNegativeNumber(product.promotional_price ?? product.price),
+    estoque_atual: toNonNegativeNumber(product.stock),
+    situacao: "A",
+  };
+
+  if (mode === "minimal") {
+    return payload;
+  }
+
+  const images = collectProductImages(product, variations);
+  const description = normalizeText(product.description);
+  if (description) payload.descricao_complementar = description;
+
+  const promotionalPrice = toPositiveNumber(product.promotional_price);
+  if (promotionalPrice !== undefined) payload.preco_promocional = promotionalPrice;
+
+  const weight = toPositiveNumber(product.weight_kg);
+  if (weight !== undefined) {
+    payload.peso_bruto = weight;
+    payload.peso_liquido = weight;
+  }
+
+  const width = toPositiveNumber(product.width_cm);
+  if (width !== undefined) payload.largura = width;
+  const height = toPositiveNumber(product.height_cm);
+  if (height !== undefined) payload.altura = height;
+  const depth = toPositiveNumber(product.depth_cm);
+  if (depth !== undefined) payload.comprimento = depth;
+
+  if (images.length > 0) {
+    payload.imagens_externas = images.map((url) => ({ url }));
+  }
+
+  return payload;
+}
+
+async function findOlistProductId(product: Record<string, any>, variations: Record<string, any>[]) {
+  const code = extractProductCode(product, variations);
+  const byCode = await findOlistProductIdByCode(code);
+  if (byCode) return byCode;
+
+  const name = normalizeText(product.name);
+  if (!name) return null;
+
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const result = await olistPost("produtos.pesquisa.php", { pesquisa: name });
+      const products = Array.isArray(result?.produtos) ? result.produtos : [];
+      const match = products.find((item: any) => {
+        const candidate = item?.produto || item;
+        return String(candidate?.nome ?? "").trim().toLowerCase() === name.toLowerCase();
+      });
+
+      const matchedId = extractOlistProductId(match?.produto || match);
+      if (matchedId) return matchedId;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (!message.toLowerCase().includes("a consulta não retornou registros") && !message.toLowerCase().includes("a consulta nao retornou registros")) {
+        throw error;
+      }
+    }
+
+    await sleep(3000 * (attempt + 1));
+  }
+
+  return null;
+}
+
 async function findOlistProductIdByCode(code: string): Promise<string | null> {
   for (let attempt = 0; attempt < 3; attempt++) {
     let result: any;
@@ -270,38 +347,8 @@ async function pushProducts(
           : [];
 
         const productCode = extractProductCode(product, variations);
-        const images = collectProductImages(product, variations);
-        const existingPrice = toNonNegativeNumber(product.promotional_price ?? product.price);
-        const productPayload: Record<string, any> = {
-          codigo: productCode,
-          nome: product.name,
-          unidade: "UN",
-          preco: existingPrice,
-          estoque_atual: toNonNegativeNumber(product.stock),
-          situacao: "A",
-        };
-
-        const description = normalizeText(product.description);
-        if (description) productPayload.descricao_complementar = description;
-
-        const promotionalPrice = toPositiveNumber(product.promotional_price);
-        if (promotionalPrice !== undefined) productPayload.preco_promocional = promotionalPrice;
-
-        const weight = toPositiveNumber(product.weight_kg);
-        if (weight !== undefined) {
-          productPayload.peso_bruto = weight;
-          productPayload.peso_liquido = weight;
-        }
-        const width = toPositiveNumber(product.width_cm);
-        if (width !== undefined) productPayload.largura = width;
-        const height = toPositiveNumber(product.height_cm);
-        if (height !== undefined) productPayload.altura = height;
-        const depth = toPositiveNumber(product.depth_cm);
-        if (depth !== undefined) productPayload.comprimento = depth;
-
-        if (images.length > 0) {
-          productPayload.imagens_externas = images.map((url) => ({ url }));
-        }
+        const productPayload = buildProductPayload(product, variations, "full");
+        const createPayload = buildProductPayload(product, variations, "minimal");
 
         const { data: existing } = await supabase
           .from("olist_product_mappings")
@@ -314,7 +361,7 @@ async function pushProducts(
         if (existingOlistId === "pending") existingOlistId = undefined;
         
         if (!existingOlistId && existing) {
-          existingOlistId = await findOlistProductIdByCode(productCode);
+          existingOlistId = await findOlistProductId(product, variations);
         }
 
         if (existingOlistId) {
@@ -337,7 +384,7 @@ async function pushProducts(
 
           try {
             result = await olistPost("produto.incluir.php", {
-              produto: JSON.stringify(productPayload),
+              produto: JSON.stringify(createPayload),
             });
             createdSuccessfully = true;
             console.log(`Tiny response for ${product.name}:`, JSON.stringify(result));
@@ -355,7 +402,7 @@ async function pushProducts(
             }
 
             // Product already exists - find it
-            const foundOlistId = await findOlistProductIdByCode(productCode);
+            const foundOlistId = await findOlistProductId(product, variations);
             if (foundOlistId) {
               await olistPost("produto.alterar.php", {
                 produto: JSON.stringify({ ...productPayload, id: foundOlistId }),
@@ -390,7 +437,13 @@ async function pushProducts(
             let resolvedId = olistId;
             if (!resolvedId) {
               await sleep(2000);
-              resolvedId = await findOlistProductIdByCode(productCode);
+              resolvedId = await findOlistProductId(product, variations);
+            }
+
+            if (resolvedId) {
+              await olistPost("produto.alterar.php", {
+                produto: JSON.stringify({ ...productPayload, id: resolvedId }),
+              });
             }
 
             const mappingPayload = {
@@ -440,15 +493,15 @@ async function pushProducts(
       failures: failureDetails.slice(0, 10),
       message: hasMore
         ? `Enviando lote ${Math.floor(offset / limit) + 1}. ${nextOffset} de ${total} produtos processados.`
-        : failed > 0
+          : failed > 0
           ? `${queued > 0 ? queued + " produto(s) na fila de processamento do Tiny. " : ""}Parte dos produtos falhou. Tente novamente.`
           : queued > 0
-            ? `${created} criados, ${updated} atualizados, ${queued} na fila de processamento do Tiny ERP.`
+            ? `${created} criados, ${updated} atualizados, ${queued} aguardando confirmação no Tiny ERP.`
             : "Todos os produtos foram enviados com sucesso",
     };
 
     await supabase.from("olist_sync_logs").update({
-      status: hasMore ? "running" : failed > 0 ? "partial_success" : "success",
+      status: hasMore ? "running" : failed > 0 || queued > 0 ? "partial_success" : "success",
       records_processed: processed,
       records_failed: failed,
       completed_at: hasMore ? null : new Date().toISOString(),
