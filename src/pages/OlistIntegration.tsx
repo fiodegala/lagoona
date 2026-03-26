@@ -115,6 +115,23 @@ const OlistIntegration = () => {
     }
   };
 
+  const handleExportSelectAll = (checked: boolean) => {
+    setExportSelectAll(checked);
+    if (checked) {
+      setExportSelectedIds(new Set(exportFilteredProducts.map(p => p.id)));
+    } else {
+      setExportSelectedIds(new Set());
+    }
+  };
+
+  const toggleExportProduct = (id: string) => {
+    setExportSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
   const toggleProduct = (id: string) => {
     setSelectedProductIds(prev => {
       const next = new Set(prev);
