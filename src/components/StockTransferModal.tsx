@@ -276,7 +276,9 @@ const StockTransferModal: React.FC<Props> = ({ open, onOpenChange, stores, onTra
   const filteredProducts = useMemo(() => {
     if (!productSearch) return products.slice(0, 20);
     const q = productSearch.toLowerCase();
-    return products.filter(p => p.name.toLowerCase().includes(q)).slice(0, 20);
+    return products.filter(p =>
+      (p._searchCodes || [p.name?.toLowerCase()]).some((code: string) => code.includes(q))
+    ).slice(0, 20);
   }, [products, productSearch]);
 
   const filteredVariations = useMemo(() => {
