@@ -73,6 +73,9 @@ const OlistIntegration = () => {
   const [tiktokSearch, setTiktokSearch] = useState('');
   const [tiktokSelectAll, setTiktokSelectAll] = useState(false);
   const [tiktokTemplateFile, setTiktokTemplateFile] = useState<File | null>(null);
+  const [tiktokTemplateBuffer, setTiktokTemplateBuffer] = useState<ArrayBuffer | null>(null);
+  const [tiktokCategories, setTiktokCategories] = useState<string[]>([]);
+  const [tiktokSelectedCategory, setTiktokSelectedCategory] = useState('');
 
   useEffect(() => {
     loadData();
