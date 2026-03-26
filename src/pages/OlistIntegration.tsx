@@ -61,6 +61,11 @@ const OlistIntegration = () => {
   const [productSearch, setProductSearch] = useState('');
   const [selectAll, setSelectAll] = useState(false);
 
+  // Export selection state (independent)
+  const [exportSelectedIds, setExportSelectedIds] = useState<Set<string>>(new Set());
+  const [exportSearch, setExportSearch] = useState('');
+  const [exportSelectAll, setExportSelectAll] = useState(false);
+
   useEffect(() => {
     loadData();
   }, []);
