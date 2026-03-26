@@ -128,11 +128,11 @@ const StockTransferModal: React.FC<Props> = ({ open, onOpenChange, stores, onTra
           : Promise.resolve({ data: [] as any[] }),
       ]);
 
-      const stockedProductIds = new Set(
-        (stockData || [])
-          .filter((item: any) => (item.quantity ?? 0) > 0)
-          .map((item: any) => item.product_id)
-      );
+      const sourceProductQtyMap: Record<string, number> = {};
+      (stockData || []).forEach((item: any) => {
+        if (!item.product_id) return;
+        sourceProductQtyMap[item.product_id] = (sourceProductQtyMap[item.product_id] || 0) + (item.quantity ?? 0);
+      });
 
       const varSearchMap: Record<string, string[]> = {};
       (varData || []).forEach((v: any) => {
@@ -142,15 +142,20 @@ const StockTransferModal: React.FC<Props> = ({ open, onOpenChange, stores, onTra
       });
 
       const enriched = (productData || [])
-        .filter((p: any) => p.is_active || stockedProductIds.has(p.id))
         .map((p: any) => ({
           ...p,
+          hasSourceStock: (sourceProductQtyMap[p.id] || 0) > 0,
+          sourceQuantity: sourceProductQtyMap[p.id] || 0,
           _searchCodes: [
             p.name?.toLowerCase() || '',
             p.barcode?.toLowerCase() || '',
             ...(varSearchMap[p.id] || []),
           ].filter(Boolean),
-        }));
+        }))
+        .sort((a: any, b: any) => {
+          if (a.hasSourceStock !== b.hasSourceStock) return Number(b.hasSourceStock) - Number(a.hasSourceStock);
+          return a.name.localeCompare(b.name, 'pt-BR');
+        });
 
       setProducts(enriched);
     };
