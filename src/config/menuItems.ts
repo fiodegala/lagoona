@@ -61,13 +61,13 @@ export const navItems: MenuItem[] = [
   { icon: Users, label: 'Usuários', path: '/admin/users', menuKey: 'users', requireAdmin: true },
   { icon: History, label: 'Histórico', path: '/admin/audit-logs', menuKey: 'audit-logs', requireAdmin: true },
   { icon: Handshake, label: 'Afiliados', path: '/admin/afiliados', menuKey: 'affiliates', requireAdmin: true },
+  { icon: Zap, label: 'Olist', path: '/admin/olist', menuKey: 'olist', requireAdmin: true },
   { icon: Upload, label: 'Importar CSV', path: '/admin/importar-csv', menuKey: 'import-csv', requireAdmin: true },
   { icon: Upload, label: 'Importar Legado', path: '/admin/importar-legado', menuKey: 'import-legacy', requireAdmin: true },
   { icon: Upload, label: 'Importar Dados (BI)', path: '/admin/importar-dados', menuKey: 'import-data', requireAdmin: true },
-  { icon: BookOpen, label: 'Manual', path: '/admin/manual', menuKey: 'manual' },
   { icon: ClipboardList, label: 'Ordens de Serviço', path: '/admin/ordens-servico', menuKey: 'service-orders' },
   { icon: Megaphone, label: 'Comunicados', path: '/admin/comunicados', menuKey: 'announcements', requireAdmin: true },
-  { icon: Zap, label: 'Olist', path: '/admin/olist', menuKey: 'olist', requireAdmin: true },
+  { icon: BookOpen, label: 'Manual', path: '/admin/manual', menuKey: 'manual' },
 ];
 
 export const settingsItems: MenuItem[] = [
