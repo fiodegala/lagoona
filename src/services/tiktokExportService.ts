@@ -169,7 +169,7 @@ export async function exportProductsToTikTokXLSX(
     const baseSku = generateSKU(product.name);
 
     const fillBase = (row: (string | number | null)[]) => {
-      row[COL.category] = categoryName;
+      row[COL.category] = templateCategory;
       row[COL.brand] = '';
       row[COL.product_name] = product.name;
       row[COL.product_description] = product.description || product.name;
