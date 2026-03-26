@@ -179,31 +179,71 @@ async function olistPost(endpoint: string, extraParams: Record<string, string> =
 }
 
 // ── Push local products to Olist ERP ──
-async function pushProducts(supabase: ReturnType<typeof getSupabaseClient>) {
-  const logId = crypto.randomUUID();
-  await supabase.from("olist_sync_logs").insert({
-    id: logId, sync_type: "products", direction: "push", status: "running",
-  });
+async function pushProducts(
+  supabase: ReturnType<typeof getSupabaseClient>,
+  options: { offset?: number; limit?: number; logId?: string } = {}
+) {
+  const offset = Math.max(0, Number(options.offset ?? 0));
+  const limit = Math.min(20, Math.max(1, Number(options.limit ?? 10)));
+  const logId = normalizeText(options.logId) || crypto.randomUUID();
+
+  const { data: existingLog } = await supabase
+    .from("olist_sync_logs")
+    .select("id, details")
+    .eq("id", logId)
+    .maybeSingle();
+
+  if (!existingLog) {
+    await supabase.from("olist_sync_logs").insert({
+      id: logId,
+      sync_type: "products",
+      direction: "push",
+      status: "running",
+      records_processed: 0,
+      records_failed: 0,
+      details: { total: 0, created: 0, updated: 0, failures: [] },
+    });
+  }
 
   try {
+    const { count: totalProducts, error: countErr } = await supabase
+      .from("products")
+      .select("id", { count: "exact", head: true })
+      .eq("is_active", true);
+
+    if (countErr) throw new Error(`DB error: ${countErr.message}`);
+
+    const total = totalProducts ?? 0;
+    if (total === 0) {
+      await supabase.from("olist_sync_logs").update({
+        status: "success",
+        records_processed: 0,
+        records_failed: 0,
+        completed_at: new Date().toISOString(),
+        details: { total: 0, created: 0, updated: 0, failures: [], message: "Nenhum produto ativo encontrado" },
+      }).eq("id", logId);
+
+      return { processed: 0, failed: 0, total: 0, created: 0, updated: 0, hasMore: false, nextOffset: offset, logId };
+    }
+
     const { data: products, error: prodErr } = await supabase
       .from("products")
       .select("*, product_variations(*)")
-      .eq("is_active", true);
+      .eq("is_active", true)
+      .range(offset, offset + limit - 1);
 
     if (prodErr) throw new Error(`DB error: ${prodErr.message}`);
-    if (!products || products.length === 0) {
-      await supabase.from("olist_sync_logs").update({
-        status: "success", records_processed: 0, completed_at: new Date().toISOString(),
-        details: { message: "Nenhum produto ativo encontrado" },
-      }).eq("id", logId);
-      return { processed: 0, failed: 0, total: 0, created: 0, updated: 0 };
-    }
 
-    let processed = 0, failed = 0, created = 0, updated = 0;
-    const failureDetails: Array<{ product_id: string; product_name: string; error: string }> = [];
+    const previousDetails = (existingLog?.details as Record<string, any> | null) || {};
+    let processed = toNonNegativeNumber(previousDetails.processed, 0);
+    let failed = toNonNegativeNumber(previousDetails.failed, 0);
+    let created = toNonNegativeNumber(previousDetails.created, 0);
+    let updated = toNonNegativeNumber(previousDetails.updated, 0);
+    const failureDetails: Array<{ product_id: string; product_name: string; error: string }> = Array.isArray(previousDetails.failures)
+      ? previousDetails.failures.slice(0, 50)
+      : [];
 
-    for (const product of products) {
+    for (const product of products || []) {
       try {
         await sleep(OLIST_REQUEST_DELAY_MS);
 
@@ -260,7 +300,6 @@ async function pushProducts(supabase: ReturnType<typeof getSupabaseClient>) {
         }
 
         if (existingOlistId) {
-          // Update: use alterar endpoint
           await olistPost("produto.alterar.php", {
             produto: JSON.stringify({
               ...productPayload,
@@ -272,10 +311,10 @@ async function pushProducts(supabase: ReturnType<typeof getSupabaseClient>) {
             olist_product_id: existingOlistId,
             last_synced_at: new Date().toISOString(),
             sync_status: "synced",
+            olist_sku: productCode,
           }).eq("id", existing!.id);
           updated++;
         } else {
-          // Create first; only search if Olist reports duplicate/already exists
           let result: any;
 
           try {
@@ -349,6 +388,7 @@ async function pushProducts(supabase: ReturnType<typeof getSupabaseClient>) {
 
           created++;
         }
+
         processed++;
       } catch (e) {
         failed++;
@@ -361,30 +401,44 @@ async function pushProducts(supabase: ReturnType<typeof getSupabaseClient>) {
       }
     }
 
-    await supabase.from("olist_sync_logs").update({
-      status: failed > 0 ? "partial_success" : "success", records_processed: processed, records_failed: failed,
-      completed_at: new Date().toISOString(),
-      details: {
-        total: products.length,
-        created,
-        updated,
-        failures: failureDetails.slice(0, 10),
-        message: failed > 0
+    const nextOffset = offset + (products?.length || 0);
+    const hasMore = nextOffset < total;
+    const details = {
+      total,
+      processed,
+      failed,
+      created,
+      updated,
+      failures: failureDetails.slice(0, 10),
+      message: hasMore
+        ? `Enviando lote ${Math.floor(offset / limit) + 1}. ${nextOffset} de ${total} produtos processados.`
+        : failed > 0
           ? "Parte dos produtos falhou, provavelmente por limitação temporária da API do Olist. Tente novamente em alguns minutos."
           : "Todos os produtos foram enviados com sucesso",
-      },
+    };
+
+    await supabase.from("olist_sync_logs").update({
+      status: hasMore ? "running" : failed > 0 ? "partial_success" : "success",
+      records_processed: processed,
+      records_failed: failed,
+      completed_at: hasMore ? null : new Date().toISOString(),
+      details,
     }).eq("id", logId);
 
-    await supabase.from("olist_integration").update({
-      last_product_sync_at: new Date().toISOString(),
-      last_error: failed > 0 ? `${failed} produto(s) falharam na sincronização` : null,
-    }).neq("id", "00000000-0000-0000-0000-000000000000");
+    if (!hasMore) {
+      await supabase.from("olist_integration").update({
+        last_product_sync_at: new Date().toISOString(),
+        last_error: failed > 0 ? `${failed} produto(s) falharam na sincronização` : null,
+      }).neq("id", "00000000-0000-0000-0000-000000000000");
+    }
 
-    return { processed, failed, total: products.length, created, updated };
+    return { processed, failed, total, created, updated, hasMore, nextOffset, logId };
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : "Unknown error";
     await supabase.from("olist_sync_logs").update({
-      status: "error", error_message: errorMsg, completed_at: new Date().toISOString(),
+      status: "error",
+      error_message: errorMsg,
+      completed_at: new Date().toISOString(),
     }).eq("id", logId);
     await supabase.from("olist_integration").update({ last_error: errorMsg }).neq("id", "00000000-0000-0000-0000-000000000000");
     throw error;
