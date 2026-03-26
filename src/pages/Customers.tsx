@@ -254,6 +254,26 @@ const Customers = () => {
     const submitData = {
       ...formData,
       name: isPJ ? (formData.razao_social?.trim() || '') : formData.name.trim(),
+      email: formData.email?.trim() || null,
+      phone: formData.phone?.trim() || null,
+      document: formData.document?.trim() || null,
+      address: formData.address?.trim() || null,
+      address_number: formData.address_number?.trim() || null,
+      address_complement: formData.address_complement?.trim() || null,
+      neighborhood: formData.neighborhood?.trim() || null,
+      city: formData.city?.trim() || null,
+      state: formData.state?.trim() || null,
+      zip_code: formData.zip_code?.trim() || null,
+      notes: formData.notes?.trim() || null,
+      birthday: formData.birthday?.trim() || null,
+      razao_social: formData.razao_social?.trim() || null,
+      nome_fantasia: formData.nome_fantasia?.trim() || null,
+      inscricao_estadual: formData.inscricao_estadual?.trim() || null,
+      inscricao_municipal: formData.inscricao_municipal?.trim() || null,
+      responsavel_nome: formData.responsavel_nome?.trim() || null,
+      responsavel_telefone: formData.responsavel_telefone?.trim() || null,
+      store_id: formData.store_id || null,
+      referral_source: formData.referral_source?.trim() || null,
     };
 
     if (selectedCustomer) {
