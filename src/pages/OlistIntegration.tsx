@@ -68,6 +68,11 @@ const OlistIntegration = () => {
   const [exportSearch, setExportSearch] = useState('');
   const [exportSelectAll, setExportSelectAll] = useState(false);
 
+  // TikTok export selection state
+  const [tiktokSelectedIds, setTiktokSelectedIds] = useState<Set<string>>(new Set());
+  const [tiktokSearch, setTiktokSearch] = useState('');
+  const [tiktokSelectAll, setTiktokSelectAll] = useState(false);
+
   useEffect(() => {
     loadData();
   }, []);
