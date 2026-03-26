@@ -148,6 +148,23 @@ const OlistIntegration = () => {
     });
   };
 
+  const handleTiktokSelectAll = (checked: boolean) => {
+    setTiktokSelectAll(checked);
+    if (checked) {
+      setTiktokSelectedIds(new Set(tiktokFilteredProducts.map(p => p.id)));
+    } else {
+      setTiktokSelectedIds(new Set());
+    }
+  };
+
+  const toggleTiktokProduct = (id: string) => {
+    setTiktokSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
   const toggleProduct = (id: string) => {
     setSelectedProductIds(prev => {
       const next = new Set(prev);
