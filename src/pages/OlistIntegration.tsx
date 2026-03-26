@@ -325,6 +325,7 @@ const OlistIntegration = () => {
         <Tabs defaultValue="products" className="space-y-4">
           <TabsList>
             <TabsTrigger value="products"><Package className="h-4 w-4 mr-1" />Enviar Produtos</TabsTrigger>
+            <TabsTrigger value="export"><Download className="h-4 w-4 mr-1" />Exportar CSV</TabsTrigger>
             <TabsTrigger value="config"><Settings className="h-4 w-4 mr-1" />Configurações</TabsTrigger>
             <TabsTrigger value="logs"><Activity className="h-4 w-4 mr-1" />Logs</TabsTrigger>
           </TabsList>
