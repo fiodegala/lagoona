@@ -195,7 +195,7 @@ function buildVariationRow(
   row[10] = String(variation.stock || 0);
   row[17] = formatWeight(product.weight_kg);
   row[18] = formatWeight(product.weight_kg);
-  row[19] = variation.barcode && variation.barcode !== 'null' ? variation.barcode : '';
+  row[19] = formatGTIN(variation.barcode);
   row[21] = product.description || '';
   row[24] = 'Pacote / Caixa';
   row[25] = formatDimension(product.width_cm);
