@@ -29,7 +29,9 @@ import {
   AlertTriangle,
   Search,
   Send,
+  Download,
 } from 'lucide-react';
+import { exportProductsToTinyCSV, downloadCSV } from '@/services/tinyExportService';
 import { olistService, OlistConfig, OlistSyncLog } from '@/services/olistService';
 
 interface ProductItem {
