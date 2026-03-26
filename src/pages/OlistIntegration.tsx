@@ -741,6 +741,7 @@ const OlistIntegration = () => {
             </Card>
           </TabsContent>
 
+          <TabsContent value="config" className="space-y-4">
             <Card>
               <CardHeader>
                 <CardTitle>Módulos de Sincronização</CardTitle>
