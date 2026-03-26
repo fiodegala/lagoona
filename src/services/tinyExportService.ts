@@ -85,6 +85,17 @@ function formatDimension(value: number | null | undefined): string {
   return String(value);
 }
 
+function isValidGTIN(code: string | null | undefined): boolean {
+  if (!code || code === 'null') return false;
+  const cleaned = code.replace(/\D/g, '');
+  return [8, 12, 13, 14].includes(cleaned.length);
+}
+
+function formatGTIN(code: string | null | undefined): string {
+  if (!isValidGTIN(code)) return '';
+  return code!.replace(/\D/g, '');
+}
+
 function generateSKU(name: string): string {
   return name
     .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
