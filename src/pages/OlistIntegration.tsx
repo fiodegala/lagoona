@@ -72,6 +72,7 @@ const OlistIntegration = () => {
   const [tiktokSelectedIds, setTiktokSelectedIds] = useState<Set<string>>(new Set());
   const [tiktokSearch, setTiktokSearch] = useState('');
   const [tiktokSelectAll, setTiktokSelectAll] = useState(false);
+  const [tiktokTemplateFile, setTiktokTemplateFile] = useState<File | null>(null);
 
   useEffect(() => {
     loadData();
