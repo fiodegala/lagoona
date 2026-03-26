@@ -35,36 +35,30 @@ interface ExportVariationValue {
   attribute_value: string;
 }
 
-const TIKTOK_HEADERS = [
-  'Categoria',
-  'Marca',
-  'Nome do produto',
-  'Descrição do produto',
-  'Imagem principal',
-  'Imagem 2',
-  'Imagem 3',
-  'Imagem 4',
-  'Imagem 5',
-  'Imagem 6',
-  'Imagem 7',
-  'Imagem do produto 8',
-  'Imagem do produto 9',
-  'Tipo de código identificador',
-  'Código identificador',
-  'Nome da variação principal (tema)',
-  'Valor da variação principal (opcional)',
-  'Imagem principal da variação 1',
-  'Nome da variação secundária (tema)',
-  'Valor da variação secundária (opcional)',
-  'Peso do pacote(g)',
-  'Comprimento do pacote(cm)',
-  'Largura do pacote(cm)',
-  'Altura do pacote(cm)',
-  'Opções de entrega',
-  'Preço de varejo (moeda local)',
-  'Quantidade',
-  'SKU do vendedor',
-];
+// Column indices (0-based) matching the template internal keys
+const COL = {
+  category: 0,
+  brand: 1,
+  product_name: 2,
+  product_description: 3,
+  main_image: 4,
+  image_2: 5, image_3: 6, image_4: 7, image_5: 8, image_6: 9, image_7: 10, image_8: 11, image_9: 12,
+  gtin_type: 13,
+  gtin_code: 14,
+  property_name_1: 15,
+  property_value_1: 16,
+  property_1_image: 17,
+  property_name_2: 18,
+  property_value_2: 19,
+  parcel_weight: 20,
+  parcel_length: 21,
+  parcel_width: 22,
+  parcel_height: 23,
+  delivery: 24,
+  price: 25,
+  quantity: 26,
+  seller_sku: 27,
+};
 
 function getProductImages(product: ExportProduct): string[] {
   const images: string[] = [];
@@ -82,6 +76,14 @@ function isValidGTIN(code: string | null | undefined): boolean {
   return [8, 12, 13, 14].includes(cleaned.length);
 }
 
+function generateSKU(name: string, suffix?: string): string {
+  const base = name
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase().replace(/[^A-Z0-9 ]/g, '')
+    .split(' ').filter(Boolean).slice(0, 3).map(w => w.slice(0, 4)).join('-');
+  return suffix ? `${base}-${suffix}` : base;
+}
+
 async function loadExportData(productIds?: string[]) {
   let query = supabase.from('products').select('*').eq('is_active', true).order('name');
   if (productIds && productIds.length > 0) query = query.in('id', productIds);
@@ -92,7 +94,6 @@ async function loadExportData(productIds?: string[]) {
 
   const productIdList = products.map(p => p.id);
 
-  // Categories
   const categoryIds = [...new Set(products.map(p => p.category_id).filter(Boolean))] as string[];
   const categoryMap: Record<string, string> = {};
   if (categoryIds.length > 0) {
@@ -100,12 +101,10 @@ async function loadExportData(productIds?: string[]) {
     (cats || []).forEach((c: { id: string; name: string }) => { categoryMap[c.id] = c.name; });
   }
 
-  // Variations
   const { data: variationsData } = await supabase
     .from('product_variations').select('*').in('product_id', productIdList).order('sort_order');
   const variations = (variationsData || []) as unknown as ExportVariation[];
 
-  // Variation values
   const variationIds = variations.map(v => v.id);
   const variationValuesMap: Record<string, ExportVariationValue[]> = {};
 
@@ -145,18 +144,26 @@ async function loadExportData(productIds?: string[]) {
   return { products, categoryMap, variations, variationValuesMap };
 }
 
-function generateSKU(name: string, suffix?: string): string {
-  const base = name
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-    .toUpperCase().replace(/[^A-Z0-9 ]/g, '')
-    .split(' ').filter(Boolean).slice(0, 3).map(w => w.slice(0, 4)).join('-');
-  return suffix ? `${base}-${suffix}` : base;
+function makeRow(cols: number): (string | number | null)[] {
+  return new Array(cols).fill(null);
 }
 
 export async function exportProductsToTikTokXLSX(productIds?: string[]): Promise<void> {
   const { products, categoryMap, variations, variationValuesMap } = await loadExportData(productIds);
 
-  const rows: Record<string, string>[] = [];
+  // Fetch and clone the official template
+  const response = await fetch('/templates/tiktok-template.xlsx');
+  const arrayBuffer = await response.arrayBuffer();
+  const wb = XLSX.read(arrayBuffer, { type: 'array' });
+  const ws = wb.Sheets['Template'];
+
+  // The template has: row1=internal keys, row2=version config, row3=PT headers, row4=required labels, row5=instructions, row6=example
+  // We need to remove the example row (row 6) and add our data starting at row 6
+  // In XLSX.js rows are 1-indexed in cell addresses
+
+  // Build data rows
+  const dataRows: (string | number | null)[][] = [];
+  const NUM_COLS = 28;
 
   for (const product of products) {
     const categoryName = product.category_id ? (categoryMap[product.category_id] || '') : '';
@@ -165,45 +172,37 @@ export async function exportProductsToTikTokXLSX(productIds?: string[]): Promise
     const weightGrams = product.weight_kg ? Math.round(product.weight_kg * 1000) : 200;
     const baseSku = generateSKU(product.name);
 
-    const baseRow: Record<string, string> = {
-      'Categoria': categoryName,
-      'Marca': '',
-      'Nome do produto': product.name,
-      'Descrição do produto': product.description || product.name,
-      'Imagem principal': images[0] || '',
-      'Imagem 2': images[1] || '',
-      'Imagem 3': images[2] || '',
-      'Imagem 4': images[3] || '',
-      'Imagem 5': images[4] || '',
-      'Imagem 6': images[5] || '',
-      'Imagem 7': images[6] || '',
-      'Imagem do produto 8': images[7] || '',
-      'Imagem do produto 9': images[8] || '',
-      'Tipo de código identificador': isValidGTIN(product.barcode) ? 'JAN' : '',
-      'Código identificador': isValidGTIN(product.barcode) ? product.barcode!.replace(/\D/g, '') : '',
-      'Peso do pacote(g)': String(weightGrams),
-      'Comprimento do pacote(cm)': String(product.depth_cm || 20),
-      'Largura do pacote(cm)': String(product.width_cm || 15),
-      'Altura do pacote(cm)': String(product.height_cm || 10),
-      'Opções de entrega': '',
+    const fillBase = (row: (string | number | null)[]) => {
+      row[COL.category] = categoryName;
+      row[COL.brand] = '';
+      row[COL.product_name] = product.name;
+      row[COL.product_description] = product.description || product.name;
+      row[COL.main_image] = images[0] || '';
+      row[COL.image_2] = images[1] || '';
+      row[COL.image_3] = images[2] || '';
+      row[COL.image_4] = images[3] || '';
+      row[COL.image_5] = images[4] || '';
+      row[COL.image_6] = images[5] || '';
+      row[COL.image_7] = images[6] || '';
+      row[COL.image_8] = images[7] || '';
+      row[COL.image_9] = images[8] || '';
+      row[COL.gtin_type] = isValidGTIN(product.barcode) ? 'JAN' : '';
+      row[COL.gtin_code] = isValidGTIN(product.barcode) ? product.barcode!.replace(/\D/g, '') : '';
+      row[COL.parcel_weight] = weightGrams;
+      row[COL.parcel_length] = product.depth_cm || 20;
+      row[COL.parcel_width] = product.width_cm || 15;
+      row[COL.parcel_height] = product.height_cm || 10;
+      row[COL.delivery] = '';
     };
 
     if (productVariations.length === 0) {
-      // Simple product - one row
-      rows.push({
-        ...baseRow,
-        'Nome da variação principal (tema)': '',
-        'Valor da variação principal (opcional)': '',
-        'Imagem principal da variação 1': '',
-        'Nome da variação secundária (tema)': '',
-        'Valor da variação secundária (opcional)': '',
-        'Preço de varejo (moeda local)': String(product.price),
-        'Quantidade': String(product.stock || 0),
-        'SKU do vendedor': baseSku,
-      });
+      const row = makeRow(NUM_COLS);
+      fillBase(row);
+      row[COL.price] = product.price;
+      row[COL.quantity] = product.stock || 0;
+      row[COL.seller_sku] = baseSku;
+      dataRows.push(row);
     } else {
-      // Product with variations - one row per variation
-      // Determine attribute structure (primary = first attr, secondary = second attr)
       const allAttrNames = new Set<string>();
       productVariations.forEach(v => {
         (variationValuesMap[v.id] || []).forEach(val => allAttrNames.add(val.attribute_name));
@@ -218,32 +217,56 @@ export async function exportProductsToTikTokXLSX(productIds?: string[]): Promise
         const secondaryValue = secondaryAttr ? (values.find(v => v.attribute_name === secondaryAttr)?.attribute_value || '') : '';
         const varSku = variation.sku && variation.sku !== 'null'
           ? variation.sku
-          : generateSKU(product.name, values.map(v => v.attribute_value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '').toUpperCase()).join('-'));
+          : generateSKU(product.name, values.map(v =>
+              v.attribute_value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '').toUpperCase()
+            ).join('-'));
 
-        rows.push({
-          ...baseRow,
-          'Nome da variação principal (tema)': primaryAttr,
-          'Valor da variação principal (opcional)': primaryValue,
-          'Imagem principal da variação 1': variation.image_url && variation.image_url !== 'null' ? variation.image_url : '',
-          'Nome da variação secundária (tema)': secondaryAttr,
-          'Valor da variação secundária (opcional)': secondaryValue,
-          'Preço de varejo (moeda local)': String(variation.price || product.price),
-          'Quantidade': String(variation.stock || 0),
-          'SKU do vendedor': varSku,
-        });
+        const row = makeRow(NUM_COLS);
+        fillBase(row);
+        row[COL.property_name_1] = primaryAttr;
+        row[COL.property_value_1] = primaryValue;
+        row[COL.property_1_image] = variation.image_url && variation.image_url !== 'null' ? variation.image_url : '';
+        row[COL.property_name_2] = secondaryAttr;
+        row[COL.property_value_2] = secondaryValue;
+        row[COL.price] = variation.price || product.price;
+        row[COL.quantity] = variation.stock || 0;
+        row[COL.seller_sku] = varSku;
+        dataRows.push(row);
       }
     }
   }
 
-  // Build XLSX
-  const ws = XLSX.utils.json_to_sheet(rows, { header: TIKTOK_HEADERS });
+  // Write data into the worksheet starting at row 6 (replacing the example row)
+  // Cell addresses are 1-indexed, so row 6 = index 5 in 0-based
+  const startRow = 6; // 1-indexed
+  const colLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').concat(
+    'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(l => 'A' + l)
+  );
 
-  // Set column widths
-  ws['!cols'] = TIKTOK_HEADERS.map(h => ({ wch: Math.max(h.length, 20) }));
+  // Remove example row data (row 6)
+  for (let c = 0; c < NUM_COLS; c++) {
+    const cellRef = colLetters[c] + '6';
+    delete ws[cellRef];
+  }
 
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Template');
-  
+  // Write new data
+  for (let r = 0; r < dataRows.length; r++) {
+    const rowNum = startRow + r;
+    for (let c = 0; c < NUM_COLS; c++) {
+      const cellRef = colLetters[c] + rowNum;
+      const value = dataRows[r][c];
+      if (value !== null && value !== undefined && value !== '') {
+        ws[cellRef] = { v: value, t: typeof value === 'number' ? 'n' : 's' };
+      } else {
+        delete ws[cellRef];
+      }
+    }
+  }
+
+  // Update the sheet range
+  const lastRow = startRow + dataRows.length - 1;
+  ws['!ref'] = `A1:AB${Math.max(lastRow, 6)}`;
+
   const date = new Date().toISOString().slice(0, 10);
   XLSX.writeFile(wb, `tiktokshop-produtos-${date}.xlsx`);
 }
