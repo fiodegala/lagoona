@@ -32,7 +32,7 @@ import {
   Download,
 } from 'lucide-react';
 import { exportProductsToTinyCSV, downloadCSV } from '@/services/tinyExportService';
-import { exportProductsToTikTokXLSX } from '@/services/tiktokExportService';
+import { exportProductsToTikTokXLSX, readTikTokTemplateCategories } from '@/services/tiktokExportService';
 import { olistService, OlistConfig, OlistSyncLog } from '@/services/olistService';
 
 interface ProductItem {
