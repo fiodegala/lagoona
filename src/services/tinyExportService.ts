@@ -85,6 +85,17 @@ function formatDimension(value: number | null | undefined): string {
   return String(value);
 }
 
+function isValidGTIN(code: string | null | undefined): boolean {
+  if (!code || code === 'null') return false;
+  const cleaned = code.replace(/\D/g, '');
+  return [8, 12, 13, 14].includes(cleaned.length);
+}
+
+function formatGTIN(code: string | null | undefined): string {
+  if (!isValidGTIN(code)) return '';
+  return code!.replace(/\D/g, '');
+}
+
 function generateSKU(name: string): string {
   return name
     .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
@@ -127,7 +138,7 @@ function buildParentRow(
   row[16] = product.min_stock ? String(product.min_stock) : ''; // Estoque mín
   row[17] = formatWeight(product.weight_kg); // Peso líq
   row[18] = formatWeight(product.weight_kg); // Peso bruto
-  row[19] = product.barcode && product.barcode !== 'null' ? product.barcode : ''; // GTIN
+  row[19] = formatGTIN(product.barcode); // GTIN
   row[20] = ''; // GTIN tributável
   row[21] = product.description || ''; // Desc complementar
   row[22] = ''; // CEST
@@ -184,7 +195,7 @@ function buildVariationRow(
   row[10] = String(variation.stock || 0);
   row[17] = formatWeight(product.weight_kg);
   row[18] = formatWeight(product.weight_kg);
-  row[19] = variation.barcode && variation.barcode !== 'null' ? variation.barcode : '';
+  row[19] = formatGTIN(variation.barcode);
   row[21] = product.description || '';
   row[24] = 'Pacote / Caixa';
   row[25] = formatDimension(product.width_cm);
