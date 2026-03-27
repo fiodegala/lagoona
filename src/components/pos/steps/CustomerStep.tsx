@@ -93,26 +93,64 @@ const CustomerStep = ({ selectedCustomer, onSelectCustomer, saleType, onNext, on
   const [isLoadingCep, setIsLoadingCep] = useState(false);
 
   useEffect(() => {
-    const fetchCustomers = async () => {
+    const fetchData = async () => {
       setIsLoading(true);
       try {
-        let query = supabase
-          .from('customers')
-          .select('id, name, email, phone, document')
-          .eq('is_active', true)
-          .order('name', { ascending: true })
-          .limit(searchQuery.trim() ? 50 : 100);
+        if (isColaborador) {
+          // Fetch collaborators from profiles + user_roles
+          let query = supabase
+            .from('profiles')
+            .select('user_id, full_name, phone, document')
+            .order('full_name', { ascending: true })
+            .limit(100);
 
-        if (searchQuery.trim()) {
-          const term = `%${searchQuery.trim()}%`;
-          query = query.or(`name.ilike.${term},email.ilike.${term},phone.ilike.${term},document.ilike.${term}`);
+          if (searchQuery.trim()) {
+            query = query.ilike('full_name', `%${searchQuery.trim()}%`);
+          }
+
+          const { data: profilesData, error: profilesError } = await query;
+          if (profilesError) throw profilesError;
+
+          // Get roles for visual info
+          const userIds = (profilesData || []).map(p => p.user_id);
+          let rolesMap: Record<string, string> = {};
+          if (userIds.length > 0) {
+            const { data: rolesData } = await supabase
+              .from('user_roles')
+              .select('user_id, role')
+              .in('user_id', userIds);
+            rolesData?.forEach(r => { rolesMap[r.user_id] = r.role; });
+          }
+
+          const mapped: Customer[] = (profilesData || []).map(p => ({
+            id: p.user_id,
+            name: p.full_name,
+            email: null,
+            phone: p.phone || null,
+            document: p.document || null,
+            _role: rolesMap[p.user_id] || null,
+          }));
+          setCustomers(mapped);
+        } else {
+          // Fetch regular customers
+          let query = supabase
+            .from('customers')
+            .select('id, name, email, phone, document')
+            .eq('is_active', true)
+            .order('name', { ascending: true })
+            .limit(searchQuery.trim() ? 50 : 100);
+
+          if (searchQuery.trim()) {
+            const term = `%${searchQuery.trim()}%`;
+            query = query.or(`name.ilike.${term},email.ilike.${term},phone.ilike.${term},document.ilike.${term}`);
+          }
+
+          const { data, error } = await query;
+          if (error) throw error;
+          setCustomers(data || []);
         }
-
-        const { data, error } = await query;
-        if (error) throw error;
-        setCustomers(data || []);
       } catch (error) {
-        console.error('Erro ao carregar clientes:', error);
+        console.error('Erro ao carregar:', error);
       } finally {
         setIsLoading(false);
       }
@@ -130,11 +168,11 @@ const CustomerStep = ({ selectedCustomer, onSelectCustomer, saleType, onNext, on
       }
     };
 
-    const debounce = setTimeout(fetchCustomers, 300);
-    fetchStores();
+    const debounce = setTimeout(fetchData, 300);
+    if (!isColaborador) fetchStores();
 
     return () => clearTimeout(debounce);
-  }, [searchQuery]);
+  }, [searchQuery, isColaborador]);
 
   const filteredCustomers = customers;
 
