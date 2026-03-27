@@ -391,9 +391,11 @@ const CustomerStep = ({ selectedCustomer, onSelectCustomer, saleType, onNext, on
           </>
         )}
 
-        {isExchange && !selectedCustomer && (
+        {selectionRequired && !selectedCustomer && (
           <div className="text-sm text-destructive bg-destructive/10 rounded-md px-3 py-2">
-            ⚠️ Selecione um cliente para realizar a troca
+            {isColaborador
+              ? '⚠️ Selecione o colaborador para continuar'
+              : '⚠️ Selecione um cliente para realizar a troca'}
           </div>
         )}
       </div>
@@ -402,12 +404,12 @@ const CustomerStep = ({ selectedCustomer, onSelectCustomer, saleType, onNext, on
         <Button variant="outline" size="lg" onClick={onBack}>
           <ChevronLeft className="h-4 w-4 mr-2" /> Voltar
         </Button>
-        {!isExchange && !selectedCustomer && (
+        {!selectionRequired && !selectedCustomer && (
           <Button variant="ghost" size="lg" onClick={() => { onSelectCustomer(null); onNext(); }}>
             <SkipForward className="h-4 w-4 mr-2" /> Pular
           </Button>
         )}
-        <Button size="lg" className="px-12" onClick={onNext} disabled={isExchange && !selectedCustomer}>
+        <Button size="lg" className="px-12" onClick={onNext} disabled={selectionRequired && !selectedCustomer}>
           Próximo
         </Button>
       </div>
