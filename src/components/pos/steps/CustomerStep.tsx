@@ -375,17 +375,19 @@ const CustomerStep = ({ selectedCustomer, onSelectCustomer, saleType, onNext, on
               </ScrollArea>
             </div>
 
-            {/* Register button */}
-            <Button
-              variant="outline"
-              className="w-full gap-2"
-              onClick={() => {
-                setFormData({ ...emptyForm, name: searchQuery });
-                setShowRegisterDialog(true);
-              }}
-            >
-              <UserPlus className="h-4 w-4" /> Cadastrar novo cliente
-            </Button>
+            {/* Register button - hide for colaborador */}
+            {!isColaborador && (
+              <Button
+                variant="outline"
+                className="w-full gap-2"
+                onClick={() => {
+                  setFormData({ ...emptyForm, name: searchQuery });
+                  setShowRegisterDialog(true);
+                }}
+              >
+                <UserPlus className="h-4 w-4" /> Cadastrar novo cliente
+              </Button>
+            )}
           </>
         )}
 
