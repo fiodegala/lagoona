@@ -174,6 +174,11 @@ const CustomerStep = ({ selectedCustomer, onSelectCustomer, saleType, onNext, on
     return () => clearTimeout(debounce);
   }, [searchQuery, isColaborador]);
 
+  const getRoleLabel = (role: string) => {
+    const labels: Record<string, string> = { admin: 'Administrador', manager: 'Gerente', seller: 'Vendedor', support: 'Suporte' };
+    return labels[role] || role;
+  };
+
   const filteredCustomers = customers;
 
   const handleSelect = (customer: Customer) => {
