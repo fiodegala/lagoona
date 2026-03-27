@@ -81,7 +81,7 @@ const emptyForm = {
 const CustomerStep = ({ selectedCustomer, onSelectCustomer, saleType, onNext, onBack }: CustomerStepProps) => {
   const isExchange = saleType === 'troca';
   const isColaborador = saleType === 'colaborador';
-  const customerOptional = !isExchange || isColaborador;
+  const selectionRequired = isExchange || isColaborador;
 
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [stores, setStores] = useState<{ id: string; name: string; type: string }[]>([]);
@@ -93,26 +93,64 @@ const CustomerStep = ({ selectedCustomer, onSelectCustomer, saleType, onNext, on
   const [isLoadingCep, setIsLoadingCep] = useState(false);
 
   useEffect(() => {
-    const fetchCustomers = async () => {
+    const fetchData = async () => {
       setIsLoading(true);
       try {
-        let query = supabase
-          .from('customers')
-          .select('id, name, email, phone, document')
-          .eq('is_active', true)
-          .order('name', { ascending: true })
-          .limit(searchQuery.trim() ? 50 : 100);
+        if (isColaborador) {
+          // Fetch collaborators from profiles + user_roles
+          let query = supabase
+            .from('profiles')
+            .select('user_id, full_name, phone, document')
+            .order('full_name', { ascending: true })
+            .limit(100);
 
-        if (searchQuery.trim()) {
-          const term = `%${searchQuery.trim()}%`;
-          query = query.or(`name.ilike.${term},email.ilike.${term},phone.ilike.${term},document.ilike.${term}`);
+          if (searchQuery.trim()) {
+            query = query.ilike('full_name', `%${searchQuery.trim()}%`);
+          }
+
+          const { data: profilesData, error: profilesError } = await query;
+          if (profilesError) throw profilesError;
+
+          // Get roles for visual info
+          const userIds = (profilesData || []).map(p => p.user_id);
+          let rolesMap: Record<string, string> = {};
+          if (userIds.length > 0) {
+            const { data: rolesData } = await supabase
+              .from('user_roles')
+              .select('user_id, role')
+              .in('user_id', userIds);
+            rolesData?.forEach(r => { rolesMap[r.user_id] = r.role; });
+          }
+
+          const mapped: Customer[] = (profilesData || []).map(p => ({
+            id: p.user_id,
+            name: p.full_name,
+            email: null,
+            phone: p.phone || null,
+            document: p.document || null,
+            _role: rolesMap[p.user_id] || null,
+          }));
+          setCustomers(mapped);
+        } else {
+          // Fetch regular customers
+          let query = supabase
+            .from('customers')
+            .select('id, name, email, phone, document')
+            .eq('is_active', true)
+            .order('name', { ascending: true })
+            .limit(searchQuery.trim() ? 50 : 100);
+
+          if (searchQuery.trim()) {
+            const term = `%${searchQuery.trim()}%`;
+            query = query.or(`name.ilike.${term},email.ilike.${term},phone.ilike.${term},document.ilike.${term}`);
+          }
+
+          const { data, error } = await query;
+          if (error) throw error;
+          setCustomers(data || []);
         }
-
-        const { data, error } = await query;
-        if (error) throw error;
-        setCustomers(data || []);
       } catch (error) {
-        console.error('Erro ao carregar clientes:', error);
+        console.error('Erro ao carregar:', error);
       } finally {
         setIsLoading(false);
       }
@@ -130,11 +168,16 @@ const CustomerStep = ({ selectedCustomer, onSelectCustomer, saleType, onNext, on
       }
     };
 
-    const debounce = setTimeout(fetchCustomers, 300);
-    fetchStores();
+    const debounce = setTimeout(fetchData, 300);
+    if (!isColaborador) fetchStores();
 
     return () => clearTimeout(debounce);
-  }, [searchQuery]);
+  }, [searchQuery, isColaborador]);
+
+  const getRoleLabel = (role: string) => {
+    const labels: Record<string, string> = { admin: 'Administrador', manager: 'Gerente', seller: 'Vendedor', support: 'Suporte' };
+    return labels[role] || role;
+  };
 
   const filteredCustomers = customers;
 
@@ -235,12 +278,14 @@ const CustomerStep = ({ selectedCustomer, onSelectCustomer, saleType, onNext, on
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-8">
-      <h2 className="text-2xl font-bold mb-2">Selecione o Cliente</h2>
+      <h2 className="text-2xl font-bold mb-2">
+        {isColaborador ? 'Selecione o Colaborador' : 'Selecione o Cliente'}
+      </h2>
       <p className="text-muted-foreground mb-8">
         {isExchange
           ? 'É obrigatório selecionar um cliente para troca'
           : isColaborador
-            ? 'Opcional — vincule o colaborador ou pule esta etapa'
+            ? 'Selecione o colaborador que está realizando a compra'
             : 'Vincule um cliente à venda ou pule esta etapa'}
       </p>
 
@@ -275,7 +320,7 @@ const CustomerStep = ({ selectedCustomer, onSelectCustomer, saleType, onNext, on
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Buscar por nome, CPF, telefone ou e-mail..."
+                placeholder={isColaborador ? "Buscar colaborador por nome..." : "Buscar por nome, CPF, telefone ou e-mail..."}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 h-12"
@@ -304,6 +349,9 @@ const CustomerStep = ({ selectedCustomer, onSelectCustomer, saleType, onNext, on
                         <div className="flex-1 min-w-0">
                           <div className="font-medium text-sm truncate">{customer.name}</div>
                           <div className="text-xs text-muted-foreground flex items-center gap-2">
+                            {(customer as any)._role && (
+                              <span className="capitalize">{getRoleLabel((customer as any)._role)}</span>
+                            )}
                             {customer.document && (
                               <span className="flex items-center gap-1">
                                 <FileText className="h-3 w-3" /> {customer.document}
@@ -321,29 +369,35 @@ const CustomerStep = ({ selectedCustomer, onSelectCustomer, saleType, onNext, on
                   </div>
                 ) : (
                   <div className="p-6 text-center text-muted-foreground text-sm">
-                    {searchQuery ? 'Nenhum cliente encontrado' : 'Digite para buscar'}
+                    {searchQuery
+                      ? (isColaborador ? 'Nenhum colaborador encontrado' : 'Nenhum cliente encontrado')
+                      : (isColaborador ? 'Carregando colaboradores...' : 'Digite para buscar')}
                   </div>
                 )}
               </ScrollArea>
             </div>
 
-            {/* Register button */}
-            <Button
-              variant="outline"
-              className="w-full gap-2"
-              onClick={() => {
-                setFormData({ ...emptyForm, name: searchQuery });
-                setShowRegisterDialog(true);
-              }}
-            >
-              <UserPlus className="h-4 w-4" /> Cadastrar novo cliente
-            </Button>
+            {/* Register button - hide for colaborador */}
+            {!isColaborador && (
+              <Button
+                variant="outline"
+                className="w-full gap-2"
+                onClick={() => {
+                  setFormData({ ...emptyForm, name: searchQuery });
+                  setShowRegisterDialog(true);
+                }}
+              >
+                <UserPlus className="h-4 w-4" /> Cadastrar novo cliente
+              </Button>
+            )}
           </>
         )}
 
-        {isExchange && !selectedCustomer && (
+        {selectionRequired && !selectedCustomer && (
           <div className="text-sm text-destructive bg-destructive/10 rounded-md px-3 py-2">
-            ⚠️ Selecione um cliente para realizar a troca
+            {isColaborador
+              ? '⚠️ Selecione o colaborador para continuar'
+              : '⚠️ Selecione um cliente para realizar a troca'}
           </div>
         )}
       </div>
@@ -352,12 +406,12 @@ const CustomerStep = ({ selectedCustomer, onSelectCustomer, saleType, onNext, on
         <Button variant="outline" size="lg" onClick={onBack}>
           <ChevronLeft className="h-4 w-4 mr-2" /> Voltar
         </Button>
-        {!isExchange && !selectedCustomer && (
+        {!selectionRequired && !selectedCustomer && (
           <Button variant="ghost" size="lg" onClick={() => { onSelectCustomer(null); onNext(); }}>
             <SkipForward className="h-4 w-4 mr-2" /> Pular
           </Button>
         )}
-        <Button size="lg" className="px-12" onClick={onNext} disabled={isExchange && !selectedCustomer}>
+        <Button size="lg" className="px-12" onClick={onNext} disabled={selectionRequired && !selectedCustomer}>
           Próximo
         </Button>
       </div>
