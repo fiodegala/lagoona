@@ -273,12 +273,14 @@ const CustomerStep = ({ selectedCustomer, onSelectCustomer, saleType, onNext, on
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-8">
-      <h2 className="text-2xl font-bold mb-2">Selecione o Cliente</h2>
+      <h2 className="text-2xl font-bold mb-2">
+        {isColaborador ? 'Selecione o Colaborador' : 'Selecione o Cliente'}
+      </h2>
       <p className="text-muted-foreground mb-8">
         {isExchange
           ? 'É obrigatório selecionar um cliente para troca'
           : isColaborador
-            ? 'Opcional — vincule o colaborador ou pule esta etapa'
+            ? 'Selecione o colaborador que está realizando a compra'
             : 'Vincule um cliente à venda ou pule esta etapa'}
       </p>
 
