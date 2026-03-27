@@ -330,7 +330,7 @@ const CustomerStep = ({ selectedCustomer, onSelectCustomer, saleType, onNext, on
 
             {/* Customer list */}
             <div className="border rounded-xl overflow-hidden">
-              <ScrollArea className="max-h-64">
+              <ScrollArea className="h-[300px]">
                 {isLoading ? (
                   <div className="p-6 flex items-center justify-center text-muted-foreground">
                     <Loader2 className="h-5 w-5 animate-spin mr-2" /> Carregando...
