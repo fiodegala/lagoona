@@ -369,7 +369,9 @@ const CustomerStep = ({ selectedCustomer, onSelectCustomer, saleType, onNext, on
                   </div>
                 ) : (
                   <div className="p-6 text-center text-muted-foreground text-sm">
-                    {searchQuery ? 'Nenhum cliente encontrado' : 'Digite para buscar'}
+                    {searchQuery
+                      ? (isColaborador ? 'Nenhum colaborador encontrado' : 'Nenhum cliente encontrado')
+                      : (isColaborador ? 'Carregando colaboradores...' : 'Digite para buscar')}
                   </div>
                 )}
               </ScrollArea>
