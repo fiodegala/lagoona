@@ -239,7 +239,7 @@ const Sales = () => {
       </style></head><body>
       <div class="header">${logoBase64 ? `<img src="${logoBase64}" alt="Logo" style="height:44px;margin:0 auto 8px;">` : ''}<h1>Comprovante de Venda</h1><p>ID: ${detailSale.id}</p><p>${format(new Date(detailSale.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p></div>
       <div class="section"><div class="section-title">Cliente</div><div class="grid">${customerHtml}</div></div>
-      <div class="section"><div class="section-title">Itens</div><table><thead><tr><th>Produto</th><th class="text-right">Qtd</th><th class="text-right">Unit.</th><th class="text-right">Total</th></tr></thead><tbody>${itemsRows}</tbody></table></div>
+      <div class="section"><div class="section-title">Itens</div><table><thead><tr><th>Produto</th><th class="text-right">Qtd</th><th class="text-right">Unit.</th><th class="text-right">Total</th></tr></thead><tbody>${itemsRows}${itemsFooter}</tbody></table></div>
       <div class="section totals">${totalsHtml}</div>
       ${notesHtml}
     </body></html>`);
