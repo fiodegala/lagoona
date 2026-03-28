@@ -203,11 +203,13 @@ const Sales = () => {
       customerHtml += `<div style="grid-column:span 2"><span class="label">Endereço:</span> <span class="value">${addr}${detailCustomer.zip_code ? ` - CEP: ${detailCustomer.zip_code}` : ''}</span></div>`;
     }
 
+    const totalQuantity = items.reduce((sum: number, item: any) => sum + Number(item.quantity || 0), 0);
     const itemsRows = items.map((item: any) => {
       const unitPrice = Number(item.unit_price ?? item.price ?? 0);
       const itemTotal = Number(item.total ?? (item.quantity * unitPrice));
       return `<tr><td>${item.name}${item.sku ? ` (${item.sku})` : ''}</td><td class="text-right">${item.quantity}</td><td class="text-right">R$ ${unitPrice.toFixed(2)}</td><td class="text-right">R$ ${itemTotal.toFixed(2)}</td></tr>`;
     }).join('');
+    const itemsFooter = `<tr style="font-weight:600;border-top:2px solid #333"><td>Total de Peças</td><td class="text-right">${totalQuantity}</td><td></td><td></td></tr>`;
 
     let totalsHtml = `<div class="row"><span>Subtotal</span><span>R$ ${Number(detailSale.subtotal).toFixed(2)}</span></div>`;
     if (Number(detailSale.discount_amount || 0) > 0) {
@@ -237,7 +239,7 @@ const Sales = () => {
       </style></head><body>
       <div class="header">${logoBase64 ? `<img src="${logoBase64}" alt="Logo" style="height:44px;margin:0 auto 8px;">` : ''}<h1>Comprovante de Venda</h1><p>ID: ${detailSale.id}</p><p>${format(new Date(detailSale.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p></div>
       <div class="section"><div class="section-title">Cliente</div><div class="grid">${customerHtml}</div></div>
-      <div class="section"><div class="section-title">Itens</div><table><thead><tr><th>Produto</th><th class="text-right">Qtd</th><th class="text-right">Unit.</th><th class="text-right">Total</th></tr></thead><tbody>${itemsRows}</tbody></table></div>
+      <div class="section"><div class="section-title">Itens</div><table><thead><tr><th>Produto</th><th class="text-right">Qtd</th><th class="text-right">Unit.</th><th class="text-right">Total</th></tr></thead><tbody>${itemsRows}${itemsFooter}</tbody></table></div>
       <div class="section totals">${totalsHtml}</div>
       ${notesHtml}
     </body></html>`);
