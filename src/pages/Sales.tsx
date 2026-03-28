@@ -203,11 +203,13 @@ const Sales = () => {
       customerHtml += `<div style="grid-column:span 2"><span class="label">Endereço:</span> <span class="value">${addr}${detailCustomer.zip_code ? ` - CEP: ${detailCustomer.zip_code}` : ''}</span></div>`;
     }
 
+    const totalQuantity = items.reduce((sum: number, item: any) => sum + Number(item.quantity || 0), 0);
     const itemsRows = items.map((item: any) => {
       const unitPrice = Number(item.unit_price ?? item.price ?? 0);
       const itemTotal = Number(item.total ?? (item.quantity * unitPrice));
       return `<tr><td>${item.name}${item.sku ? ` (${item.sku})` : ''}</td><td class="text-right">${item.quantity}</td><td class="text-right">R$ ${unitPrice.toFixed(2)}</td><td class="text-right">R$ ${itemTotal.toFixed(2)}</td></tr>`;
     }).join('');
+    const itemsFooter = `<tr style="font-weight:600;border-top:2px solid #333"><td>Total de Peças</td><td class="text-right">${totalQuantity}</td><td></td><td></td></tr>`;
 
     let totalsHtml = `<div class="row"><span>Subtotal</span><span>R$ ${Number(detailSale.subtotal).toFixed(2)}</span></div>`;
     if (Number(detailSale.discount_amount || 0) > 0) {
