@@ -128,11 +128,28 @@ const POSCart = ({
   return (
     <div className="h-full flex flex-col bg-card border-l">
       {/* Header */}
-      <div className="p-4 border-b">
-        <h2 className="text-lg font-semibold">Carrinho</h2>
-        <p className="text-sm text-muted-foreground">
-          {items.reduce((sum, i) => sum + i.quantity, 0)} {items.reduce((sum, i) => sum + i.quantity, 0) === 1 ? 'peça' : 'peças'} ({items.length} {items.length === 1 ? 'item' : 'itens'})
-        </p>
+      <div className="p-4 border-b space-y-2">
+        <div>
+          <h2 className="text-lg font-semibold">Carrinho</h2>
+          <p className="text-sm text-muted-foreground">
+            {items.reduce((sum, i) => sum + i.quantity, 0)} {items.reduce((sum, i) => sum + i.quantity, 0) === 1 ? 'peça' : 'peças'} ({items.length} {items.length === 1 ? 'item' : 'itens'})
+          </p>
+        </div>
+        {showPricingModeSwitcher && onChangePricingMode && pricingMode && (
+          <div className="flex items-center gap-2">
+            <ArrowUpDown className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+            <Select value={pricingMode} onValueChange={(v) => onChangePricingMode(v as PricingMode)}>
+              <SelectTrigger className="h-8 text-xs flex-1">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="varejo">Varejo</SelectItem>
+                <SelectItem value="atacado">Atacado</SelectItem>
+                <SelectItem value="exclusivo">Exclusivo</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
       </div>
 
       {/* Items */}
