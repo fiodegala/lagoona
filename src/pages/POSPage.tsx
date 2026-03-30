@@ -326,6 +326,9 @@ const POSPage = () => {
           total: unitPrice,
           max_stock: product.stock,
           is_lagoona: product.is_lagoona || false,
+          retail_price: product.price,
+          wholesale_price: product.wholesale_price ?? null,
+          exclusive_price: product.exclusive_price ?? null,
         };
         setCartItems((items) => [...items, newItem]);
       }
