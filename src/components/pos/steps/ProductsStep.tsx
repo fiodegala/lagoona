@@ -26,6 +26,9 @@ interface ProductsStepProps {
   isOnline: boolean;
   onNext: () => void;
   onBack: () => void;
+  pricingMode?: PricingMode;
+  onChangePricingMode?: (mode: PricingMode) => void;
+  showPricingModeSwitcher?: boolean;
 }
 
 const ProductsStep = ({
