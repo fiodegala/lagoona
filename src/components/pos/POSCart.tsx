@@ -90,6 +90,9 @@ const POSCart = ({
   subtotal,
   discountAmount,
   total,
+  pricingMode,
+  onChangePricingMode,
+  showPricingModeSwitcher,
 }: POSCartProps) => {
   const [discountInput, setDiscountInput] = useState('');
   const [discountType, setDiscountType] = useState<'percentage' | 'fixed'>('percentage');
