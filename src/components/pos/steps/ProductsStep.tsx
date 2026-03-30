@@ -89,6 +89,9 @@ const ProductsStep = ({
       subtotal={subtotal}
       discountAmount={discountAmount}
       total={total}
+      pricingMode={pricingMode}
+      onChangePricingMode={onChangePricingMode}
+      showPricingModeSwitcher={showPricingModeSwitcher}
     />
   );
 
