@@ -73,6 +73,9 @@ interface POSCartProps {
   subtotal: number;
   discountAmount: number;
   total: number;
+  pricingMode?: PricingMode;
+  onChangePricingMode?: (mode: PricingMode) => void;
+  showPricingModeSwitcher?: boolean;
 }
 
 const POSCart = ({
