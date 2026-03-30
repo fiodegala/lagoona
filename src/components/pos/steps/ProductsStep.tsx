@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { PricingMode } from '@/components/pos/POSCart';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ChevronLeft, ShoppingCart, X } from 'lucide-react';
