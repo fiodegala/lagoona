@@ -30,6 +30,8 @@ import {
 } from '@/components/ui/popover';
 import { Label } from '@/components/ui/label';
 
+export type PricingMode = 'varejo' | 'atacado' | 'exclusivo';
+
 export interface CartItem {
   id: string;
   product_id: string;
@@ -49,6 +51,10 @@ export interface CartItem {
   max_stock: number;
   is_lagoona?: boolean;
   is_gift?: boolean;
+  // Price tiers for mode switching
+  retail_price?: number;
+  wholesale_price?: number | null;
+  exclusive_price?: number | null;
 }
 
 interface POSCartProps {
