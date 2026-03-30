@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import POSLayout from '@/components/pos/POSLayout';
 import { ProductResult, SaleType } from '@/components/pos/ProductSearch';
-import { CartItem } from '@/components/pos/POSCart';
+import { CartItem, PricingMode } from '@/components/pos/POSCart';
 import { Customer } from '@/components/pos/CustomerSelector';
 import { Seller } from '@/components/pos/steps/SellerStep';
 import SaleTypeStep from '@/components/pos/steps/SaleTypeStep';
