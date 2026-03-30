@@ -262,7 +262,41 @@ const Sales = () => {
         } as any)
         .eq('id', cancelSale.id);
       if (error) throw error;
-      toast.success('Venda cancelada com sucesso');
+
+      // Restore stock for cancelled sale items
+      const saleStoreId = cancelSale.store_id;
+      const items = cancelSale.items as any[];
+      if (saleStoreId && items && Array.isArray(items)) {
+        for (const item of items) {
+          const productId = item.product_id;
+          const variationId = item.variation_id || null;
+          const quantity = item.quantity || 1;
+          if (!productId) continue;
+
+          let stockQuery = supabase
+            .from('store_stock')
+            .select('id, quantity')
+            .eq('store_id', saleStoreId)
+            .eq('product_id', productId);
+
+          if (variationId) {
+            stockQuery = stockQuery.eq('variation_id', variationId);
+          } else {
+            stockQuery = stockQuery.is('variation_id', null);
+          }
+
+          const { data: stockRow } = await stockQuery.maybeSingle();
+          if (stockRow) {
+            await supabase
+              .from('store_stock')
+              .update({ quantity: stockRow.quantity + quantity, updated_at: new Date().toISOString() })
+              .eq('id', stockRow.id);
+          }
+        }
+        console.log(`Stock restored for cancelled sale ${cancelSale.id}`);
+      }
+
+      toast.success('Venda cancelada e estoque restaurado com sucesso');
       auditService.log({
         action: 'cancel',
         entity_type: 'pos_sale',
@@ -271,6 +305,7 @@ const Sales = () => {
           total: cancelSale.total,
           customer: cancelSale.customer_name || 'Consumidor Final',
           reason: cancelReason || undefined,
+          stock_restored: true,
         },
       });
       queryClient.invalidateQueries({ queryKey: ['pos-sales'] });
