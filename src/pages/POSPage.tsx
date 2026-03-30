@@ -918,6 +918,9 @@ const POSPage = () => {
               isOnline={isOnline}
               onNext={() => setCurrentStep('payment')}
               onBack={() => setCurrentStep('customer')}
+              pricingMode={saleType as PricingMode}
+              onChangePricingMode={handleChangePricingMode}
+              showPricingModeSwitcher={['varejo', 'atacado', 'exclusivo', 'colaborador'].includes(saleType)}
             />
           )}
 
