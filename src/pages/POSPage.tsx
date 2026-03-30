@@ -398,6 +398,42 @@ const POSPage = () => {
     );
   };
 
+  const handleChangePricingMode = useCallback((newMode: PricingMode) => {
+    setSaleType(newMode);
+    setCartItems((items) =>
+      items.map((item) => {
+        if (item.is_gift) return item;
+        const retailPrice = item.retail_price ?? item.unit_price;
+        let newPrice: number;
+        switch (newMode) {
+          case 'atacado':
+            newPrice = item.wholesale_price ?? retailPrice;
+            break;
+          case 'exclusivo':
+            newPrice = item.exclusive_price ?? retailPrice;
+            break;
+          default:
+            newPrice = retailPrice;
+        }
+        const discountAmount = item.discount_type === 'percentage'
+          ? newPrice * item.quantity * ((item.discount_value || 0) / 100)
+          : (item.discount_value || 0);
+        return {
+          ...item,
+          unit_price: newPrice,
+          is_promotional: undefined,
+          original_price: undefined,
+          discount_amount: discountAmount,
+          total: newPrice * item.quantity - discountAmount,
+        };
+      })
+    );
+    toast({
+      title: 'Modalidade alterada',
+      description: `Preços atualizados para ${newMode === 'varejo' ? 'Varejo' : newMode === 'atacado' ? 'Atacado' : 'Exclusivo'}`,
+    });
+  }, [toast]);
+
   const handleAddGiftItem = useCallback((product: ProductResult, variationId?: string) => {
     if (variationId) {
       const variation = product.variations.find(v => v.id === variationId);
