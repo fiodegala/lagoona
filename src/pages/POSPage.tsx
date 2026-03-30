@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import POSLayout from '@/components/pos/POSLayout';
 import { ProductResult, SaleType } from '@/components/pos/ProductSearch';
-import { CartItem } from '@/components/pos/POSCart';
+import { CartItem, PricingMode } from '@/components/pos/POSCart';
 import { Customer } from '@/components/pos/CustomerSelector';
 import { Seller } from '@/components/pos/steps/SellerStep';
 import SaleTypeStep from '@/components/pos/steps/SaleTypeStep';
@@ -294,6 +294,9 @@ const POSPage = () => {
           total: variationPrice,
           max_stock: variation.stock,
           is_lagoona: product.is_lagoona || false,
+          retail_price: variation.price ?? product.price,
+          wholesale_price: variation.wholesale_price ?? product.wholesale_price ?? null,
+          exclusive_price: variation.exclusive_price ?? product.exclusive_price ?? null,
         };
         setCartItems((items) => [...items, newItem]);
       }
@@ -323,6 +326,9 @@ const POSPage = () => {
           total: unitPrice,
           max_stock: product.stock,
           is_lagoona: product.is_lagoona || false,
+          retail_price: product.price,
+          wholesale_price: product.wholesale_price ?? null,
+          exclusive_price: product.exclusive_price ?? null,
         };
         setCartItems((items) => [...items, newItem]);
       }
@@ -391,6 +397,42 @@ const POSPage = () => {
       })
     );
   };
+
+  const handleChangePricingMode = useCallback((newMode: PricingMode) => {
+    setSaleType(newMode);
+    setCartItems((items) =>
+      items.map((item) => {
+        if (item.is_gift) return item;
+        const retailPrice = item.retail_price ?? item.unit_price;
+        let newPrice: number;
+        switch (newMode) {
+          case 'atacado':
+            newPrice = item.wholesale_price ?? retailPrice;
+            break;
+          case 'exclusivo':
+            newPrice = item.exclusive_price ?? retailPrice;
+            break;
+          default:
+            newPrice = retailPrice;
+        }
+        const discountAmount = item.discount_type === 'percentage'
+          ? newPrice * item.quantity * ((item.discount_value || 0) / 100)
+          : (item.discount_value || 0);
+        return {
+          ...item,
+          unit_price: newPrice,
+          is_promotional: undefined,
+          original_price: undefined,
+          discount_amount: discountAmount,
+          total: newPrice * item.quantity - discountAmount,
+        };
+      })
+    );
+    toast({
+      title: 'Modalidade alterada',
+      description: `Preços atualizados para ${newMode === 'varejo' ? 'Varejo' : newMode === 'atacado' ? 'Atacado' : 'Exclusivo'}`,
+    });
+  }, [toast]);
 
   const handleAddGiftItem = useCallback((product: ProductResult, variationId?: string) => {
     if (variationId) {
@@ -876,6 +918,9 @@ const POSPage = () => {
               isOnline={isOnline}
               onNext={() => setCurrentStep('payment')}
               onBack={() => setCurrentStep('customer')}
+              pricingMode={saleType as PricingMode}
+              onChangePricingMode={handleChangePricingMode}
+              showPricingModeSwitcher={['varejo', 'atacado', 'exclusivo', 'colaborador'].includes(saleType)}
             />
           )}
 

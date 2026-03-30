@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { PricingMode } from '@/components/pos/POSCart';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ChevronLeft, ShoppingCart, X } from 'lucide-react';
@@ -25,6 +26,9 @@ interface ProductsStepProps {
   isOnline: boolean;
   onNext: () => void;
   onBack: () => void;
+  pricingMode?: PricingMode;
+  onChangePricingMode?: (mode: PricingMode) => void;
+  showPricingModeSwitcher?: boolean;
 }
 
 const ProductsStep = ({
@@ -43,6 +47,9 @@ const ProductsStep = ({
   isOnline,
   onNext,
   onBack,
+  pricingMode,
+  onChangePricingMode,
+  showPricingModeSwitcher,
 }: ProductsStepProps) => {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [variationPickerProduct, setVariationPickerProduct] = useState<ProductResult | null>(null);
@@ -82,6 +89,9 @@ const ProductsStep = ({
       subtotal={subtotal}
       discountAmount={discountAmount}
       total={total}
+      pricingMode={pricingMode}
+      onChangePricingMode={onChangePricingMode}
+      showPricingModeSwitcher={showPricingModeSwitcher}
     />
   );
 

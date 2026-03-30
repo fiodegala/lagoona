@@ -11,6 +11,13 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
   Trash2,
   Plus,
   Minus,
@@ -21,6 +28,7 @@ import {
   Hash,
   DollarSign,
   BarChart3,
+  ArrowUpDown,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -29,6 +37,8 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Label } from '@/components/ui/label';
+
+export type PricingMode = 'varejo' | 'atacado' | 'exclusivo';
 
 export interface CartItem {
   id: string;
@@ -49,6 +59,10 @@ export interface CartItem {
   max_stock: number;
   is_lagoona?: boolean;
   is_gift?: boolean;
+  // Price tiers for mode switching
+  retail_price?: number;
+  wholesale_price?: number | null;
+  exclusive_price?: number | null;
 }
 
 interface POSCartProps {
@@ -67,6 +81,9 @@ interface POSCartProps {
   subtotal: number;
   discountAmount: number;
   total: number;
+  pricingMode?: PricingMode;
+  onChangePricingMode?: (mode: PricingMode) => void;
+  showPricingModeSwitcher?: boolean;
 }
 
 const POSCart = ({
@@ -81,6 +98,9 @@ const POSCart = ({
   subtotal,
   discountAmount,
   total,
+  pricingMode,
+  onChangePricingMode,
+  showPricingModeSwitcher,
 }: POSCartProps) => {
   const [discountInput, setDiscountInput] = useState('');
   const [discountType, setDiscountType] = useState<'percentage' | 'fixed'>('percentage');
@@ -109,11 +129,28 @@ const POSCart = ({
   return (
     <div className="h-full flex flex-col bg-card border-l">
       {/* Header */}
-      <div className="p-4 border-b">
-        <h2 className="text-lg font-semibold">Carrinho</h2>
-        <p className="text-sm text-muted-foreground">
-          {items.reduce((sum, i) => sum + i.quantity, 0)} {items.reduce((sum, i) => sum + i.quantity, 0) === 1 ? 'peça' : 'peças'} ({items.length} {items.length === 1 ? 'item' : 'itens'})
-        </p>
+      <div className="p-4 border-b space-y-2">
+        <div>
+          <h2 className="text-lg font-semibold">Carrinho</h2>
+          <p className="text-sm text-muted-foreground">
+            {items.reduce((sum, i) => sum + i.quantity, 0)} {items.reduce((sum, i) => sum + i.quantity, 0) === 1 ? 'peça' : 'peças'} ({items.length} {items.length === 1 ? 'item' : 'itens'})
+          </p>
+        </div>
+        {showPricingModeSwitcher && onChangePricingMode && pricingMode && (
+          <div className="flex items-center gap-2">
+            <ArrowUpDown className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+            <Select value={pricingMode} onValueChange={(v) => onChangePricingMode(v as PricingMode)}>
+              <SelectTrigger className="h-8 text-xs flex-1">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="varejo">Varejo</SelectItem>
+                <SelectItem value="atacado">Atacado</SelectItem>
+                <SelectItem value="exclusivo">Exclusivo</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
       </div>
 
       {/* Items */}
