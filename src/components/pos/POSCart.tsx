@@ -28,6 +28,7 @@ import {
   Hash,
   DollarSign,
   BarChart3,
+  ArrowUpDown,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
