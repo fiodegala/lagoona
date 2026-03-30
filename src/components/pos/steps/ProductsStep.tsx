@@ -47,6 +47,9 @@ const ProductsStep = ({
   isOnline,
   onNext,
   onBack,
+  pricingMode,
+  onChangePricingMode,
+  showPricingModeSwitcher,
 }: ProductsStepProps) => {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [variationPickerProduct, setVariationPickerProduct] = useState<ProductResult | null>(null);
