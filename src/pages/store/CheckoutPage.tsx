@@ -170,15 +170,29 @@ const CheckoutPage = () => {
     const trimmedState = formData.state.trim();
     const trimmedZipCode = formData.zipCode.trim();
 
-    if (!trimmedName || !trimmedEmail || !trimmedPhone || !trimmedDocument || !trimmedAddress || !trimmedNumber || !trimmedCity || !trimmedState || !trimmedZipCode) {
+    // Validate CPF/CNPJ FIRST - it's mandatory for shipping labels and invoices
+    const docDigits = trimmedDocument.replace(/\D/g, '');
+    if (!trimmedDocument || docDigits.length === 0) {
+      toast.error('CPF ou CNPJ é obrigatório para finalizar a compra');
+      document.getElementById('document')?.focus();
+      return;
+    }
+    if (docDigits.length !== 11 && docDigits.length !== 14) {
+      toast.error('CPF deve ter 11 dígitos ou CNPJ deve ter 14 dígitos');
+      document.getElementById('document')?.focus();
+      return;
+    }
+
+    if (!trimmedName || !trimmedEmail || !trimmedPhone || !trimmedAddress || !trimmedNumber || !trimmedCity || !trimmedState || !trimmedZipCode) {
       toast.error('Preencha todos os campos obrigatórios');
       return;
     }
 
-    // Validate CPF/CNPJ format
-    const docDigits = trimmedDocument.replace(/\D/g, '');
-    if (docDigits.length !== 11 && docDigits.length !== 14) {
-      toast.error('CPF deve ter 11 dígitos ou CNPJ deve ter 14 dígitos');
+    // Validate phone format (minimum digits)
+    const phoneDigits = trimmedPhone.replace(/\D/g, '');
+    if (phoneDigits.length < 10) {
+      toast.error('Telefone deve ter no mínimo 10 dígitos');
+      document.getElementById('phone')?.focus();
       return;
     }
 
