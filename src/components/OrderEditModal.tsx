@@ -464,7 +464,7 @@ const OrderEditModal = ({ open, onOpenChange, order, onSaved }: OrderEditModalPr
                             {swapVariationsLoading ? (
                               <p className="text-xs text-muted-foreground">Carregando variações...</p>
                             ) : (
-                              <ScrollArea className="max-h-48">
+                              <div className="max-h-60 overflow-y-auto">
                                 <div className="space-y-1">
                                   {swapVariations.map((v: any) => (
                                     <button
