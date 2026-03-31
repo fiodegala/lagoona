@@ -87,9 +87,10 @@ serve(async (req) => {
 
         const data = await response.json();
 
-        // Filter only available services (no errors)
+        // Filter only available services (no errors) and exclude LATAM Cargo (requires special unit config)
+        const excludedServices = [12]; // LATAM Cargo
         const available = (Array.isArray(data) ? data : []).filter(
-          (s: any) => !s.error && s.price
+          (s: any) => !s.error && s.price && !excludedServices.includes(s.id)
         ).map((s: any) => ({
           id: s.id,
           name: s.name,
@@ -183,10 +184,10 @@ serve(async (req) => {
         const cartData = await cartResponse.json();
         console.log("Cart response:", JSON.stringify(cartData));
 
-        if (!cartResponse.ok) {
-          const errorMsg = cartData?.message || cartData?.errors
-            ? JSON.stringify(cartData.errors || cartData.message)
-            : "Failed to add to cart";
+        if (!cartResponse.ok || cartData?.error) {
+          const errorMsg = cartData?.error || cartData?.message || 
+            (cartData?.errors ? JSON.stringify(cartData.errors) : "Failed to add to cart");
+          console.error("Cart error details:", errorMsg);
           return jsonError(errorMsg, 502);
         }
 
