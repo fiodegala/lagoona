@@ -361,59 +361,78 @@ const OrderEditModal = ({ open, onOpenChange, order, onSaved }: OrderEditModalPr
                     {/* Swap product panel */}
                     {swapIdx === idx && (
                       <div className="rounded-md border border-primary/30 bg-muted/30 p-3 space-y-2">
-                        <Label className="text-xs font-semibold">Trocar por outro produto:</Label>
-                        <Input
-                          value={swapSearch}
-                          onChange={e => setSwapSearch(e.target.value)}
-                          className="h-8 text-sm"
-                          placeholder="Buscar produto por nome..."
-                          autoFocus
-                        />
-                        {swapLoading && <p className="text-xs text-muted-foreground">Buscando...</p>}
-                        {swapResults.length > 0 && (
-                          <ScrollArea className="max-h-48">
-                            <div className="space-y-1">
-                              {swapResults.map(product => (
-                                <div key={product.id}>
-                                  {product.variations.length === 0 ? (
+                        {!swapSelectedProduct ? (
+                          <>
+                            <Label className="text-xs font-semibold">Trocar por outro produto:</Label>
+                            <Input
+                              value={swapSearch}
+                              onChange={e => setSwapSearch(e.target.value)}
+                              className="h-8 text-sm"
+                              placeholder="Buscar produto por nome..."
+                              autoFocus
+                            />
+                            {swapLoading && <p className="text-xs text-muted-foreground">Buscando...</p>}
+                            {swapResults.length > 0 && (
+                              <ScrollArea className="max-h-48">
+                                <div className="space-y-1">
+                                  {swapResults.map(product => (
                                     <button
+                                      key={product.id}
                                       type="button"
                                       className="w-full text-left p-2 rounded hover:bg-accent text-sm flex items-center gap-2"
-                                      onClick={() => handleSwapProduct(idx, product)}
+                                      onClick={() => {
+                                        if (product.variations.length === 0) {
+                                          handleSwapProduct(idx, product);
+                                        } else {
+                                          setSwapSelectedProduct(product);
+                                        }
+                                      }}
                                     >
                                       {product.image_url && (
                                         <img src={product.image_url} alt="" className="w-8 h-8 rounded object-cover shrink-0" />
                                       )}
                                       <div className="flex-1 min-w-0">
                                         <p className="font-medium truncate">{product.name}</p>
-                                        <p className="text-xs text-muted-foreground">R$ {product.price.toFixed(2)}</p>
+                                        <p className="text-xs text-muted-foreground">
+                                          R$ {product.price.toFixed(2)}
+                                          {product.variations.length > 0 && ` • ${product.variations.length} variações`}
+                                        </p>
                                       </div>
                                     </button>
-                                  ) : (
-                                    <>
-                                      <p className="text-xs font-medium px-2 pt-1 text-muted-foreground">{product.name}</p>
-                                      {product.variations.map((v: any) => (
-                                        <button
-                                          key={v.id}
-                                          type="button"
-                                          className="w-full text-left p-2 pl-4 rounded hover:bg-accent text-sm flex items-center justify-between"
-                                          onClick={() => handleSwapProduct(idx, product, v)}
-                                        >
-                                          <span>{v.label}</span>
-                                          <span className="text-xs text-muted-foreground">
-                                            R$ {(v.price ?? product.price).toFixed(2)} • {v.stock} un.
-                                          </span>
-                                        </button>
-                                      ))}
-                                    </>
-                                  )}
+                                  ))}
                                 </div>
-                              ))}
+                              </ScrollArea>
+                            )}
+                            {swapSearch.length >= 2 && !swapLoading && swapResults.length === 0 && (
+                              <p className="text-xs text-muted-foreground">Nenhum produto encontrado.</p>
+                            )}
+                          </>
+                        ) : (
+                          <>
+                            <div className="flex items-center justify-between">
+                              <Label className="text-xs font-semibold">Escolha a variação de: {swapSelectedProduct.name}</Label>
+                              <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={() => setSwapSelectedProduct(null)}>
+                                ← Voltar
+                              </Button>
                             </div>
-                          </ScrollArea>
-                        )}
-                        {swapSearch.length >= 2 && !swapLoading && swapResults.length === 0 && (
-                          <p className="text-xs text-muted-foreground">Nenhum produto encontrado.</p>
+                            <ScrollArea className="max-h-48">
+                              <div className="space-y-1">
+                                {swapSelectedProduct.variations.map((v: any) => (
+                                  <button
+                                    key={v.id}
+                                    type="button"
+                                    className="w-full text-left p-2 rounded hover:bg-accent text-sm flex items-center justify-between"
+                                    onClick={() => handleSwapProduct(idx, swapSelectedProduct, v)}
+                                  >
+                                    <span className="font-medium">{v.label}</span>
+                                    <span className="text-xs text-muted-foreground">
+                                      R$ {(v.price ?? swapSelectedProduct.price).toFixed(2)} • {v.stock} un.
+                                    </span>
+                                  </button>
+                                ))}
+                              </div>
+                            </ScrollArea>
+                          </>
                         )}
                       </div>
                     )}
