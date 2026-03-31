@@ -51,6 +51,10 @@ const OrderEditModal = ({ open, onOpenChange, order, onSaved }: OrderEditModalPr
   const [customerEmail, setCustomerEmail] = useState('');
   const [customerDocument, setCustomerDocument] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
+  const [swapIdx, setSwapIdx] = useState<number | null>(null);
+  const [swapSearch, setSwapSearch] = useState('');
+  const [swapResults, setSwapResults] = useState<any[]>([]);
+  const [swapLoading, setSwapLoading] = useState(false);
 
   useEffect(() => {
     if (!order) return;
@@ -78,6 +82,60 @@ const OrderEditModal = ({ open, onOpenChange, order, onSaved }: OrderEditModalPr
     setCustomerDocument(meta.customer_document || '');
     setCustomerPhone(meta.customer_phone || '');
   }, [order]);
+
+  const searchProducts = useCallback(async (term: string) => {
+    if (term.trim().length < 2) { setSwapResults([]); return; }
+    setSwapLoading(true);
+    try {
+      const { data: products } = await supabase
+        .from('products')
+        .select('id, name, price, image_url, promotional_price, wholesale_price, exclusive_price')
+        .ilike('name', `%${term.trim()}%`)
+        .eq('is_active', true)
+        .limit(15);
+
+      if (!products || products.length === 0) { setSwapResults([]); return; }
+
+      const productIds = products.map(p => p.id);
+      const { data: variations } = await supabase
+        .from('product_variations')
+        .select('id, product_id, label, sku, price, stock')
+        .in('product_id', productIds)
+        .eq('is_active', true);
+
+      const results = products.map(p => ({
+        ...p,
+        variations: (variations || []).filter(v => v.product_id === p.id),
+      }));
+      setSwapResults(results);
+    } catch {
+      setSwapResults([]);
+    } finally {
+      setSwapLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (swapIdx === null) { setSwapSearch(''); setSwapResults([]); return; }
+    const timer = setTimeout(() => searchProducts(swapSearch), 300);
+    return () => clearTimeout(timer);
+  }, [swapSearch, swapIdx, searchProducts]);
+
+  const handleSwapProduct = (idx: number, product: any, variation?: any) => {
+    setItems(prev => prev.map((item, i) => {
+      if (i !== idx) return item;
+      return {
+        ...item,
+        name: product.name,
+        price: variation?.price ?? product.price,
+        variation: variation?.label || '',
+        sku: variation?.sku || '',
+        image_url: product.image_url || '',
+      };
+    }));
+    setSwapIdx(null);
+    toast.success('Produto alterado!');
+  };
 
   if (!order) return null;
 
