@@ -457,27 +457,31 @@ const OrderEditModal = ({ open, onOpenChange, order, onSaved }: OrderEditModalPr
                           <>
                             <div className="flex items-center justify-between">
                               <Label className="text-xs font-semibold">Escolha a variação de: {swapSelectedProduct.name}</Label>
-                              <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={() => setSwapSelectedProduct(null)}>
+                              <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={() => { setSwapSelectedProduct(null); setSwapVariations([]); }}>
                                 ← Voltar
                               </Button>
                             </div>
-                            <ScrollArea className="max-h-48">
-                              <div className="space-y-1">
-                                {swapSelectedProduct.variations.map((v: any) => (
-                                  <button
-                                    key={v.id}
-                                    type="button"
-                                    className="w-full text-left p-2 rounded hover:bg-accent text-sm flex items-center justify-between"
-                                    onClick={() => handleSwapProduct(idx, swapSelectedProduct, v)}
-                                  >
-                                    <span className="font-medium">{v.label}</span>
-                                    <span className="text-xs text-muted-foreground">
-                                      R$ {(v.price ?? swapSelectedProduct.price).toFixed(2)} • {v.stock} un.
-                                    </span>
-                                  </button>
-                                ))}
-                              </div>
-                            </ScrollArea>
+                            {swapVariationsLoading ? (
+                              <p className="text-xs text-muted-foreground">Carregando variações...</p>
+                            ) : (
+                              <ScrollArea className="max-h-48">
+                                <div className="space-y-1">
+                                  {swapVariations.map((v: any) => (
+                                    <button
+                                      key={v.id}
+                                      type="button"
+                                      className="w-full text-left p-2 rounded hover:bg-accent text-sm flex items-center justify-between"
+                                      onClick={() => handleSwapProduct(idx, swapSelectedProduct, v)}
+                                    >
+                                      <span className="font-medium">{v.label}</span>
+                                      <span className="text-xs text-muted-foreground">
+                                        R$ {(v.price ?? swapSelectedProduct.price).toFixed(2)} • {v.stock} un.
+                                      </span>
+                                    </button>
+                                  ))}
+                                </div>
+                              </ScrollArea>
+                            )}
                           </>
                         )}
                       </div>
