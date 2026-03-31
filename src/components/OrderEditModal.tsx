@@ -54,6 +54,8 @@ const OrderEditModal = ({ open, onOpenChange, order, onSaved }: OrderEditModalPr
   const [swapResults, setSwapResults] = useState<any[]>([]);
   const [swapLoading, setSwapLoading] = useState(false);
   const [swapSelectedProduct, setSwapSelectedProduct] = useState<any | null>(null);
+  const [swapVariations, setSwapVariations] = useState<any[]>([]);
+  const [swapVariationsLoading, setSwapVariationsLoading] = useState(false);
 
   useEffect(() => {
     if (!order) return;
