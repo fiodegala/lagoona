@@ -335,15 +335,87 @@ const OrderEditModal = ({ open, onOpenChange, order, onSaved }: OrderEditModalPr
                           </div>
                         </div>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-destructive hover:text-destructive shrink-0 mt-5"
-                        onClick={() => removeItem(idx)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <div className="flex flex-col gap-1 shrink-0 mt-5">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-8 w-8"
+                          title="Trocar produto"
+                          onClick={() => setSwapIdx(swapIdx === idx ? null : idx)}
+                        >
+                          <RefreshCw className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-destructive hover:text-destructive"
+                          onClick={() => removeItem(idx)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
+
+                    {/* Swap product panel */}
+                    {swapIdx === idx && (
+                      <div className="rounded-md border border-primary/30 bg-muted/30 p-3 space-y-2">
+                        <Label className="text-xs font-semibold">Trocar por outro produto:</Label>
+                        <Input
+                          value={swapSearch}
+                          onChange={e => setSwapSearch(e.target.value)}
+                          className="h-8 text-sm"
+                          placeholder="Buscar produto por nome..."
+                          autoFocus
+                        />
+                        {swapLoading && <p className="text-xs text-muted-foreground">Buscando...</p>}
+                        {swapResults.length > 0 && (
+                          <ScrollArea className="max-h-48">
+                            <div className="space-y-1">
+                              {swapResults.map(product => (
+                                <div key={product.id}>
+                                  {product.variations.length === 0 ? (
+                                    <button
+                                      type="button"
+                                      className="w-full text-left p-2 rounded hover:bg-accent text-sm flex items-center gap-2"
+                                      onClick={() => handleSwapProduct(idx, product)}
+                                    >
+                                      {product.image_url && (
+                                        <img src={product.image_url} alt="" className="w-8 h-8 rounded object-cover shrink-0" />
+                                      )}
+                                      <div className="flex-1 min-w-0">
+                                        <p className="font-medium truncate">{product.name}</p>
+                                        <p className="text-xs text-muted-foreground">R$ {product.price.toFixed(2)}</p>
+                                      </div>
+                                    </button>
+                                  ) : (
+                                    <>
+                                      <p className="text-xs font-medium px-2 pt-1 text-muted-foreground">{product.name}</p>
+                                      {product.variations.map((v: any) => (
+                                        <button
+                                          key={v.id}
+                                          type="button"
+                                          className="w-full text-left p-2 pl-4 rounded hover:bg-accent text-sm flex items-center justify-between"
+                                          onClick={() => handleSwapProduct(idx, product, v)}
+                                        >
+                                          <span>{v.label}</span>
+                                          <span className="text-xs text-muted-foreground">
+                                            R$ {(v.price ?? product.price).toFixed(2)} • {v.stock} un.
+                                          </span>
+                                        </button>
+                                      ))}
+                                    </>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </ScrollArea>
+                        )}
+                        {swapSearch.length >= 2 && !swapLoading && swapResults.length === 0 && (
+                          <p className="text-xs text-muted-foreground">Nenhum produto encontrado.</p>
+                        )}
+                      </div>
+                    )}
+
                     <p className="text-xs text-muted-foreground text-right">
                       Subtotal: R$ {(item.price * item.quantity).toFixed(2)}
                     </p>
