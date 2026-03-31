@@ -145,11 +145,55 @@ const OrderEditModal = ({ open, onOpenChange, order, onSaved }: OrderEditModalPr
   }, []);
 
   useEffect(() => {
-    if (swapIdx === null) { setSwapSearch(''); setSwapResults([]); setSwapSelectedProduct(null); return; }
-    if (swapSelectedProduct) return; // don't search while picking variation
+    if (swapIdx === null) { setSwapSearch(''); setSwapResults([]); setSwapSelectedProduct(null); setSwapVariations([]); return; }
+    if (swapSelectedProduct) return;
     const timer = setTimeout(() => searchProducts(swapSearch), 300);
     return () => clearTimeout(timer);
   }, [swapSearch, swapIdx, searchProducts, swapSelectedProduct]);
+
+  // Load ALL variations when a product is selected for swap
+  useEffect(() => {
+    if (!swapSelectedProduct?.id) { setSwapVariations([]); return; }
+    setSwapVariationsLoading(true);
+    (async () => {
+      const { data: variations } = await supabase
+        .from('product_variations')
+        .select('id, product_id, sku, price, stock')
+        .eq('product_id', swapSelectedProduct.id)
+        .eq('is_active', true)
+        .order('sort_order');
+
+      const varIds = (variations || []).map(v => v.id);
+      let labelsMap: Record<string, string> = {};
+      if (varIds.length > 0) {
+        const { data: vvData } = await supabase
+          .from('product_variation_values')
+          .select('variation_id, attribute_value_id')
+          .in('variation_id', varIds);
+        if (vvData && vvData.length > 0) {
+          const avIds = [...new Set(vvData.map(v => v.attribute_value_id))];
+          const { data: avData } = await supabase
+            .from('product_attribute_values')
+            .select('id, value')
+            .in('id', avIds);
+          const avMap = Object.fromEntries((avData || []).map(a => [a.id, a.value]));
+          for (const vv of vvData) {
+            const label = avMap[vv.attribute_value_id] || '';
+            if (label) {
+              labelsMap[vv.variation_id] = labelsMap[vv.variation_id]
+                ? `${labelsMap[vv.variation_id]} / ${label}` : label;
+            }
+          }
+        }
+      }
+
+      setSwapVariations((variations || []).map(v => ({
+        ...v,
+        label: labelsMap[v.id] || v.sku || v.id.slice(0, 8),
+      })));
+      setSwapVariationsLoading(false);
+    })();
+  }, [swapSelectedProduct?.id]);
 
   const handleSwapProduct = (idx: number, product: any, variation?: any) => {
     setItems(prev => prev.map((item, i) => {
