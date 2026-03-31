@@ -87,9 +87,10 @@ serve(async (req) => {
 
         const data = await response.json();
 
-        // Filter only available services (no errors)
+        // Filter only available services (no errors) and exclude LATAM Cargo (requires special unit config)
+        const excludedServices = [12]; // LATAM Cargo
         const available = (Array.isArray(data) ? data : []).filter(
-          (s: any) => !s.error && s.price
+          (s: any) => !s.error && s.price && !excludedServices.includes(s.id)
         ).map((s: any) => ({
           id: s.id,
           name: s.name,
