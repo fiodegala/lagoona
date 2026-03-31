@@ -53,6 +53,7 @@ const OrderEditModal = ({ open, onOpenChange, order, onSaved }: OrderEditModalPr
   const [swapSearch, setSwapSearch] = useState('');
   const [swapResults, setSwapResults] = useState<any[]>([]);
   const [swapLoading, setSwapLoading] = useState(false);
+  const [swapSelectedProduct, setSwapSelectedProduct] = useState<any | null>(null);
 
   useEffect(() => {
     if (!order) return;
