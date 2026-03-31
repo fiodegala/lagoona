@@ -97,10 +97,7 @@ const ShippingLabelModal = ({ open, onOpenChange, order }: ShippingLabelProps) =
     const content = labelRef.current;
     if (!content) return;
 
-    const printWindow = window.open('', '_blank', 'width=800,height=600');
-    if (!printWindow) return;
-
-    printWindow.document.write(`
+    const htmlContent = `
       <!DOCTYPE html>
       <html>
       <head>
@@ -115,15 +112,52 @@ const ShippingLabelModal = ({ open, onOpenChange, order }: ShippingLabelProps) =
             padding: 16px;
             page-break-inside: avoid;
           }
+          img { max-width: 100%; }
         </style>
       </head>
       <body>
         ${content.innerHTML}
-        <script>window.onload = function() { window.print(); window.close(); }<\/script>
       </body>
       </html>
-    `);
-    printWindow.document.close();
+    `;
+
+    // Use hidden iframe to avoid popup blockers
+    let iframe = document.getElementById('print-label-iframe') as HTMLIFrameElement;
+    if (iframe) iframe.remove();
+    
+    iframe = document.createElement('iframe');
+    iframe.id = 'print-label-iframe';
+    iframe.style.position = 'fixed';
+    iframe.style.top = '-10000px';
+    iframe.style.left = '-10000px';
+    iframe.style.width = '800px';
+    iframe.style.height = '600px';
+    document.body.appendChild(iframe);
+
+    const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+    if (!iframeDoc) return;
+
+    iframeDoc.open();
+    iframeDoc.write(htmlContent);
+    iframeDoc.close();
+
+    // Wait for images to load then print
+    const images = iframeDoc.querySelectorAll('img');
+    const imagePromises = Array.from(images).map(img => {
+      if (img.complete) return Promise.resolve();
+      return new Promise<void>((resolve) => {
+        img.onload = () => resolve();
+        img.onerror = () => resolve();
+      });
+    });
+
+    Promise.all(imagePromises).then(() => {
+      setTimeout(() => {
+        iframe.contentWindow?.focus();
+        iframe.contentWindow?.print();
+        setTimeout(() => iframe.remove(), 2000);
+      }, 300);
+    });
   };
 
   return (
