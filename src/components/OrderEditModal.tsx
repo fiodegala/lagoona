@@ -87,7 +87,7 @@ const OrderEditModal = ({ open, onOpenChange, order, onSaved }: OrderEditModalPr
     try {
       const { data: products } = await supabase
         .from('products')
-        .select('id, name, price, image_url, promotional_price, wholesale_price, exclusive_price')
+        .select('id, name, price, image_url')
         .ilike('name', `%${term.trim()}%`)
         .eq('is_active', true)
         .limit(15);
@@ -97,13 +97,41 @@ const OrderEditModal = ({ open, onOpenChange, order, onSaved }: OrderEditModalPr
       const productIds = products.map(p => p.id);
       const { data: variations } = await supabase
         .from('product_variations')
-        .select('id, product_id, label, sku, price, stock')
+        .select('id, product_id, sku, price, stock')
         .in('product_id', productIds)
         .eq('is_active', true);
 
+      // Get variation labels from attribute values
+      const variationIds = (variations || []).map(v => v.id);
+      let labelsMap: Record<string, string> = {};
+      if (variationIds.length > 0) {
+        const { data: vvData } = await supabase
+          .from('product_variation_values')
+          .select('variation_id, attribute_value_id')
+          .in('variation_id', variationIds);
+        if (vvData && vvData.length > 0) {
+          const avIds = [...new Set(vvData.map(v => v.attribute_value_id))];
+          const { data: avData } = await supabase
+            .from('product_attribute_values')
+            .select('id, value')
+            .in('id', avIds);
+          const avMap = Object.fromEntries((avData || []).map(a => [a.id, a.value]));
+          for (const vv of vvData) {
+            const label = avMap[vv.attribute_value_id] || '';
+            if (label) {
+              labelsMap[vv.variation_id] = labelsMap[vv.variation_id]
+                ? `${labelsMap[vv.variation_id]} / ${label}` : label;
+            }
+          }
+        }
+      }
+
       const results = products.map(p => ({
         ...p,
-        variations: (variations || []).filter(v => v.product_id === p.id),
+        variations: (variations || []).filter(v => v.product_id === p.id).map(v => ({
+          ...v,
+          label: labelsMap[v.id] || v.sku || v.id.slice(0, 8),
+        })),
       }));
       setSwapResults(results);
     } catch {
