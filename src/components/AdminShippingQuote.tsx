@@ -199,7 +199,7 @@ const AdminShippingQuote = ({
 
       if (error) {
         console.error('Generate label error:', error);
-        toast.error('Erro ao gerar etiqueta');
+        toast.error('Erro ao gerar etiqueta. Verifique os dados do pedido.');
         return;
       }
 
@@ -207,13 +207,14 @@ const AdminShippingQuote = ({
         setLabelUrl(data.label_url);
         toast.success('Etiqueta gerada com sucesso!');
       } else if (data?.error) {
-        toast.error(data.error);
+        console.error('Label error from API:', data.error);
+        toast.error(`Erro: ${data.error}`);
       } else {
         toast.error('Resposta inesperada ao gerar etiqueta');
       }
     } catch (err) {
       console.error('Label generation error:', err);
-      toast.error('Erro ao gerar etiqueta');
+      toast.error('Erro ao gerar etiqueta. Tente outro serviço de envio.');
     } finally {
       setIsGenerating(false);
     }

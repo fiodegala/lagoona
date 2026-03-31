@@ -183,10 +183,10 @@ serve(async (req) => {
         const cartData = await cartResponse.json();
         console.log("Cart response:", JSON.stringify(cartData));
 
-        if (!cartResponse.ok) {
-          const errorMsg = cartData?.message || cartData?.errors
-            ? JSON.stringify(cartData.errors || cartData.message)
-            : "Failed to add to cart";
+        if (!cartResponse.ok || cartData?.error) {
+          const errorMsg = cartData?.error || cartData?.message || 
+            (cartData?.errors ? JSON.stringify(cartData.errors) : "Failed to add to cart");
+          console.error("Cart error details:", errorMsg);
           return jsonError(errorMsg, 502);
         }
 
