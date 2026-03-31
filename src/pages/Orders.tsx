@@ -279,6 +279,24 @@ const Orders = () => {
     if (!deleteConfirm) return;
     try {
       const idsToDelete = deleteConfirm.type === 'single' ? [deleteConfirm.id!] : selectedIds;
+
+      // Log audit before deletion (capture order details)
+      const deletedOrders = orders.filter(o => idsToDelete.includes(o.id));
+      for (const order of deletedOrders) {
+        await auditService.log({
+          action: 'delete',
+          entity_type: 'order',
+          entity_id: order.id,
+          details: {
+            customer_name: order.customer_name,
+            customer_email: order.customer_email,
+            total: order.total,
+            status: order.status,
+            payment_status: order.payment_status,
+          },
+        });
+      }
+
       const { error } = await supabase
         .from('orders')
         .delete()
