@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { auditService } from '@/services/auditService';
 import AdminLayout from '@/components/AdminLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -279,6 +280,24 @@ const Orders = () => {
     if (!deleteConfirm) return;
     try {
       const idsToDelete = deleteConfirm.type === 'single' ? [deleteConfirm.id!] : selectedIds;
+
+      // Log audit before deletion (capture order details)
+      const deletedOrders = orders.filter(o => idsToDelete.includes(o.id));
+      for (const order of deletedOrders) {
+        await auditService.log({
+          action: 'delete',
+          entity_type: 'order',
+          entity_id: order.id,
+          details: {
+            customer_name: order.customer_name,
+            customer_email: order.customer_email,
+            total: order.total,
+            status: order.status,
+            payment_status: order.payment_status,
+          },
+        });
+      }
+
       const { error } = await supabase
         .from('orders')
         .delete()
