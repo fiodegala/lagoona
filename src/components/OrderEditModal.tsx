@@ -54,6 +54,8 @@ const OrderEditModal = ({ open, onOpenChange, order, onSaved }: OrderEditModalPr
   const [swapResults, setSwapResults] = useState<any[]>([]);
   const [swapLoading, setSwapLoading] = useState(false);
   const [swapSelectedProduct, setSwapSelectedProduct] = useState<any | null>(null);
+  const [swapVariations, setSwapVariations] = useState<any[]>([]);
+  const [swapVariationsLoading, setSwapVariationsLoading] = useState(false);
 
   useEffect(() => {
     if (!order) return;
@@ -143,11 +145,55 @@ const OrderEditModal = ({ open, onOpenChange, order, onSaved }: OrderEditModalPr
   }, []);
 
   useEffect(() => {
-    if (swapIdx === null) { setSwapSearch(''); setSwapResults([]); setSwapSelectedProduct(null); return; }
-    if (swapSelectedProduct) return; // don't search while picking variation
+    if (swapIdx === null) { setSwapSearch(''); setSwapResults([]); setSwapSelectedProduct(null); setSwapVariations([]); return; }
+    if (swapSelectedProduct) return;
     const timer = setTimeout(() => searchProducts(swapSearch), 300);
     return () => clearTimeout(timer);
   }, [swapSearch, swapIdx, searchProducts, swapSelectedProduct]);
+
+  // Load ALL variations when a product is selected for swap
+  useEffect(() => {
+    if (!swapSelectedProduct?.id) { setSwapVariations([]); return; }
+    setSwapVariationsLoading(true);
+    (async () => {
+      const { data: variations } = await supabase
+        .from('product_variations')
+        .select('id, product_id, sku, price, stock')
+        .eq('product_id', swapSelectedProduct.id)
+        .eq('is_active', true)
+        .order('sort_order');
+
+      const varIds = (variations || []).map(v => v.id);
+      let labelsMap: Record<string, string> = {};
+      if (varIds.length > 0) {
+        const { data: vvData } = await supabase
+          .from('product_variation_values')
+          .select('variation_id, attribute_value_id')
+          .in('variation_id', varIds);
+        if (vvData && vvData.length > 0) {
+          const avIds = [...new Set(vvData.map(v => v.attribute_value_id))];
+          const { data: avData } = await supabase
+            .from('product_attribute_values')
+            .select('id, value')
+            .in('id', avIds);
+          const avMap = Object.fromEntries((avData || []).map(a => [a.id, a.value]));
+          for (const vv of vvData) {
+            const label = avMap[vv.attribute_value_id] || '';
+            if (label) {
+              labelsMap[vv.variation_id] = labelsMap[vv.variation_id]
+                ? `${labelsMap[vv.variation_id]} / ${label}` : label;
+            }
+          }
+        }
+      }
+
+      setSwapVariations((variations || []).map(v => ({
+        ...v,
+        label: labelsMap[v.id] || v.sku || v.id.slice(0, 8),
+      })));
+      setSwapVariationsLoading(false);
+    })();
+  }, [swapSelectedProduct?.id]);
 
   const handleSwapProduct = (idx: number, product: any, variation?: any) => {
     setItems(prev => prev.map((item, i) => {
@@ -411,27 +457,31 @@ const OrderEditModal = ({ open, onOpenChange, order, onSaved }: OrderEditModalPr
                           <>
                             <div className="flex items-center justify-between">
                               <Label className="text-xs font-semibold">Escolha a variação de: {swapSelectedProduct.name}</Label>
-                              <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={() => setSwapSelectedProduct(null)}>
+                              <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={() => { setSwapSelectedProduct(null); setSwapVariations([]); }}>
                                 ← Voltar
                               </Button>
                             </div>
-                            <ScrollArea className="max-h-48">
-                              <div className="space-y-1">
-                                {swapSelectedProduct.variations.map((v: any) => (
-                                  <button
-                                    key={v.id}
-                                    type="button"
-                                    className="w-full text-left p-2 rounded hover:bg-accent text-sm flex items-center justify-between"
-                                    onClick={() => handleSwapProduct(idx, swapSelectedProduct, v)}
-                                  >
-                                    <span className="font-medium">{v.label}</span>
-                                    <span className="text-xs text-muted-foreground">
-                                      R$ {(v.price ?? swapSelectedProduct.price).toFixed(2)} • {v.stock} un.
-                                    </span>
-                                  </button>
-                                ))}
-                              </div>
-                            </ScrollArea>
+                            {swapVariationsLoading ? (
+                              <p className="text-xs text-muted-foreground">Carregando variações...</p>
+                            ) : (
+                              <ScrollArea className="max-h-48">
+                                <div className="space-y-1">
+                                  {swapVariations.map((v: any) => (
+                                    <button
+                                      key={v.id}
+                                      type="button"
+                                      className="w-full text-left p-2 rounded hover:bg-accent text-sm flex items-center justify-between"
+                                      onClick={() => handleSwapProduct(idx, swapSelectedProduct, v)}
+                                    >
+                                      <span className="font-medium">{v.label}</span>
+                                      <span className="text-xs text-muted-foreground">
+                                        R$ {(v.price ?? swapSelectedProduct.price).toFixed(2)} • {v.stock} un.
+                                      </span>
+                                    </button>
+                                  ))}
+                                </div>
+                              </ScrollArea>
+                            )}
                           </>
                         )}
                       </div>
