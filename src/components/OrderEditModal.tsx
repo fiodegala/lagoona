@@ -143,10 +143,11 @@ const OrderEditModal = ({ open, onOpenChange, order, onSaved }: OrderEditModalPr
   }, []);
 
   useEffect(() => {
-    if (swapIdx === null) { setSwapSearch(''); setSwapResults([]); return; }
+    if (swapIdx === null) { setSwapSearch(''); setSwapResults([]); setSwapSelectedProduct(null); return; }
+    if (swapSelectedProduct) return; // don't search while picking variation
     const timer = setTimeout(() => searchProducts(swapSearch), 300);
     return () => clearTimeout(timer);
-  }, [swapSearch, swapIdx, searchProducts]);
+  }, [swapSearch, swapIdx, searchProducts, swapSelectedProduct]);
 
   const handleSwapProduct = (idx: number, product: any, variation?: any) => {
     setItems(prev => prev.map((item, i) => {
