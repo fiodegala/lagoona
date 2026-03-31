@@ -480,7 +480,7 @@ const OrderEditModal = ({ open, onOpenChange, order, onSaved }: OrderEditModalPr
                                     </button>
                                   ))}
                                 </div>
-                              </ScrollArea>
+                              </div>
                             )}
                           </>
                         )}
