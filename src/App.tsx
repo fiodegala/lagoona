@@ -48,6 +48,7 @@ const ProductPricing = lazy(() => import("./pages/ProductPricing"));
 const ServiceOrders = lazy(() => import("./pages/ServiceOrders"));
 const AdminAnnouncements = lazy(() => import("./pages/AdminAnnouncements"));
 const OlistIntegration = lazy(() => import("./pages/OlistIntegration"));
+const DatabaseExport = lazy(() => import("./pages/DatabaseExport"));
 
 // Lazy-loaded Store Pages
 const HomePage = lazy(() => import("./pages/store/HomePage"));
@@ -409,6 +410,14 @@ const App = () => (
                 element={
                   <ProtectedRoute requiredRole="admin">
                     <OlistIntegration />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/database-export"
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <DatabaseExport />
                   </ProtectedRoute>
                 }
               />
