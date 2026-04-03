@@ -44,6 +44,7 @@ export const navItems: MenuItem[] = [
   { icon: DollarSign, label: 'Valores de Produtos', path: '/admin/valores-produtos', menuKey: 'product-pricing' },
   { icon: FolderTree, label: 'Categorias', path: '/admin/categories', menuKey: 'categories', requireAdmin: true },
   { icon: Warehouse, label: 'Estoque', path: '/admin/stock', menuKey: 'stock' },
+  { icon: BarChart3, label: 'Distribuição Estoque', path: '/admin/distribuicao-estoque', menuKey: 'stock-distribution' },
   { icon: UserPlus, label: 'Clientes', path: '/admin/customers', menuKey: 'customers' },
   { icon: ShoppingCart, label: 'Pedidos', path: '/admin/orders', menuKey: 'orders' },
   { icon: Receipt, label: 'Vendas', path: '/admin/sales', menuKey: 'sales' },
