@@ -27,6 +27,7 @@ import {
   ClipboardList,
   Megaphone,
   Zap,
+  TrendingUp,
 } from 'lucide-react';
 
 export interface MenuItem {
@@ -45,6 +46,7 @@ export const navItems: MenuItem[] = [
   { icon: FolderTree, label: 'Categorias', path: '/admin/categories', menuKey: 'categories', requireAdmin: true },
   { icon: Warehouse, label: 'Estoque', path: '/admin/stock', menuKey: 'stock' },
   { icon: BarChart3, label: 'Distribuição Estoque', path: '/admin/distribuicao-estoque', menuKey: 'stock-distribution' },
+  { icon: TrendingUp, label: 'Curva ABC', path: '/admin/curva-abc', menuKey: 'abc-curve', requireAdmin: true },
   { icon: UserPlus, label: 'Clientes', path: '/admin/customers', menuKey: 'customers' },
   { icon: ShoppingCart, label: 'Pedidos', path: '/admin/orders', menuKey: 'orders' },
   { icon: Receipt, label: 'Vendas', path: '/admin/sales', menuKey: 'sales' },
