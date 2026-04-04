@@ -21,6 +21,7 @@ const FeaturedProductSection = ({ product }: FeaturedProductSectionProps) => {
   const [selectedVariation, setSelectedVariation] = useState<ProductVariation | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [currentImage, setCurrentImage] = useState(product.image_url);
+  const [hasVariations, setHasVariations] = useState(false);
   const { addItem } = useCart();
 
   const handleVariationSelect = useCallback((variation: ProductVariation | null) => {
@@ -41,6 +42,10 @@ const FeaturedProductSection = ({ product }: FeaturedProductSectionProps) => {
   const isOutOfStock = currentStock <= 0;
 
   const handleAddToCart = () => {
+    if (hasVariations && !selectedVariation) {
+      toast.error('Selecione todas as opções do produto (cor, tamanho, etc.)');
+      return;
+    }
     if (isOutOfStock) {
       toast.error('Produto fora de estoque');
       return;
@@ -129,6 +134,7 @@ const FeaturedProductSection = ({ product }: FeaturedProductSectionProps) => {
             <ProductVariationSelector
               productId={product.id}
               onVariationSelect={handleVariationSelect}
+              onHasVariations={setHasVariations}
             />
 
             {/* Quantity + Add to Cart */}
@@ -157,11 +163,11 @@ const FeaturedProductSection = ({ product }: FeaturedProductSectionProps) => {
 
               <Button
                 onClick={handleAddToCart}
-                disabled={isOutOfStock}
+                disabled={isOutOfStock || (hasVariations && !selectedVariation)}
                 className="flex-1 gap-2 bg-store-gold text-store-dark hover:bg-store-gold/90 font-semibold h-11"
               >
                 <ShoppingCart className="h-4 w-4" />
-                {isOutOfStock ? 'Esgotado' : 'Compra Rápida'}
+                {isOutOfStock ? 'Esgotado' : (hasVariations && !selectedVariation) ? 'Selecione as Opções' : 'Compra Rápida'}
               </Button>
             </div>
 

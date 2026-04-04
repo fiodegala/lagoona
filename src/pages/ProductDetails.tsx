@@ -164,6 +164,11 @@ const ProductDetails = () => {
   const handleAddToCart = () => {
     if (!product) return;
     
+    if (productHasVariations && !selectedVariation) {
+      toast.error('Selecione todas as opções do produto (cor, tamanho, etc.)');
+      return;
+    }
+    
     if (isOutOfStock) {
       toast.error('Produto fora de estoque');
       return;
@@ -644,10 +649,10 @@ const ProductDetails = () => {
                 size="lg"
                 className="flex-1 gap-2 bg-store-primary text-store-accent hover:bg-store-primary/90 font-semibold"
                 onClick={upsellHasSelection && upsellBuyTogether ? upsellBuyTogether : handleAddToCart}
-                disabled={isOutOfStock}
+                disabled={isOutOfStock || (productHasVariations && !selectedVariation)}
               >
                 <ShoppingCart className="h-5 w-5" />
-                {isOutOfStock ? 'Produto Indisponível' : upsellHasSelection ? 'Comprar Junto' : 'Adicionar ao Carrinho'}
+                {isOutOfStock ? 'Produto Indisponível' : (productHasVariations && !selectedVariation) ? 'Selecione as Opções' : upsellHasSelection ? 'Comprar Junto' : 'Adicionar ao Carrinho'}
               </Button>
               <Button
                 variant="outline"
@@ -833,10 +838,10 @@ const ProductDetails = () => {
           size="lg"
           className="gap-2 bg-store-primary text-store-accent hover:bg-store-primary/90 font-semibold shrink-0"
           onClick={upsellHasSelection && upsellBuyTogether ? upsellBuyTogether : handleAddToCart}
-          disabled={isOutOfStock}
+          disabled={isOutOfStock || (productHasVariations && !selectedVariation)}
         >
           <ShoppingCart className="h-5 w-5" />
-          {isOutOfStock ? 'Esgotado' : 'Comprar'}
+          {isOutOfStock ? 'Esgotado' : (productHasVariations && !selectedVariation) ? 'Selecione' : 'Comprar'}
         </Button>
       </div>
     </StoreLayout>
