@@ -1,5 +1,10 @@
 // Service Worker for Push Notifications and PWA
 
+const clearLegacyCaches = async () => {
+  const cacheKeys = await caches.keys();
+  await Promise.all(cacheKeys.map((cacheKey) => caches.delete(cacheKey)));
+};
+
 self.addEventListener('push', (event) => {
   let data = { title: 'Fio de Gala', message: 'Nova notificação', type: '', entityId: '' };
 
@@ -62,5 +67,10 @@ self.addEventListener('install', () => {
 });
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(self.clients.claim());
+  event.waitUntil(
+    Promise.all([
+      self.clients.claim(),
+      clearLegacyCaches(),
+    ])
+  );
 });

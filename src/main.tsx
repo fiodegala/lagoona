@@ -8,10 +8,37 @@ import { initMetaPixel, trackMetaPageView } from "@/lib/metaPixel";
 initMetaPixel();
 trackMetaPageView();
 
-// Register custom service worker for push notifications
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js').catch((err) => {
-    console.warn('SW registration failed:', err);
+const isInIframe = (() => {
+  try {
+    return window.self !== window.top;
+  } catch {
+    return true;
+  }
+})();
+
+const isPreviewHost =
+  window.location.hostname.includes("id-preview--") ||
+  window.location.hostname.includes("lovableproject.com");
+
+// Register only the notification service worker and avoid preview cache pollution
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", async () => {
+    try {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+
+      if (isPreviewHost || isInIframe) {
+        await Promise.all(registrations.map((registration) => registration.unregister()));
+        return;
+      }
+
+      const registration = await navigator.serviceWorker.register("/sw.js", {
+        updateViaCache: "none",
+      });
+
+      await registration.update();
+    } catch (err) {
+      console.warn("SW registration failed:", err);
+    }
   });
 }
 
