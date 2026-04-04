@@ -6,11 +6,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-// Priority order for stock deduction: Hyper Modas 44 first, then Bernardo Sayão
-const STORE_PRIORITY = [
-  '351fbca7-44d9-42eb-8a77-76fa9fc3227c', // Hyper Modas 44
-  'ad756bb1-e8ff-43a7-ac5c-c600ba7bd0e3', // Bernardo Sayão
-];
+// Stock utilities imported from _shared/stockUtils.ts
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
