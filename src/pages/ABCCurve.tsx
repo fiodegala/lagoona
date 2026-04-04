@@ -8,9 +8,9 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { BarChart, Bar, Line, XAxis, YAxis, CartesianGrid, ComposedChart, ResponsiveContainer } from 'recharts';
-import { TrendingUp, Package, DollarSign, Search, Loader2, BarChart3 } from 'lucide-react';
-import { format, subDays, startOfMonth } from 'date-fns';
+import { Bar, Line, XAxis, YAxis, CartesianGrid, ComposedChart } from 'recharts';
+import { TrendingUp, Search, Loader2, BarChart3 } from 'lucide-react';
+import { subDays, startOfMonth } from 'date-fns';
 
 type PeriodFilter = '7d' | '30d' | '90d' | 'month' | 'all';
 
