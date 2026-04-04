@@ -106,7 +106,7 @@ const ProductCard = memo(forwardRef<HTMLAnchorElement, ProductCardProps>(({ prod
       id: product.id,
       productId: product.id,
       name: product.name,
-      price: product.price,
+      price: displayPrice,
       imageUrl: product.image_url || undefined,
       stock: product.stock,
     });

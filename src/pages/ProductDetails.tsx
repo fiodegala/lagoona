@@ -180,7 +180,9 @@ const ProductDetails = () => {
     addItem({
       id: selectedVariation?.id || product.id,
       productId: product.id,
-      name: variationLabel ? `${product.name} - ${variationLabel}` : product.name,
+      variationId: selectedVariation?.id,
+      name: product.name,
+      variationLabel: variationLabel || undefined,
       price: currentPrice,
       originalPrice: hasRealDiscount ? basePrice : undefined,
       isPromotional: hasRealDiscount || undefined,
