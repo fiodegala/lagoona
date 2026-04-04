@@ -838,10 +838,10 @@ const ProductDetails = () => {
           size="lg"
           className="gap-2 bg-store-primary text-store-accent hover:bg-store-primary/90 font-semibold shrink-0"
           onClick={upsellHasSelection && upsellBuyTogether ? upsellBuyTogether : handleAddToCart}
-          disabled={isOutOfStock}
+          disabled={isOutOfStock || (productHasVariations && !selectedVariation)}
         >
           <ShoppingCart className="h-5 w-5" />
-          {isOutOfStock ? 'Esgotado' : 'Comprar'}
+          {isOutOfStock ? 'Esgotado' : (productHasVariations && !selectedVariation) ? 'Selecione' : 'Comprar'}
         </Button>
       </div>
     </StoreLayout>
