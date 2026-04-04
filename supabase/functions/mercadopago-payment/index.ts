@@ -312,8 +312,6 @@ async function getPayment(paymentId: string | number, accessToken: string) {
   );
 }
 
-// Import shared stock utilities
-import { deductStockForOrder, restoreStockForOrder } from "../_shared/stockUtils.ts";
 
 async function recoverAbandonedCart(supabase: any, orderId: string) {
   try {
