@@ -42,6 +42,10 @@ const FeaturedProductSection = ({ product }: FeaturedProductSectionProps) => {
   const isOutOfStock = currentStock <= 0;
 
   const handleAddToCart = () => {
+    if (hasVariations && !selectedVariation) {
+      toast.error('Selecione todas as opções do produto (cor, tamanho, etc.)');
+      return;
+    }
     if (isOutOfStock) {
       toast.error('Produto fora de estoque');
       return;
