@@ -134,6 +134,7 @@ const FeaturedProductSection = ({ product }: FeaturedProductSectionProps) => {
             <ProductVariationSelector
               productId={product.id}
               onVariationSelect={handleVariationSelect}
+              onHasVariations={setHasVariations}
             />
 
             {/* Quantity + Add to Cart */}
