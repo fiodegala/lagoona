@@ -21,6 +21,7 @@ const FeaturedProductSection = ({ product }: FeaturedProductSectionProps) => {
   const [selectedVariation, setSelectedVariation] = useState<ProductVariation | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [currentImage, setCurrentImage] = useState(product.image_url);
+  const [hasVariations, setHasVariations] = useState(false);
   const { addItem } = useCart();
 
   const handleVariationSelect = useCallback((variation: ProductVariation | null) => {
