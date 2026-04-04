@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Bar, Line, XAxis, YAxis, CartesianGrid, ComposedChart } from 'recharts';
 import { TrendingUp, Search, Loader2, BarChart3 } from 'lucide-react';
+import ABCAnalysisReport from '@/components/abc/ABCAnalysisReport';
 import { subDays, startOfMonth } from 'date-fns';
 
 type PeriodFilter = '7d' | '30d' | '90d' | 'month' | 'all';
@@ -307,6 +308,9 @@ const ABCCurve = () => {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Análise e Recomendações */}
+            <ABCAnalysisReport abcData={abcData} />
           </>
         )}
       </div>
