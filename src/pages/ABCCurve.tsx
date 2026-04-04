@@ -308,6 +308,9 @@ const ABCCurve = () => {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Análise e Recomendações */}
+            <ABCAnalysisReport abcData={abcData} />
           </>
         )}
       </div>
