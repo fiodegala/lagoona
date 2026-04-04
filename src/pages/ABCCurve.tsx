@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Bar, Line, XAxis, YAxis, CartesianGrid, ComposedChart } from 'recharts';
-import { TrendingUp, Search, Loader2, BarChart3, Target } from 'lucide-react';
+import { TrendingUp, Search, Loader2, BarChart3 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ABCAnalysisReport from '@/components/abc/ABCAnalysisReport';
 import ProductClassificationTab from '@/components/abc/ProductClassificationTab';

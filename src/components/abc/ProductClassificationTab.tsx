@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { AlertTriangle, Star, ShieldCheck, DoorOpen, Ban, TrendingUp, TrendingDown } from 'lucide-react';
+import { AlertTriangle, Star, ShieldCheck, DoorOpen, Ban } from 'lucide-react';
 
 interface ABCItem {
   productName: string;
