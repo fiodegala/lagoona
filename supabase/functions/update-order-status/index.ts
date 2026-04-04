@@ -1,15 +1,12 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { deductStockForOrder, restoreStockForOrder } from "../_shared/stockUtils.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-// Priority order for stock deduction: Hyper Modas 44 first, then Bernardo Sayão
-const STORE_PRIORITY = [
-  '351fbca7-44d9-42eb-8a77-76fa9fc3227c', // Hyper Modas 44
-  'ad756bb1-e8ff-43a7-ac5c-c600ba7bd0e3', // Bernardo Sayão
-];
+// Stock utilities imported from _shared/stockUtils.ts
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -135,103 +132,4 @@ Deno.serve(async (req) => {
   }
 });
 
-async function restoreStockForOrder(supabase: any, orderId: string, items: any[]) {
-  try {
-    if (!items || !Array.isArray(items)) {
-      console.error(`No items to restore for order ${orderId}`);
-      return;
-    }
-
-    for (const item of items) {
-      const productId = item.product_id;
-      const variationId = item.variation_id || null;
-      const quantity = item.quantity || 1;
-
-      if (!productId) continue;
-
-      // Restore to the first store that has a stock record for this product/variation
-      for (const storeId of STORE_PRIORITY) {
-        let query = supabase
-          .from('store_stock')
-          .select('id, quantity')
-          .eq('store_id', storeId)
-          .eq('product_id', productId);
-
-        if (variationId) {
-          query = query.eq('variation_id', variationId);
-        } else {
-          query = query.is('variation_id', null);
-        }
-
-        const { data: stockRow } = await query.single();
-
-        if (stockRow) {
-          const newQty = stockRow.quantity + quantity;
-          await supabase
-            .from('store_stock')
-            .update({ quantity: newQty, updated_at: new Date().toISOString() })
-            .eq('id', stockRow.id);
-
-          console.log(`Stock restored: product=${productId}, variation=${variationId}, store=${storeId}, qty=+${quantity}, new_total=${newQty}`);
-          break; // Restore to first available store only
-        }
-      }
-    }
-
-    console.log(`Stock restoration completed for order ${orderId}`);
-  } catch (err) {
-    console.error(`Error restoring stock for order ${orderId}:`, err);
-  }
-}
-
-async function deductStockForOrder(supabase: any, orderId: string, items: any[]) {
-  try {
-    if (!items || !Array.isArray(items)) {
-      console.error(`No items to deduct for order ${orderId}`);
-      return;
-    }
-
-    for (const item of items) {
-      const productId = item.product_id;
-      const variationId = item.variation_id || null;
-      let remainingQty = item.quantity || 1;
-
-      if (!productId) continue;
-
-      for (const storeId of STORE_PRIORITY) {
-        if (remainingQty <= 0) break;
-
-        let query = supabase
-          .from('store_stock')
-          .select('id, quantity')
-          .eq('store_id', storeId)
-          .eq('product_id', productId);
-
-        if (variationId) {
-          query = query.eq('variation_id', variationId);
-        } else {
-          query = query.is('variation_id', null);
-        }
-
-        const { data: stockRow } = await query.single();
-
-        if (!stockRow || stockRow.quantity <= 0) continue;
-
-        const deduct = Math.min(remainingQty, stockRow.quantity);
-        const newQty = stockRow.quantity - deduct;
-
-        await supabase
-          .from('store_stock')
-          .update({ quantity: newQty, updated_at: new Date().toISOString() })
-          .eq('id', stockRow.id);
-
-        remainingQty -= deduct;
-        console.log(`Stock deducted: product=${productId}, variation=${variationId}, store=${storeId}, qty=-${deduct}, remaining=${newQty}`);
-      }
-    }
-
-    console.log(`Stock deduction completed for order ${orderId}`);
-  } catch (err) {
-    console.error(`Error deducting stock for order ${orderId}:`, err);
-  }
-}
+// Stock functions are imported from _shared/stockUtils.ts
