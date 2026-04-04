@@ -183,137 +183,150 @@ const ABCCurve = () => {
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : (
-          <>
-            {/* KPI Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-              <Card>
-                <CardContent className="pt-4 pb-4">
-                  <div className="text-xs text-muted-foreground">Faturamento Total</div>
-                  <div className="text-lg font-bold text-foreground">
-                    {stats.totalRevenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="pt-4 pb-4">
-                  <div className="text-xs text-muted-foreground">Ticket Médio</div>
-                  <div className="text-lg font-bold text-foreground">
-                    {stats.ticketMedio.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                  </div>
-                </CardContent>
-              </Card>
-              <Card className="border-green-500/30">
-                <CardContent className="pt-4 pb-4">
-                  <div className="text-xs text-green-600 font-medium">Classe A (80%)</div>
-                  <div className="text-lg font-bold text-foreground">{stats.countA} SKUs</div>
-                </CardContent>
-              </Card>
-              <Card className="border-yellow-500/30">
-                <CardContent className="pt-4 pb-4">
-                  <div className="text-xs text-yellow-600 font-medium">Classe B (15%)</div>
-                  <div className="text-lg font-bold text-foreground">{stats.countB} SKUs</div>
-                </CardContent>
-              </Card>
-              <Card className="border-red-500/30">
-                <CardContent className="pt-4 pb-4">
-                  <div className="text-xs text-red-600 font-medium">Classe C (5%)</div>
-                  <div className="text-lg font-bold text-foreground">{stats.countC} SKUs</div>
-                </CardContent>
-              </Card>
-            </div>
+          <Tabs defaultValue="abc" className="w-full">
+            <TabsList className="mb-4">
+              <TabsTrigger value="abc">📊 Curva ABC</TabsTrigger>
+              <TabsTrigger value="classification">🎯 Classificação Estratégica</TabsTrigger>
+            </TabsList>
 
-            {/* Pareto Chart */}
-            {chartData.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <BarChart3 className="h-4 w-4" />
-                    Gráfico de Pareto — Top 20 Produtos
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ChartContainer config={chartConfig} className="h-[350px] w-full">
-                    <ComposedChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 60 }}>
-                      <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
-                      <XAxis dataKey="name" angle={-45} textAnchor="end" fontSize={11} className="fill-muted-foreground" interval={0} />
-                      <YAxis yAxisId="left" tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} fontSize={11} className="fill-muted-foreground" />
-                      <YAxis yAxisId="right" orientation="right" tickFormatter={(v) => `${v}%`} domain={[0, 100]} fontSize={11} className="fill-muted-foreground" />
-                      <ChartTooltip
-                        content={
-                          <ChartTooltipContent
-                            formatter={(value, name) => {
-                              if (name === 'revenue') return [`R$ ${Number(value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 'Faturamento'];
-                              return [`${Number(value).toFixed(1)}%`, '% Acumulado'];
-                            }}
+            <TabsContent value="abc">
+              <div className="space-y-6">
+                {/* KPI Cards */}
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                  <Card>
+                    <CardContent className="pt-4 pb-4">
+                      <div className="text-xs text-muted-foreground">Faturamento Total</div>
+                      <div className="text-lg font-bold text-foreground">
+                        {stats.totalRevenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="pt-4 pb-4">
+                      <div className="text-xs text-muted-foreground">Ticket Médio</div>
+                      <div className="text-lg font-bold text-foreground">
+                        {stats.ticketMedio.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card className="border-green-500/30">
+                    <CardContent className="pt-4 pb-4">
+                      <div className="text-xs text-green-600 font-medium">Classe A (80%)</div>
+                      <div className="text-lg font-bold text-foreground">{stats.countA} SKUs</div>
+                    </CardContent>
+                  </Card>
+                  <Card className="border-yellow-500/30">
+                    <CardContent className="pt-4 pb-4">
+                      <div className="text-xs text-yellow-600 font-medium">Classe B (15%)</div>
+                      <div className="text-lg font-bold text-foreground">{stats.countB} SKUs</div>
+                    </CardContent>
+                  </Card>
+                  <Card className="border-red-500/30">
+                    <CardContent className="pt-4 pb-4">
+                      <div className="text-xs text-red-600 font-medium">Classe C (5%)</div>
+                      <div className="text-lg font-bold text-foreground">{stats.countC} SKUs</div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Pareto Chart */}
+                {chartData.length > 0 && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <BarChart3 className="h-4 w-4" />
+                        Gráfico de Pareto — Top 20 Produtos
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ChartContainer config={chartConfig} className="h-[350px] w-full">
+                        <ComposedChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 60 }}>
+                          <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
+                          <XAxis dataKey="name" angle={-45} textAnchor="end" fontSize={11} className="fill-muted-foreground" interval={0} />
+                          <YAxis yAxisId="left" tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} fontSize={11} className="fill-muted-foreground" />
+                          <YAxis yAxisId="right" orientation="right" tickFormatter={(v) => `${v}%`} domain={[0, 100]} fontSize={11} className="fill-muted-foreground" />
+                          <ChartTooltip
+                            content={
+                              <ChartTooltipContent
+                                formatter={(value, name) => {
+                                  if (name === 'revenue') return [`R$ ${Number(value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 'Faturamento'];
+                                  return [`${Number(value).toFixed(1)}%`, '% Acumulado'];
+                                }}
+                              />
+                            }
                           />
-                        }
-                      />
-                      <Bar yAxisId="left" dataKey="revenue" radius={[4, 4, 0, 0]} fill="hsl(var(--primary))" />
-                      <Line yAxisId="right" dataKey="accumulated" type="monotone" stroke="hsl(0, 84%, 60%)" strokeWidth={2} dot={{ r: 3 }} />
-                    </ComposedChart>
-                  </ChartContainer>
-                </CardContent>
-              </Card>
-            )}
+                          <Bar yAxisId="left" dataKey="revenue" radius={[4, 4, 0, 0]} fill="hsl(var(--primary))" />
+                          <Line yAxisId="right" dataKey="accumulated" type="monotone" stroke="hsl(0, 84%, 60%)" strokeWidth={2} dot={{ r: 3 }} />
+                        </ComposedChart>
+                      </ChartContainer>
+                    </CardContent>
+                  </Card>
+                )}
 
-            {/* Table */}
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="text-base">Tabela Detalhada</CardTitle>
-                <div className="relative w-64">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input placeholder="Buscar produto..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="rounded-md border overflow-auto max-h-[500px]">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-12">#</TableHead>
-                        <TableHead>Produto</TableHead>
-                        <TableHead className="text-right">Qtd Vendida</TableHead>
-                        <TableHead className="text-right">Faturamento</TableHead>
-                        <TableHead className="text-right">% Individual</TableHead>
-                        <TableHead className="text-right">% Acumulado</TableHead>
-                        <TableHead className="text-center">Classe</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredData.length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={7} className="text-center text-muted-foreground py-10">
-                            Nenhum dado de venda encontrado para o período selecionado.
-                          </TableCell>
-                        </TableRow>
-                      ) : (
-                        filteredData.map(item => (
-                          <TableRow key={item.productId}>
-                            <TableCell className="font-medium text-muted-foreground">{item.rank}</TableCell>
-                            <TableCell className="font-medium">{item.productName}</TableCell>
-                            <TableCell className="text-right">{item.quantitySold}</TableCell>
-                            <TableCell className="text-right font-medium">
-                              {item.totalRevenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                            </TableCell>
-                            <TableCell className="text-right">{item.individualPercent.toFixed(2)}%</TableCell>
-                            <TableCell className="text-right">{item.accumulatedPercent.toFixed(2)}%</TableCell>
-                            <TableCell className="text-center">
-                              <Badge variant="outline" className={classColor(item.classification)}>
-                                {item.classification}
-                              </Badge>
-                            </TableCell>
+                {/* Table */}
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between">
+                    <CardTitle className="text-base">Tabela Detalhada</CardTitle>
+                    <div className="relative w-64">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input placeholder="Buscar produto..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="rounded-md border overflow-auto max-h-[500px]">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="w-12">#</TableHead>
+                            <TableHead>Produto</TableHead>
+                            <TableHead className="text-right">Qtd Vendida</TableHead>
+                            <TableHead className="text-right">Faturamento</TableHead>
+                            <TableHead className="text-right">% Individual</TableHead>
+                            <TableHead className="text-right">% Acumulado</TableHead>
+                            <TableHead className="text-center">Classe</TableHead>
                           </TableRow>
-                        ))
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-            </Card>
+                        </TableHeader>
+                        <TableBody>
+                          {filteredData.length === 0 ? (
+                            <TableRow>
+                              <TableCell colSpan={7} className="text-center text-muted-foreground py-10">
+                                Nenhum dado de venda encontrado para o período selecionado.
+                              </TableCell>
+                            </TableRow>
+                          ) : (
+                            filteredData.map(item => (
+                              <TableRow key={item.productId}>
+                                <TableCell className="font-medium text-muted-foreground">{item.rank}</TableCell>
+                                <TableCell className="font-medium">{item.productName}</TableCell>
+                                <TableCell className="text-right">{item.quantitySold}</TableCell>
+                                <TableCell className="text-right font-medium">
+                                  {item.totalRevenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                                </TableCell>
+                                <TableCell className="text-right">{item.individualPercent.toFixed(2)}%</TableCell>
+                                <TableCell className="text-right">{item.accumulatedPercent.toFixed(2)}%</TableCell>
+                                <TableCell className="text-center">
+                                  <Badge variant="outline" className={classColor(item.classification)}>
+                                    {item.classification}
+                                  </Badge>
+                                </TableCell>
+                              </TableRow>
+                            ))
+                          )}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </CardContent>
+                </Card>
 
-            {/* Análise e Recomendações */}
-            <ABCAnalysisReport abcData={abcData} />
-          </>
+                {/* Análise e Recomendações */}
+                <ABCAnalysisReport abcData={abcData} />
+              </div>
+            </TabsContent>
+
+            <TabsContent value="classification">
+              <ProductClassificationTab abcData={abcData} />
+            </TabsContent>
+          </Tabs>
         )}
       </div>
     </AdminLayout>
