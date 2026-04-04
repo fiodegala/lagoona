@@ -50,6 +50,7 @@ const AdminAnnouncements = lazy(() => import("./pages/AdminAnnouncements"));
 const OlistIntegration = lazy(() => import("./pages/OlistIntegration"));
 const DatabaseExport = lazy(() => import("./pages/DatabaseExport"));
 const StockDistribution = lazy(() => import("./pages/StockDistribution"));
+const ABCCurve = lazy(() => import("./pages/ABCCurve"));
 
 // Lazy-loaded Store Pages
 const HomePage = lazy(() => import("./pages/store/HomePage"));
