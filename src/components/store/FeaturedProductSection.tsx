@@ -163,11 +163,11 @@ const FeaturedProductSection = ({ product }: FeaturedProductSectionProps) => {
 
               <Button
                 onClick={handleAddToCart}
-                disabled={isOutOfStock}
+                disabled={isOutOfStock || (hasVariations && !selectedVariation)}
                 className="flex-1 gap-2 bg-store-gold text-store-dark hover:bg-store-gold/90 font-semibold h-11"
               >
                 <ShoppingCart className="h-4 w-4" />
-                {isOutOfStock ? 'Esgotado' : 'Compra Rápida'}
+                {isOutOfStock ? 'Esgotado' : (hasVariations && !selectedVariation) ? 'Selecione as Opções' : 'Compra Rápida'}
               </Button>
             </div>
 
