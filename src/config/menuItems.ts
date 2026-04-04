@@ -27,6 +27,7 @@ import {
   ClipboardList,
   Megaphone,
   Zap,
+  TrendingUp,
 } from 'lucide-react';
 
 export interface MenuItem {
