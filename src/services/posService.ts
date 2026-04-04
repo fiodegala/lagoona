@@ -374,49 +374,39 @@ export const posService = {
       const isOnlineSale = storeData?.type === 'online' || storeData?.type === 'website';
 
       if (isOnlineSale) {
-        // Priority deduction: Hyper Modas 44 first, then other physical stores
-        const { data: physicalStores } = await supabase
-          .from('stores')
-          .select('id, name')
-          .eq('type', 'physical')
-          .eq('is_active', true)
-          .order('name');
-
-        // Sort: "Hyper" stores first (priority), then others
-        const sortedStores = (physicalStores || []).sort((a, b) => {
-          const aIsHyper = a.name.toLowerCase().includes('hyper');
-          const bIsHyper = b.name.toLowerCase().includes('hyper');
-          if (aIsHyper && !bIsHyper) return -1;
-          if (!aIsHyper && bIsHyper) return 1;
-          return 0;
-        });
-
+        // Deduct from store with HIGHEST quantity for each item
         for (const item of saleData.items) {
           let remaining = item.quantity;
-          for (const store of sortedStores) {
+
+          // Get all stock records for this product/variation sorted by quantity DESC
+          let stockQuery = supabase
+            .from('store_stock')
+            .select('id, store_id, quantity')
+            .eq('product_id', item.product_id)
+            .order('quantity', { ascending: false });
+
+          if (item.variation_id) {
+            stockQuery = stockQuery.eq('variation_id', item.variation_id);
+          } else {
+            stockQuery = stockQuery.is('variation_id', null);
+          }
+
+          const { data: stockRows } = await stockQuery;
+
+          for (const stock of (stockRows || [])) {
             if (remaining <= 0) break;
+            if (stock.quantity <= 0) continue;
 
-            let query = supabase
+            // Skip online/website stores
+            const { data: st } = await supabase.from('stores').select('type').eq('id', stock.store_id).single();
+            if (st && ['online', 'website'].includes(st.type)) continue;
+
+            const deduct = Math.min(remaining, stock.quantity);
+            await supabase
               .from('store_stock')
-              .select('id, quantity')
-              .eq('store_id', store.id)
-              .eq('product_id', item.product_id);
-
-            if (item.variation_id) {
-              query = query.eq('variation_id', item.variation_id);
-            } else {
-              query = query.is('variation_id', null);
-            }
-
-            const { data: stock } = await query.maybeSingle();
-            if (stock && stock.quantity > 0) {
-              const deduct = Math.min(remaining, stock.quantity);
-              await supabase
-                .from('store_stock')
-                .update({ quantity: stock.quantity - deduct })
-                .eq('id', stock.id);
-              remaining -= deduct;
-            }
+              .update({ quantity: stock.quantity - deduct })
+              .eq('id', stock.id);
+            remaining -= deduct;
           }
         }
       } else {
