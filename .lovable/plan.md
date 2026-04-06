@@ -1,41 +1,38 @@
 
 
-# Curva ABC de Produtos
+# Loja TikTok Shop no PDV
 
 ## Objetivo
-Criar uma página admin completa de análise Curva ABC baseada em vendas reais (POS + online), com gráfico de Pareto, tabela detalhada e filtros por período.
+Criar uma loja "TikTok Shop" no sistema e adicionar a opção de venda pelo TikTok no PDV, visível apenas para admins. Vendas registradas com esse canal serão contabilizadas na loja TikTok Shop, com estoque sendo deduzido normalmente.
 
 ## Implementação
 
-### 1. Nova página `src/pages/ABCCurve.tsx`
+### 1. Criar a loja "TikTok Shop" no banco de dados
+- Inserir um novo registro na tabela `stores` com `name: 'TikTok Shop'`, `slug: 'tiktok-shop'`, `type: 'online'` (tipo online para não receber transferências físicas, e o estoque é deduzido da loja com maior quantidade — mesmo comportamento do e-commerce).
 
-**Dados**: Buscar `pos_sales` (status != cancelled) e `orders` (status != cancelled) do Supabase, extrair itens do campo JSON `items` de cada venda, agrupar por produto e calcular faturamento total por produto.
+### 2. Adicionar canal "TikTok" no PaymentPanel (`src/components/pos/PaymentPanel.tsx`)
+- Adicionar `'tiktok'` ao tipo `SaleChannel`.
+- Adicionar opção `{ value: 'tiktok', label: 'TikTok Shop', icon: <Video /> }` no array `channelOptions`.
+- Aceitar uma nova prop `isAdmin: boolean` para controlar visibilidade — o botão TikTok só aparece quando `isAdmin === true`.
 
-**Classificação ABC**:
-- Ordenar produtos por faturamento decrescente
-- Calcular % acumulado do faturamento
-- Classe A: até 80% acumulado
-- Classe B: de 80% a 95% acumulado
-- Classe C: acima de 95%
+### 3. Passar `isAdmin` do POSPage → PaymentStep → PaymentPanel
+- **POSPage**: já tem `isAdmin` do `useAuth()`. Passar como prop para `PaymentStep`.
+- **PaymentStep** (`src/components/pos/steps/PaymentStep.tsx`): receber `isAdmin` e repassar ao `PaymentPanel`.
+- **PaymentPanel**: filtrar `channelOptions` para mostrar TikTok apenas quando `isAdmin`.
 
-**Filtros**: Período (7d, 30d, 90d, mês atual, customizado com DateRange picker).
-
-**KPI Cards**: Total faturado, quantidade de SKUs por classe (A/B/C), ticket médio.
-
-**Gráfico de Pareto** (Recharts):
-- Barras: faturamento por produto (eixo esquerdo)
-- Linha: % acumulado (eixo direito)
-- Cores diferenciadas por classe (verde=A, amarelo=B, vermelho=C)
-
-**Tabela detalhada**: Ranking, nome do produto, quantidade vendida, faturamento, % individual, % acumulado, classe (badge colorido). Com busca por nome.
-
-### 2. Rota e Menu
-
-- Adicionar lazy import e rota `/admin/curva-abc` em `src/App.tsx` (protegida por admin)
-- Adicionar item "Curva ABC" com ícone `TrendingUp` em `src/config/menuItems.ts`, logo após "Distribuição Estoque"
+### 4. Atribuir `store_id` da TikTok Shop quando canal TikTok for selecionado (`src/pages/POSPage.tsx`)
+- No `handlePayment`, verificar se `paymentDetails.channel === 'tiktok'`. Se sim, substituir o `store_id` pelo ID da loja TikTok Shop (buscar da tabela `stores` ou usar constante).
+- O mesmo para orçamentos (quotes).
 
 ### Arquivos alterados
-- `src/pages/ABCCurve.tsx` (novo)
-- `src/App.tsx` (nova rota)
-- `src/config/menuItems.ts` (novo item de menu)
+- **Migração SQL**: inserir loja TikTok Shop
+- `src/components/pos/PaymentPanel.tsx`: novo canal + prop `isAdmin`
+- `src/components/pos/steps/PaymentStep.tsx`: repassar `isAdmin`
+- `src/pages/POSPage.tsx`: passar `isAdmin`, lógica de `store_id` para TikTok
+
+### Resultado
+- Admins veem o botão "TikTok Shop" no seletor de canal do pagamento
+- Vendas TikTok são registradas com `store_id` da loja TikTok Shop
+- Estoque é deduzido da loja física com maior quantidade (comportamento padrão para lojas tipo `online`)
+- Sellers/colaboradores não veem a opção TikTok
 
