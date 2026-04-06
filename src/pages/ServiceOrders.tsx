@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { toast } from 'sonner';
+import { playServiceOrderSound } from '@/lib/alertSounds';
 import { Plus, MessageSquare, Clock, CheckCircle2, XCircle, Search, Filter, Settings2, Pencil, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -50,6 +51,22 @@ const ServiceOrders = () => {
   const [newComment, setNewComment] = useState('');
   const [form, setForm] = useState({ title: '', description: '', department: '', priority: 'normal' });
   const [deptForm, setDeptForm] = useState({ name: '', editingId: '' });
+
+  // Realtime listener for new service orders
+  useEffect(() => {
+    const channel = supabase
+      .channel('service-orders-realtime')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'service_orders' }, (payload) => {
+        const os = payload.new as any;
+        if (os.created_by !== user?.id) {
+          playServiceOrderSound();
+          toast.info('📋 Nova Ordem de Serviço', { description: os.title || 'Nova OS criada' });
+        }
+        queryClient.invalidateQueries({ queryKey: ['service-orders'] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [user?.id, queryClient]);
 
   const { data: departments = [] } = useQuery({
     queryKey: ['service-order-departments'],

@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { playNotificationSound, playTransferAlertSound } from '@/lib/alertSounds';
 
 export type NotificationType = 'new_order' | 'abandoned_cart' | 'pos_sale' | 'stock_transfer';
 
@@ -21,21 +22,6 @@ interface NotificationOptions {
 export function useAdminNotifications({ isAdmin, isOnlineStore }: NotificationOptions) {
   const [notifications, setNotifications] = useState<AdminNotification[]>([]);
 
-  const playSound = useCallback(() => {
-    try {
-      const ctx = new AudioContext();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.frequency.value = 800;
-      gain.gain.value = 0.3;
-      osc.start();
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
-      osc.stop(ctx.currentTime + 0.3);
-    } catch {}
-  }, []);
-
   const addNotification = useCallback((notif: Omit<AdminNotification, 'id' | 'createdAt' | 'read'>) => {
     const newNotif: AdminNotification = {
       ...notif,
@@ -44,8 +30,13 @@ export function useAdminNotifications({ isAdmin, isOnlineStore }: NotificationOp
       read: false,
     };
     setNotifications(prev => [newNotif, ...prev].slice(0, 50));
-    playSound();
-  }, [playSound]);
+    // Play differentiated sound by type
+    if (notif.type === 'stock_transfer') {
+      playTransferAlertSound();
+    } else {
+      playNotificationSound();
+    }
+  }, []);
 
   const markAsRead = useCallback((id: string) => {
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));

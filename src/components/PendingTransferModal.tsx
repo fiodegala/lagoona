@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { playTransferAlertSound } from '@/lib/alertSounds';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -44,43 +45,7 @@ const PendingTransferModal: React.FC = () => {
   const alertIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const playAlertSound = useCallback(() => {
-    try {
-      const ctx = new AudioContext();
-      const now = ctx.currentTime;
-
-      // First beep — high pitch
-      const osc1 = ctx.createOscillator();
-      const gain1 = ctx.createGain();
-      osc1.connect(gain1);
-      gain1.connect(ctx.destination);
-      osc1.frequency.value = 880;
-      gain1.gain.setValueAtTime(0.4, now);
-      gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
-      osc1.start(now);
-      osc1.stop(now + 0.15);
-
-      // Second beep — higher pitch (urgency)
-      const osc2 = ctx.createOscillator();
-      const gain2 = ctx.createGain();
-      osc2.connect(gain2);
-      gain2.connect(ctx.destination);
-      osc2.frequency.value = 1100;
-      gain2.gain.setValueAtTime(0.4, now + 0.2);
-      gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
-      osc2.start(now + 0.2);
-      osc2.stop(now + 0.4);
-
-      // Third beep — highest pitch
-      const osc3 = ctx.createOscillator();
-      const gain3 = ctx.createGain();
-      osc3.connect(gain3);
-      gain3.connect(ctx.destination);
-      osc3.frequency.value = 1320;
-      gain3.gain.setValueAtTime(0.45, now + 0.45);
-      gain3.gain.exponentialRampToValueAtTime(0.001, now + 0.7);
-      osc3.start(now + 0.45);
-      osc3.stop(now + 0.7);
-    } catch {}
+    playTransferAlertSound();
   }, []);
 
   useEffect(() => {
