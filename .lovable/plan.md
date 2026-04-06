@@ -1,38 +1,47 @@
 
 
-# Loja TikTok Shop no PDV
+# Alertas Sonoros Completos para Notificações
 
-## Objetivo
-Criar uma loja "TikTok Shop" no sistema e adicionar a opção de venda pelo TikTok no PDV, visível apenas para admins. Vendas registradas com esse canal serão contabilizadas na loja TikTok Shop, com estoque sendo deduzido normalmente.
+## Situação Atual
+- **Notificações gerais** (pedidos, carrinhos, vendas PDV, transferências): som fraco (gain 0.3, duração 0.3s, frequência única 800Hz)
+- **Modal de transferência pendente**: som com 3 beeps (gain 0.4-0.45) — melhor, mas ainda discreto
+- **Comunicados (AnnouncementPopup)**: sem som nenhum
+- **Ordens de Serviço**: sem som nenhum, sem listener realtime
 
 ## Implementação
 
-### 1. Criar a loja "TikTok Shop" no banco de dados
-- Inserir um novo registro na tabela `stores` com `name: 'TikTok Shop'`, `slug: 'tiktok-shop'`, `type: 'online'` (tipo online para não receber transferências físicas, e o estoque é deduzido da loja com maior quantidade — mesmo comportamento do e-commerce).
+### 1. Criar utilitário de sons centralizados (`src/lib/alertSounds.ts`)
+Criar um módulo com funções de som distintas para cada tipo de evento, todas com volume alto (gain 0.7-0.9) e padrões sonoros diferenciados:
 
-### 2. Adicionar canal "TikTok" no PaymentPanel (`src/components/pos/PaymentPanel.tsx`)
-- Adicionar `'tiktok'` ao tipo `SaleChannel`.
-- Adicionar opção `{ value: 'tiktok', label: 'TikTok Shop', icon: <Video /> }` no array `channelOptions`.
-- Aceitar uma nova prop `isAdmin: boolean` para controlar visibilidade — o botão TikTok só aparece quando `isAdmin === true`.
+- **`playNotificationSound()`** — para pedidos, vendas, carrinhos: 2 beeps rápidos agudos
+- **`playTransferAlertSound()`** — para transferências de estoque: alarme urgente com 4 beeps crescentes, repetido
+- **`playServiceOrderSound()`** — para ordens de serviço: 3 tons médios distintos
+- **`playAnnouncementSound()`** — para comunicados: fanfarra/chime com acordes
 
-### 3. Passar `isAdmin` do POSPage → PaymentStep → PaymentPanel
-- **POSPage**: já tem `isAdmin` do `useAuth()`. Passar como prop para `PaymentStep`.
-- **PaymentStep** (`src/components/pos/steps/PaymentStep.tsx`): receber `isAdmin` e repassar ao `PaymentPanel`.
-- **PaymentPanel**: filtrar `channelOptions` para mostrar TikTok apenas quando `isAdmin`.
+Cada função usa `AudioContext` com `gain.value` alto (0.7-0.9) e múltiplos osciladores para garantir volume audível.
 
-### 4. Atribuir `store_id` da TikTok Shop quando canal TikTok for selecionado (`src/pages/POSPage.tsx`)
-- No `handlePayment`, verificar se `paymentDetails.channel === 'tiktok'`. Se sim, substituir o `store_id` pelo ID da loja TikTok Shop (buscar da tabela `stores` ou usar constante).
-- O mesmo para orçamentos (quotes).
+### 2. Atualizar `useAdminNotifications.ts`
+- Importar `playNotificationSound` do novo módulo
+- Substituir o `playSound` atual pelo novo som alto
+- Usar sons diferenciados por tipo de notificação (switch no `type`)
+
+### 3. Atualizar `PendingTransferModal.tsx`
+- Importar `playTransferAlertSound` do novo módulo
+- Substituir o `playAlertSound` pelo novo som mais alto e urgente
+
+### 4. Atualizar `AnnouncementPopup.tsx`
+- Importar `playAnnouncementSound`
+- Tocar som quando um comunicado é exibido (no `useEffect` que abre o popup)
+
+### 5. Adicionar alerta sonoro para Ordens de Serviço (`ServiceOrders.tsx`)
+- Adicionar listener Supabase Realtime na tabela `service_orders` (evento INSERT)
+- Ao receber nova OS, tocar `playServiceOrderSound()`
+- Mostrar toast informativo com dados da nova OS
 
 ### Arquivos alterados
-- **Migração SQL**: inserir loja TikTok Shop
-- `src/components/pos/PaymentPanel.tsx`: novo canal + prop `isAdmin`
-- `src/components/pos/steps/PaymentStep.tsx`: repassar `isAdmin`
-- `src/pages/POSPage.tsx`: passar `isAdmin`, lógica de `store_id` para TikTok
-
-### Resultado
-- Admins veem o botão "TikTok Shop" no seletor de canal do pagamento
-- Vendas TikTok são registradas com `store_id` da loja TikTok Shop
-- Estoque é deduzido da loja física com maior quantidade (comportamento padrão para lojas tipo `online`)
-- Sellers/colaboradores não veem a opção TikTok
+- `src/lib/alertSounds.ts` (novo) — módulo centralizado de sons
+- `src/hooks/useAdminNotifications.ts` — usar sons altos diferenciados por tipo
+- `src/components/PendingTransferModal.tsx` — usar som alto de transferência
+- `src/components/AnnouncementPopup.tsx` — adicionar som ao exibir comunicado
+- `src/pages/ServiceOrders.tsx` — adicionar realtime + som para novas OS
 
