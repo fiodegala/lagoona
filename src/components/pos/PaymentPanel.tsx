@@ -23,12 +23,13 @@ import {
   Crown,
   MessageCircle,
   Store,
+  Video,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export type SaleChannel = 'site' | 'instagram' | 'indicacao' | 'grupo_vip' | 'whatsapp' | 'loja_bs' | 'loja_hm44';
+export type SaleChannel = 'site' | 'instagram' | 'indicacao' | 'grupo_vip' | 'whatsapp' | 'loja_bs' | 'loja_hm44' | 'tiktok';
 
-const channelOptions: { value: SaleChannel; label: string; icon: React.ReactNode }[] = [
+const allChannelOptions: { value: SaleChannel; label: string; icon: React.ReactNode; adminOnly?: boolean }[] = [
   { value: 'site', label: 'Site', icon: <Globe className="h-4 w-4" /> },
   { value: 'instagram', label: 'Instagram', icon: <Instagram className="h-4 w-4" /> },
   { value: 'indicacao', label: 'Indicação', icon: <Users className="h-4 w-4" /> },
@@ -36,6 +37,7 @@ const channelOptions: { value: SaleChannel; label: string; icon: React.ReactNode
   { value: 'whatsapp', label: 'WhatsApp', icon: <MessageCircle className="h-4 w-4" /> },
   { value: 'loja_bs', label: 'Loja BS', icon: <Store className="h-4 w-4" /> },
   { value: 'loja_hm44', label: 'Loja HM 44', icon: <Store className="h-4 w-4" /> },
+  { value: 'tiktok', label: 'TikTok Shop', icon: <Video className="h-4 w-4" />, adminOnly: true },
 ];
 
 interface PaymentPanelProps {
@@ -47,6 +49,7 @@ interface PaymentPanelProps {
   ) => void;
   isProcessing: boolean;
   disabled?: boolean;
+  isAdmin?: boolean;
 }
 
 const PaymentPanel = ({
@@ -54,7 +57,9 @@ const PaymentPanel = ({
   onPayment,
   isProcessing,
   disabled,
+  isAdmin = false,
 }: PaymentPanelProps) => {
+  const channelOptions = allChannelOptions.filter(ch => !ch.adminOnly || isAdmin);
   const [selectedChannel, setSelectedChannel] = useState<SaleChannel | null>(null);
   const [selectedMethod, setSelectedMethod] = useState<'cash' | 'card' | 'pix' | 'mixed' | null>(null);
   const [cashReceived, setCashReceived] = useState('');
