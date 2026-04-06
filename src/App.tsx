@@ -440,6 +440,14 @@ const App = () => (
                   </ProtectedRoute>
                 }
               />
+              <Route
+                path="/admin/relatorio-caixa"
+                element={
+                  <ProtectedRoute>
+                    <CashRegisterReport />
+                  </ProtectedRoute>
+                }
+              />
               {/* Legacy redirects for admin routes */}
               <Route path="/products" element={<Navigate to="/admin/products" replace />} />
               <Route path="/categories" element={<Navigate to="/admin/categories" replace />} />

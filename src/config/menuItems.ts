@@ -59,6 +59,7 @@ export const navItems: MenuItem[] = [
   { icon: Truck, label: 'Frete', path: '/admin/shipping', menuKey: 'shipping', requireAdmin: true },
   { icon: ImageIcon, label: 'Banners', path: '/admin/banners', menuKey: 'banners', requireAdmin: true },
   { icon: BarChart3, label: 'Relatórios', path: '/admin/reports', menuKey: 'reports' },
+  { icon: Receipt, label: 'Relatório de Caixa', path: '/admin/relatorio-caixa', menuKey: 'cash-report' },
   { icon: Sparkles, label: 'Assistente IA', path: '/admin/assistente', menuKey: 'assistant' },
   { icon: BrainCircuit, label: 'Analytics IA', path: '/admin/analytics', menuKey: 'analytics', requireAdmin: true },
   { icon: Users, label: 'Usuários', path: '/admin/users', menuKey: 'users', requireAdmin: true },
