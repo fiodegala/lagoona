@@ -242,8 +242,6 @@ const CashRegisterReport = () => {
                   </TableHeader>
                   <TableBody>
                     {filtered.map((session) => {
-                      const withdrawals = session.transactions.filter((t) => t.type === 'withdrawal');
-                      const deposits = session.transactions.filter((t) => t.type === 'deposit');
                       const isExpanded = expandedSession === session.id;
 
                       return (
