@@ -53,7 +53,8 @@ const POSPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
-  const { userStoreId } = useAuth();
+  const { userStoreId, isAdmin } = useAuth();
+  const TIKTOK_SHOP_STORE_ID = '2e77df46-e984-4480-bb0c-a890ed57d7da';
   const [session, setSession] = useState<POSSession | null>(null);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [isLoading, setIsLoading] = useState(true);
@@ -556,10 +557,15 @@ const POSPage = () => {
       return;
     }
 
+    const isTiktokChannel = paymentDetails && (paymentDetails as Record<string, unknown>).channel === 'tiktok';
+    const resolvedStoreId = isTiktokChannel
+      ? TIKTOK_SHOP_STORE_ID
+      : (selectedSeller?.store_id || userStoreId || undefined);
+
     const saleData: CreateSaleData = {
       local_id: offlineService.generateLocalId(),
       session_id: session?.id,
-      store_id: selectedSeller?.store_id || userStoreId || undefined,
+      store_id: resolvedStoreId,
       customer_id: selectedCustomer?.id,
       customer_name: selectedCustomer?.name,
       customer_document: selectedCustomer?.document || undefined,
@@ -953,6 +959,7 @@ const POSPage = () => {
               selectedSeller={selectedSeller}
               selectedCustomer={selectedCustomer}
               isProcessing={isProcessing}
+              isAdmin={isAdmin}
               onPayment={handlePayment}
               onBack={() => setCurrentStep('products')}
               onAddGiftItem={handleAddGiftItem}
@@ -969,6 +976,7 @@ const POSPage = () => {
               selectedSeller={selectedSeller}
               selectedCustomer={selectedCustomer}
               isProcessing={isProcessing}
+              isAdmin={isAdmin}
               onPayment={handlePayment}
               onBack={() => setCurrentStep('products')}
               onAddGiftItem={handleAddGiftItem}
