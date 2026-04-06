@@ -25,6 +25,7 @@ interface PaymentStepProps {
   selectedSeller: Seller | null;
   selectedCustomer: Customer | null;
   isProcessing: boolean;
+  isAdmin?: boolean;
   onPayment: (method: 'cash' | 'card' | 'pix' | 'mixed', amountReceived?: number, paymentDetails?: Record<string, number>, saleDate?: string) => void;
   onBack: () => void;
   onAddGiftItem?: (product: ProductResult, variationId?: string) => void;
@@ -52,6 +53,7 @@ const PaymentStep = ({
   selectedSeller,
   selectedCustomer,
   isProcessing,
+  isAdmin = false,
   onPayment,
   onBack,
   onAddGiftItem,
@@ -215,6 +217,7 @@ const PaymentStep = ({
           onPayment={handlePaymentWithDate}
           isProcessing={isProcessing}
           disabled={cartItems.length === 0}
+          isAdmin={isAdmin}
         />
       </div>
 
