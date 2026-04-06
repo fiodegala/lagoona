@@ -46,9 +46,6 @@ const PendingTransferModal: React.FC = () => {
 
   const playAlertSound = useCallback(() => {
     playTransferAlertSound();
-      osc3.start(now + 0.45);
-      osc3.stop(now + 0.7);
-    } catch {}
   }, []);
 
   useEffect(() => {
