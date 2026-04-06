@@ -51,6 +51,7 @@ const OlistIntegration = lazy(() => import("./pages/OlistIntegration"));
 const DatabaseExport = lazy(() => import("./pages/DatabaseExport"));
 const StockDistribution = lazy(() => import("./pages/StockDistribution"));
 const ABCCurve = lazy(() => import("./pages/ABCCurve"));
+const CashRegisterReport = lazy(() => import("./pages/CashRegisterReport"));
 
 // Lazy-loaded Store Pages
 const HomePage = lazy(() => import("./pages/store/HomePage"));
@@ -436,6 +437,14 @@ const App = () => (
                 element={
                   <ProtectedRoute requiredRole="admin">
                     <ABCCurve />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/relatorio-caixa"
+                element={
+                  <ProtectedRoute>
+                    <CashRegisterReport />
                   </ProtectedRoute>
                 }
               />
