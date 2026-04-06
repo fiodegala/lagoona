@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { playAnnouncementSound } from '@/lib/alertSounds';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Megaphone } from 'lucide-react';
@@ -47,6 +48,7 @@ const AnnouncementPopup = () => {
     if (announcements.length > 0) {
       setCurrentIndex(0);
       setOpen(true);
+      playAnnouncementSound();
     }
   }, [announcements.length]);
 
