@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { playServiceOrderSound, playTransferAlertSound } from '@/lib/alertSounds';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -21,12 +22,14 @@ interface PendingItem {
 const SNOOZE_MINUTES = 5;
 
 const GlobalNotificationPopups = () => {
+  const navigate = useNavigate();
   const { user, isAdmin, userStoreId, accessibleStoreIds } = useAuth();
   const [items, setItems] = useState<PendingItem[]>([]);
   const [currentItem, setCurrentItem] = useState<PendingItem | null>(null);
   const [showPopup, setShowPopup] = useState(false);
   const snoozeTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const processedIdsRef = useRef<Set<string>>(new Set());
+  const dismissedIdsRef = useRef<Set<string>>(new Set());
 
   // Load pending service orders for this user
   const loadPendingServiceOrders = useCallback(async () => {
@@ -186,7 +189,8 @@ const GlobalNotificationPopups = () => {
   // Show popup for first unsnoozed item
   useEffect(() => {
     const now = Date.now();
-    const unsnoozed = items.filter(i => !i.snoozedUntil || i.snoozedUntil <= now);
+    const unsnoozed = items.filter(i => !i.snoozedUntil || i.snoozedUntil <= now)
+      .filter(i => !dismissedIdsRef.current.has(i.id));
     
     if (unsnoozed.length > 0 && !showPopup) {
       setCurrentItem(unsnoozed[0]);
@@ -195,7 +199,7 @@ const GlobalNotificationPopups = () => {
       setShowPopup(false);
       setCurrentItem(null);
     }
-  }, [items]);
+  }, [items, showPopup]);
 
   // Snooze timer - check every 30s if any snoozed items have expired
   useEffect(() => {
@@ -331,10 +335,10 @@ const GlobalNotificationPopups = () => {
           <Button
             variant="default"
             onClick={() => {
-              // Navigate to the relevant page
               const route = isOS ? '/admin/ordens-servico' : '/admin/stock';
-              window.location.href = route;
+              dismissedIdsRef.current.add(currentItem.id);
               handleDismissAndNext();
+              navigate(route);
             }}
           >
             {isOS ? 'Ir para Ordens de Serviço' : 'Ir para Estoque'}
