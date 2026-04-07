@@ -49,11 +49,7 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const { action, email, password, fullName, role, store_id, allowed_menus, user_id: targetUserId, new_password } = body;
 
-    // Use service role client for admin operations
-    const adminClient = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
+    // adminClient already created above
 
     // Handle password update action
     if (action === "update-password") {
