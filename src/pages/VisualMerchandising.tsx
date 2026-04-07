@@ -352,7 +352,7 @@ const VisualMerchandising = () => {
                   {post.images.length > 0 ? (
                     <div
                       className="aspect-video bg-muted cursor-pointer relative group"
-                      onClick={() => { setLightboxUrl(post.images[0]); setLightboxType('image'); }}
+                      onClick={() => openLightbox(post, post.images[0])}
                     >
                       <img src={post.images[0]} alt={post.title} className="w-full h-full object-cover" />
                       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
@@ -362,7 +362,7 @@ const VisualMerchandising = () => {
                   ) : post.videos.length > 0 ? (
                     <div
                       className="aspect-video bg-muted cursor-pointer relative group"
-                      onClick={() => { setLightboxUrl(post.videos[0]); setLightboxType('video'); }}
+                      onClick={() => openLightbox(post, post.videos[0])}
                     >
                       <video src={post.videos[0]} muted className="w-full h-full object-cover" />
                       <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
@@ -395,14 +395,14 @@ const VisualMerchandising = () => {
                             src={img}
                             alt=""
                             className="h-12 w-12 rounded object-cover cursor-pointer border hover:ring-2 ring-primary shrink-0"
-                            onClick={() => { setLightboxUrl(img); setLightboxType('image'); }}
+                            onClick={() => openLightbox(post, img)}
                           />
                         ))}
                         {post.videos.map((vid, i) => (
                           <div
                             key={`v-${i}`}
                             className="h-12 w-12 rounded bg-muted flex items-center justify-center cursor-pointer border hover:ring-2 ring-primary shrink-0"
-                            onClick={() => { setLightboxUrl(vid); setLightboxType('video'); }}
+                            onClick={() => openLightbox(post, vid)}
                           >
                             <Play className="h-5 w-5 text-muted-foreground" />
                           </div>
@@ -550,23 +550,67 @@ const VisualMerchandising = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Lightbox */}
-      <Dialog open={!!lightboxUrl} onOpenChange={() => setLightboxUrl(null)}>
-        <DialogContent className="max-w-4xl p-2">
-          {lightboxType === 'image' && lightboxUrl && (
-            <img src={lightboxUrl} alt="VM" className="w-full h-auto max-h-[80vh] object-contain rounded" />
-          )}
-          {lightboxType === 'video' && lightboxUrl && (
-            lightboxUrl.includes('youtube') || lightboxUrl.includes('youtu.be') ? (
-              <iframe
-                src={lightboxUrl.replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/')}
-                className="w-full aspect-video rounded"
-                allowFullScreen
-              />
-            ) : (
-              <video src={lightboxUrl} controls autoPlay className="w-full max-h-[80vh] rounded" />
-            )
-          )}
+      {/* Lightbox with navigation */}
+      <Dialog open={lightboxOpen} onOpenChange={() => closeLightbox()}>
+        <DialogContent className="max-w-4xl p-2 bg-black/95 border-none">
+          <div className="relative flex items-center justify-center min-h-[50vh]">
+            {/* Close */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute top-2 right-2 z-50 text-white hover:bg-white/20"
+              onClick={closeLightbox}
+            >
+              <X className="h-6 w-6" />
+            </Button>
+
+            {/* Previous */}
+            {lightboxItems.length > 1 && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute left-2 top-1/2 -translate-y-1/2 z-50 text-white hover:bg-white/20 h-12 w-12"
+                onClick={lightboxPrev}
+              >
+                <ChevronLeft className="h-8 w-8" />
+              </Button>
+            )}
+
+            {/* Content */}
+            {lightboxCurrent?.type === 'image' && (
+              <img src={lightboxCurrent.url} alt="VM" className="w-full h-auto max-h-[80vh] object-contain rounded" />
+            )}
+            {lightboxCurrent?.type === 'video' && (
+              lightboxCurrent.url.includes('youtube') || lightboxCurrent.url.includes('youtu.be') ? (
+                <iframe
+                  src={lightboxCurrent.url.replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/')}
+                  className="w-full aspect-video rounded"
+                  allowFullScreen
+                />
+              ) : (
+                <video src={lightboxCurrent.url} controls autoPlay className="w-full max-h-[80vh] rounded" />
+              )
+            )}
+
+            {/* Next */}
+            {lightboxItems.length > 1 && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute right-2 top-1/2 -translate-y-1/2 z-50 text-white hover:bg-white/20 h-12 w-12"
+                onClick={lightboxNext}
+              >
+                <ChevronRight className="h-8 w-8" />
+              </Button>
+            )}
+
+            {/* Counter */}
+            {lightboxItems.length > 1 && (
+              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-white/80 text-sm font-medium bg-black/50 px-3 py-1 rounded-full">
+                {lightboxIndex + 1} / {lightboxItems.length}
+              </div>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </div>
