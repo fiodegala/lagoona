@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { corsHeaders } from "../_shared/utils.ts";
+import { corsHeaders, getUserIdFromAuthHeader } from "../_shared/utils.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -15,26 +15,23 @@ Deno.serve(async (req) => {
       });
     }
 
-    const adminClient = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
-
-    // Extract JWT token and get user
-    const token = authHeader.replace("Bearer ", "");
-    const { data: { user: callingUser }, error: authError } = await adminClient.auth.getUser(token);
-    if (authError || !callingUser) {
+    const callingUserId = await getUserIdFromAuthHeader(authHeader);
+    if (!callingUserId) {
       return new Response(JSON.stringify({ error: "Não autorizado" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Check admin role
+    const adminClient = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+
     const { data: roleData } = await adminClient
       .from("user_roles")
       .select("role")
-      .eq("user_id", callingUser.id)
+      .eq("user_id", callingUserId)
       .eq("role", "admin")
       .maybeSingle();
 

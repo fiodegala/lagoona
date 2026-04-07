@@ -1,5 +1,6 @@
 // Shared utilities for edge functions
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createRemoteJWKSet, jwtVerify } from "npm:jose@5";
 
 export const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -210,6 +211,45 @@ export async function logApiRequest(
     response_time_ms: responseTimeMs,
     request_body_size: bodySize,
   });
+}
+
+let jwks: ReturnType<typeof createRemoteJWKSet> | null = null;
+
+function getJwks() {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  if (!supabaseUrl) {
+    throw new Error("SUPABASE_URL não configurada");
+  }
+
+  if (!jwks) {
+    jwks = createRemoteJWKSet(new URL(`${supabaseUrl}/auth/v1/.well-known/jwks.json`));
+  }
+
+  return jwks;
+}
+
+export async function getUserIdFromAuthHeader(authHeader: string): Promise<string | null> {
+  try {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    if (!supabaseUrl || !authHeader?.startsWith("Bearer ")) {
+      return null;
+    }
+
+    const token = authHeader.slice("Bearer ".length).trim();
+    if (!token) {
+      return null;
+    }
+
+    const { payload } = await jwtVerify(token, getJwks(), {
+      issuer: `${supabaseUrl}/auth/v1`,
+      audience: "authenticated",
+    });
+
+    return typeof payload.sub === "string" ? payload.sub : null;
+  } catch (error) {
+    console.error("JWT verification failed:", error);
+    return null;
+  }
 }
 
 export function jsonResponse(data: unknown, status = 200) {
