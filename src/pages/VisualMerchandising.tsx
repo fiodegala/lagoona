@@ -163,10 +163,22 @@ const VisualMerchandising = () => {
         const { error } = await supabase.from('vm_posts').update(payload).eq('id', editingPost.id);
         if (error) throw error;
         toast.success('Publicação atualizada!');
+        auditService.log({
+          action: 'update',
+          entity_type: 'vm_post',
+          entity_id: editingPost.id,
+          details: { title: payload.title, category: payload.category, store_id: payload.store_id },
+        });
       } else {
-        const { error } = await supabase.from('vm_posts').insert(payload);
+        const { data: inserted, error } = await supabase.from('vm_posts').insert(payload).select('id').single();
         if (error) throw error;
         toast.success('Publicação criada!');
+        auditService.log({
+          action: 'create',
+          entity_type: 'vm_post',
+          entity_id: inserted?.id,
+          details: { title: payload.title, category: payload.category, store_id: payload.store_id },
+        });
       }
 
       setShowModal(false);
