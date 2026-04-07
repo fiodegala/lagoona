@@ -512,7 +512,23 @@ const ServiceOrders = () => {
             {selectedOrder && (
               <>
                 <DialogHeader>
-                  <DialogTitle className="flex items-center gap-2">{selectedOrder.title}</DialogTitle>
+                  <div className="flex items-center justify-between gap-2">
+                    <DialogTitle className="flex items-center gap-2">{selectedOrder.title}</DialogTitle>
+                    {isAdmin && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-destructive hover:text-destructive"
+                        onClick={() => {
+                          if (confirm('Tem certeza que deseja excluir esta ordem de serviço?')) {
+                            deleteMutation.mutate(selectedOrder.id);
+                          }
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
                 </DialogHeader>
                 <div className="space-y-4">
                   <div className="flex flex-wrap gap-2">
