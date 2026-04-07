@@ -275,7 +275,11 @@ const OrderDetailModal = ({ open, onOpenChange, order }: OrderDetailModalProps) 
                         />
                         <div className="min-w-0">
                           <p className="font-medium truncate">{item.name || item.product_name || 'Produto'}</p>
-                          {item.variation && <p className="text-xs text-muted-foreground">{item.variation}</p>}
+                          {(item.variation_label || item.variation) && (
+                            <p className="text-xs text-primary font-medium">
+                              {item.variation_label || item.variation}
+                            </p>
+                          )}
                           {item.sku && <p className="text-xs text-muted-foreground">SKU: {item.sku}</p>}
                         </div>
                       </div>
