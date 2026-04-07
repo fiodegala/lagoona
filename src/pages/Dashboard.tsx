@@ -55,6 +55,8 @@ interface POSStats {
     mixed: { count: number; total: number };
   };
   averageTicket: number;
+  averageProductTicket: number;
+  totalItemsSold: number;
   installmentSales: number;
 }
 
@@ -428,6 +430,10 @@ const Dashboard = () => {
 
     const totalPOSRevenue = filteredPOSSales.reduce((sum, s) => sum + Number(s.total), 0);
     const totalPOSDiscount = filteredPOSSales.reduce((sum, s) => sum + Number(s.discount_amount || 0), 0);
+    const totalItemsSold = filteredPOSSales.reduce((sum, s) => {
+      if (!Array.isArray(s.items)) return sum;
+      return sum + (s.items as any[]).reduce((iSum, item) => iSum + Number(item.quantity || item.qty || 1), 0);
+    }, 0);
 
     return {
       totalSales: filteredPOSSales.length,
@@ -435,6 +441,8 @@ const Dashboard = () => {
       totalDiscount: totalPOSDiscount,
       paymentMethods,
       averageTicket: filteredPOSSales.length > 0 ? totalPOSRevenue / filteredPOSSales.length : 0,
+      averageProductTicket: totalItemsSold > 0 ? totalPOSRevenue / totalItemsSold : 0,
+      totalItemsSold,
       installmentSales,
     };
   }, [filteredPOSSales, isLoading]);
