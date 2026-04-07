@@ -28,6 +28,7 @@ import {
   Megaphone,
   Zap,
   TrendingUp,
+  Eye,
 } from 'lucide-react';
 
 export interface MenuItem {
@@ -71,6 +72,7 @@ export const navItems: MenuItem[] = [
   { icon: Upload, label: 'Importar Dados (BI)', path: '/admin/importar-dados', menuKey: 'import-data', requireAdmin: true },
   { icon: ClipboardList, label: 'Ordens de Serviço', path: '/admin/ordens-servico', menuKey: 'service-orders' },
   { icon: Megaphone, label: 'Comunicados', path: '/admin/comunicados', menuKey: 'announcements', requireAdmin: true },
+  { icon: Eye, label: 'Visual de Loja', path: '/admin/vm', menuKey: 'visual-merchandising' },
   { icon: BookOpen, label: 'Manual', path: '/admin/manual', menuKey: 'manual' },
 ];
 
