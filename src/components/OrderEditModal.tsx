@@ -65,7 +65,7 @@ const OrderEditModal = ({ open, onOpenChange, order, onSaved }: OrderEditModalPr
         name: i.name || i.product_name || 'Produto',
         price: Number(i.price || 0),
         quantity: Number(i.quantity || 1),
-        variation: i.variation || '',
+        variation: i.variation_label || i.variation || '',
         sku: i.sku || '',
         image_url: i.image_url || i.imageUrl || '',
       })) : []);
