@@ -834,6 +834,35 @@ export type Database = {
           },
         ]
       }
+      department_managers: {
+        Row: {
+          created_at: string
+          department_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          department_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          department_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "department_managers_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "service_order_departments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fiscal_requests: {
         Row: {
           created_at: string
@@ -2399,6 +2428,10 @@ export type Database = {
       }
       service_orders: {
         Row: {
+          action_reason: string | null
+          action_type: string | null
+          actioned_at: string | null
+          actioned_by: string | null
           approved_at: string | null
           approved_by: string | null
           assigned_to: string | null
@@ -2414,6 +2447,10 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          action_reason?: string | null
+          action_type?: string | null
+          actioned_at?: string | null
+          actioned_by?: string | null
           approved_at?: string | null
           approved_by?: string | null
           assigned_to?: string | null
@@ -2429,6 +2466,10 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          action_reason?: string | null
+          action_type?: string | null
+          actioned_at?: string | null
+          actioned_by?: string | null
           approved_at?: string | null
           approved_by?: string | null
           assigned_to?: string | null
