@@ -48,7 +48,7 @@ import { Navigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
-type AppRole = 'admin' | 'manager' | 'support' | 'seller';
+type AppRole = 'admin' | 'manager' | 'support' | 'seller' | 'vm_stock' | 'cashier';
 
 interface UserWithRole {
   id: string;
@@ -69,6 +69,8 @@ const roleLabels: Record<AppRole, string> = {
   manager: 'Gerente',
   support: 'Suporte',
   seller: 'Vendedor',
+  vm_stock: 'VM/Estoque',
+  cashier: 'Caixa',
 };
 
 const roleDescriptions: Record<AppRole, string> = {
@@ -76,6 +78,8 @@ const roleDescriptions: Record<AppRole, string> = {
   manager: 'Gerencia produtos, metas e equipe',
   support: 'Acesso a pedidos e clientes',
   seller: 'Apenas vendas no PDV',
+  vm_stock: 'Visual Merchandising e controle de estoque',
+  cashier: 'Operador de caixa no PDV',
 };
 
 const roleColors: Record<AppRole, string> = {
@@ -83,6 +87,8 @@ const roleColors: Record<AppRole, string> = {
   manager: 'bg-primary text-primary-foreground',
   support: 'bg-secondary text-secondary-foreground',
   seller: 'bg-muted text-muted-foreground',
+  vm_stock: 'bg-accent text-accent-foreground',
+  cashier: 'bg-chart-4 text-primary-foreground',
 };
 
 const UsersPage = () => {
