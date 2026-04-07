@@ -16,6 +16,7 @@ import { Label } from '@/components/ui/label';
 import { Plus, Search, Trash2, Edit2, X, Eye, Play, Image as ImageIcon, Video } from 'lucide-react';
 import MultiImageUpload from '@/components/MultiImageUpload';
 import VideoUpload from '@/components/VideoUpload';
+import { auditService } from '@/services/auditService';
 
 interface VMPost {
   id: string;
@@ -162,10 +163,22 @@ const VisualMerchandising = () => {
         const { error } = await supabase.from('vm_posts').update(payload).eq('id', editingPost.id);
         if (error) throw error;
         toast.success('Publicação atualizada!');
+        auditService.log({
+          action: 'update',
+          entity_type: 'vm_post',
+          entity_id: editingPost.id,
+          details: { title: payload.title, category: payload.category, store_id: payload.store_id },
+        });
       } else {
-        const { error } = await supabase.from('vm_posts').insert(payload);
+        const { data: inserted, error } = await supabase.from('vm_posts').insert(payload).select('id').single();
         if (error) throw error;
         toast.success('Publicação criada!');
+        auditService.log({
+          action: 'create',
+          entity_type: 'vm_post',
+          entity_id: inserted?.id,
+          details: { title: payload.title, category: payload.category, store_id: payload.store_id },
+        });
       }
 
       setShowModal(false);
@@ -179,11 +192,18 @@ const VisualMerchandising = () => {
 
   const handleDelete = async (id: string) => {
     if (!confirm('Excluir esta publicação?')) return;
+    const post = posts.find(p => p.id === id);
     const { error } = await supabase.from('vm_posts').delete().eq('id', id);
     if (error) {
       toast.error('Erro ao excluir');
     } else {
       toast.success('Publicação excluída');
+      auditService.log({
+        action: 'delete',
+        entity_type: 'vm_post',
+        entity_id: id,
+        details: { title: post?.title, category: post?.category },
+      });
       loadData();
     }
   };
