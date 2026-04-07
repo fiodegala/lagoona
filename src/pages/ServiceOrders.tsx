@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -12,9 +12,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import { playServiceOrderSound } from '@/lib/alertSounds';
-import { Plus, MessageSquare, Clock, CheckCircle2, XCircle, Search, Filter, Settings2, Pencil, Trash2 } from 'lucide-react';
+import { Plus, MessageSquare, Clock, CheckCircle2, XCircle, Search, Filter, Settings2, Pencil, Trash2, Users, AlertCircle } from 'lucide-react';
 import { format } from 'date-fns';
 
 const PRIORITIES = [
@@ -27,16 +28,18 @@ const STATUSES = [
   { value: 'open', label: 'Aberta', icon: Clock, color: 'bg-blue-100 text-blue-700' },
   { value: 'awaiting_approval', label: 'Aguardando Aprovação', icon: Clock, color: 'bg-yellow-100 text-yellow-700' },
   { value: 'approved', label: 'Aprovada', icon: CheckCircle2, color: 'bg-green-100 text-green-700' },
+  { value: 'in_review', label: 'Em Revisão', icon: AlertCircle, color: 'bg-amber-100 text-amber-700' },
   { value: 'in_progress', label: 'Em Andamento', icon: Clock, color: 'bg-purple-100 text-purple-700' },
   { value: 'completed', label: 'Concluída', icon: CheckCircle2, color: 'bg-emerald-100 text-emerald-700' },
+  { value: 'rejected', label: 'Recusada', icon: XCircle, color: 'bg-red-100 text-red-700' },
   { value: 'cancelled', label: 'Cancelada', icon: XCircle, color: 'bg-destructive/10 text-destructive' },
 ];
 
 const TAB_FILTERS: Record<string, string[]> = {
   all: [],
   pending: ['open', 'awaiting_approval'],
-  in_progress: ['approved', 'in_progress'],
-  done: ['completed', 'cancelled'],
+  in_progress: ['approved', 'in_progress', 'in_review'],
+  done: ['completed', 'rejected', 'cancelled'],
 };
 
 const ServiceOrders = () => {
@@ -51,8 +54,15 @@ const ServiceOrders = () => {
   const [newComment, setNewComment] = useState('');
   const [form, setForm] = useState({ title: '', description: '', department: '', priority: 'normal' });
   const [deptForm, setDeptForm] = useState({ name: '', editingId: '' });
+  
+  // Action modal state (for review/reject with reason)
+  const [actionModal, setActionModal] = useState<{ open: boolean; type: 'in_review' | 'rejected' | ''; orderId: string }>({ open: false, type: '', orderId: '' });
+  const [actionReason, setActionReason] = useState('');
+  
+  // Department manager assignment state
+  const [selectedDeptForManagers, setSelectedDeptForManagers] = useState<string | null>(null);
 
-  // Realtime listener for new service orders
+  // Realtime listener
   useEffect(() => {
     const channel = supabase
       .channel('service-orders-realtime')
@@ -104,8 +114,39 @@ const ServiceOrders = () => {
     },
   });
 
+  // Fetch department managers
+  const { data: deptManagers = [] } = useQuery({
+    queryKey: ['department-managers'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('department_managers')
+        .select('*');
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const profileMap = Object.fromEntries(profiles.map((p: any) => [p.user_id, p.full_name]));
   const selectedOrder = orders.find((o: any) => o.id === showDetail);
+
+  // Build a map: department_id -> user_ids[]
+  const deptManagerMap = useMemo(() => {
+    const map: Record<string, string[]> = {};
+    deptManagers.forEach((dm: any) => {
+      if (!map[dm.department_id]) map[dm.department_id] = [];
+      map[dm.department_id].push(dm.user_id);
+    });
+    return map;
+  }, [deptManagers]);
+
+  // Check if current user is a manager of the department of the selected order
+  const isResponsibleForOrder = (order: any) => {
+    if (isAdmin) return true;
+    const dept = departments.find((d: any) => d.name === order.department);
+    if (!dept) return false;
+    const managers = deptManagerMap[dept.id] || [];
+    return managers.includes(user?.id || '');
+  };
 
   const { data: comments = [] } = useQuery({
     queryKey: ['service-order-comments', showDetail],
@@ -140,8 +181,6 @@ const ServiceOrders = () => {
       const createdDept = form.department;
       setForm({ title: '', description: '', department: '', priority: 'normal' });
       toast.success('Ordem de serviço criada!');
-
-      // Notify admins via push
       try {
         await supabase.functions.invoke('send-push', {
           body: {
@@ -150,19 +189,26 @@ const ServiceOrders = () => {
             type: 'service_order',
           },
         });
-      } catch (e) {
-        // silent - notification is best-effort
-      }
+      } catch {}
     },
     onError: () => toast.error('Erro ao criar OS'),
   });
 
   const updateStatusMutation = useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+    mutationFn: async ({ id, status, reason }: { id: string; status: string; reason?: string }) => {
       const updates: any = { status };
       if (status === 'approved') {
         updates.approved_by = user!.id;
         updates.approved_at = new Date().toISOString();
+        updates.action_type = 'approved';
+        updates.actioned_by = user!.id;
+        updates.actioned_at = new Date().toISOString();
+      }
+      if (status === 'in_review' || status === 'rejected') {
+        updates.action_type = status === 'in_review' ? 'review' : 'rejected';
+        updates.action_reason = reason;
+        updates.actioned_by = user!.id;
+        updates.actioned_at = new Date().toISOString();
       }
       if (status === 'completed') updates.completed_at = new Date().toISOString();
       const { error } = await supabase.from('service_orders').update(updates).eq('id', id);
@@ -171,6 +217,8 @@ const ServiceOrders = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['service-orders'] });
       toast.success('Status atualizado!');
+      setActionModal({ open: false, type: '', orderId: '' });
+      setActionReason('');
     },
   });
 
@@ -228,6 +276,24 @@ const ServiceOrders = () => {
     },
   });
 
+  // Toggle manager for a department
+  const toggleManagerMutation = useMutation({
+    mutationFn: async ({ deptId, userId, add }: { deptId: string; userId: string; add: boolean }) => {
+      if (add) {
+        const { error } = await supabase.from('department_managers').insert({ department_id: deptId, user_id: userId });
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from('department_managers').delete().eq('department_id', deptId).eq('user_id', userId);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['department-managers'] });
+      toast.success('Responsável atualizado!');
+    },
+    onError: () => toast.error('Erro ao atualizar responsável'),
+  });
+
   const filtered = orders.filter((o: any) => {
     const tabStatuses = TAB_FILTERS[activeTab];
     if (tabStatuses && tabStatuses.length > 0 && !tabStatuses.includes(o.status)) return false;
@@ -252,14 +318,42 @@ const ServiceOrders = () => {
     return p ? <Badge className={p.color}>{p.label}</Badge> : <Badge>{priority}</Badge>;
   };
 
-  const getNextStatuses = (current: string) => {
+  const getNextActions = (current: string) => {
+    // Actions that require a reason
+    const actionsWithReason = ['in_review', 'rejected'];
+    // All possible next statuses
     const flow: Record<string, string[]> = {
-      open: ['awaiting_approval', 'cancelled'],
-      awaiting_approval: ['approved', 'cancelled'],
+      open: ['approved', 'in_review', 'rejected', 'cancelled'],
+      awaiting_approval: ['approved', 'in_review', 'rejected', 'cancelled'],
+      in_review: ['approved', 'rejected', 'cancelled'],
       approved: ['in_progress', 'cancelled'],
       in_progress: ['completed', 'cancelled'],
     };
-    return flow[current] || [];
+    return (flow[current] || []).map(s => ({
+      status: s,
+      requiresReason: actionsWithReason.includes(s),
+    }));
+  };
+
+  const handleAction = (orderId: string, status: string, requiresReason: boolean) => {
+    if (requiresReason) {
+      setActionModal({ open: true, type: status as 'in_review' | 'rejected', orderId });
+      setActionReason('');
+    } else {
+      updateStatusMutation.mutate({ id: orderId, status });
+    }
+  };
+
+  const confirmAction = () => {
+    if (!actionReason.trim()) {
+      toast.error('Informe o motivo da ação.');
+      return;
+    }
+    updateStatusMutation.mutate({
+      id: actionModal.orderId,
+      status: actionModal.type,
+      reason: actionReason.trim(),
+    });
   };
 
   const renderOrdersList = () => {
@@ -267,31 +361,45 @@ const ServiceOrders = () => {
     if (filtered.length === 0) return <Card><CardContent className="py-12 text-center text-muted-foreground">Nenhuma ordem de serviço encontrada.</CardContent></Card>;
     return (
       <div className="space-y-3">
-        {filtered.map((order: any) => (
-          <Card key={order.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setShowDetail(order.id)}>
-            <CardContent className="p-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <div className="space-y-1">
-                  <p className="font-semibold">{order.title}</p>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <span>{order.department}</span>
-                    <span>•</span>
-                    <span>{profileMap[order.created_by] || 'Usuário'}</span>
-                    <span>•</span>
-                    <span>{format(new Date(order.created_at), 'dd/MM/yyyy HH:mm')}</span>
+        {filtered.map((order: any) => {
+          const dept = departments.find((d: any) => d.name === order.department);
+          const managers = dept ? (deptManagerMap[dept.id] || []) : [];
+          const managerNames = managers.map(uid => profileMap[uid]).filter(Boolean);
+
+          return (
+            <Card key={order.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setShowDetail(order.id)}>
+              <CardContent className="p-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div className="space-y-1">
+                    <p className="font-semibold">{order.title}</p>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
+                      <span>{order.department}</span>
+                      <span>•</span>
+                      <span>{profileMap[order.created_by] || 'Usuário'}</span>
+                      <span>•</span>
+                      <span>{format(new Date(order.created_at), 'dd/MM/yyyy HH:mm')}</span>
+                      {managerNames.length > 0 && (
+                        <>
+                          <span>•</span>
+                          <span className="flex items-center gap-1"><Users className="h-3 w-3" />{managerNames.join(', ')}</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {getPriorityBadge(order.priority)}
+                    {getStatusBadge(order.status)}
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  {getPriorityBadge(order.priority)}
-                  {getStatusBadge(order.status)}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
     );
   };
+
+  const selectedDeptManagers = selectedDeptForManagers ? (deptManagerMap[selectedDeptForManagers] || []) : [];
 
   return (
     <AdminLayout>
@@ -313,7 +421,6 @@ const ServiceOrders = () => {
           </div>
         </div>
 
-        {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList>
             <TabsTrigger value="all">Todas ({countByTab('all')})</TabsTrigger>
@@ -322,7 +429,6 @@ const ServiceOrders = () => {
             <TabsTrigger value="done">Concluídas ({countByTab('done')})</TabsTrigger>
           </TabsList>
 
-          {/* Filters */}
           <div className="flex flex-col sm:flex-row gap-3 mt-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -392,16 +498,54 @@ const ServiceOrders = () => {
                       <> • Aprovado por <strong>{profileMap[selectedOrder.approved_by] || 'Admin'}</strong></>
                     )}
                   </div>
+
+                  {/* Show action reason if exists */}
+                  {(selectedOrder as any).action_reason && (
+                    <Card className="border-amber-200 bg-amber-50">
+                      <CardContent className="p-3 text-sm">
+                        <p className="font-semibold text-amber-800">
+                          {(selectedOrder as any).action_type === 'review' ? '📝 Motivo da revisão:' : '❌ Motivo da recusa:'}
+                        </p>
+                        <p className="text-amber-700 mt-1">{(selectedOrder as any).action_reason}</p>
+                        <p className="text-xs text-amber-600 mt-1">
+                          Por {profileMap[(selectedOrder as any).actioned_by] || 'Responsável'} em {(selectedOrder as any).actioned_at ? format(new Date((selectedOrder as any).actioned_at), 'dd/MM/yyyy HH:mm') : ''}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Show responsible users */}
+                  {(() => {
+                    const dept = departments.find((d: any) => d.name === selectedOrder.department);
+                    const managers = dept ? (deptManagerMap[dept.id] || []) : [];
+                    const managerNames = managers.map(uid => profileMap[uid]).filter(Boolean);
+                    if (managerNames.length === 0) return null;
+                    return (
+                      <div className="text-sm flex items-center gap-2">
+                        <Users className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-muted-foreground">Responsáveis:</span>
+                        <strong>{managerNames.join(', ')}</strong>
+                      </div>
+                    );
+                  })()}
+
                   <Card><CardContent className="p-4 whitespace-pre-wrap text-sm">{selectedOrder.description}</CardContent></Card>
 
-                  {isAdmin && getNextStatuses(selectedOrder.status).length > 0 && (
-                    <div className="flex gap-2">
-                      <span className="text-sm font-medium self-center">Alterar status:</span>
-                      {getNextStatuses(selectedOrder.status).map((s) => {
-                        const st = STATUSES.find((x) => x.value === s);
+                  {/* Actions for responsible users */}
+                  {isResponsibleForOrder(selectedOrder) && getNextActions(selectedOrder.status).length > 0 && (
+                    <div className="flex flex-wrap gap-2 items-center">
+                      <span className="text-sm font-medium">Ações:</span>
+                      {getNextActions(selectedOrder.status).map(({ status, requiresReason }) => {
+                        const st = STATUSES.find((x) => x.value === status);
+                        const variant = status === 'rejected' ? 'destructive' as const : status === 'approved' ? 'default' as const : 'outline' as const;
                         return (
-                          <Button key={s} size="sm" variant="outline" onClick={() => updateStatusMutation.mutate({ id: selectedOrder.id, status: s })}>
-                            {st?.label || s}
+                          <Button 
+                            key={status} 
+                            size="sm" 
+                            variant={variant}
+                            onClick={() => handleAction(selectedOrder.id, status, requiresReason)}
+                          >
+                            {st?.label || status}
                           </Button>
                         );
                       })}
@@ -436,11 +580,44 @@ const ServiceOrders = () => {
           </DialogContent>
         </Dialog>
 
-        {/* Department Manager Dialog */}
-        <Dialog open={showDeptManager} onOpenChange={setShowDeptManager}>
+        {/* Action Reason Modal */}
+        <Dialog open={actionModal.open} onOpenChange={(open) => { if (!open) { setActionModal({ open: false, type: '', orderId: '' }); setActionReason(''); } }}>
           <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>
+                {actionModal.type === 'in_review' ? '📝 Revisar Ordem de Serviço' : '❌ Recusar Ordem de Serviço'}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label>{actionModal.type === 'in_review' ? 'Motivo da revisão *' : 'Motivo da recusa *'}</Label>
+                <Textarea
+                  value={actionReason}
+                  onChange={(e) => setActionReason(e.target.value)}
+                  placeholder={actionModal.type === 'in_review' ? 'Descreva o que precisa ser revisado...' : 'Explique o motivo da recusa...'}
+                  rows={4}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => { setActionModal({ open: false, type: '', orderId: '' }); setActionReason(''); }}>Cancelar</Button>
+              <Button 
+                variant={actionModal.type === 'rejected' ? 'destructive' : 'default'}
+                onClick={confirmAction} 
+                disabled={!actionReason.trim() || updateStatusMutation.isPending}
+              >
+                {updateStatusMutation.isPending ? 'Salvando...' : actionModal.type === 'in_review' ? 'Enviar para Revisão' : 'Recusar OS'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Department Manager Dialog */}
+        <Dialog open={showDeptManager} onOpenChange={(open) => { setShowDeptManager(open); if (!open) setSelectedDeptForManagers(null); }}>
+          <DialogContent className="max-w-lg">
             <DialogHeader><DialogTitle>Gerenciar Departamentos</DialogTitle></DialogHeader>
             <div className="space-y-4">
+              {/* Add/edit department */}
               <div className="flex gap-2">
                 <Input
                   value={deptForm.name}
@@ -455,22 +632,72 @@ const ServiceOrders = () => {
                   <Button variant="ghost" onClick={() => setDeptForm({ name: '', editingId: '' })}>Cancelar</Button>
                 )}
               </div>
-              <div className="space-y-2 max-h-60 overflow-y-auto">
-                {departments.map((dept: any) => (
-                  <div key={dept.id} className="flex items-center justify-between bg-muted/50 rounded-lg px-3 py-2">
-                    <span className="text-sm font-medium">{dept.name}</span>
-                    <div className="flex gap-1">
-                      <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setDeptForm({ name: dept.name, editingId: dept.id })}>
-                        <Pencil className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" onClick={() => deleteDeptMutation.mutate(dept.id)}>
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
+
+              {/* Departments list */}
+              <div className="space-y-2 max-h-40 overflow-y-auto">
+                {departments.map((dept: any) => {
+                  const managers = deptManagerMap[dept.id] || [];
+                  const isSelected = selectedDeptForManagers === dept.id;
+                  return (
+                    <div key={dept.id} className={`rounded-lg px-3 py-2 ${isSelected ? 'bg-primary/10 border border-primary/30' : 'bg-muted/50'}`}>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium">{dept.name}</span>
+                          <Badge variant="outline" className="text-xs">{managers.length} responsável(eis)</Badge>
+                        </div>
+                        <div className="flex gap-1">
+                          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setSelectedDeptForManagers(isSelected ? null : dept.id)} title="Gerenciar responsáveis">
+                            <Users className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setDeptForm({ name: dept.name, editingId: dept.id })}>
+                            <Pencil className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" onClick={() => deleteDeptMutation.mutate(dept.id)}>
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </div>
+                      {managers.length > 0 && (
+                        <div className="mt-1 text-xs text-muted-foreground">
+                          {managers.map(uid => profileMap[uid]).filter(Boolean).join(', ')}
+                        </div>
+                      )}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
                 {departments.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">Nenhum departamento cadastrado.</p>}
               </div>
+
+              {/* Manager assignment panel */}
+              {selectedDeptForManagers && (
+                <div className="border rounded-lg p-4 space-y-3">
+                  <h4 className="font-semibold text-sm flex items-center gap-2">
+                    <Users className="h-4 w-4" />
+                    Responsáveis: {departments.find((d: any) => d.id === selectedDeptForManagers)?.name}
+                  </h4>
+                  <p className="text-xs text-muted-foreground">Selecione os usuários responsáveis por este departamento. Eles poderão aprovar, revisar ou recusar as OS.</p>
+                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                    {profiles.map((p: any) => {
+                      const isManager = selectedDeptManagers.includes(p.user_id);
+                      return (
+                        <label key={p.user_id} className="flex items-center gap-3 p-2 rounded hover:bg-muted/50 cursor-pointer">
+                          <Checkbox
+                            checked={isManager}
+                            onCheckedChange={(checked) => {
+                              toggleManagerMutation.mutate({
+                                deptId: selectedDeptForManagers,
+                                userId: p.user_id,
+                                add: !!checked,
+                              });
+                            }}
+                          />
+                          <span className="text-sm">{p.full_name}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           </DialogContent>
         </Dialog>
