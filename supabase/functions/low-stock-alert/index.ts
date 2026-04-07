@@ -142,10 +142,93 @@ serve(async (req) => {
       ? `${product.name} (${variationLabel})`
       : product.name;
 
+    // Fetch detailed stock per variation per store for this product
+    let detailedStockText = "";
+    try {
+      // Get all variations for this product
+      const { data: allVariations } = await supabase
+        .from("product_variations")
+        .select("id")
+        .eq("product_id", product_id);
+
+      const variationIds = (allVariations || []).map((v: any) => v.id);
+      
+      // Get all stock rows for this product (all variations + base)
+      const { data: allStockRows } = await supabase
+        .from("store_stock")
+        .select("quantity, variation_id, store_id")
+        .eq("product_id", product_id);
+
+      // Get store names
+      const storeIds = [...new Set((allStockRows || []).map((r: any) => r.store_id))];
+      const storeNameMap: Record<string, string> = {};
+      if (storeIds.length > 0) {
+        const { data: stores } = await supabase
+          .from("stores")
+          .select("id, name")
+          .in("id", storeIds);
+        for (const s of (stores || [])) {
+          storeNameMap[s.id] = s.name;
+        }
+      }
+
+      // Get variation labels for all variations
+      const varLabelMap: Record<string, string> = {};
+      if (variationIds.length > 0) {
+        for (const vid of variationIds) {
+          const { data: vvData } = await supabase
+            .from("product_variation_values")
+            .select("attribute_value_id")
+            .eq("variation_id", vid);
+          if (vvData && vvData.length > 0) {
+            const avIds = vvData.map((v: any) => v.attribute_value_id);
+            const { data: avData } = await supabase
+              .from("product_attribute_values")
+              .select("value")
+              .in("id", avIds);
+            if (avData) {
+              varLabelMap[vid] = avData.map((a: any) => a.value).join(" / ");
+            }
+          }
+        }
+      }
+
+      // Group stock by variation
+      const stockByVariation: Record<string, { label: string; stores: { name: string; qty: number }[]; total: number }> = {};
+
+      for (const row of (allStockRows || [])) {
+        const vId = row.variation_id || "_base_";
+        if (!stockByVariation[vId]) {
+          const label = vId === "_base_" ? "Sem variação" : (varLabelMap[vId] || vId);
+          stockByVariation[vId] = { label, stores: [], total: 0 };
+        }
+        const storeName = storeNameMap[row.store_id] || "Loja";
+        const qty = row.quantity || 0;
+        stockByVariation[vId].stores.push({ name: storeName, qty });
+        stockByVariation[vId].total += qty;
+      }
+
+      // Build detailed text
+      const lines: string[] = [];
+      for (const [, info] of Object.entries(stockByVariation)) {
+        const storeDetails = info.stores
+          .filter((s) => s.qty > 0 || info.stores.length <= 5)
+          .map((s) => `   • ${s.name}: ${s.qty} un.`)
+          .join("\n");
+        lines.push(`▸ *${info.label}* — Total: *${info.total} un.*\n${storeDetails}`);
+      }
+
+      if (lines.length > 0) {
+        detailedStockText = `\n\n📋 *Detalhamento por variação:*\n\n${lines.join("\n\n")}`;
+      }
+    } catch (detailErr) {
+      console.error("Error fetching detailed stock:", detailErr);
+    }
+
     const message = `⚠️ *Alerta de Estoque Baixo*\n\n` +
       `O produto *${productDesc}* está com estoque abaixo do mínimo configurado.\n\n` +
       `📦 Estoque atual: *${totalStock} un.*\n` +
-      `📉 Mínimo configurado: *${minStock} un.*\n\n` +
+      `📉 Mínimo configurado: *${minStock} un.*${detailedStockText}\n\n` +
       `Verifique a necessidade de reposição! 🔄`;
 
     const zapiUrl = `https://api.z-api.io/instances/${instanceId}/token/${instanceToken}/send-text`;
