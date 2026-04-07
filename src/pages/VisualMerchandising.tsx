@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { Plus, Search, Trash2, Edit2, X, Eye, Play, Image as ImageIcon, Video } from 'lucide-react';
+import { Plus, Search, Trash2, Edit2, X, Eye, Play, Image as ImageIcon, Video, ChevronLeft, ChevronRight } from 'lucide-react';
 import MultiImageUpload from '@/components/MultiImageUpload';
 import VideoUpload from '@/components/VideoUpload';
 import { auditService } from '@/services/auditService';
@@ -69,9 +69,24 @@ const VisualMerchandising = () => {
   const [formVideoUrl, setFormVideoUrl] = useState('');
   const [saving, setSaving] = useState(false);
 
-  // Lightbox
-  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
-  const [lightboxType, setLightboxType] = useState<'image' | 'video'>('image');
+  // Lightbox with navigation
+  const [lightboxItems, setLightboxItems] = useState<{ url: string; type: 'image' | 'video' }[]>([]);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
+  const lightboxOpen = lightboxItems.length > 0;
+  const lightboxCurrent = lightboxItems[lightboxIndex] || null;
+
+  const openLightbox = (post: VMPost, url: string) => {
+    const items: { url: string; type: 'image' | 'video' }[] = [
+      ...post.images.map(u => ({ url: u, type: 'image' as const })),
+      ...post.videos.map(u => ({ url: u, type: 'video' as const })),
+    ];
+    const idx = items.findIndex(i => i.url === url);
+    setLightboxItems(items);
+    setLightboxIndex(idx >= 0 ? idx : 0);
+  };
+  const closeLightbox = () => { setLightboxItems([]); setLightboxIndex(0); };
+  const lightboxPrev = () => setLightboxIndex(i => i === 0 ? lightboxItems.length - 1 : i - 1);
+  const lightboxNext = () => setLightboxIndex(i => i === lightboxItems.length - 1 ? 0 : i + 1);
 
   // Active tab
   const [activeTab, setActiveTab] = useState('gallery');
