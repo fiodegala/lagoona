@@ -391,6 +391,7 @@ const App = () => (
                 }
               />
 
+              <Route path="/admin/service-orders" element={<Navigate to="/admin/ordens-servico" replace />} />
               <Route
                 path="/admin/ordens-servico"
                 element={
