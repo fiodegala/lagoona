@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { playServiceOrderSound, playTransferAlertSound, playNotificationSound, playAnnouncementSound } from '@/lib/alertSounds';
+import { playServiceOrderSound, playTransferAlertSound } from '@/lib/alertSounds';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { AlertTriangle, ClipboardList, Megaphone, Clock, Package, ArrowRight } from 'lucide-react';
+import { AlertTriangle, ClipboardList, Clock, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface PendingItem {
@@ -21,7 +21,7 @@ interface PendingItem {
 const SNOOZE_MINUTES = 5;
 
 const GlobalNotificationPopups = () => {
-  const { user, isAdmin, isManager, userStoreId, accessibleStoreIds } = useAuth();
+  const { user, isAdmin, userStoreId, accessibleStoreIds } = useAuth();
   const [items, setItems] = useState<PendingItem[]>([]);
   const [currentItem, setCurrentItem] = useState<PendingItem | null>(null);
   const [showPopup, setShowPopup] = useState(false);
