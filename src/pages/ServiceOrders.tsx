@@ -385,8 +385,7 @@ const ServiceOrders = () => {
       <div className="space-y-3">
         {filtered.map((order: any) => {
           const dept = departments.find((d: any) => d.name === order.department);
-          const managers = dept ? (deptManagerMap[dept.id] || []) : [];
-          const managerNames = managers.map(uid => profileMap[uid]).filter(Boolean);
+          const managerNames = dept ? getManagerNames(dept.id) : [];
 
           return (
             <Card key={order.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setShowDetail(order.id)}>
