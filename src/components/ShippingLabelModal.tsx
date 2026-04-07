@@ -248,8 +248,8 @@ const ShippingLabelModal = ({ open, onOpenChange, order }: ShippingLabelProps) =
                           <div style={{ fontSize: '12px', fontWeight: 'bold', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {item.name || item.product_name || 'Produto'}
                           </div>
-                          {item.variation && (
-                            <div style={{ fontSize: '10px', color: '#666' }}>{item.variation}</div>
+                          {(item.variation_label || item.variation) && (
+                            <div style={{ fontSize: '10px', color: '#666' }}>{item.variation_label || item.variation}</div>
                           )}
                           {item.sku && (
                             <div style={{ fontSize: '10px', color: '#999' }}>SKU: {item.sku}</div>
