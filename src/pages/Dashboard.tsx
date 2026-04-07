@@ -1446,7 +1446,23 @@ const Dashboard = () => {
                   </CardContent>
                 </Card>
 
-                <Card className="card-elevated border-l-4 border-l-destructive">
+                <Card className="card-elevated border-l-4 border-l-primary">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Ticket Médio por Produto</p>
+                        <p className="text-2xl font-bold mt-1">{formatCurrency(posStats?.averageProductTicket || 0)}</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {posStats?.totalItemsSold || 0} itens vendidos
+                        </p>
+                      </div>
+                      <div className="bg-primary/10 p-3 rounded-xl">
+                        <Package className="h-6 w-6 text-primary" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                       <div>
