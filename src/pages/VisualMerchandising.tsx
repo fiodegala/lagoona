@@ -192,11 +192,18 @@ const VisualMerchandising = () => {
 
   const handleDelete = async (id: string) => {
     if (!confirm('Excluir esta publicação?')) return;
+    const post = posts.find(p => p.id === id);
     const { error } = await supabase.from('vm_posts').delete().eq('id', id);
     if (error) {
       toast.error('Erro ao excluir');
     } else {
       toast.success('Publicação excluída');
+      auditService.log({
+        action: 'delete',
+        entity_type: 'vm_post',
+        entity_id: id,
+        details: { title: post?.title, category: post?.category },
+      });
       loadData();
     }
   };
