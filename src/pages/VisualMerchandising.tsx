@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from 'react';
+import AdminLayout from '@/components/AdminLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -231,13 +232,16 @@ const VisualMerchandising = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center p-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-      </div>
+      <AdminLayout>
+        <div className="flex items-center justify-center p-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+        </div>
+      </AdminLayout>
     );
   }
 
   return (
+    <AdminLayout>
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
@@ -531,6 +535,7 @@ const VisualMerchandising = () => {
         </DialogContent>
       </Dialog>
     </div>
+    </AdminLayout>
   );
 };
 
