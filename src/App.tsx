@@ -449,6 +449,14 @@ const App = () => (
                   </ProtectedRoute>
                 }
               />
+              <Route
+                path="/admin/vm"
+                element={
+                  <ProtectedRoute>
+                    <VisualMerchandising />
+                  </ProtectedRoute>
+                }
+              />
               {/* Legacy redirects for admin routes */}
               <Route path="/products" element={<Navigate to="/admin/products" replace />} />
               <Route path="/categories" element={<Navigate to="/admin/categories" replace />} />

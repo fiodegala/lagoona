@@ -458,7 +458,7 @@ const VisualMerchandising = () => {
             <div>
               <Label className="flex items-center gap-1 mb-2"><ImageIcon className="h-4 w-4" /> Fotos</Label>
               <MultiImageUpload
-                images={formImages}
+                values={formImages}
                 onChange={setFormImages}
                 bucket="vm-media"
                 folder="images"
