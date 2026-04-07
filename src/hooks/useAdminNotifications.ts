@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { playNotificationSound, playTransferAlertSound } from '@/lib/alertSounds';
+import { playNotificationSound, playTransferAlertSound, playServiceOrderSound, playAnnouncementSound } from '@/lib/alertSounds';
 
-export type NotificationType = 'new_order' | 'abandoned_cart' | 'pos_sale' | 'stock_transfer';
+export type NotificationType = 'new_order' | 'abandoned_cart' | 'pos_sale' | 'stock_transfer' | 'service_order' | 'announcement';
 
 export interface AdminNotification {
   id: string;
@@ -33,6 +33,10 @@ export function useAdminNotifications({ isAdmin, isOnlineStore }: NotificationOp
     // Play differentiated sound by type
     if (notif.type === 'stock_transfer') {
       playTransferAlertSound();
+    } else if (notif.type === 'service_order') {
+      playServiceOrderSound();
+    } else if (notif.type === 'announcement') {
+      playAnnouncementSound();
     } else {
       playNotificationSound();
     }
