@@ -239,6 +239,19 @@ const ServiceOrders = () => {
     },
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('service_orders').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['service-orders'] });
+      setShowDetail(null);
+      toast.success('Ordem de serviço excluída!');
+    },
+    onError: () => toast.error('Erro ao excluir OS'),
+  });
+
   const saveDeptMutation = useMutation({
     mutationFn: async () => {
       if (deptForm.editingId) {
@@ -389,6 +402,21 @@ const ServiceOrders = () => {
                   <div className="flex items-center gap-2">
                     {getPriorityBadge(order.priority)}
                     {getStatusBadge(order.status)}
+                    {isAdmin && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-destructive hover:text-destructive"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (confirm('Tem certeza que deseja excluir esta ordem de serviço?')) {
+                            deleteMutation.mutate(order.id);
+                          }
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -484,7 +512,23 @@ const ServiceOrders = () => {
             {selectedOrder && (
               <>
                 <DialogHeader>
-                  <DialogTitle className="flex items-center gap-2">{selectedOrder.title}</DialogTitle>
+                  <div className="flex items-center justify-between gap-2">
+                    <DialogTitle className="flex items-center gap-2">{selectedOrder.title}</DialogTitle>
+                    {isAdmin && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-destructive hover:text-destructive"
+                        onClick={() => {
+                          if (confirm('Tem certeza que deseja excluir esta ordem de serviço?')) {
+                            deleteMutation.mutate(selectedOrder.id);
+                          }
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
                 </DialogHeader>
                 <div className="space-y-4">
                   <div className="flex flex-wrap gap-2">
