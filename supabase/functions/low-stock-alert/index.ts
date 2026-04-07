@@ -14,7 +14,7 @@ serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { product_id, variation_id, new_quantity } = body;
+    const { product_id, variation_id, new_quantity, override_phone } = body;
 
     if (!product_id) {
       return new Response(
@@ -96,7 +96,7 @@ serve(async (req) => {
       .eq("key", "low_stock_alert_phone")
       .maybeSingle();
 
-    const alertPhone = (configData?.value as any)?.phone;
+    const alertPhone = override_phone || (configData?.value as any)?.phone;
 
     if (!alertPhone) {
       console.log("No alert phone configured, skipping notification");
