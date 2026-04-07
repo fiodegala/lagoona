@@ -3132,7 +3132,13 @@ export type Database = {
     }
     Enums: {
       api_key_status: "active" | "revoked" | "expired"
-      app_role: "admin" | "manager" | "support" | "seller"
+      app_role:
+        | "admin"
+        | "manager"
+        | "support"
+        | "seller"
+        | "vm_stock"
+        | "cashier"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -3261,7 +3267,14 @@ export const Constants = {
   public: {
     Enums: {
       api_key_status: ["active", "revoked", "expired"],
-      app_role: ["admin", "manager", "support", "seller"],
+      app_role: [
+        "admin",
+        "manager",
+        "support",
+        "seller",
+        "vm_stock",
+        "cashier",
+      ],
     },
   },
 } as const
