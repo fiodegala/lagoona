@@ -134,10 +134,19 @@ const ServiceOrders = () => {
     const map: Record<string, string[]> = {};
     deptManagers.forEach((dm: any) => {
       if (!map[dm.department_id]) map[dm.department_id] = [];
-      map[dm.department_id].push(dm.user_id);
+      if (!map[dm.department_id].includes(dm.user_id)) {
+        map[dm.department_id].push(dm.user_id);
+      }
     });
     return map;
   }, [deptManagers]);
+
+  // Helper to get unique manager names for a department
+  const getManagerNames = (deptId: string) => {
+    const managers = deptManagerMap[deptId] || [];
+    const names = managers.map(uid => profileMap[uid]).filter(Boolean);
+    return [...new Set(names)]; // deduplicate same name from multiple user_ids
+  };
 
   // Check if current user is a manager of the department of the selected order
   const isResponsibleForOrder = (order: any) => {
@@ -376,8 +385,7 @@ const ServiceOrders = () => {
       <div className="space-y-3">
         {filtered.map((order: any) => {
           const dept = departments.find((d: any) => d.name === order.department);
-          const managers = dept ? (deptManagerMap[dept.id] || []) : [];
-          const managerNames = managers.map(uid => profileMap[uid]).filter(Boolean);
+          const managerNames = dept ? getManagerNames(dept.id) : [];
 
           return (
             <Card key={order.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setShowDetail(order.id)}>
@@ -561,8 +569,7 @@ const ServiceOrders = () => {
                   {/* Show responsible users */}
                   {(() => {
                     const dept = departments.find((d: any) => d.name === selectedOrder.department);
-                    const managers = dept ? (deptManagerMap[dept.id] || []) : [];
-                    const managerNames = managers.map(uid => profileMap[uid]).filter(Boolean);
+                    const managerNames = dept ? getManagerNames(dept.id) : [];
                     if (managerNames.length === 0) return null;
                     return (
                       <div className="text-sm flex items-center gap-2">
