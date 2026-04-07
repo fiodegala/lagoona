@@ -16,6 +16,7 @@ import { Label } from '@/components/ui/label';
 import { Plus, Search, Trash2, Edit2, X, Eye, Play, Image as ImageIcon, Video } from 'lucide-react';
 import MultiImageUpload from '@/components/MultiImageUpload';
 import VideoUpload from '@/components/VideoUpload';
+import { auditService } from '@/services/auditService';
 
 interface VMPost {
   id: string;
