@@ -2914,6 +2914,74 @@ export type Database = {
         }
         Relationships: []
       }
+      vm_editors: {
+        Row: {
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      vm_posts: {
+        Row: {
+          category: string | null
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          images: Json
+          is_active: boolean
+          store_id: string | null
+          title: string
+          updated_at: string
+          videos: Json
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          images?: Json
+          is_active?: boolean
+          store_id?: string | null
+          title: string
+          updated_at?: string
+          videos?: Json
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          images?: Json
+          is_active?: boolean
+          store_id?: string | null
+          title?: string
+          updated_at?: string
+          videos?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vm_posts_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       whatsapp_logs: {
         Row: {
           created_at: string
@@ -3051,6 +3119,7 @@ export type Database = {
       }
       is_admin_or_manager: { Args: { _user_id: string }; Returns: boolean }
       is_online_store_user: { Args: { _user_id: string }; Returns: boolean }
+      is_vm_editor: { Args: { _user_id: string }; Returns: boolean }
       process_stock_transfer: {
         Args: { _action: string; _transfer_id: string; _user_id: string }
         Returns: Json

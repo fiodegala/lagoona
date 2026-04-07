@@ -52,6 +52,7 @@ const DatabaseExport = lazy(() => import("./pages/DatabaseExport"));
 const StockDistribution = lazy(() => import("./pages/StockDistribution"));
 const ABCCurve = lazy(() => import("./pages/ABCCurve"));
 const CashRegisterReport = lazy(() => import("./pages/CashRegisterReport"));
+const VisualMerchandising = lazy(() => import("./pages/VisualMerchandising"));
 
 // Lazy-loaded Store Pages
 const HomePage = lazy(() => import("./pages/store/HomePage"));

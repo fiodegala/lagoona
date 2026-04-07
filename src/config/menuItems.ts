@@ -28,6 +28,7 @@ import {
   Megaphone,
   Zap,
   TrendingUp,
+  Eye,
 } from 'lucide-react';
 
 export interface MenuItem {
