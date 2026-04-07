@@ -15,13 +15,14 @@ Deno.serve(async (req) => {
       });
     }
 
-    const anonClient = createClient(
+    const adminClient = createClient(
       Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_ANON_KEY")!,
-      { global: { headers: { Authorization: authHeader } } }
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    const { data: { user: callingUser }, error: authError } = await anonClient.auth.getUser();
+    // Extract JWT token and get user
+    const token = authHeader.replace("Bearer ", "");
+    const { data: { user: callingUser }, error: authError } = await adminClient.auth.getUser(token);
     if (authError || !callingUser) {
       return new Response(JSON.stringify({ error: "Não autorizado" }), {
         status: 401,
@@ -30,7 +31,7 @@ Deno.serve(async (req) => {
     }
 
     // Check admin role
-    const { data: roleData } = await anonClient
+    const { data: roleData } = await adminClient
       .from("user_roles")
       .select("role")
       .eq("user_id", callingUser.id)
@@ -50,11 +51,6 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
-    const adminClient = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
 
     const emails: Record<string, string> = {};
 
