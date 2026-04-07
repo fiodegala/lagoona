@@ -55,6 +55,8 @@ interface POSStats {
     mixed: { count: number; total: number };
   };
   averageTicket: number;
+  averageProductTicket: number;
+  totalItemsSold: number;
   installmentSales: number;
 }
 
@@ -428,6 +430,10 @@ const Dashboard = () => {
 
     const totalPOSRevenue = filteredPOSSales.reduce((sum, s) => sum + Number(s.total), 0);
     const totalPOSDiscount = filteredPOSSales.reduce((sum, s) => sum + Number(s.discount_amount || 0), 0);
+    const totalItemsSold = filteredPOSSales.reduce((sum, s) => {
+      if (!Array.isArray(s.items)) return sum;
+      return sum + (s.items as any[]).reduce((iSum, item) => iSum + Number(item.quantity || item.qty || 1), 0);
+    }, 0);
 
     return {
       totalSales: filteredPOSSales.length,
@@ -435,6 +441,8 @@ const Dashboard = () => {
       totalDiscount: totalPOSDiscount,
       paymentMethods,
       averageTicket: filteredPOSSales.length > 0 ? totalPOSRevenue / filteredPOSSales.length : 0,
+      averageProductTicket: totalItemsSold > 0 ? totalPOSRevenue / totalItemsSold : 0,
+      totalItemsSold,
       installmentSales,
     };
   }, [filteredPOSSales, isLoading]);
@@ -1433,6 +1441,23 @@ const Dashboard = () => {
                       </div>
                       <div className="bg-warning/10 p-3 rounded-xl">
                         <TrendingUp className="h-6 w-6 text-warning" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="card-elevated border-l-4 border-l-primary">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Ticket Médio por Produto</p>
+                        <p className="text-2xl font-bold mt-1">{formatCurrency(posStats?.averageProductTicket || 0)}</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {posStats?.totalItemsSold || 0} itens vendidos
+                        </p>
+                      </div>
+                      <div className="bg-primary/10 p-3 rounded-xl">
+                        <Package className="h-6 w-6 text-primary" />
                       </div>
                     </div>
                   </CardContent>
