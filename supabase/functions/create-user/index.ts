@@ -15,14 +15,15 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Verify the calling user is an admin
-    const anonClient = createClient(
+    // Use service role client for all operations (avoids session-not-found issues)
+    const adminClient = createClient(
       Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_ANON_KEY")!,
-      { global: { headers: { Authorization: authHeader } } }
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    const { data: { user: callingUser }, error: authError } = await anonClient.auth.getUser();
+    // Validate calling user from JWT token
+    const token = authHeader.replace("Bearer ", "");
+    const { data: { user: callingUser }, error: authError } = await adminClient.auth.getUser(token);
     if (authError || !callingUser) {
       return new Response(JSON.stringify({ error: "Não autorizado" }), {
         status: 401,
@@ -31,7 +32,7 @@ Deno.serve(async (req) => {
     }
 
     // Check admin role
-    const { data: roleData } = await anonClient
+    const { data: roleData } = await adminClient
       .from("user_roles")
       .select("role")
       .eq("user_id", callingUser.id)
@@ -48,11 +49,7 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const { action, email, password, fullName, role, store_id, allowed_menus, user_id: targetUserId, new_password } = body;
 
-    // Use service role client for admin operations
-    const adminClient = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
+    // adminClient already created above
 
     // Handle password update action
     if (action === "update-password") {
