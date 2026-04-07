@@ -569,8 +569,7 @@ const ServiceOrders = () => {
                   {/* Show responsible users */}
                   {(() => {
                     const dept = departments.find((d: any) => d.name === selectedOrder.department);
-                    const managers = dept ? (deptManagerMap[dept.id] || []) : [];
-                    const managerNames = managers.map(uid => profileMap[uid]).filter(Boolean);
+                    const managerNames = dept ? getManagerNames(dept.id) : [];
                     if (managerNames.length === 0) return null;
                     return (
                       <div className="text-sm flex items-center gap-2">
