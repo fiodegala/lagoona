@@ -14,7 +14,7 @@ serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { product_id, variation_id, new_quantity } = body;
+    const { product_id, variation_id, new_quantity, override_phone } = body;
 
     if (!product_id) {
       return new Response(
