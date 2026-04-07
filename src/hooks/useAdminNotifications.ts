@@ -124,6 +124,36 @@ export function useAdminNotifications({ isAdmin, isOnlineStore }: NotificationOp
       channels.push(transfersChannel);
     }
 
+    // Service Orders — for all admin users
+    const osChannel = supabase
+      .channel('admin-os-notifications')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'service_orders' }, (payload) => {
+        const os = payload.new as any;
+        addNotification({
+          type: 'service_order',
+          title: '📋 Nova Ordem de Serviço',
+          message: `${os.title || 'Nova OS'} — ${os.department || ''}`,
+          entityId: os.id,
+        });
+      })
+      .subscribe();
+    channels.push(osChannel);
+
+    // Announcements — for all admin users
+    const announcementChannel = supabase
+      .channel('admin-announcement-notifications')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'admin_announcements' }, (payload) => {
+        const a = payload.new as any;
+        addNotification({
+          type: 'announcement',
+          title: '📢 Novo Comunicado',
+          message: a.title || 'Novo comunicado',
+          entityId: a.id,
+        });
+      })
+      .subscribe();
+    channels.push(announcementChannel);
+
     return () => {
       channels.forEach(ch => supabase.removeChannel(ch));
     };
