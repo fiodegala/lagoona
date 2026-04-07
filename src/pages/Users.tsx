@@ -646,6 +646,18 @@ const UsersPage = () => {
                         <span className="text-xs text-muted-foreground">Apenas vendas no PDV</span>
                       </div>
                     </SelectItem>
+                    <SelectItem value="vm_stock">
+                      <div className="flex flex-col">
+                        <span className="font-medium">VM/Estoque</span>
+                        <span className="text-xs text-muted-foreground">Visual Merchandising e controle de estoque</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="cashier">
+                      <div className="flex flex-col">
+                        <span className="font-medium">Caixa</span>
+                        <span className="text-xs text-muted-foreground">Operador de caixa no PDV</span>
+                      </div>
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
