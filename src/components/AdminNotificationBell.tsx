@@ -26,7 +26,7 @@ const routeMap: Record<NotificationType, string> = {
   abandoned_cart: '/admin/abandoned-carts',
   pos_sale: '/admin/sales',
   stock_transfer: '/admin/stock',
-  service_order: '/admin/service-orders',
+  service_order: '/admin/ordens-servico',
   announcement: '/admin/announcements',
 };
 

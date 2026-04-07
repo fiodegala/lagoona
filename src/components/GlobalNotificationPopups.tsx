@@ -332,7 +332,7 @@ const GlobalNotificationPopups = () => {
             variant="default"
             onClick={() => {
               // Navigate to the relevant page
-              const route = isOS ? '/admin/service-orders' : '/admin/stock';
+              const route = isOS ? '/admin/ordens-servico' : '/admin/stock';
               window.location.href = route;
               handleDismissAndNext();
             }}
