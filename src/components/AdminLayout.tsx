@@ -19,6 +19,7 @@ import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import PendingTransferModal from '@/components/PendingTransferModal';
 import AnnouncementPopup from '@/components/AnnouncementPopup';
+import GlobalNotificationPopups from '@/components/GlobalNotificationPopups';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -241,6 +242,8 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
         <div className="p-6 lg:p-8 h-full overflow-y-auto">{children}</div>
       </main>
 
+      {/* Global notification popups with remind-later for OS and transfers */}
+      <GlobalNotificationPopups />
       {/* Forced modal for pending transfers targeting this user's store */}
       <PendingTransferModal />
       <AnnouncementPopup />

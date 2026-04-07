@@ -17,6 +17,8 @@ const iconMap: Record<NotificationType, { icon: typeof Bell; bg: string; text: s
   abandoned_cart: { icon: ShoppingCart, bg: 'bg-amber-100', text: 'text-amber-600' },
   pos_sale: { icon: DollarSign, bg: 'bg-blue-100', text: 'text-blue-600' },
   stock_transfer: { icon: PackageCheck, bg: 'bg-purple-100', text: 'text-purple-600' },
+  service_order: { icon: Bell, bg: 'bg-orange-100', text: 'text-orange-600' },
+  announcement: { icon: Bell, bg: 'bg-pink-100', text: 'text-pink-600' },
 };
 
 const routeMap: Record<NotificationType, string> = {
@@ -24,6 +26,8 @@ const routeMap: Record<NotificationType, string> = {
   abandoned_cart: '/admin/abandoned-carts',
   pos_sale: '/admin/sales',
   stock_transfer: '/admin/stock',
+  service_order: '/admin/service-orders',
+  announcement: '/admin/announcements',
 };
 
 function NotificationToast({ notification, onDismiss }: { notification: AdminNotification; onDismiss: () => void }) {

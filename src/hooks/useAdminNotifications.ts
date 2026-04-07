@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { playNotificationSound, playTransferAlertSound } from '@/lib/alertSounds';
+import { playNotificationSound, playTransferAlertSound, playServiceOrderSound, playAnnouncementSound } from '@/lib/alertSounds';
 
-export type NotificationType = 'new_order' | 'abandoned_cart' | 'pos_sale' | 'stock_transfer';
+export type NotificationType = 'new_order' | 'abandoned_cart' | 'pos_sale' | 'stock_transfer' | 'service_order' | 'announcement';
 
 export interface AdminNotification {
   id: string;
@@ -33,6 +33,10 @@ export function useAdminNotifications({ isAdmin, isOnlineStore }: NotificationOp
     // Play differentiated sound by type
     if (notif.type === 'stock_transfer') {
       playTransferAlertSound();
+    } else if (notif.type === 'service_order') {
+      playServiceOrderSound();
+    } else if (notif.type === 'announcement') {
+      playAnnouncementSound();
     } else {
       playNotificationSound();
     }
@@ -119,6 +123,36 @@ export function useAdminNotifications({ isAdmin, isOnlineStore }: NotificationOp
         .subscribe();
       channels.push(transfersChannel);
     }
+
+    // Service Orders — for all admin users
+    const osChannel = supabase
+      .channel('admin-os-notifications')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'service_orders' }, (payload) => {
+        const os = payload.new as any;
+        addNotification({
+          type: 'service_order',
+          title: '📋 Nova Ordem de Serviço',
+          message: `${os.title || 'Nova OS'} — ${os.department || ''}`,
+          entityId: os.id,
+        });
+      })
+      .subscribe();
+    channels.push(osChannel);
+
+    // Announcements — for all admin users
+    const announcementChannel = supabase
+      .channel('admin-announcement-notifications')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'admin_announcements' }, (payload) => {
+        const a = payload.new as any;
+        addNotification({
+          type: 'announcement',
+          title: '📢 Novo Comunicado',
+          message: a.title || 'Novo comunicado',
+          entityId: a.id,
+        });
+      })
+      .subscribe();
+    channels.push(announcementChannel);
 
     return () => {
       channels.forEach(ch => supabase.removeChannel(ch));
