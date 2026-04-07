@@ -1463,6 +1463,7 @@ const Dashboard = () => {
                   </CardContent>
                 </Card>
 
+                <Card className="card-elevated border-l-4 border-l-destructive">
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                       <div>
