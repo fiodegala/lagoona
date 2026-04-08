@@ -11,7 +11,7 @@ import SellerStep from '@/components/pos/steps/SellerStep';
 import CustomerStep from '@/components/pos/steps/CustomerStep';
 import ProductsStep from '@/components/pos/steps/ProductsStep';
 import PaymentStep from '@/components/pos/steps/PaymentStep';
-import ExchangePanel, { ExchangeData } from '@/components/pos/ExchangePanel';
+// ExchangePanel no longer used - exchange integrated into main cart
 import FiscalReceiptModal from '@/components/pos/FiscalReceiptModal';
 import { OpenSessionModal, CloseSessionModal, CashMovementModal } from '@/components/pos/CashDrawerModals';
 import { posService, POSSession, CreateSaleData } from '@/services/posService';
