@@ -22,6 +22,9 @@ const routeToMenuKey: Record<string, string> = {
   '/admin/importar-legado': 'import-legacy',
   '/admin/importar-dados': 'import-data',
   '/admin/comunicados': 'announcements',
+  '/admin/settings/api-keys': 'api-keys',
+  '/admin/settings/api-docs': 'api-docs',
+  '/admin/database-export': 'database-export',
 };
 
 interface ProtectedRouteProps {

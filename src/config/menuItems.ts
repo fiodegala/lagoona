@@ -29,6 +29,9 @@ import {
   Zap,
   TrendingUp,
   Eye,
+  Database,
+  KeyRound,
+  FileCode2,
 } from 'lucide-react';
 
 export interface MenuItem {
@@ -79,6 +82,9 @@ export const navItems: MenuItem[] = [
 export const settingsItems: MenuItem[] = [
   { icon: Target, label: 'Metas de Vendas', path: '/admin/settings', menuKey: 'settings-goals' },
   { icon: Settings, label: 'Configurações', path: '/admin/settings', menuKey: 'settings' },
+  { icon: KeyRound, label: 'API Keys', path: '/admin/settings/api-keys', menuKey: 'api-keys', requireAdmin: true },
+  { icon: FileCode2, label: 'Documentação API', path: '/admin/settings/api-docs', menuKey: 'api-docs', requireAdmin: true },
+  { icon: Database, label: 'Exportar Banco', path: '/admin/database-export', menuKey: 'database-export', requireAdmin: true },
 ];
 
 export const allMenuItems = [...navItems, ...settingsItems];
