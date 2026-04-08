@@ -637,7 +637,7 @@ const POSPage = () => {
       customer_id: selectedCustomer?.id,
       customer_name: selectedCustomer?.name,
       customer_document: selectedCustomer?.document || undefined,
-      items: cartItems.map((item) => ({
+      items: cartItems.filter(i => !i.is_return).map((item) => ({
         product_id: item.product_id,
         variation_id: item.variation_id,
         name: item.name,
@@ -654,6 +654,18 @@ const POSPage = () => {
         discount_amount: item.discount_amount,
         total: item.total,
       })),
+      // Include return items in metadata
+      ...(returnItems.length > 0 ? {
+        return_items: returnItems.map((item) => ({
+          product_id: item.product_id,
+          variation_id: item.variation_id,
+          name: item.name,
+          quantity: item.quantity,
+          unit_price: item.unit_price,
+          total: item.total,
+          is_return: true,
+        })),
+      } : {}),
       subtotal,
       discount_type: generalDiscount.value > 0 ? generalDiscount.type : undefined,
       discount_value: generalDiscount.value,
@@ -663,7 +675,10 @@ const POSPage = () => {
       payment_details: paymentDetails,
       amount_received: amountReceived,
       change_amount: amountReceived ? Math.max(0, amountReceived - total) : 0,
-      notes: selectedSeller ? `Vendedor: ${selectedSeller.full_name}` : undefined,
+      notes: [
+        selectedSeller ? `Vendedor: ${selectedSeller.full_name}` : '',
+        returnItems.length > 0 ? `TROCA - Devolvidos: ${returnItems.map(i => `${i.quantity}x ${i.name}`).join(', ')}` : '',
+      ].filter(Boolean).join(' | ') || undefined,
       sale_date: saleDate,
       sale_type: saleType as 'varejo' | 'atacado' | 'exclusivo' | 'troca' | 'brinde' | 'colaborador',
     };
