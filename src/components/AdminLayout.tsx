@@ -63,7 +63,9 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
   };
 
   const NavItem = ({ icon: Icon, label, path, menuKey, requireAdmin }: typeof navItems[0]) => {
-    if (requireAdmin && !isAdmin) return null;
+    // If user has explicit menu permission, show it regardless of requireAdmin
+    const hasExplicitPermission = allowedMenus.length > 0 && allowedMenus.includes(menuKey);
+    if (requireAdmin && !isAdmin && !hasExplicitPermission) return null;
     if (!hasMenuAccess(menuKey)) return null;
     
     const isActive = location.pathname === path;
