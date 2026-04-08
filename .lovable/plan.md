@@ -1,47 +1,43 @@
 
 
-# VM (Visual de Loja) - Visual Merchandising com Vídeos
+## Plano: Troca Integrada no Carrinho do PDV
 
-## Objetivo
-Criar uma seção de Visual Merchandising onde fotos e vídeos do padrão visual das lojas são publicados. Usuários editores selecionados alimentam o conteúdo; os demais apenas visualizam.
+### Problema Atual
+Quando o tipo "Troca" é selecionado, o sistema abre um painel separado (`ExchangePanel`) com duas listas independentes. O usuário quer que tudo fique na **mesma venda/carrinho**, onde itens devolvidos aparecem junto com itens novos e o valor das devoluções é abatido automaticamente do total.
 
-## Banco de Dados
+### Como vai funcionar
 
-### Migration
-- **Tabela `vm_posts`**: id, title, description, category (Vitrine/Prateleira/Provador/etc), store_id (nullable), images (jsonb array de URLs), videos (jsonb array de URLs - uploads e links externos), created_by, is_active, created_at, updated_at
-- **Tabela `vm_editors`**: id, user_id, created_at
-- **Função `is_vm_editor(uuid)`**: retorna true se usuário está em vm_editors ou é admin
-- **Bucket `vm-media`** (público): para fotos e vídeos do VM
-- **RLS**: todos autenticados com role leem; somente vm_editors/admins inserem/editam/deletam
+1. **Carrinho unificado**: No modo "Troca", o carrinho normal (ProductsStep) será usado, mas com um botão adicional para "Adicionar item devolvido"
+2. **Itens devolvidos no carrinho**: Itens devolvidos aparecem com valor **negativo** (destacados em verde/azul), reduzindo o total da venda
+3. **Regra obrigatória**: Para prosseguir ao pagamento, é necessário ter pelo menos um item novo E pelo menos um item devolvido
+4. **Estoque**: Itens devolvidos voltam ao estoque; itens novos são baixados normalmente
+5. **Total final**: `Total = Soma dos novos - Soma dos devolvidos`
 
-### Storage
-Bucket `vm-media` público, com políticas para upload por editores/admins e leitura pública.
+### Alterações Técnicas
 
-## Frontend
+**1. Expandir `CartItem` (`POSCart.tsx`)**
+- Adicionar flag `is_return?: boolean` ao tipo `CartItem`
+- Itens com `is_return = true` exibem valor negativo e visual diferenciado (cor, ícone ↩)
 
-### 1. Nova página `src/pages/VisualMerchandising.tsx`
+**2. Modificar `ProductsStep`**
+- Quando `saleType === 'troca'`, exibir dois botões de busca: "Adicionar Produto Novo" e "Adicionar Devolução"
+- A busca de devolução permite selecionar itens com estoque zero (o produto está sendo devolvido)
+- Itens devolvidos entram no carrinho com `is_return: true`
 
-**Modo Visualização (todos)**:
-- Grid de cards com fotos e vídeos do VM
-- Filtro por loja e categoria
-- Clique na mídia abre lightbox (fotos) ou player ampliado (vídeos)
-- Busca por titulo
+**3. Atualizar `POSCart` para exibir itens de devolução**
+- Itens `is_return` mostrados com background diferente e valor negativo
+- Subtotal separado: "Novos: R$ X" / "Devoluções: -R$ Y" / "Total: R$ Z"
 
-**Modo Editor (vm_editors + admins)**:
-- Botão "Nova Publicação" com modal:
-  - Titulo, descrição, categoria (select), loja (select opcional)
-  - Upload de múltiplas imagens (reutiliza `MultiImageUpload`)
-  - Upload de vídeos (reutiliza `VideoUpload`) + opção de colar link externo (YouTube/Instagram)
-- Editar/excluir posts existentes
-- Aba "Editores" (somente admin): gerenciar quais usuários podem publicar
+**4. Atualizar cálculos no `POSPage`**
+- `subtotal` e `total` consideram itens de devolução (subtraindo)
+- Validação: no modo troca, exigir ≥1 item novo e ≥1 devolução para prosseguir
+- No `handlePayment`, separar itens de retorno para restaurar estoque e itens novos para baixar estoque
 
-### 2. Rota e Menu
-- Lazy import + rota `/admin/vm` protegida em `App.tsx`
-- Novo item no menu: ícone `Eye`, label "Visual de Loja", menuKey `visual-merchandising`
+**5. Remover uso do `ExchangePanel` no modo troca**
+- O fluxo de troca passa pelo wizard normal (Tipo → Vendedor → Cliente → Produtos → Pagamento) sem desvio para painel separado
 
-## Arquivos
-- **Novo**: `src/pages/VisualMerchandising.tsx`
-- **Editado**: `src/App.tsx` (rota)
-- **Editado**: `src/config/menuItems.ts` (menu)
-- **Migration**: tabelas, função, bucket, RLS
+**6. Registro da venda**
+- A venda é registrada como `sale_type: 'troca'` com todos os itens (novos e devolvidos marcados)
+- Os itens devolvidos são incluídos no campo `items` com flag `is_return: true`
+- Notas automáticas listando os itens devolvidos
 
