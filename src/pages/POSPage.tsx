@@ -216,12 +216,16 @@ const POSPage = () => {
   ]);
 
   // Calculate totals
-  const subtotal = cartItems.reduce((sum, item) => sum + item.unit_price * item.quantity, 0);
-  const itemDiscounts = cartItems.reduce((sum, item) => sum + item.discount_amount, 0);
+  const newItems = cartItems.filter(i => !i.is_return);
+  const returnItems = cartItems.filter(i => i.is_return);
+  const newSubtotal = newItems.reduce((sum, item) => sum + item.unit_price * item.quantity, 0);
+  const returnSubtotal = returnItems.reduce((sum, item) => sum + item.unit_price * item.quantity, 0);
+  const subtotal = newSubtotal;
+  const itemDiscounts = newItems.reduce((sum, item) => sum + item.discount_amount, 0);
   const generalDiscountAmount = generalDiscount.type === 'percentage'
     ? (subtotal - itemDiscounts) * (generalDiscount.value / 100)
     : generalDiscount.value;
-  const totalDiscount = itemDiscounts + generalDiscountAmount;
+  const totalDiscount = itemDiscounts + generalDiscountAmount + returnSubtotal;
   const total = Math.max(0, subtotal - totalDiscount);
 
   // For quotes, use the selected quotePriceMode to determine pricing
