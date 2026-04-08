@@ -11,7 +11,7 @@ import SellerStep from '@/components/pos/steps/SellerStep';
 import CustomerStep from '@/components/pos/steps/CustomerStep';
 import ProductsStep from '@/components/pos/steps/ProductsStep';
 import PaymentStep from '@/components/pos/steps/PaymentStep';
-import ExchangePanel, { ExchangeData } from '@/components/pos/ExchangePanel';
+// ExchangePanel no longer used - exchange integrated into main cart
 import FiscalReceiptModal from '@/components/pos/FiscalReceiptModal';
 import { OpenSessionModal, CloseSessionModal, CashMovementModal } from '@/components/pos/CashDrawerModals';
 import { posService, POSSession, CreateSaleData } from '@/services/posService';
@@ -216,12 +216,16 @@ const POSPage = () => {
   ]);
 
   // Calculate totals
-  const subtotal = cartItems.reduce((sum, item) => sum + item.unit_price * item.quantity, 0);
-  const itemDiscounts = cartItems.reduce((sum, item) => sum + item.discount_amount, 0);
+  const newItems = cartItems.filter(i => !i.is_return);
+  const returnItems = cartItems.filter(i => i.is_return);
+  const newSubtotal = newItems.reduce((sum, item) => sum + item.unit_price * item.quantity, 0);
+  const returnSubtotal = returnItems.reduce((sum, item) => sum + item.unit_price * item.quantity, 0);
+  const subtotal = newSubtotal;
+  const itemDiscounts = newItems.reduce((sum, item) => sum + item.discount_amount, 0);
   const generalDiscountAmount = generalDiscount.type === 'percentage'
     ? (subtotal - itemDiscounts) * (generalDiscount.value / 100)
     : generalDiscount.value;
-  const totalDiscount = itemDiscounts + generalDiscountAmount;
+  const totalDiscount = itemDiscounts + generalDiscountAmount + returnSubtotal;
   const total = Math.max(0, subtotal - totalDiscount);
 
   // For quotes, use the selected quotePriceMode to determine pricing
@@ -492,6 +496,70 @@ const POSPage = () => {
     }
   }, [cartItems]);
 
+  // Handle return product select (for exchange mode)
+  const handleReturnProductSelect = useCallback((product: ProductResult, variationId?: string) => {
+    if (variationId) {
+      const variation = product.variations.find((v) => v.id === variationId);
+      if (!variation) return;
+      const basePrice = variation.price ?? product.price;
+      const label = variation.label || variation.sku || variationId.slice(0, 8);
+
+      const existingItem = cartItems.find((item) => item.product_id === product.id && item.variation_id === variationId && item.is_return);
+      if (existingItem) {
+        setCartItems((items) =>
+          items.map((item) =>
+            item.id === existingItem.id
+              ? { ...item, quantity: item.quantity + 1, total: item.unit_price * (item.quantity + 1) }
+              : item
+          )
+        );
+      } else {
+        const newItem: CartItem = {
+          id: crypto.randomUUID(),
+          product_id: product.id,
+          variation_id: variationId,
+          name: `${product.name} — ${label}`,
+          sku: variation.sku || undefined,
+          image_url: variation.image_url || product.image_url || null,
+          unit_price: basePrice,
+          quantity: 1,
+          discount_amount: 0,
+          total: basePrice,
+          max_stock: 9999, // No stock limit for returns
+          is_return: true,
+          retail_price: basePrice,
+        };
+        setCartItems((items) => [...items, newItem]);
+      }
+    } else {
+      const existingItem = cartItems.find((item) => item.product_id === product.id && !item.variation_id && item.is_return);
+      if (existingItem) {
+        setCartItems((items) =>
+          items.map((item) =>
+            item.id === existingItem.id
+              ? { ...item, quantity: item.quantity + 1, total: item.unit_price * (item.quantity + 1) }
+              : item
+          )
+        );
+      } else {
+        const newItem: CartItem = {
+          id: crypto.randomUUID(),
+          product_id: product.id,
+          name: product.name,
+          image_url: product.image_url || null,
+          unit_price: product.price,
+          quantity: 1,
+          discount_amount: 0,
+          total: product.price,
+          max_stock: 9999,
+          is_return: true,
+          retail_price: product.price,
+        };
+        setCartItems((items) => [...items, newItem]);
+      }
+    }
+  }, [cartItems]);
+
   const handlePayment = async (method: 'cash' | 'card' | 'pix' | 'mixed', amountReceived?: number, paymentDetails?: Record<string, number>, saleDate?: string) => {
     if (cartItems.length === 0) return;
     // Guard against double-clicks / re-entrant calls
@@ -569,7 +637,7 @@ const POSPage = () => {
       customer_id: selectedCustomer?.id,
       customer_name: selectedCustomer?.name,
       customer_document: selectedCustomer?.document || undefined,
-      items: cartItems.map((item) => ({
+      items: cartItems.filter(i => !i.is_return).map((item) => ({
         product_id: item.product_id,
         variation_id: item.variation_id,
         name: item.name,
@@ -586,6 +654,18 @@ const POSPage = () => {
         discount_amount: item.discount_amount,
         total: item.total,
       })),
+      // Include return items in metadata
+      ...(returnItems.length > 0 ? {
+        return_items: returnItems.map((item) => ({
+          product_id: item.product_id,
+          variation_id: item.variation_id,
+          name: item.name,
+          quantity: item.quantity,
+          unit_price: item.unit_price,
+          total: item.total,
+          is_return: true,
+        })),
+      } : {}),
       subtotal,
       discount_type: generalDiscount.value > 0 ? generalDiscount.type : undefined,
       discount_value: generalDiscount.value,
@@ -595,7 +675,10 @@ const POSPage = () => {
       payment_details: paymentDetails,
       amount_received: amountReceived,
       change_amount: amountReceived ? Math.max(0, amountReceived - total) : 0,
-      notes: selectedSeller ? `Vendedor: ${selectedSeller.full_name}` : undefined,
+      notes: [
+        selectedSeller ? `Vendedor: ${selectedSeller.full_name}` : '',
+        returnItems.length > 0 ? `TROCA - Devolvidos: ${returnItems.map(i => `${i.quantity}x ${i.name}`).join(', ')}` : '',
+      ].filter(Boolean).join(' | ') || undefined,
       sale_date: saleDate,
       sale_type: saleType as 'varejo' | 'atacado' | 'exclusivo' | 'troca' | 'brinde' | 'colaborador',
     };
@@ -604,10 +687,40 @@ const POSPage = () => {
       let saleResult: any = null;
       if (isOnline) {
         saleResult = await posService.createSale(saleData);
+        
+        // Restore stock for return items
+        if (returnItems.length > 0) {
+          for (const item of returnItems) {
+            const storeId = selectedSeller?.store_id || userStoreId;
+            if (storeId) {
+              let stockQuery = supabase
+                .from('store_stock')
+                .select('id, quantity')
+                .eq('store_id', storeId)
+                .eq('product_id', item.product_id);
+              if (item.variation_id) {
+                stockQuery = stockQuery.eq('variation_id', item.variation_id);
+              } else {
+                stockQuery = stockQuery.is('variation_id', null);
+              }
+              const { data: existingStock } = await stockQuery.maybeSingle();
+              if (existingStock) {
+                await supabase.from('store_stock').update({ quantity: existingStock.quantity + item.quantity }).eq('id', existingStock.id);
+              } else {
+                await supabase.from('store_stock').insert({ store_id: storeId, product_id: item.product_id, variation_id: item.variation_id || null, quantity: item.quantity });
+              }
+            }
+            // Also update product-level stock
+            const { data: product } = await supabase.from('products').select('stock').eq('id', item.product_id).single();
+            if (product) {
+              await supabase.from('products').update({ stock: product.stock + item.quantity }).eq('id', item.product_id);
+            }
+          }
+        }
       } else {
         await offlineService.savePendingSale(saleData);
       }
-      toast({ title: 'Venda finalizada!', description: `Total: R$ ${total.toFixed(2)}${selectedCustomer ? ` • Cliente: ${selectedCustomer.name}` : ''}` });
+      toast({ title: isExchangeMode ? 'Troca finalizada!' : 'Venda finalizada!', description: `Total: R$ ${total.toFixed(2)}${selectedCustomer ? ` • Cliente: ${selectedCustomer.name}` : ''}` });
       
       // Show fiscal receipt modal
       setCompletedSaleId(saleResult?.id || null);
@@ -627,127 +740,6 @@ const POSPage = () => {
     } catch (error) {
       console.error('Error processing sale:', error);
       toast({ title: 'Erro ao processar venda', variant: 'destructive' });
-    } finally {
-      isProcessingRef.current = false;
-      setIsProcessing(false);
-    }
-  };
-
-  const handleExchange = async (data: ExchangeData) => {
-    if (!selectedCustomer) {
-      toast({ title: 'Selecione um cliente', description: 'É necessário vincular um cliente à troca.', variant: 'destructive' });
-      return;
-    }
-    setIsProcessing(true);
-
-    try {
-      // Always create a sale record when there are new items (for stock deduction and history)
-      if (data.newItems.length > 0) {
-        const saleData: CreateSaleData = {
-          local_id: offlineService.generateLocalId(),
-          session_id: session?.id,
-          store_id: selectedSeller?.store_id || userStoreId || undefined,
-          customer_id: selectedCustomer.id,
-          customer_name: selectedCustomer.name,
-          customer_document: selectedCustomer.document || undefined,
-          items: data.newItems.map(item => ({
-            product_id: item.product_id,
-            variation_id: item.variation_id,
-            name: item.name,
-            sku: item.sku,
-            quantity: item.quantity,
-            unit_price: item.unit_price,
-            discount_amount: 0,
-            total: item.unit_price * item.quantity,
-          })),
-          subtotal: data.newTotal,
-          discount_amount: data.returnTotal + data.creditUsed,
-          total: Math.max(0, data.amountToPay),
-          payment_method: data.amountToPay > 0 ? (data.paymentMethod || 'cash') : 'cash',
-          amount_received: data.amountToPay > 0 ? data.amountReceived : 0,
-          change_amount: data.amountToPay > 0 && data.amountReceived ? Math.max(0, data.amountReceived - data.amountToPay) : 0,
-          notes: `TROCA - Devolvidos: ${data.returnedItems.map(i => `${i.quantity}x ${i.name}`).join(', ')}${selectedSeller ? ` | Vendedor: ${selectedSeller.full_name}` : ''}`,
-          sale_type: 'troca',
-        };
-        await posService.createSale(saleData);
-      }
-
-      for (const item of data.returnedItems) {
-        if (userStoreId) {
-          let stockQuery = supabase
-            .from('store_stock')
-            .select('id, quantity')
-            .eq('store_id', userStoreId)
-            .eq('product_id', item.product_id);
-
-          if (item.variation_id) {
-            stockQuery = stockQuery.eq('variation_id', item.variation_id);
-          } else {
-            stockQuery = stockQuery.is('variation_id', null);
-          }
-
-          const { data: existingStock } = await stockQuery.maybeSingle();
-
-          if (existingStock) {
-            await supabase
-              .from('store_stock')
-              .update({ quantity: existingStock.quantity + item.quantity })
-              .eq('id', existingStock.id);
-          } else {
-            await supabase
-              .from('store_stock')
-              .insert({
-                store_id: userStoreId,
-                product_id: item.product_id,
-                variation_id: item.variation_id || null,
-                quantity: item.quantity,
-              });
-          }
-        }
-        const { data: product } = await supabase
-          .from('products')
-          .select('stock')
-          .eq('id', item.product_id)
-          .single();
-        if (product) {
-          await supabase
-            .from('products')
-            .update({ stock: product.stock + item.quantity })
-            .eq('id', item.product_id);
-        }
-      }
-
-      const newCreditBalance = customerCreditBalance - data.creditUsed + data.creditToStore;
-      await supabase
-        .from('customers')
-        .update({ credit_balance: newCreditBalance })
-        .eq('id', selectedCustomer.id);
-
-      const messages: string[] = [];
-      if (data.returnedItems.length > 0) messages.push(`${data.returnedItems.reduce((s, i) => s + i.quantity, 0)} item(ns) devolvido(s)`);
-      if (data.newItems.length > 0) messages.push(`${data.newItems.reduce((s, i) => s + i.quantity, 0)} item(ns) novo(s)`);
-      if (data.creditToStore > 0) messages.push(`Crédito de R$ ${data.creditToStore.toFixed(2)} gerado`);
-      if (data.amountToPay > 0) messages.push(`Diferença de R$ ${data.amountToPay.toFixed(2)} paga`);
-
-      toast({ title: 'Troca finalizada!', description: messages.join(' • ') });
-      
-      // Show fiscal modal for exchanges too
-      setCompletedSaleId(null);
-      setCompletedSaleTotal(data.amountToPay || 0);
-      if (selectedCustomer) {
-        const { data: fullCustomer } = await supabase
-          .from('customers')
-          .select('name, document, email, phone, address, city, state, zip_code')
-          .eq('id', selectedCustomer.id)
-          .single();
-        setCompletedCustomerData(fullCustomer || { name: selectedCustomer.name, document: selectedCustomer.document });
-      } else {
-        setCompletedCustomerData(null);
-      }
-      setFiscalModalOpen(true);
-    } catch (error) {
-      console.error('Error processing exchange:', error);
-      toast({ title: 'Erro ao processar troca', variant: 'destructive' });
     } finally {
       isProcessingRef.current = false;
       setIsProcessing(false);
@@ -824,7 +816,7 @@ const POSPage = () => {
               const isCompleted = index < stepIndex;
               const isCurrent = index === stepIndex;
 
-              // Skip products step display for exchange mode
+              // Show "Troca" label for exchange mode on products step
               if (step.key === 'products' && isExchangeMode) {
                 return (
                   <div key={step.key} className="flex items-center gap-2">
@@ -907,7 +899,7 @@ const POSPage = () => {
             />
           )}
 
-          {currentStep === 'products' && !isExchangeMode && (
+          {currentStep === 'products' && (
             <ProductsStep
               cartItems={cartItems}
               onProductSelect={handleProductSelect}
@@ -926,27 +918,10 @@ const POSPage = () => {
               onBack={() => setCurrentStep('customer')}
               pricingMode={saleType as PricingMode}
               onChangePricingMode={handleChangePricingMode}
-              showPricingModeSwitcher={['varejo', 'atacado', 'exclusivo', 'colaborador'].includes(saleType)}
+              showPricingModeSwitcher={!isExchangeMode && ['varejo', 'atacado', 'exclusivo', 'colaborador'].includes(saleType)}
+              saleType={saleType}
+              onReturnProductSelect={handleReturnProductSelect}
             />
-          )}
-
-          {currentStep === 'products' && isExchangeMode && (
-            <div className="flex-1 overflow-hidden flex flex-col">
-              <div className="p-4 border-b flex items-center gap-4">
-                <Button variant="outline" onClick={() => setCurrentStep('customer')}>
-                  ← Voltar
-                </Button>
-                <h2 className="text-lg font-bold">Troca de Produtos</h2>
-              </div>
-              <div className="flex-1 overflow-hidden">
-                <ExchangePanel
-                  isOnline={isOnline}
-                  customerCreditBalance={customerCreditBalance}
-                  onConfirmExchange={handleExchange}
-                  isProcessing={isProcessing}
-                />
-              </div>
-            </div>
           )}
 
           {currentStep === 'payment' && isQuoteMode && (

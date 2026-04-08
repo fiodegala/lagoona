@@ -59,6 +59,7 @@ export interface CartItem {
   max_stock: number;
   is_lagoona?: boolean;
   is_gift?: boolean;
+  is_return?: boolean;
   // Price tiers for mode switching
   retail_price?: number;
   wholesale_price?: number | null;
@@ -171,7 +172,10 @@ const POSCart = ({
               return (
               <div
                 key={item.id}
-                className="p-3 rounded-lg hover:bg-accent/50 transition-colors"
+                className={cn(
+                  "p-3 rounded-lg hover:bg-accent/50 transition-colors",
+                  item.is_return && "bg-blue-500/10 border border-blue-500/30"
+                )}
               >
                 <div className="flex items-start gap-2">
                   {/* Variation/Product image - clickable */}
@@ -195,11 +199,19 @@ const POSCart = ({
                   <div className="flex-1 min-w-0">
                     <button
                       type="button"
-                      className="font-medium text-sm truncate text-left hover:underline cursor-pointer block w-full"
+                      className={cn(
+                        "font-medium text-sm truncate text-left hover:underline cursor-pointer block w-full",
+                        item.is_return && "text-blue-600"
+                      )}
                       onClick={() => setDetailItem(item)}
                     >
-                      {productName}
+                      {item.is_return && '↩ '}{productName}
                     </button>
+                    {item.is_return && (
+                      <Badge variant="outline" className="text-xs mt-0.5 bg-blue-500/20 text-blue-700 border-blue-500/30">
+                        Devolução
+                      </Badge>
+                    )}
                     {variationLabel && (
                       <Badge variant="outline" className="text-xs mt-0.5">
                         {variationLabel}
@@ -396,8 +408,8 @@ const POSCart = ({
                       -{formatCurrency(item.discount_amount)}
                     </Badge>
                   )}
-                  <div className="ml-auto font-semibold">
-                    {formatCurrency(item.total)}
+                  <div className={cn("ml-auto font-semibold", item.is_return && "text-blue-600")}>
+                    {item.is_return ? '-' : ''}{formatCurrency(item.total)}
                   </div>
                 </div>
               </div>
@@ -481,10 +493,34 @@ const POSCart = ({
 
         {/* Totals */}
         <div className="space-y-1 text-sm">
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Subtotal</span>
-            <span>{formatCurrency(subtotal)}</span>
-          </div>
+          {(() => {
+            const newItems = items.filter(i => !i.is_return);
+            const returnItems = items.filter(i => i.is_return);
+            const hasReturns = returnItems.length > 0;
+            const newSubtotal = newItems.reduce((s, i) => s + i.unit_price * i.quantity, 0);
+            const returnSubtotal = returnItems.reduce((s, i) => s + i.unit_price * i.quantity, 0);
+            return (
+              <>
+                {hasReturns ? (
+                  <>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Novos</span>
+                      <span>{formatCurrency(newSubtotal)}</span>
+                    </div>
+                    <div className="flex justify-between text-blue-600">
+                      <span>Devoluções</span>
+                      <span>-{formatCurrency(returnSubtotal)}</span>
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Subtotal</span>
+                    <span>{formatCurrency(subtotal)}</span>
+                  </div>
+                )}
+              </>
+            );
+          })()}
           {discountAmount > 0 && (
             <div className="flex justify-between text-destructive">
               <span>Desconto</span>
