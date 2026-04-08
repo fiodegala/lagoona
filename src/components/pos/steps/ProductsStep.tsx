@@ -2,13 +2,13 @@ import { useState } from 'react';
 import { PricingMode } from '@/components/pos/POSCart';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ChevronLeft, ShoppingCart, X, RotateCcw, Plus } from 'lucide-react';
+import { ChevronLeft, ShoppingCart, RotateCcw, Plus } from 'lucide-react';
 import ProductSearch, { ProductResult } from '@/components/pos/ProductSearch';
 import ProductGrid from '@/components/pos/ProductGrid';
 import POSCart, { CartItem } from '@/components/pos/POSCart';
 import VariationPickerModal from '@/components/pos/VariationPickerModal';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 
 interface ProductsStepProps {
