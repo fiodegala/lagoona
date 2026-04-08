@@ -1020,7 +1020,7 @@ const POSPage = () => {
             />
           )}
 
-          {currentStep === 'products' && !isExchangeMode && (
+          {currentStep === 'products' && (
             <ProductsStep
               cartItems={cartItems}
               onProductSelect={handleProductSelect}
@@ -1039,27 +1039,10 @@ const POSPage = () => {
               onBack={() => setCurrentStep('customer')}
               pricingMode={saleType as PricingMode}
               onChangePricingMode={handleChangePricingMode}
-              showPricingModeSwitcher={['varejo', 'atacado', 'exclusivo', 'colaborador'].includes(saleType)}
+              showPricingModeSwitcher={!isExchangeMode && ['varejo', 'atacado', 'exclusivo', 'colaborador'].includes(saleType)}
+              saleType={saleType}
+              onReturnProductSelect={handleReturnProductSelect}
             />
-          )}
-
-          {currentStep === 'products' && isExchangeMode && (
-            <div className="flex-1 overflow-hidden flex flex-col">
-              <div className="p-4 border-b flex items-center gap-4">
-                <Button variant="outline" onClick={() => setCurrentStep('customer')}>
-                  ← Voltar
-                </Button>
-                <h2 className="text-lg font-bold">Troca de Produtos</h2>
-              </div>
-              <div className="flex-1 overflow-hidden">
-                <ExchangePanel
-                  isOnline={isOnline}
-                  customerCreditBalance={customerCreditBalance}
-                  onConfirmExchange={handleExchange}
-                  isProcessing={isProcessing}
-                />
-              </div>
-            </div>
           )}
 
           {currentStep === 'payment' && isQuoteMode && (
