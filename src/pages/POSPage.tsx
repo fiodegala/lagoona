@@ -687,10 +687,40 @@ const POSPage = () => {
       let saleResult: any = null;
       if (isOnline) {
         saleResult = await posService.createSale(saleData);
+        
+        // Restore stock for return items
+        if (returnItems.length > 0) {
+          for (const item of returnItems) {
+            const storeId = selectedSeller?.store_id || userStoreId;
+            if (storeId) {
+              let stockQuery = supabase
+                .from('store_stock')
+                .select('id, quantity')
+                .eq('store_id', storeId)
+                .eq('product_id', item.product_id);
+              if (item.variation_id) {
+                stockQuery = stockQuery.eq('variation_id', item.variation_id);
+              } else {
+                stockQuery = stockQuery.is('variation_id', null);
+              }
+              const { data: existingStock } = await stockQuery.maybeSingle();
+              if (existingStock) {
+                await supabase.from('store_stock').update({ quantity: existingStock.quantity + item.quantity }).eq('id', existingStock.id);
+              } else {
+                await supabase.from('store_stock').insert({ store_id: storeId, product_id: item.product_id, variation_id: item.variation_id || null, quantity: item.quantity });
+              }
+            }
+            // Also update product-level stock
+            const { data: product } = await supabase.from('products').select('stock').eq('id', item.product_id).single();
+            if (product) {
+              await supabase.from('products').update({ stock: product.stock + item.quantity }).eq('id', item.product_id);
+            }
+          }
+        }
       } else {
         await offlineService.savePendingSale(saleData);
       }
-      toast({ title: 'Venda finalizada!', description: `Total: R$ ${total.toFixed(2)}${selectedCustomer ? ` • Cliente: ${selectedCustomer.name}` : ''}` });
+      toast({ title: isExchangeMode ? 'Troca finalizada!' : 'Venda finalizada!', description: `Total: R$ ${total.toFixed(2)}${selectedCustomer ? ` • Cliente: ${selectedCustomer.name}` : ''}` });
       
       // Show fiscal receipt modal
       setCompletedSaleId(saleResult?.id || null);
