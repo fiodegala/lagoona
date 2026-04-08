@@ -937,7 +937,7 @@ const POSPage = () => {
               const isCompleted = index < stepIndex;
               const isCurrent = index === stepIndex;
 
-              // Skip products step display for exchange mode
+              // Show "Troca" label for exchange mode on products step
               if (step.key === 'products' && isExchangeMode) {
                 return (
                   <div key={step.key} className="flex items-center gap-2">
