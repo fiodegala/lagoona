@@ -516,13 +516,56 @@ const Dashboard = () => {
       const month = now.getMonth();
       const lastDay = new Date(year, month + 1, 0).getDate();
       const currentDay = now.getDate();
+
+      // Brazilian national holidays (fixed dates)
+      const fixedHolidays = [
+        `${year}-01-01`, // Confraternização Universal
+        `${year}-04-21`, // Tiradentes
+        `${year}-05-01`, // Dia do Trabalho
+        `${year}-09-07`, // Independência
+        `${year}-10-12`, // Nossa Senhora Aparecida
+        `${year}-11-02`, // Finados
+        `${year}-11-15`, // Proclamação da República
+        `${year}-12-25`, // Natal
+      ];
+
+      // Easter-based holidays (Carnival Mon/Tue, Good Friday, Corpus Christi)
+      const getEasterDate = (y: number): Date => {
+        const a = y % 19, b = Math.floor(y / 100), c = y % 100;
+        const d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25);
+        const g = Math.floor((b - f + 1) / 3), h = (19 * a + b - d - g + 15) % 30;
+        const i = Math.floor(c / 4), k = c % 4;
+        const l = (32 + 2 * e + 2 * i - h - k) % 7;
+        const m = Math.floor((a + 11 * h + 22 * l) / 451);
+        const mo = Math.floor((h + l - 7 * m + 114) / 31);
+        const da = ((h + l - 7 * m + 114) % 31) + 1;
+        return new Date(y, mo - 1, da);
+      };
+      const easter = getEasterDate(year);
+      const addDays = (date: Date, days: number) => {
+        const r = new Date(date); r.setDate(r.getDate() + days); return r;
+      };
+      const easterHolidays = [
+        addDays(easter, -48), // Segunda de Carnaval
+        addDays(easter, -47), // Terça de Carnaval
+        addDays(easter, -2),  // Sexta-feira Santa
+        addDays(easter, 60),  // Corpus Christi
+      ];
+      const holidaySet = new Set([
+        ...fixedHolidays,
+        ...easterHolidays.map(d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`),
+      ]);
+
       let count = 0;
-      // Count from today to end of month (Mon-Sat = business days)
       for (let d = currentDay; d <= lastDay; d++) {
-        const dayOfWeek = new Date(year, month, d).getDay();
-        if (dayOfWeek >= 1 && dayOfWeek <= 6) count++;
+        const date = new Date(year, month, d);
+        const dayOfWeek = date.getDay();
+        if (dayOfWeek === 0) continue; // Sunday
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        if (holidaySet.has(dateStr)) continue; // Holiday
+        count++;
       }
-      return Math.max(count, 1); // At least 1 to avoid division by zero
+      return Math.max(count, 1);
     };
 
     const remainingDays = getRemainingWorkingDays();
