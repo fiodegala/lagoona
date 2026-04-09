@@ -17,6 +17,7 @@ import { toast } from 'sonner';
 import { Plus, Megaphone, Trash2, Edit, Eye } from 'lucide-react';
 import { format } from 'date-fns';
 import ImageUpload from '@/components/ImageUpload';
+import VideoUpload from '@/components/VideoUpload';
 
 const AdminAnnouncements = () => {
   const { user } = useAuth();
