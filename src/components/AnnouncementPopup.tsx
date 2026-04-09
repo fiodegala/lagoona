@@ -84,7 +84,10 @@ const AnnouncementPopup = () => {
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
-          {current.image_url && (
+          {current.video_url && (
+            <video src={current.video_url} controls className="w-full rounded-lg max-h-64" />
+          )}
+          {current.image_url && !current.video_url && (
             <img src={current.image_url} alt={current.title} className="w-full rounded-lg object-cover max-h-48" />
           )}
           <p className="text-sm whitespace-pre-wrap">{current.message}</p>
