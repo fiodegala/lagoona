@@ -101,9 +101,10 @@ const AdminAnnouncements = () => {
   const openEdit = (a: any) => {
     setEditing(a);
     setForm({
-      title: a.title, message: a.message, image_url: a.image_url || '', link_url: a.link_url || '',
-      link_text: a.link_text || '', target_type: a.target_type, target_user_ids: a.target_user_ids || [],
-      is_active: a.is_active, expires_at: a.expires_at ? a.expires_at.slice(0, 16) : '',
+      title: a.title, message: a.message, image_url: a.image_url || '', video_url: a.video_url || '',
+      link_url: a.link_url || '', link_text: a.link_text || '', target_type: a.target_type,
+      target_user_ids: a.target_user_ids || [], is_active: a.is_active,
+      expires_at: a.expires_at ? a.expires_at.slice(0, 16) : '',
     });
     setShowForm(true);
   };
