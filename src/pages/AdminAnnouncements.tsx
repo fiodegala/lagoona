@@ -25,7 +25,7 @@ const AdminAnnouncements = () => {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<any>(null);
   const [form, setForm] = useState({
-    title: '', message: '', image_url: '', link_url: '', link_text: '',
+    title: '', message: '', image_url: '', video_url: '', link_url: '', link_text: '',
     target_type: 'all', target_user_ids: [] as string[], is_active: true, expires_at: '',
   });
 
