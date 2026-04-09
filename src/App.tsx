@@ -404,7 +404,7 @@ const App = () => (
               <Route
                 path="/admin/comunicados"
                 element={
-                  <ProtectedRoute requiredRole="admin">
+                  <ProtectedRoute>
                     <AdminAnnouncements />
                   </ProtectedRoute>
                 }
