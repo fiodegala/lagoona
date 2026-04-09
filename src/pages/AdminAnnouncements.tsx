@@ -14,7 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
-import { Plus, Megaphone, Trash2, Edit, Play, Image as ImageIcon, Calendar } from 'lucide-react';
+import { Plus, Megaphone, Trash2, Edit, Play, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 import ImageUpload from '@/components/ImageUpload';
 import VideoUpload from '@/components/VideoUpload';
