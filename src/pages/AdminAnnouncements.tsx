@@ -56,6 +56,7 @@ const AdminAnnouncements = () => {
         title: form.title.trim(),
         message: form.message.trim(),
         image_url: form.image_url || null,
+        video_url: form.video_url || null,
         link_url: form.link_url || null,
         link_text: form.link_text || null,
         target_type: form.target_type,
