@@ -95,7 +95,7 @@ const AdminAnnouncements = () => {
   const closeForm = () => {
     setShowForm(false);
     setEditing(null);
-    setForm({ title: '', message: '', image_url: '', link_url: '', link_text: '', target_type: 'all', target_user_ids: [], is_active: true, expires_at: '' });
+    setForm({ title: '', message: '', image_url: '', video_url: '', link_url: '', link_text: '', target_type: 'all', target_user_ids: [], is_active: true, expires_at: '' });
   };
 
   const openEdit = (a: any) => {
