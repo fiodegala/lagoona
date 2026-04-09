@@ -9,16 +9,40 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
+const getBrazilianHolidays = (year: number): Set<string> => {
+  const fixed = [
+    `${year}-01-01`, `${year}-04-21`, `${year}-05-01`, `${year}-09-07`,
+    `${year}-10-12`, `${year}-11-02`, `${year}-11-15`, `${year}-12-25`,
+  ];
+  // Easter (Anonymous Gregorian algorithm)
+  const a = year % 19, b = Math.floor(year / 100), c = year % 100;
+  const d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25);
+  const g = Math.floor((b - f + 1) / 3), h = (19 * a + b - d - g + 15) % 30;
+  const i = Math.floor(c / 4), k = c % 4;
+  const l = (32 + 2 * e + 2 * i - h - k) % 7;
+  const m = Math.floor((a + 11 * h + 22 * l) / 451);
+  const mo = Math.floor((h + l - 7 * m + 114) / 31);
+  const da = ((h + l - 7 * m + 114) % 31) + 1;
+  const easter = new Date(year, mo - 1, da);
+  const addDays = (date: Date, days: number) => { const r = new Date(date); r.setDate(r.getDate() + days); return r; };
+  const fmt = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const easterDates = [-48, -47, -2, 60].map(off => fmt(addDays(easter, off)));
+  return new Set([...fixed, ...easterDates]);
+};
+
 const getWorkingDaysInMonth = () => {
   const now = new Date();
   const year = now.getFullYear();
   const month = now.getMonth();
   const lastDay = new Date(year, month + 1, 0).getDate();
+  const holidays = getBrazilianHolidays(year);
   let count = 0;
   for (let d = 1; d <= lastDay; d++) {
     const day = new Date(year, month, d).getDay();
-    // 0=Sun, 1=Mon..6=Sat — count Mon-Sat (1-6)
-    if (day >= 1 && day <= 6) count++;
+    if (day === 0) continue; // Sunday
+    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    if (holidays.has(dateStr)) continue;
+    count++;
   }
   return count;
 };
