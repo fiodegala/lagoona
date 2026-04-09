@@ -17,6 +17,7 @@ import { toast } from 'sonner';
 import { Plus, Megaphone, Trash2, Edit, Eye } from 'lucide-react';
 import { format } from 'date-fns';
 import ImageUpload from '@/components/ImageUpload';
+import VideoUpload from '@/components/VideoUpload';
 
 const AdminAnnouncements = () => {
   const { user } = useAuth();
@@ -24,7 +25,7 @@ const AdminAnnouncements = () => {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<any>(null);
   const [form, setForm] = useState({
-    title: '', message: '', image_url: '', link_url: '', link_text: '',
+    title: '', message: '', image_url: '', video_url: '', link_url: '', link_text: '',
     target_type: 'all', target_user_ids: [] as string[], is_active: true, expires_at: '',
   });
 
@@ -55,6 +56,7 @@ const AdminAnnouncements = () => {
         title: form.title.trim(),
         message: form.message.trim(),
         image_url: form.image_url || null,
+        video_url: form.video_url || null,
         link_url: form.link_url || null,
         link_text: form.link_text || null,
         target_type: form.target_type,
@@ -93,15 +95,16 @@ const AdminAnnouncements = () => {
   const closeForm = () => {
     setShowForm(false);
     setEditing(null);
-    setForm({ title: '', message: '', image_url: '', link_url: '', link_text: '', target_type: 'all', target_user_ids: [], is_active: true, expires_at: '' });
+    setForm({ title: '', message: '', image_url: '', video_url: '', link_url: '', link_text: '', target_type: 'all', target_user_ids: [], is_active: true, expires_at: '' });
   };
 
   const openEdit = (a: any) => {
     setEditing(a);
     setForm({
-      title: a.title, message: a.message, image_url: a.image_url || '', link_url: a.link_url || '',
-      link_text: a.link_text || '', target_type: a.target_type, target_user_ids: a.target_user_ids || [],
-      is_active: a.is_active, expires_at: a.expires_at ? a.expires_at.slice(0, 16) : '',
+      title: a.title, message: a.message, image_url: a.image_url || '', video_url: a.video_url || '',
+      link_url: a.link_url || '', link_text: a.link_text || '', target_type: a.target_type,
+      target_user_ids: a.target_user_ids || [], is_active: a.is_active,
+      expires_at: a.expires_at ? a.expires_at.slice(0, 16) : '',
     });
     setShowForm(true);
   };
@@ -170,6 +173,7 @@ const AdminAnnouncements = () => {
               <div><Label>Título *</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Título do comunicado" /></div>
               <div><Label>Mensagem *</Label><Textarea value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} placeholder="Conteúdo do comunicado..." rows={4} /></div>
               <div><Label>Imagem (opcional)</Label><ImageUpload value={form.image_url} onChange={(url) => setForm({ ...form, image_url: url || '' })} bucket="product-images" folder="announcements" /></div>
+              <div><Label>Vídeo (opcional)</Label><VideoUpload value={form.video_url || undefined} onChange={(url) => setForm({ ...form, video_url: url || '' })} bucket="product-images" folder="announcements-videos" maxSizeMB={50} /></div>
               <div className="grid grid-cols-2 gap-3">
                 <div><Label>URL do link (opcional)</Label><Input value={form.link_url} onChange={(e) => setForm({ ...form, link_url: e.target.value })} placeholder="https://..." /></div>
                 <div><Label>Texto do botão</Label><Input value={form.link_text} onChange={(e) => setForm({ ...form, link_text: e.target.value })} placeholder="Saiba mais" /></div>
