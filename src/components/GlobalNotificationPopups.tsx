@@ -193,7 +193,8 @@ const GlobalNotificationPopups = () => {
   useEffect(() => {
     const now = Date.now();
     const unsnoozed = items.filter(i => !i.snoozedUntil || i.snoozedUntil <= now)
-      .filter(i => !dismissedIdsRef.current.has(i.id));
+      .filter(i => !dismissedIdsRef.current.has(i.id))
+      .filter(i => !(i.type === 'service_order' && isOnServiceOrdersPage));
     
     if (unsnoozed.length > 0 && !showPopup) {
       setCurrentItem(unsnoozed[0]);
@@ -202,7 +203,7 @@ const GlobalNotificationPopups = () => {
       setShowPopup(false);
       setCurrentItem(null);
     }
-  }, [items, showPopup]);
+  }, [items, showPopup, isOnServiceOrdersPage]);
 
   // Snooze timer - check every 30s if any snoozed items have expired
   useEffect(() => {
