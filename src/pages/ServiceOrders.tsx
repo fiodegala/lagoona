@@ -508,8 +508,26 @@ const ServiceOrders = () => {
                 </Select>
               </div>
               <div><Label>Descrição</Label><Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Descreva a solicitação em detalhes..." rows={4} /></div>
-            </div>
-            <DialogFooter>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <Label>Imagem (opcional)</Label>
+                  <ImageUpload
+                    value={form.image_url}
+                    onChange={(url) => setForm({ ...form, image_url: url })}
+                    bucket="product-images"
+                    folder="service-orders"
+                  />
+                </div>
+                <div>
+                  <Label>Vídeo (opcional)</Label>
+                  <VideoUpload
+                    value={form.video_url}
+                    onChange={(url) => setForm({ ...form, video_url: url })}
+                    bucket="product-images"
+                    folder="service-orders"
+                  />
+                </div>
+              </div>
               <Button variant="outline" onClick={() => setShowCreate(false)}>Cancelar</Button>
               <Button onClick={() => createMutation.mutate()} disabled={!form.title.trim() || !form.department || !form.description.trim() || createMutation.isPending}>
                 {createMutation.isPending ? 'Criando...' : 'Criar OS'}
