@@ -166,31 +166,37 @@ const InternalChat = () => {
     
     const isGroup = selectedUsers.length > 1;
     const convName = isGroup ? newConvName || `Grupo (${selectedUsers.length + 1})` : null;
+    const convId = crypto.randomUUID();
 
-    const { data: conv, error } = await supabase
+    // Insert conversation without .select() to avoid RLS SELECT conflict
+    const { error } = await supabase
       .from('conversations')
-      .insert({ name: convName, type: isGroup ? 'group' : 'direct', created_by: user.id })
-      .select()
-      .single();
+      .insert({ id: convId, name: convName, type: isGroup ? 'group' : 'direct', created_by: user.id });
     
-    if (error || !conv) {
+    if (error) {
+      console.error('Create conversation error:', error);
       toast.error('Erro ao criar conversa');
       return;
     }
 
-    // Add members (including self)
+    // Add members (including self) - now the SELECT policy will work
     const allMembers = [...selectedUsers, user.id].map(uid => ({
-      conversation_id: conv.id,
+      conversation_id: convId,
       user_id: uid,
     }));
 
-    await supabase.from('conversation_members').insert(allMembers);
+    const { error: membersError } = await supabase.from('conversation_members').insert(allMembers);
+    if (membersError) {
+      console.error('Add members error:', membersError);
+      toast.error('Erro ao adicionar membros');
+      return;
+    }
     
     setShowNewConversation(false);
     setSelectedUsers([]);
     setNewConvName('');
     await loadConversations();
-    setSelectedConversation(conv.id);
+    setSelectedConversation(convId);
     toast.success('Conversa criada!');
   };
 
