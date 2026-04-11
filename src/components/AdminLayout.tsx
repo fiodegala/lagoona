@@ -20,6 +20,7 @@ import { cn } from '@/lib/utils';
 import PendingTransferModal from '@/components/PendingTransferModal';
 import AnnouncementPopup from '@/components/AnnouncementPopup';
 import GlobalNotificationPopups from '@/components/GlobalNotificationPopups';
+import FloatingChatWidget from '@/components/FloatingChatWidget';
 import { useChatUnread } from '@/hooks/useChatUnread';
 import {
   DropdownMenu,
@@ -271,6 +272,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
       {/* Forced modal for pending transfers targeting this user's store */}
       <PendingTransferModal />
       <AnnouncementPopup />
+      <FloatingChatWidget />
     </div>
   );
 };
