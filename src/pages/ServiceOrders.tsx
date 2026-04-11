@@ -16,6 +16,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import { playServiceOrderSound } from '@/lib/alertSounds';
 import { Plus, MessageSquare, Clock, CheckCircle2, XCircle, Search, Filter, Settings2, Pencil, Trash2, Users, AlertCircle } from 'lucide-react';
+import ImageUpload from '@/components/ImageUpload';
+import VideoUpload from '@/components/VideoUpload';
 import { format } from 'date-fns';
 
 const PRIORITIES = [
@@ -52,7 +54,7 @@ const ServiceOrders = () => {
   const [filterDept, setFilterDept] = useState('all');
   const [search, setSearch] = useState('');
   const [newComment, setNewComment] = useState('');
-  const [form, setForm] = useState({ title: '', description: '', department: '', priority: 'normal' });
+  const [form, setForm] = useState({ title: '', description: '', department: '', priority: 'normal', image_url: '' as string | undefined, video_url: '' as string | undefined });
   const [deptForm, setDeptForm] = useState({ name: '', editingId: '' });
   
   // Action modal state (for review/reject with reason)
@@ -180,7 +182,9 @@ const ServiceOrders = () => {
         priority: form.priority,
         created_by: user!.id,
         status: 'open',
-      });
+        image_url: form.image_url || null,
+        video_url: form.video_url || null,
+      } as any);
       if (error) throw error;
     },
     onSuccess: async () => {
@@ -188,7 +192,7 @@ const ServiceOrders = () => {
       setShowCreate(false);
       const createdTitle = form.title.trim();
       const createdDept = form.department;
-      setForm({ title: '', description: '', department: '', priority: 'normal' });
+      setForm({ title: '', description: '', department: '', priority: 'normal', image_url: undefined, video_url: undefined });
       toast.success('Ordem de serviço criada!');
       try {
         await supabase.functions.invoke('send-push', {
@@ -504,6 +508,26 @@ const ServiceOrders = () => {
                 </Select>
               </div>
               <div><Label>Descrição</Label><Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Descreva a solicitação em detalhes..." rows={4} /></div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <Label>Imagem (opcional)</Label>
+                  <ImageUpload
+                    value={form.image_url}
+                    onChange={(url) => setForm({ ...form, image_url: url })}
+                    bucket="product-images"
+                    folder="service-orders"
+                  />
+                </div>
+                <div>
+                  <Label>Vídeo (opcional)</Label>
+                  <VideoUpload
+                    value={form.video_url}
+                    onChange={(url) => setForm({ ...form, video_url: url })}
+                    bucket="product-images"
+                    folder="service-orders"
+                  />
+                </div>
+              </div>
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setShowCreate(false)}>Cancelar</Button>
@@ -581,6 +605,32 @@ const ServiceOrders = () => {
                   })()}
 
                   <Card><CardContent className="p-4 whitespace-pre-wrap text-sm">{selectedOrder.description}</CardContent></Card>
+
+                  {/* Media attachments */}
+                  {((selectedOrder as any).image_url || (selectedOrder as any).video_url) && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {(selectedOrder as any).image_url && (
+                        <div>
+                          <Label className="text-xs text-muted-foreground mb-1 block">Imagem anexada</Label>
+                          <img
+                            src={(selectedOrder as any).image_url}
+                            alt="Anexo da OS"
+                            className="rounded-lg border w-full max-h-64 object-contain bg-muted"
+                          />
+                        </div>
+                      )}
+                      {(selectedOrder as any).video_url && (
+                        <div>
+                          <Label className="text-xs text-muted-foreground mb-1 block">Vídeo anexado</Label>
+                          <video
+                            src={(selectedOrder as any).video_url}
+                            controls
+                            className="rounded-lg border w-full max-h-64 bg-muted"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {/* Actions for responsible users */}
                   {isResponsibleForOrder(selectedOrder) && getNextActions(selectedOrder.status).length > 0 && (

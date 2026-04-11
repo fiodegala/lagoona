@@ -2444,10 +2444,12 @@ export type Database = {
           department: string
           description: string
           id: string
+          image_url: string | null
           priority: string
           status: string
           title: string
           updated_at: string
+          video_url: string | null
         }
         Insert: {
           action_reason?: string | null
@@ -2463,10 +2465,12 @@ export type Database = {
           department: string
           description: string
           id?: string
+          image_url?: string | null
           priority?: string
           status?: string
           title: string
           updated_at?: string
+          video_url?: string | null
         }
         Update: {
           action_reason?: string | null
@@ -2482,10 +2486,12 @@ export type Database = {
           department?: string
           description?: string
           id?: string
+          image_url?: string | null
           priority?: string
           status?: string
           title?: string
           updated_at?: string
+          video_url?: string | null
         }
         Relationships: []
       }
