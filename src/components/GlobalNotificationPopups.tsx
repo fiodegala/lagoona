@@ -217,11 +217,11 @@ const GlobalNotificationPopups = () => {
           return i;
         });
         // Check if any became unsnoozed
-        const unsnoozed = updated.filter(i => !i.snoozedUntil);
+        const unsnoozed = updated.filter(i => !i.snoozedUntil)
+          .filter(i => !(i.type === 'service_order' && isOnServiceOrdersPage));
         if (unsnoozed.length > 0 && !showPopup) {
           setCurrentItem(unsnoozed[0]);
           setShowPopup(true);
-          // Play sound on reminder
           if (unsnoozed[0].type === 'stock_transfer') playTransferAlertSound();
           else if (unsnoozed[0].type === 'service_order') playServiceOrderSound();
         }
