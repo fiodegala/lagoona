@@ -606,6 +606,32 @@ const ServiceOrders = () => {
 
                   <Card><CardContent className="p-4 whitespace-pre-wrap text-sm">{selectedOrder.description}</CardContent></Card>
 
+                  {/* Media attachments */}
+                  {((selectedOrder as any).image_url || (selectedOrder as any).video_url) && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {(selectedOrder as any).image_url && (
+                        <div>
+                          <Label className="text-xs text-muted-foreground mb-1 block">Imagem anexada</Label>
+                          <img
+                            src={(selectedOrder as any).image_url}
+                            alt="Anexo da OS"
+                            className="rounded-lg border w-full max-h-64 object-contain bg-muted"
+                          />
+                        </div>
+                      )}
+                      {(selectedOrder as any).video_url && (
+                        <div>
+                          <Label className="text-xs text-muted-foreground mb-1 block">Vídeo anexado</Label>
+                          <video
+                            src={(selectedOrder as any).video_url}
+                            controls
+                            className="rounded-lg border w-full max-h-64 bg-muted"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   {/* Actions for responsible users */}
                   {isResponsibleForOrder(selectedOrder) && getNextActions(selectedOrder.status).length > 0 && (
                     <div className="flex flex-wrap gap-2 items-center">
