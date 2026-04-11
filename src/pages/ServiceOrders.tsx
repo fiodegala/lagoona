@@ -15,7 +15,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import { playServiceOrderSound } from '@/lib/alertSounds';
-import { Plus, MessageSquare, Clock, CheckCircle2, XCircle, Search, Filter, Settings2, Pencil, Trash2, Users, AlertCircle, X } from 'lucide-react';
+import { Plus, MessageSquare, Clock, CheckCircle2, XCircle, Search, Filter, Settings2, Pencil, Trash2, Users, AlertCircle, X, Image, Video } from 'lucide-react';
 import ImageUpload from '@/components/ImageUpload';
 import VideoUpload from '@/components/VideoUpload';
 import { format } from 'date-fns';
@@ -387,51 +387,74 @@ const ServiceOrders = () => {
     if (isLoading) return <p className="text-muted-foreground py-8 text-center">Carregando...</p>;
     if (filtered.length === 0) return <Card><CardContent className="py-12 text-center text-muted-foreground">Nenhuma ordem de serviço encontrada.</CardContent></Card>;
     return (
-      <div className="space-y-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {filtered.map((order: any) => {
           const dept = departments.find((d: any) => d.name === order.department);
           const managerNames = dept ? getManagerNames(dept.id) : [];
+          const hasImage = !!order.image_url;
+          const hasVideo = !!order.video_url;
 
           return (
-            <Card key={order.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setShowDetail(order.id)}>
-              <CardContent className="p-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <div className="space-y-1">
-                    <p className="font-semibold">{order.title}</p>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
-                      <span>{order.department}</span>
-                      <span>•</span>
-                      <span>{profileMap[order.created_by] || 'Usuário'}</span>
-                      <span>•</span>
-                      <span>{format(new Date(order.created_at), 'dd/MM/yyyy HH:mm')}</span>
-                      {managerNames.length > 0 && (
-                        <>
-                          <span>•</span>
-                          <span className="flex items-center gap-1"><Users className="h-3 w-3" />{managerNames.join(', ')}</span>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {getPriorityBadge(order.priority)}
-                    {getStatusBadge(order.status)}
-                    {isAdmin && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-destructive hover:text-destructive"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (confirm('Tem certeza que deseja excluir esta ordem de serviço?')) {
-                            deleteMutation.mutate(order.id);
-                          }
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+            <Card key={order.id} className="cursor-pointer hover:shadow-lg transition-all group overflow-hidden" onClick={() => setShowDetail(order.id)}>
+              {/* Media preview area */}
+              {(hasImage || hasVideo) ? (
+                <div className="relative w-full h-40 bg-muted overflow-hidden">
+                  {hasImage && (
+                    <img src={order.image_url} alt={order.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                  )}
+                  {hasVideo && !hasImage && (
+                    <video src={order.video_url} className="w-full h-full object-cover" muted />
+                  )}
+                  {/* Media badges */}
+                  <div className="absolute top-2 right-2 flex gap-1">
+                    {hasImage && (
+                      <span className="bg-background/80 backdrop-blur-sm rounded-full p-1.5">
+                        <Image className="h-3.5 w-3.5 text-foreground" />
+                      </span>
+                    )}
+                    {hasVideo && (
+                      <span className="bg-background/80 backdrop-blur-sm rounded-full p-1.5">
+                        <Video className="h-3.5 w-3.5 text-foreground" />
+                      </span>
                     )}
                   </div>
                 </div>
+              ) : (
+                <div className="w-full h-24 bg-muted/50 flex items-center justify-center">
+                  <span className="text-muted-foreground/40 text-xs">Sem mídia</span>
+                </div>
+              )}
+
+              <CardContent className="p-3 space-y-2">
+                <div className="flex items-center gap-2 flex-wrap">
+                  {getPriorityBadge(order.priority)}
+                  {getStatusBadge(order.status)}
+                </div>
+                <p className="font-semibold text-sm line-clamp-2">{order.title}</p>
+                <div className="text-xs text-muted-foreground space-y-0.5">
+                  <p>{order.department}</p>
+                  <p>{profileMap[order.created_by] || 'Usuário'} • {format(new Date(order.created_at), 'dd/MM HH:mm')}</p>
+                  {managerNames.length > 0 && (
+                    <p className="flex items-center gap-1"><Users className="h-3 w-3" />{managerNames.join(', ')}</p>
+                  )}
+                </div>
+                {isAdmin && (
+                  <div className="flex justify-end">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-destructive hover:text-destructive"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (confirm('Tem certeza que deseja excluir esta ordem de serviço?')) {
+                          deleteMutation.mutate(order.id);
+                        }
+                      }}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           );
