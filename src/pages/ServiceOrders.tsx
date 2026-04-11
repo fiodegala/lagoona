@@ -528,6 +528,8 @@ const ServiceOrders = () => {
                   />
                 </div>
               </div>
+            </div>
+            <DialogFooter>
               <Button variant="outline" onClick={() => setShowCreate(false)}>Cancelar</Button>
               <Button onClick={() => createMutation.mutate()} disabled={!form.title.trim() || !form.department || !form.description.trim() || createMutation.isPending}>
                 {createMutation.isPending ? 'Criando...' : 'Criar OS'}
