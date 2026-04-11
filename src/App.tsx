@@ -412,6 +412,15 @@ const App = () => (
               />
 
               <Route
+                path="/admin/chat"
+                element={
+                  <ProtectedRoute>
+                    <InternalChat />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
                 path="/admin/olist"
                 element={
                   <ProtectedRoute requiredRole="admin">
