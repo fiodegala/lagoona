@@ -55,7 +55,6 @@ import {
   FileCode2,
   TrendingUp,
   Zap,
-  X,
 } from 'lucide-react';
 
 interface StepByStep {
