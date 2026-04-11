@@ -283,10 +283,35 @@ export const posService = {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Usuário não autenticado');
 
-    // Generate dedup hash to prevent duplicate sales
-    const dedupHash = `${saleData.local_id}_${user.id}_${saleData.total}_${Date.now()}`;
+    // Generate dedup hash based on business data to prevent true duplicates
+    // Uses customer + total + sale_date + item product_ids to detect same sale submitted multiple times
+    const itemsFingerprint = (saleData.items as any[])
+      .map((i: any) => `${i.product_id}_${i.variation_id || ''}_${i.quantity}`)
+      .sort()
+      .join('|');
+    const saleDateKey = saleData.sale_date
+      ? new Date(saleData.sale_date).toISOString().slice(0, 10)
+      : new Date().toISOString().slice(0, 10);
+    const dedupHash = `${user.id}_${saleData.customer_name || 'anon'}_${saleData.total}_${saleDateKey}_${itemsFingerprint}`;
 
-    // Check for existing sale with the same local_id (duplicate prevention)
+    // Check for existing sale with same dedup_hash (true content duplicate)
+    const { data: existingByHash } = await supabase
+      .from('pos_sales')
+      .select('id')
+      .eq('dedup_hash', dedupHash)
+      .eq('status', 'completed')
+      .maybeSingle();
+
+    if (existingByHash) {
+      const { data: fullSale } = await supabase
+        .from('pos_sales')
+        .select('*')
+        .eq('id', existingByHash.id)
+        .single();
+      return fullSale as unknown as POSSale;
+    }
+
+    // Also check by local_id for backward compatibility
     const { data: existingSale } = await supabase
       .from('pos_sales')
       .select('id')
@@ -294,7 +319,6 @@ export const posService = {
       .maybeSingle();
 
     if (existingSale) {
-      // Return the existing sale instead of creating a duplicate
       const { data: fullSale } = await supabase
         .from('pos_sales')
         .select('*')
