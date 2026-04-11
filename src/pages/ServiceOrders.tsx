@@ -15,7 +15,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import { playServiceOrderSound } from '@/lib/alertSounds';
-import { Plus, MessageSquare, Clock, CheckCircle2, XCircle, Search, Filter, Settings2, Pencil, Trash2, Users, AlertCircle } from 'lucide-react';
+import { Plus, MessageSquare, Clock, CheckCircle2, XCircle, Search, Filter, Settings2, Pencil, Trash2, Users, AlertCircle, X } from 'lucide-react';
 import ImageUpload from '@/components/ImageUpload';
 import VideoUpload from '@/components/VideoUpload';
 import { format } from 'date-fns';
@@ -56,6 +56,7 @@ const ServiceOrders = () => {
   const [newComment, setNewComment] = useState('');
   const [form, setForm] = useState({ title: '', description: '', department: '', priority: 'normal', image_url: '' as string | undefined, video_url: '' as string | undefined });
   const [deptForm, setDeptForm] = useState({ name: '', editingId: '' });
+  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   
   // Action modal state (for review/reject with reason)
   const [actionModal, setActionModal] = useState<{ open: boolean; type: 'in_review' | 'rejected' | ''; orderId: string }>({ open: false, type: '', orderId: '' });
@@ -615,7 +616,8 @@ const ServiceOrders = () => {
                           <img
                             src={(selectedOrder as any).image_url}
                             alt="Anexo da OS"
-                            className="rounded-lg border w-full max-h-64 object-contain bg-muted"
+                            className="rounded-lg border w-full max-h-64 object-contain bg-muted cursor-pointer hover:opacity-80 transition-opacity"
+                            onClick={() => setLightboxImage((selectedOrder as any).image_url)}
                           />
                         </div>
                       )}
@@ -803,6 +805,25 @@ const ServiceOrders = () => {
           </DialogContent>
         </Dialog>
       </div>
+      {lightboxImage && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 cursor-pointer"
+          onClick={() => setLightboxImage(null)}
+        >
+          <button
+            className="absolute top-4 right-4 text-white hover:text-white/80 transition-colors"
+            onClick={() => setLightboxImage(null)}
+          >
+            <X className="h-8 w-8" />
+          </button>
+          <img
+            src={lightboxImage}
+            alt="Imagem ampliada"
+            className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
     </AdminLayout>
   );
 };
