@@ -32,6 +32,7 @@ import {
   Database,
   KeyRound,
   FileCode2,
+  MessageSquare,
 } from 'lucide-react';
 
 export interface MenuItem {
@@ -76,6 +77,7 @@ export const navItems: MenuItem[] = [
   { icon: ClipboardList, label: 'Ordens de Serviço', path: '/admin/ordens-servico', menuKey: 'service-orders' },
   { icon: Megaphone, label: 'Comunicados', path: '/admin/comunicados', menuKey: 'announcements' },
   { icon: Eye, label: 'Visual de Loja', path: '/admin/vm', menuKey: 'visual-merchandising' },
+  { icon: MessageSquare, label: 'Chat Interno', path: '/admin/chat', menuKey: 'internal-chat' },
   { icon: BookOpen, label: 'Manual', path: '/admin/manual', menuKey: 'manual' },
 ];
 
