@@ -182,7 +182,9 @@ const ServiceOrders = () => {
         priority: form.priority,
         created_by: user!.id,
         status: 'open',
-      });
+        image_url: form.image_url || null,
+        video_url: form.video_url || null,
+      } as any);
       if (error) throw error;
     },
     onSuccess: async () => {
