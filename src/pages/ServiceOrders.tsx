@@ -54,7 +54,7 @@ const ServiceOrders = () => {
   const [filterDept, setFilterDept] = useState('all');
   const [search, setSearch] = useState('');
   const [newComment, setNewComment] = useState('');
-  const [form, setForm] = useState({ title: '', description: '', department: '', priority: 'normal' });
+  const [form, setForm] = useState({ title: '', description: '', department: '', priority: 'normal', image_url: '' as string | undefined, video_url: '' as string | undefined });
   const [deptForm, setDeptForm] = useState({ name: '', editingId: '' });
   
   // Action modal state (for review/reject with reason)
