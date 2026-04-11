@@ -56,6 +56,7 @@ const ServiceOrders = () => {
   const [newComment, setNewComment] = useState('');
   const [form, setForm] = useState({ title: '', description: '', department: '', priority: 'normal', image_url: '' as string | undefined, video_url: '' as string | undefined });
   const [deptForm, setDeptForm] = useState({ name: '', editingId: '' });
+  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   
   // Action modal state (for review/reject with reason)
   const [actionModal, setActionModal] = useState<{ open: boolean; type: 'in_review' | 'rejected' | ''; orderId: string }>({ open: false, type: '', orderId: '' });
