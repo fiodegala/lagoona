@@ -45,6 +45,11 @@ import {
   Upload,
   Settings,
   BookOpen,
+  Video,
+  Plus,
+  Trash2,
+  Pencil,
+  PlayCircle,
 } from 'lucide-react';
 
 interface StepByStep {
