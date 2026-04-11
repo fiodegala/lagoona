@@ -232,7 +232,7 @@ const GlobalNotificationPopups = () => {
     return () => {
       if (snoozeTimerRef.current) clearInterval(snoozeTimerRef.current);
     };
-  }, [showPopup]);
+  }, [showPopup, isOnServiceOrdersPage]);
 
   const handleSnooze = () => {
     if (!currentItem) return;
