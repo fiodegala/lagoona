@@ -41,8 +41,9 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
   const { profile, roles, signOut, isAdmin, userStore, allowedMenus } = useAuth();
 
   // Filter menu items: admins see everything, others see only allowed menus
+  const alwaysVisibleMenus = ['manual', 'service-orders', 'announcements'];
   const hasMenuAccess = (key: string) => {
-    if (key === 'manual') return true; // Manual always visible for all users
+    if (alwaysVisibleMenus.includes(key)) return true;
     if (isAdmin) return true;
     if (allowedMenus.length === 0) return true; // no restrictions set = show all role-based defaults
     return allowedMenus.includes(key);
