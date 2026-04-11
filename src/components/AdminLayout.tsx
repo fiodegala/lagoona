@@ -20,6 +20,7 @@ import { cn } from '@/lib/utils';
 import PendingTransferModal from '@/components/PendingTransferModal';
 import AnnouncementPopup from '@/components/AnnouncementPopup';
 import GlobalNotificationPopups from '@/components/GlobalNotificationPopups';
+import { useChatUnread } from '@/hooks/useChatUnread';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,6 +29,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+
+
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -39,6 +42,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { profile, roles, signOut, isAdmin, userStore, allowedMenus } = useAuth();
+  const { unreadCount } = useChatUnread();
 
   // Filter menu items: admins see everything, others see only allowed menus
   const alwaysVisibleMenus = ['manual', 'service-orders', 'announcements'];
@@ -70,20 +74,37 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
     if (!hasMenuAccess(menuKey)) return null;
     
     const isActive = location.pathname === path;
+    const showBadge = menuKey === 'internal-chat' && unreadCount > 0;
     
     return (
       <Link
         to={path}
         onClick={() => setMobileOpen(false)}
         className={cn(
-          'flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group',
+          'flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group relative',
           isActive
             ? 'bg-sidebar-primary text-sidebar-primary-foreground'
             : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
         )}
       >
-        <Icon className={cn('h-5 w-5 flex-shrink-0', collapsed && 'mx-auto')} />
-        {!collapsed && <span className="font-medium">{label}</span>}
+        <div className="relative flex-shrink-0">
+          <Icon className={cn('h-5 w-5', collapsed && 'mx-auto')} />
+          {showBadge && collapsed && (
+            <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-green-500 text-white text-[10px] font-bold px-1 animate-pulse">
+              {unreadCount > 99 ? '99+' : unreadCount}
+            </span>
+          )}
+        </div>
+        {!collapsed && (
+          <>
+            <span className="font-medium flex-1">{label}</span>
+            {showBadge && (
+              <span className="min-w-[20px] h-[20px] flex items-center justify-center rounded-full bg-green-500 text-white text-[11px] font-bold px-1.5 animate-pulse">
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </span>
+            )}
+          </>
+        )}
       </Link>
     );
   };
