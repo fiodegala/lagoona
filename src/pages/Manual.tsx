@@ -1,7 +1,19 @@
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import AdminLayout from '@/components/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { toast } from 'sonner';
+import VideoUpload from '@/components/VideoUpload';
 import {
   Accordion,
   AccordionContent,
@@ -33,6 +45,11 @@ import {
   Upload,
   Settings,
   BookOpen,
+  Video,
+  Plus,
+  Trash2,
+  Pencil,
+  PlayCircle,
 } from 'lucide-react';
 
 interface StepByStep {
@@ -1025,18 +1042,105 @@ const sections: ManualSection[] = [
   },
 ];
 
+const SECTION_KEYS = sections.map((s, i) => ({ key: `section-${i}`, title: s.title }));
+
 const Manual = () => {
+  const { isAdmin, user } = useAuth();
+  const queryClient = useQueryClient();
+  const [showVideoForm, setShowVideoForm] = useState(false);
+  const [editingVideo, setEditingVideo] = useState<any>(null);
+  const [videoForm, setVideoForm] = useState({ section_key: '', title: '', description: '', video_url: '' as string | undefined });
+
+  const { data: manualVideos = [] } = useQuery({
+    queryKey: ['manual-videos'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('manual_videos')
+        .select('*')
+        .eq('is_active', true)
+        .order('sort_order')
+        .order('created_at');
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const saveVideoMutation = useMutation({
+    mutationFn: async () => {
+      if (editingVideo) {
+        const { error } = await supabase.from('manual_videos').update({
+          section_key: videoForm.section_key,
+          title: videoForm.title.trim(),
+          description: videoForm.description.trim() || null,
+          video_url: videoForm.video_url!,
+        } as any).eq('id', editingVideo.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from('manual_videos').insert({
+          section_key: videoForm.section_key,
+          title: videoForm.title.trim(),
+          description: videoForm.description.trim() || null,
+          video_url: videoForm.video_url!,
+          created_by: user!.id,
+        } as any);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['manual-videos'] });
+      setShowVideoForm(false);
+      setEditingVideo(null);
+      setVideoForm({ section_key: '', title: '', description: '', video_url: undefined });
+      toast.success(editingVideo ? 'Vídeo atualizado!' : 'Vídeo adicionado!');
+    },
+    onError: () => toast.error('Erro ao salvar vídeo'),
+  });
+
+  const deleteVideoMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('manual_videos').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['manual-videos'] });
+      toast.success('Vídeo removido!');
+    },
+  });
+
+  const openEditVideo = (video: any) => {
+    setEditingVideo(video);
+    setVideoForm({
+      section_key: video.section_key,
+      title: video.title,
+      description: video.description || '',
+      video_url: video.video_url,
+    });
+    setShowVideoForm(true);
+  };
+
+  const getVideosForSection = (idx: number) => {
+    const key = `section-${idx}`;
+    return manualVideos.filter((v: any) => v.section_key === key);
+  };
+
   return (
     <AdminLayout>
       <div className="space-y-6 max-w-4xl">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <BookOpen className="h-6 w-6" />
-            Manual do Sistema
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Guia completo com passo a passo de todas as funcionalidades do painel administrativo
-          </p>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold flex items-center gap-2">
+              <BookOpen className="h-6 w-6" />
+              Manual do Sistema
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              Guia completo com passo a passo e vídeos de treinamento
+            </p>
+          </div>
+          {isAdmin && (
+            <Button onClick={() => { setEditingVideo(null); setVideoForm({ section_key: '', title: '', description: '', video_url: undefined }); setShowVideoForm(true); }}>
+              <Plus className="h-4 w-4 mr-2" /> Adicionar Vídeo
+            </Button>
+          )}
         </div>
 
         {/* Quick legend */}
@@ -1050,6 +1154,7 @@ const Manual = () => {
         <Accordion type="multiple" className="space-y-3">
           {sections.map((section, idx) => {
             const Icon = section.icon;
+            const sectionVideos = getVideosForSection(idx);
             return (
               <AccordionItem
                 key={idx}
@@ -1074,9 +1179,56 @@ const Manual = () => {
                     >
                       {section.badge}
                     </Badge>
+                    {sectionVideos.length > 0 && (
+                      <Badge variant="outline" className="ml-1 gap-1">
+                        <Video className="h-3 w-3" /> {sectionVideos.length}
+                      </Badge>
+                    )}
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="pb-6">
+                  {/* Videos EAD section */}
+                  {sectionVideos.length > 0 && (
+                    <div className="pl-12 mb-6">
+                      <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-2">
+                        <PlayCircle className="h-4 w-4" /> Vídeos de Treinamento
+                      </h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {sectionVideos.map((video: any) => (
+                          <Card key={video.id} className="overflow-hidden">
+                            <div className="aspect-video bg-muted">
+                              <video
+                                src={video.video_url}
+                                controls
+                                preload="metadata"
+                                className="w-full h-full object-contain"
+                              />
+                            </div>
+                            <CardContent className="p-3">
+                              <p className="font-medium text-sm">{video.title}</p>
+                              {video.description && (
+                                <p className="text-xs text-muted-foreground mt-1">{video.description}</p>
+                              )}
+                              {isAdmin && (
+                                <div className="flex gap-1 mt-2">
+                                  <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => openEditVideo(video)}>
+                                    <Pencil className="h-3 w-3 mr-1" /> Editar
+                                  </Button>
+                                  <Button size="sm" variant="ghost" className="h-7 px-2 text-destructive" onClick={() => {
+                                    if (confirm('Remover este vídeo?')) deleteVideoMutation.mutate(video.id);
+                                  }}>
+                                    <Trash2 className="h-3 w-3 mr-1" /> Remover
+                                  </Button>
+                                </div>
+                              )}
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                      <Separator className="mt-5" />
+                    </div>
+                  )}
+
                   {/* Description */}
                   <p className="text-sm text-muted-foreground mb-4 pl-12">
                     {section.description}
@@ -1175,6 +1327,55 @@ const Manual = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Video Form Dialog */}
+        <Dialog open={showVideoForm} onOpenChange={(open) => { if (!open) { setShowVideoForm(false); setEditingVideo(null); } }}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle>{editingVideo ? 'Editar Vídeo' : 'Adicionar Vídeo de Treinamento'}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label>Seção do Manual</Label>
+                <Select value={videoForm.section_key} onValueChange={(v) => setVideoForm({ ...videoForm, section_key: v })}>
+                  <SelectTrigger><SelectValue placeholder="Selecione a seção" /></SelectTrigger>
+                  <SelectContent>
+                    {SECTION_KEYS.map((s) => (
+                      <SelectItem key={s.key} value={s.key}>{s.title}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Título do vídeo</Label>
+                <Input value={videoForm.title} onChange={(e) => setVideoForm({ ...videoForm, title: e.target.value })} placeholder="Ex: Como cadastrar um produto" />
+              </div>
+              <div>
+                <Label>Descrição (opcional)</Label>
+                <Textarea value={videoForm.description} onChange={(e) => setVideoForm({ ...videoForm, description: e.target.value })} placeholder="Breve descrição do conteúdo do vídeo" rows={2} />
+              </div>
+              <div>
+                <Label>Vídeo</Label>
+                <VideoUpload
+                  value={videoForm.video_url}
+                  onChange={(url) => setVideoForm({ ...videoForm, video_url: url })}
+                  bucket="product-images"
+                  folder="manual-videos"
+                  maxSizeMB={100}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => { setShowVideoForm(false); setEditingVideo(null); }}>Cancelar</Button>
+              <Button
+                onClick={() => saveVideoMutation.mutate()}
+                disabled={!videoForm.section_key || !videoForm.title.trim() || !videoForm.video_url || saveVideoMutation.isPending}
+              >
+                {saveVideoMutation.isPending ? 'Salvando...' : editingVideo ? 'Salvar' : 'Adicionar'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </AdminLayout>
   );
