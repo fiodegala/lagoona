@@ -23,6 +23,7 @@ const SNOOZE_MINUTES = 5;
 
 const GlobalNotificationPopups = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, isAdmin, userStoreId, accessibleStoreIds } = useAuth();
   const [items, setItems] = useState<PendingItem[]>([]);
   const [currentItem, setCurrentItem] = useState<PendingItem | null>(null);
@@ -30,6 +31,8 @@ const GlobalNotificationPopups = () => {
   const snoozeTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const processedIdsRef = useRef<Set<string>>(new Set());
   const dismissedIdsRef = useRef<Set<string>>(new Set());
+
+  const isOnServiceOrdersPage = location.pathname === '/admin/ordens-servico';
 
   // Load pending service orders for this user
   const loadPendingServiceOrders = useCallback(async () => {
