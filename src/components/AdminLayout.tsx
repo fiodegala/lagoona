@@ -272,6 +272,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
       {/* Forced modal for pending transfers targeting this user's store */}
       <PendingTransferModal />
       <AnnouncementPopup />
+      <FloatingChatWidget />
     </div>
   );
 };
