@@ -616,7 +616,8 @@ const ServiceOrders = () => {
                           <img
                             src={(selectedOrder as any).image_url}
                             alt="Anexo da OS"
-                            className="rounded-lg border w-full max-h-64 object-contain bg-muted"
+                            className="rounded-lg border w-full max-h-64 object-contain bg-muted cursor-pointer hover:opacity-80 transition-opacity"
+                            onClick={() => setLightboxImage((selectedOrder as any).image_url)}
                           />
                         </div>
                       )}
