@@ -148,20 +148,20 @@ const GlobalNotificationPopups = () => {
       const hasNewTransfer = newIds.some(id => id.startsWith('transfer-'));
       
       if (hasNewTransfer) playTransferAlertSound();
-      else if (hasNewOS) playServiceOrderSound();
+      else if (hasNewOS && !isOnServiceOrdersPage) playServiceOrderSound();
       
       newIds.forEach(id => processedIdsRef.current.add(id));
       
-      // Show toast for each new item
+      // Show toast for each new item (skip OS toasts when on OS page)
       allItems.filter(i => newIds.includes(i.id)).forEach(item => {
-        if (item.type === 'service_order') {
+        if (item.type === 'service_order' && !isOnServiceOrdersPage) {
           toast.info('📋 Nova Ordem de Serviço pendente', { description: item.extra?.osTitle });
         } else if (item.type === 'stock_transfer') {
           toast.warning('📦 Transferência pendente', { description: item.description });
         }
       });
     }
-  }, [loadPendingServiceOrders, loadPendingTransfers]);
+  }, [loadPendingServiceOrders, loadPendingTransfers, isOnServiceOrdersPage]);
 
   // Initial load + realtime subscriptions
   useEffect(() => {
