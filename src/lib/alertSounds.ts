@@ -65,3 +65,13 @@ export function playAnnouncementSound() {
     createBeep(ctx, 1047, now + 0.35, 0.4, 0.8);
   } catch {}
 }
+
+/** Chat interno — som tipo WhatsApp: 2 tons suaves rápidos */
+export function playChatMessageSound() {
+  try {
+    const ctx = new AudioContext();
+    const now = ctx.currentTime;
+    createBeep(ctx, 600, now, 0.1, 0.6, 'sine');
+    createBeep(ctx, 900, now + 0.12, 0.15, 0.7, 'sine');
+  } catch {}
+}
