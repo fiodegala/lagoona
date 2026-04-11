@@ -192,7 +192,7 @@ const ServiceOrders = () => {
       setShowCreate(false);
       const createdTitle = form.title.trim();
       const createdDept = form.department;
-      setForm({ title: '', description: '', department: '', priority: 'normal' });
+      setForm({ title: '', description: '', department: '', priority: 'normal', image_url: undefined, video_url: undefined });
       toast.success('Ordem de serviço criada!');
       try {
         await supabase.functions.invoke('send-push', {
