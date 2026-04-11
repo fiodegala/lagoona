@@ -805,6 +805,25 @@ const ServiceOrders = () => {
           </DialogContent>
         </Dialog>
       </div>
+      {lightboxImage && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 cursor-pointer"
+          onClick={() => setLightboxImage(null)}
+        >
+          <button
+            className="absolute top-4 right-4 text-white hover:text-white/80 transition-colors"
+            onClick={() => setLightboxImage(null)}
+          >
+            <X className="h-8 w-8" />
+          </button>
+          <img
+            src={lightboxImage}
+            alt="Imagem ampliada"
+            className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
     </AdminLayout>
   );
 };
