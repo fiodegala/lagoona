@@ -61,6 +61,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [accessibleStoreIds, setAccessibleStoreIds] = useState<string[]>([]);
   const [allowedMenus, setAllowedMenus] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [userDataLoaded, setUserDataLoaded] = useState(false);
 
   // Refs prevent stale-closure behavior inside onAuthStateChange
   const currentUserIdRef = useRef<string | null>(null);
@@ -68,6 +69,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const fetchUserData = async (userId: string): Promise<void> => {
     try {
+      setUserDataLoaded(false);
       // Fetch profile
       const { data: profileData } = await supabase
         .from('profiles')
@@ -130,8 +132,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setAccessibleStoreIds([]);
         }
       }
+      setUserDataLoaded(true);
     } catch (error) {
       console.error('Error fetching user data:', error);
+      setUserDataLoaded(true);
     }
   };
 
@@ -176,11 +180,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setSession(null);
           setUser(null);
           setProfile(null);
-          setRoles([]);
-          setUserStore(null);
-          setAllowedMenus([]);
-          setAccessibleStoreIds([]);
-          setIsLoading(false);
+      setRoles([]);
+      setUserStore(null);
+      setAllowedMenus([]);
+      setAccessibleStoreIds([]);
+      setUserDataLoaded(false);
+      setIsLoading(false);
         }
       }
     );
@@ -233,6 +238,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUserStore(null);
     setAccessibleStoreIds([]);
     setAllowedMenus([]);
+    setUserDataLoaded(false);
   };
 
   const hasRole = (role: AppRole) => roles.includes(role);
@@ -244,6 +250,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const canManageGoals = isAdmin || isManager;
   const userStoreId = userStore?.id || null;
   const isOnlineStore = userStore?.type === 'online' || userStore?.type === 'website';
+  
+  // Consider loading until user data is fully loaded for authenticated users
+  const effectiveLoading = isLoading || (!!user && !userDataLoaded);
 
   return (
     <AuthContext.Provider
@@ -257,7 +266,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         userStoreId,
         accessibleStoreIds,
         isOnlineStore,
-        isLoading,
+        isLoading: effectiveLoading,
         isAdmin,
         isManager,
         isSeller,
