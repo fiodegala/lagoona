@@ -250,6 +250,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const canManageGoals = isAdmin || isManager;
   const userStoreId = userStore?.id || null;
   const isOnlineStore = userStore?.type === 'online' || userStore?.type === 'website';
+  
+  // Consider loading until user data is fully loaded for authenticated users
+  const effectiveLoading = isLoading || (!!user && !userDataLoaded);
 
   return (
     <AuthContext.Provider
@@ -263,7 +266,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         userStoreId,
         accessibleStoreIds,
         isOnlineStore,
-        isLoading,
+        isLoading: effectiveLoading,
         isAdmin,
         isManager,
         isSeller,
