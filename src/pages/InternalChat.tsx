@@ -50,6 +50,7 @@ const InternalChat = () => {
   const [sending, setSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
+  const [allConvMembers, setAllConvMembers] = useState<Record<string, string[]>>({});
 
   // Load admin users (profiles with roles)
   useEffect(() => {
@@ -82,6 +83,22 @@ const InternalChat = () => {
       .order('updated_at', { ascending: false });
     if (data) {
       setConversations(data as Conversation[]);
+      // Load members for all direct conversations to resolve names
+      const directConvIds = (data as Conversation[]).filter(c => c.type === 'direct' && !c.name).map(c => c.id);
+      if (directConvIds.length > 0) {
+        const { data: allMembers } = await supabase
+          .from('conversation_members')
+          .select('conversation_id, user_id')
+          .in('conversation_id', directConvIds);
+        if (allMembers) {
+          const map: Record<string, string[]> = {};
+          allMembers.forEach(m => {
+            if (!map[m.conversation_id]) map[m.conversation_id] = [];
+            map[m.conversation_id].push(m.user_id);
+          });
+          setAllConvMembers(map);
+        }
+      }
     }
     setLoading(false);
   }, []);
@@ -203,8 +220,8 @@ const InternalChat = () => {
   const getConversationDisplayName = (conv: Conversation) => {
     if (conv.name) return conv.name;
     if (conv.type === 'direct') {
-      // Find the other member
-      const otherMember = conversationMembers.find(id => id !== user?.id);
+      const memberIds = allConvMembers[conv.id] || conversationMembers;
+      const otherMember = memberIds.find(id => id !== user?.id);
       if (otherMember && members[otherMember]) return members[otherMember].full_name;
     }
     return 'Conversa';
@@ -301,7 +318,7 @@ const InternalChat = () => {
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center justify-between">
                           <span className="font-medium text-sm truncate">
-                            {conv.name || 'Conversa Direta'}
+                            {getConversationDisplayName(conv)}
                           </span>
                           <span className="text-xs text-muted-foreground">
                             {format(new Date(conv.updated_at), 'HH:mm', { locale: ptBR })}
