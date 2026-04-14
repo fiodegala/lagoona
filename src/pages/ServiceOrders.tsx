@@ -268,17 +268,36 @@ const ServiceOrders = () => {
 
   const saveDeptMutation = useMutation({
     mutationFn: async () => {
+      const trimmedName = deptForm.name.trim();
       if (deptForm.editingId) {
         const { error } = await supabase
           .from('service_order_departments')
-          .update({ name: deptForm.name.trim() })
+          .update({ name: trimmedName })
           .eq('id', deptForm.editingId);
         if (error) throw error;
       } else {
-        const { error } = await supabase
+        // Check if an inactive department with the same name exists
+        const { data: existing } = await supabase
           .from('service_order_departments')
-          .insert({ name: deptForm.name.trim() });
-        if (error) throw error;
+          .select('id, is_active')
+          .eq('name', trimmedName)
+          .maybeSingle();
+
+        if (existing && !existing.is_active) {
+          // Reactivate it
+          const { error } = await supabase
+            .from('service_order_departments')
+            .update({ is_active: true })
+            .eq('id', existing.id);
+          if (error) throw error;
+        } else if (existing && existing.is_active) {
+          throw new Error('Departamento já existe');
+        } else {
+          const { error } = await supabase
+            .from('service_order_departments')
+            .insert({ name: trimmedName });
+          if (error) throw error;
+        }
       }
     },
     onSuccess: () => {
