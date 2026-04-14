@@ -695,7 +695,7 @@ const ServiceOrders = () => {
         </Dialog>
 
         {/* Detail Dialog */}
-        <Dialog open={!!showDetail} onOpenChange={() => setShowDetail(null)}>
+        <Dialog open={!!showDetail} onOpenChange={() => { setShowDetail(null); setAiAnalysis(''); }}>
           <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
             {selectedOrder && (
               <>
