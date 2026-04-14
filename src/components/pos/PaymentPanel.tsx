@@ -24,6 +24,8 @@ import {
   MessageCircle,
   Store,
   Video,
+  Plus,
+  Trash2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -39,6 +41,22 @@ const allChannelOptions: { value: SaleChannel; label: string; icon: React.ReactN
   { value: 'loja_hm44', label: 'Loja HM 44', icon: <Store className="h-4 w-4" /> },
   { value: 'tiktok', label: 'TikTok Shop', icon: <Video className="h-4 w-4" />, adminOnly: true },
 ];
+
+type MixedPaymentType = 'cash' | 'credit' | 'debit' | 'pix';
+
+interface MixedPaymentLine {
+  id: string;
+  type: MixedPaymentType;
+  amount: string;
+  installments: string;
+}
+
+const paymentTypeLabels: Record<MixedPaymentType, { label: string; icon: React.ReactNode }> = {
+  cash: { label: 'Dinheiro', icon: <Banknote className="h-4 w-4" /> },
+  credit: { label: 'Crédito', icon: <CreditCard className="h-4 w-4" /> },
+  debit: { label: 'Débito', icon: <CreditCard className="h-4 w-4" /> },
+  pix: { label: 'PIX', icon: <QrCode className="h-4 w-4" /> },
+};
 
 interface PaymentPanelProps {
   total: number;
@@ -65,13 +83,12 @@ const PaymentPanel = ({
   const [cashReceived, setCashReceived] = useState('');
   const [cardType, setCardType] = useState<'credit' | 'debit'>('credit');
   const [installments, setInstallments] = useState('1');
-  const [mixedCardType, setMixedCardType] = useState<'credit' | 'debit'>('credit');
-  const [mixedInstallments, setMixedInstallments] = useState('1');
-  const [mixedAmounts, setMixedAmounts] = useState({
-    cash: '',
-    card: '',
-    pix: '',
-  });
+
+  // Multi-line mixed payments
+  const [mixedLines, setMixedLines] = useState<MixedPaymentLine[]>([
+    { id: crypto.randomUUID(), type: 'credit', amount: '', installments: '1' },
+    { id: crypto.randomUUID(), type: 'pix', amount: '', installments: '1' },
+  ]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -88,14 +105,42 @@ const PaymentPanel = ({
     ? Math.max(0, parseCurrency(cashReceived) - total) 
     : 0;
 
-  const mixedTotal = 
-    parseCurrency(mixedAmounts.cash) +
-    parseCurrency(mixedAmounts.card) +
-    parseCurrency(mixedAmounts.pix);
-
+  const mixedTotal = mixedLines.reduce((sum, line) => sum + parseCurrency(line.amount), 0);
   const mixedRemaining = total - mixedTotal;
 
   const installmentValue = total / parseInt(installments);
+
+  const addMixedLine = () => {
+    setMixedLines(prev => [
+      ...prev,
+      { id: crypto.randomUUID(), type: 'pix', amount: '', installments: '1' },
+    ]);
+  };
+
+  const removeMixedLine = (id: string) => {
+    if (mixedLines.length <= 2) return;
+    setMixedLines(prev => prev.filter(l => l.id !== id));
+  };
+
+  const updateMixedLine = (id: string, updates: Partial<MixedPaymentLine>) => {
+    setMixedLines(prev => prev.map(l => {
+      if (l.id !== id) return l;
+      const updated = { ...l, ...updates };
+      // Reset installments when switching to non-credit
+      if (updates.type && updates.type !== 'credit') {
+        updated.installments = '1';
+      }
+      return updated;
+    }));
+  };
+
+  const fillRemainingMixed = (id: string) => {
+    const otherTotal = mixedLines
+      .filter(l => l.id !== id)
+      .reduce((sum, l) => sum + parseCurrency(l.amount), 0);
+    const remaining = Math.max(0, total - otherTotal);
+    updateMixedLine(id, { amount: remaining.toFixed(2) });
+  };
 
   const handlePayment = () => {
     if (!selectedMethod || !selectedChannel) return;
@@ -112,13 +157,35 @@ const PaymentPanel = ({
         installmentValue: cardType === 'credit' ? installmentValue : total,
       });
     } else if (selectedMethod === 'mixed') {
+      // Build payment details from lines
+      const payments = mixedLines
+        .filter(l => parseCurrency(l.amount) > 0)
+        .map(l => ({
+          type: l.type,
+          amount: parseCurrency(l.amount),
+          installments: l.type === 'credit' ? parseInt(l.installments) : 1,
+        }));
+
+      // Build legacy-compatible format + new multi-payment array
+      const cashTotal = payments.filter(p => p.type === 'cash').reduce((s, p) => s + p.amount, 0);
+      const pixTotal = payments.filter(p => p.type === 'pix').reduce((s, p) => s + p.amount, 0);
+      const creditTotal = payments.filter(p => p.type === 'credit').reduce((s, p) => s + p.amount, 0);
+      const debitTotal = payments.filter(p => p.type === 'debit').reduce((s, p) => s + p.amount, 0);
+      const cardTotal = creditTotal + debitTotal;
+
+      // For legacy compat: pick the first card line's type/installments
+      const firstCardLine = payments.find(p => p.type === 'credit' || p.type === 'debit');
+
       onPayment('mixed', undefined, {
         ...channelInfo,
-        cash: parseCurrency(mixedAmounts.cash),
-        card: parseCurrency(mixedAmounts.card),
-        pix: parseCurrency(mixedAmounts.pix),
-        mixedCardType,
-        mixedInstallments: mixedCardType === 'credit' ? parseInt(mixedInstallments) : 1,
+        cash: cashTotal,
+        card: cardTotal,
+        pix: pixTotal,
+        debit: debitTotal,
+        credit: creditTotal,
+        mixedCardType: firstCardLine?.type === 'credit' ? 'credit' : 'debit',
+        mixedInstallments: firstCardLine?.installments || 1,
+        payments, // New: full array of all payment lines
       });
     } else {
       onPayment(selectedMethod, undefined, channelInfo);
@@ -132,7 +199,7 @@ const PaymentPanel = ({
       return parseCurrency(cashReceived) >= total;
     }
     if (selectedMethod === 'mixed') {
-      return Math.abs(mixedRemaining) < 0.01;
+      return Math.abs(mixedRemaining) < 0.01 && mixedLines.some(l => parseCurrency(l.amount) > 0);
     }
     return true;
   };
@@ -144,7 +211,6 @@ const PaymentPanel = ({
     Math.ceil(total / 100) * 100,
   ].filter((v, i, arr) => arr.indexOf(v) === i);
 
-  // Reset card options when switching methods
   const handleMethodChange = (method: 'cash' | 'card' | 'pix' | 'mixed') => {
     setSelectedMethod(method);
     if (method !== 'card') {
@@ -261,36 +327,27 @@ const PaymentPanel = ({
       {selectedMethod === 'card' && (
         <div className="space-y-4">
           <Separator />
-          
-          {/* Credit/Debit selection */}
           <div className="space-y-2">
             <Label>Tipo de Cartão</Label>
             <RadioGroup
               value={cardType}
               onValueChange={(value) => {
                 setCardType(value as 'credit' | 'debit');
-                if (value === 'debit') {
-                  setInstallments('1');
-                }
+                if (value === 'debit') setInstallments('1');
               }}
               className="flex gap-4"
             >
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="credit" id="credit" />
-                <Label htmlFor="credit" className="cursor-pointer font-normal">
-                  Crédito
-                </Label>
+                <Label htmlFor="credit" className="cursor-pointer font-normal">Crédito</Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="debit" id="debit" />
-                <Label htmlFor="debit" className="cursor-pointer font-normal">
-                  Débito
-                </Label>
+                <Label htmlFor="debit" className="cursor-pointer font-normal">Débito</Label>
               </div>
             </RadioGroup>
           </div>
 
-          {/* Installments (credit only) */}
           {cardType === 'credit' && (
             <div className="space-y-2">
               <Label>Parcelas</Label>
@@ -310,8 +367,6 @@ const PaymentPanel = ({
                   })}
                 </SelectContent>
               </Select>
-              
-              {/* Installment summary */}
               <div className="bg-primary/10 rounded-lg p-3 text-center mt-3">
                 <div className="text-sm text-muted-foreground">
                   {parseInt(installments) === 1 ? 'Pagamento à vista' : `${installments}x de`}
@@ -328,7 +383,6 @@ const PaymentPanel = ({
             </div>
           )}
 
-          {/* Debit summary */}
           {cardType === 'debit' && (
             <div className="bg-primary/10 rounded-lg p-3 text-center">
               <div className="text-sm text-muted-foreground">Débito à vista</div>
@@ -340,94 +394,104 @@ const PaymentPanel = ({
         </div>
       )}
 
-      {/* Mixed payment details */}
+      {/* Mixed payment details — MULTIMODAL */}
       {selectedMethod === 'mixed' && (
         <div className="space-y-3">
           <Separator />
-          <div className="grid gap-3">
-            <div>
-              <Label className="flex items-center gap-2">
-                <Banknote className="h-4 w-4" /> Dinheiro
-              </Label>
-              <Input
-                type="number"
-                placeholder="R$ 0,00"
-                value={mixedAmounts.cash}
-                onChange={(e) =>
-                  setMixedAmounts({ ...mixedAmounts, cash: e.target.value })
-                }
-                className="mt-1"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <CreditCard className="h-4 w-4" /> Cartão
-              </Label>
-              <Input
-                type="number"
-                placeholder="R$ 0,00"
-                value={mixedAmounts.card}
-                onChange={(e) =>
-                  setMixedAmounts({ ...mixedAmounts, card: e.target.value })
-                }
-                className="mt-1"
-              />
-              {parseCurrency(mixedAmounts.card) > 0 && (
-                <div className="pl-2 border-l-2 border-primary/20 space-y-2">
-                  <RadioGroup
-                    value={mixedCardType}
-                    onValueChange={(v) => {
-                      setMixedCardType(v as 'credit' | 'debit');
-                      if (v === 'debit') setMixedInstallments('1');
-                    }}
-                    className="flex gap-4"
-                  >
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="credit" id="mixed-credit" />
-                      <Label htmlFor="mixed-credit" className="cursor-pointer font-normal text-sm">Crédito</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="debit" id="mixed-debit" />
-                      <Label htmlFor="mixed-debit" className="cursor-pointer font-normal text-sm">Débito</Label>
-                    </div>
-                  </RadioGroup>
-                  {mixedCardType === 'credit' && (
-                    <Select value={mixedInstallments} onValueChange={setMixedInstallments}>
-                      <SelectTrigger className="w-full h-9 text-sm">
-                        <SelectValue placeholder="Parcelas" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-popover">
-                        {Array.from({ length: 6 }, (_, i) => i + 1).map((num) => {
-                          const cardVal = parseCurrency(mixedAmounts.card);
-                          const instVal = cardVal / num;
-                          return (
-                            <SelectItem key={num} value={num.toString()}>
-                              {num}x de {formatCurrency(instVal)}
-                              {num === 1 && ' (à vista)'}
-                            </SelectItem>
-                          );
-                        })}
-                      </SelectContent>
-                    </Select>
+          <div className="space-y-3">
+            {mixedLines.map((line, index) => (
+              <div key={line.id} className="border rounded-lg p-3 space-y-2 bg-muted/30">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs font-medium text-muted-foreground">
+                    Pagamento {index + 1}
+                  </span>
+                  {mixedLines.length > 2 && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 text-destructive"
+                      onClick={() => removeMixedLine(line.id)}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
                   )}
                 </div>
-              )}
-            </div>
-            <div>
-              <Label className="flex items-center gap-2">
-                <QrCode className="h-4 w-4" /> PIX
-              </Label>
-              <Input
-                type="number"
-                placeholder="R$ 0,00"
-                value={mixedAmounts.pix}
-                onChange={(e) =>
-                  setMixedAmounts({ ...mixedAmounts, pix: e.target.value })
-                }
-                className="mt-1"
-              />
-            </div>
+
+                {/* Payment type selector */}
+                <div className="grid grid-cols-4 gap-1">
+                  {(['cash', 'credit', 'debit', 'pix'] as MixedPaymentType[]).map((type) => (
+                    <Button
+                      key={type}
+                      variant={line.type === type ? 'default' : 'outline'}
+                      size="sm"
+                      className="h-8 text-xs gap-1 px-1.5"
+                      onClick={() => updateMixedLine(line.id, { type })}
+                    >
+                      {paymentTypeLabels[type].icon}
+                      <span className="hidden sm:inline">{paymentTypeLabels[type].label}</span>
+                    </Button>
+                  ))}
+                </div>
+
+                {/* Amount */}
+                <div className="flex gap-2 items-end">
+                  <div className="flex-1">
+                    <Input
+                      type="number"
+                      placeholder="R$ 0,00"
+                      value={line.amount}
+                      onChange={(e) => updateMixedLine(line.id, { amount: e.target.value })}
+                      className="h-9"
+                    />
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-9 text-xs whitespace-nowrap"
+                    onClick={() => fillRemainingMixed(line.id)}
+                  >
+                    Restante
+                  </Button>
+                </div>
+
+                {/* Credit installments */}
+                {line.type === 'credit' && parseCurrency(line.amount) > 0 && (
+                  <Select
+                    value={line.installments}
+                    onValueChange={(v) => updateMixedLine(line.id, { installments: v })}
+                  >
+                    <SelectTrigger className="w-full h-8 text-sm">
+                      <SelectValue placeholder="Parcelas" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover">
+                      {Array.from({ length: 6 }, (_, i) => i + 1).map((num) => {
+                        const val = parseCurrency(line.amount) / num;
+                        return (
+                          <SelectItem key={num} value={num.toString()}>
+                            {num}x de {formatCurrency(val)}
+                            {num === 1 && ' (à vista)'}
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
+            ))}
           </div>
+
+          {/* Add payment line */}
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full gap-2"
+            onClick={addMixedLine}
+          >
+            <Plus className="h-4 w-4" />
+            Adicionar forma de pagamento
+          </Button>
+
+          {/* Remaining indicator */}
           <div
             className={cn(
               'rounded-lg p-3 text-center',
@@ -443,7 +507,7 @@ const PaymentPanel = ({
                 ? 'Falta'
                 : mixedRemaining < -0.01
                   ? 'Excedente'
-                  : 'Valor correto'}
+                  : 'Valor correto ✓'}
             </div>
             <div className="text-xl font-bold">
               {formatCurrency(Math.abs(mixedRemaining))}
