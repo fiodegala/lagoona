@@ -15,7 +15,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 import { playServiceOrderSound } from '@/lib/alertSounds';
-import { Plus, MessageSquare, Clock, CheckCircle2, XCircle, Search, Filter, Settings2, Pencil, Trash2, Users, AlertCircle, X, Image, Video, BrainCircuit, Loader2 } from 'lucide-react';
+import { Plus, MessageSquare, Clock, CheckCircle2, XCircle, Search, Filter, Settings2, Pencil, Trash2, Users, AlertCircle, X, Image, Video, BrainCircuit, Loader2, ArrowRightLeft } from 'lucide-react';
 import ImageUpload from '@/components/ImageUpload';
 import VideoUpload from '@/components/VideoUpload';
 import { format } from 'date-fns';
@@ -65,6 +65,8 @@ const ServiceOrders = () => {
   const [draggedOrderId, setDraggedOrderId] = useState<string | null>(null);
   const [aiAnalysis, setAiAnalysis] = useState('');
   const [aiAnalyzing, setAiAnalyzing] = useState(false);
+  const [transferModal, setTransferModal] = useState<{ open: boolean; orderId: string; currentDept: string }>({ open: false, orderId: '', currentDept: '' });
+  const [transferDept, setTransferDept] = useState('');
 
   // AI Analysis - streaming
   const analyzeWithAI = async (order: any) => {
@@ -409,6 +411,20 @@ const ServiceOrders = () => {
     onError: () => toast.error('Erro ao atualizar responsável'),
   });
 
+  const transferDeptMutation = useMutation({
+    mutationFn: async ({ orderId, newDepartment }: { orderId: string; newDepartment: string }) => {
+      const { error } = await supabase.from('service_orders').update({ department: newDepartment } as any).eq('id', orderId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['service-orders'] });
+      setTransferModal({ open: false, orderId: '', currentDept: '' });
+      setTransferDept('');
+      toast.success('OS transferida para outro departamento!');
+    },
+    onError: () => toast.error('Erro ao transferir OS'),
+  });
+
   // Filter orders by search and department
   const filtered = orders.filter((o: any) => {
     if (filterDept !== 'all' && o.department !== filterDept) return false;
@@ -702,12 +718,20 @@ const ServiceOrders = () => {
                 <DialogHeader>
                   <div className="flex items-center justify-between gap-2">
                     <DialogTitle className="flex items-center gap-2">{selectedOrder.title}</DialogTitle>
-                    {isAdmin && (
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive"
-                        onClick={() => { if (confirm('Tem certeza que deseja excluir esta ordem de serviço?')) deleteMutation.mutate(selectedOrder.id); }}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    )}
+                    <div className="flex items-center gap-1">
+                      {isAdmin && (
+                        <Button variant="outline" size="sm" className="gap-1.5"
+                          onClick={() => { setTransferModal({ open: true, orderId: selectedOrder.id, currentDept: selectedOrder.department }); setTransferDept(''); }}>
+                          <ArrowRightLeft className="h-3.5 w-3.5" /> Transferir
+                        </Button>
+                      )}
+                      {isAdmin && (
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive"
+                          onClick={() => { if (confirm('Tem certeza que deseja excluir esta ordem de serviço?')) deleteMutation.mutate(selectedOrder.id); }}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </DialogHeader>
                 <div className="space-y-4">
@@ -944,6 +968,39 @@ const ServiceOrders = () => {
                 </div>
               )}
             </div>
+          </DialogContent>
+        </Dialog>
+        {/* Transfer Department Modal */}
+        <Dialog open={transferModal.open} onOpenChange={(open) => { if (!open) { setTransferModal({ open: false, orderId: '', currentDept: '' }); setTransferDept(''); } }}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <ArrowRightLeft className="h-5 w-5" /> Transferir OS para outro Departamento
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="text-sm text-muted-foreground">
+                Departamento atual: <strong>{transferModal.currentDept}</strong>
+              </div>
+              <div>
+                <Label>Novo departamento</Label>
+                <Select value={transferDept} onValueChange={setTransferDept}>
+                  <SelectTrigger><SelectValue placeholder="Selecione o departamento" /></SelectTrigger>
+                  <SelectContent>
+                    {departmentNames.filter(d => d !== transferModal.currentDept).map((d) => (
+                      <SelectItem key={d} value={d}>{d}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => { setTransferModal({ open: false, orderId: '', currentDept: '' }); setTransferDept(''); }}>Cancelar</Button>
+              <Button onClick={() => transferDeptMutation.mutate({ orderId: transferModal.orderId, newDepartment: transferDept })}
+                disabled={!transferDept || transferDeptMutation.isPending}>
+                {transferDeptMutation.isPending ? 'Transferindo...' : 'Transferir'}
+              </Button>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
