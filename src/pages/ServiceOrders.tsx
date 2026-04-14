@@ -15,10 +15,11 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 import { playServiceOrderSound } from '@/lib/alertSounds';
-import { Plus, MessageSquare, Clock, CheckCircle2, XCircle, Search, Filter, Settings2, Pencil, Trash2, Users, AlertCircle, X, Image, Video } from 'lucide-react';
+import { Plus, MessageSquare, Clock, CheckCircle2, XCircle, Search, Filter, Settings2, Pencil, Trash2, Users, AlertCircle, X, Image, Video, BrainCircuit, Loader2 } from 'lucide-react';
 import ImageUpload from '@/components/ImageUpload';
 import VideoUpload from '@/components/VideoUpload';
 import { format } from 'date-fns';
+import ReactMarkdown from 'react-markdown';
 
 const PRIORITIES = [
   { value: 'low', label: 'Baixa', color: 'bg-muted text-muted-foreground' },
@@ -62,6 +63,83 @@ const ServiceOrders = () => {
   const [actionReason, setActionReason] = useState('');
   const [selectedDeptForManagers, setSelectedDeptForManagers] = useState<string | null>(null);
   const [draggedOrderId, setDraggedOrderId] = useState<string | null>(null);
+  const [aiAnalysis, setAiAnalysis] = useState('');
+  const [aiAnalyzing, setAiAnalyzing] = useState(false);
+
+  // AI Analysis - streaming
+  const analyzeWithAI = async (order: any) => {
+    setAiAnalysis('');
+    setAiAnalyzing(true);
+
+    try {
+      const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/analyze-service-order`;
+      const resp = await fetch(CHAT_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: JSON.stringify({
+          title: order.title,
+          description: order.description,
+          department: order.department,
+          priority: order.priority,
+          status: order.status,
+          comments: comments.map((c: any) => ({ user_name: c.user_name, comment: c.comment })),
+        }),
+      });
+
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({ error: 'Erro desconhecido' }));
+        toast.error(err.error || 'Erro ao analisar OS');
+        setAiAnalyzing(false);
+        return;
+      }
+
+      if (!resp.body) throw new Error('No response body');
+
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let textBuffer = '';
+      let fullText = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        textBuffer += decoder.decode(value, { stream: true });
+
+        let newlineIndex: number;
+        while ((newlineIndex = textBuffer.indexOf('\n')) !== -1) {
+          let line = textBuffer.slice(0, newlineIndex);
+          textBuffer = textBuffer.slice(newlineIndex + 1);
+
+          if (line.endsWith('\r')) line = line.slice(0, -1);
+          if (line.startsWith(':') || line.trim() === '') continue;
+          if (!line.startsWith('data: ')) continue;
+
+          const jsonStr = line.slice(6).trim();
+          if (jsonStr === '[DONE]') break;
+
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const content = parsed.choices?.[0]?.delta?.content;
+            if (content) {
+              fullText += content;
+              setAiAnalysis(fullText);
+            }
+          } catch {
+            textBuffer = line + '\n' + textBuffer;
+            break;
+          }
+        }
+      }
+    } catch (e) {
+      console.error('AI analysis error:', e);
+      toast.error('Erro ao analisar com IA');
+    } finally {
+      setAiAnalyzing(false);
+    }
+  };
 
   // Realtime listener
   useEffect(() => {
@@ -617,7 +695,7 @@ const ServiceOrders = () => {
         </Dialog>
 
         {/* Detail Dialog */}
-        <Dialog open={!!showDetail} onOpenChange={() => setShowDetail(null)}>
+        <Dialog open={!!showDetail} onOpenChange={() => { setShowDetail(null); setAiAnalysis(''); }}>
           <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
             {selectedOrder && (
               <>
@@ -706,6 +784,42 @@ const ServiceOrders = () => {
                       })}
                     </div>
                   )}
+
+                  {/* AI Analysis Section */}
+                  <div className="border rounded-lg overflow-hidden">
+                    <div className="flex items-center justify-between bg-muted/50 px-4 py-2.5 border-b">
+                      <h3 className="font-semibold flex items-center gap-2 text-sm">
+                        <BrainCircuit className="h-4 w-4 text-primary" /> Análise IA
+                      </h3>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => analyzeWithAI(selectedOrder)}
+                        disabled={aiAnalyzing}
+                        className="gap-1.5"
+                      >
+                        {aiAnalyzing ? (
+                          <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Analisando...</>
+                        ) : (
+                          <><BrainCircuit className="h-3.5 w-3.5" /> {aiAnalysis ? 'Reanalisar' : 'Analisar Demanda'}</>
+                        )}
+                      </Button>
+                    </div>
+                    {(aiAnalysis || aiAnalyzing) && (
+                      <div className="p-4 max-h-80 overflow-y-auto">
+                        {aiAnalysis ? (
+                          <div className="prose prose-sm max-w-none dark:prose-invert">
+                            <ReactMarkdown>{aiAnalysis}</ReactMarkdown>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Analisando a demanda...
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
 
                   <div>
                     <h3 className="font-semibold flex items-center gap-2 mb-3"><MessageSquare className="h-4 w-4" /> Comentários</h3>
