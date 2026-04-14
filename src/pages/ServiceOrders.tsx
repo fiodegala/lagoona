@@ -970,6 +970,39 @@ const ServiceOrders = () => {
             </div>
           </DialogContent>
         </Dialog>
+        {/* Transfer Department Modal */}
+        <Dialog open={transferModal.open} onOpenChange={(open) => { if (!open) { setTransferModal({ open: false, orderId: '', currentDept: '' }); setTransferDept(''); } }}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <ArrowRightLeft className="h-5 w-5" /> Transferir OS para outro Departamento
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="text-sm text-muted-foreground">
+                Departamento atual: <strong>{transferModal.currentDept}</strong>
+              </div>
+              <div>
+                <Label>Novo departamento</Label>
+                <Select value={transferDept} onValueChange={setTransferDept}>
+                  <SelectTrigger><SelectValue placeholder="Selecione o departamento" /></SelectTrigger>
+                  <SelectContent>
+                    {departmentNames.filter(d => d !== transferModal.currentDept).map((d) => (
+                      <SelectItem key={d} value={d}>{d}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => { setTransferModal({ open: false, orderId: '', currentDept: '' }); setTransferDept(''); }}>Cancelar</Button>
+              <Button onClick={() => transferDeptMutation.mutate({ orderId: transferModal.orderId, newDepartment: transferDept })}
+                disabled={!transferDept || transferDeptMutation.isPending}>
+                {transferDeptMutation.isPending ? 'Transferindo...' : 'Transferir'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {lightboxImage && (
