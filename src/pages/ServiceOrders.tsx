@@ -15,7 +15,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 import { playServiceOrderSound } from '@/lib/alertSounds';
-import { Plus, MessageSquare, Clock, CheckCircle2, XCircle, Search, Filter, Settings2, Pencil, Trash2, Users, AlertCircle, X, Image, Video, BrainCircuit, Loader2 } from 'lucide-react';
+import { Plus, MessageSquare, Clock, CheckCircle2, XCircle, Search, Filter, Settings2, Pencil, Trash2, Users, AlertCircle, X, Image, Video, BrainCircuit, Loader2, ArrowRightLeft } from 'lucide-react';
 import ImageUpload from '@/components/ImageUpload';
 import VideoUpload from '@/components/VideoUpload';
 import { format } from 'date-fns';
