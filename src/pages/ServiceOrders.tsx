@@ -411,6 +411,20 @@ const ServiceOrders = () => {
     onError: () => toast.error('Erro ao atualizar responsável'),
   });
 
+  const transferDeptMutation = useMutation({
+    mutationFn: async ({ orderId, newDepartment }: { orderId: string; newDepartment: string }) => {
+      const { error } = await supabase.from('service_orders').update({ department: newDepartment } as any).eq('id', orderId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['service-orders'] });
+      setTransferModal({ open: false, orderId: '', currentDept: '' });
+      setTransferDept('');
+      toast.success('OS transferida para outro departamento!');
+    },
+    onError: () => toast.error('Erro ao transferir OS'),
+  });
+
   // Filter orders by search and department
   const filtered = orders.filter((o: any) => {
     if (filterDept !== 'all' && o.department !== filterDept) return false;
