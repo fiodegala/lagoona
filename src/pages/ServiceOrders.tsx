@@ -718,12 +718,20 @@ const ServiceOrders = () => {
                 <DialogHeader>
                   <div className="flex items-center justify-between gap-2">
                     <DialogTitle className="flex items-center gap-2">{selectedOrder.title}</DialogTitle>
-                    {isAdmin && (
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive"
-                        onClick={() => { if (confirm('Tem certeza que deseja excluir esta ordem de serviço?')) deleteMutation.mutate(selectedOrder.id); }}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    )}
+                    <div className="flex items-center gap-1">
+                      {isAdmin && (
+                        <Button variant="outline" size="sm" className="gap-1.5"
+                          onClick={() => { setTransferModal({ open: true, orderId: selectedOrder.id, currentDept: selectedOrder.department }); setTransferDept(''); }}>
+                          <ArrowRightLeft className="h-3.5 w-3.5" /> Transferir
+                        </Button>
+                      )}
+                      {isAdmin && (
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive"
+                          onClick={() => { if (confirm('Tem certeza que deseja excluir esta ordem de serviço?')) deleteMutation.mutate(selectedOrder.id); }}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </DialogHeader>
                 <div className="space-y-4">
