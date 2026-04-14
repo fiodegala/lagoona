@@ -661,7 +661,21 @@ const Reports = () => {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* Seller Filter */}
+            {/* Store Filter */}
+            {showStoreSelector && storesList.length > 0 && (
+              <Select value={selectedStoreId} onValueChange={setSelectedStoreId}>
+                <SelectTrigger className="w-[170px]">
+                  <Store className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="Todas unidades" />
+                </SelectTrigger>
+                <SelectContent>
+                  {isAdmin && <SelectItem value="all">Todas unidades</SelectItem>}
+                  {storesList.map((store) => (
+                    <SelectItem key={store.id} value={store.id}>{store.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
             {sellers.length > 0 && (
               <Select value={selectedSellerId} onValueChange={setSelectedSellerId}>
                 <SelectTrigger className="w-[170px]">
