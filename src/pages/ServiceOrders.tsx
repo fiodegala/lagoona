@@ -785,6 +785,42 @@ const ServiceOrders = () => {
                     </div>
                   )}
 
+                  {/* AI Analysis Section */}
+                  <div className="border rounded-lg overflow-hidden">
+                    <div className="flex items-center justify-between bg-muted/50 px-4 py-2.5 border-b">
+                      <h3 className="font-semibold flex items-center gap-2 text-sm">
+                        <BrainCircuit className="h-4 w-4 text-primary" /> Análise IA
+                      </h3>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => analyzeWithAI(selectedOrder)}
+                        disabled={aiAnalyzing}
+                        className="gap-1.5"
+                      >
+                        {aiAnalyzing ? (
+                          <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Analisando...</>
+                        ) : (
+                          <><BrainCircuit className="h-3.5 w-3.5" /> {aiAnalysis ? 'Reanalisar' : 'Analisar Demanda'}</>
+                        )}
+                      </Button>
+                    </div>
+                    {(aiAnalysis || aiAnalyzing) && (
+                      <div className="p-4 max-h-80 overflow-y-auto">
+                        {aiAnalysis ? (
+                          <div className="prose prose-sm max-w-none dark:prose-invert">
+                            <ReactMarkdown>{aiAnalysis}</ReactMarkdown>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Analisando a demanda...
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
                   <div>
                     <h3 className="font-semibold flex items-center gap-2 mb-3"><MessageSquare className="h-4 w-4" /> Comentários</h3>
                     <div className="space-y-3 max-h-60 overflow-y-auto">
