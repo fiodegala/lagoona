@@ -484,6 +484,7 @@ const CustomerStep = ({ selectedCustomer, onSelectCustomer, saleType, onNext, on
                   <SelectContent>
                     <SelectItem value="none">Não informado</SelectItem>
                     <SelectItem value="Instagram">Instagram</SelectItem>
+                    <SelectItem value="TikTok Shop">TikTok Shop</SelectItem>
                     <SelectItem value="Loja BS">Loja BS</SelectItem>
                     <SelectItem value="Loja 44">Loja 44</SelectItem>
                     <SelectItem value="Site">Site</SelectItem>
