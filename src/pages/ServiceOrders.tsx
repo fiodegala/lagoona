@@ -65,6 +65,8 @@ const ServiceOrders = () => {
   const [draggedOrderId, setDraggedOrderId] = useState<string | null>(null);
   const [aiAnalysis, setAiAnalysis] = useState('');
   const [aiAnalyzing, setAiAnalyzing] = useState(false);
+  const [transferModal, setTransferModal] = useState<{ open: boolean; orderId: string; currentDept: string }>({ open: false, orderId: '', currentDept: '' });
+  const [transferDept, setTransferDept] = useState('');
 
   // AI Analysis - streaming
   const analyzeWithAI = async (order: any) => {
