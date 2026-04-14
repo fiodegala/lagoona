@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   BarChart3, TrendingUp, Users, ShoppingCart, Package,
   Calendar, CalendarRange, DollarSign, ArrowUpRight, ArrowDownRight,
-  Download, FileSpreadsheet, FileText, Tag, Star
+  Download, FileSpreadsheet, FileText, Tag, Star, Store
 } from 'lucide-react';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -104,24 +104,62 @@ const formatCurrency = (value: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 
 const Reports = () => {
-  const { user } = useAuth();
+  const { user, isAdmin, isManager, userStoreId, accessibleStoreIds } = useAuth();
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('30d');
   const [customDateRange, setCustomDateRange] = useState<DateRange | undefined>();
   const [selectedSellerId, setSelectedSellerId] = useState<string>('all');
+  const [selectedStoreId, setSelectedStoreId] = useState<string>('all');
   const [orders, setOrders] = useState<RawOrder[]>([]);
   const [posSales, setPOSSales] = useState<RawPOSSale[]>([]);
   const [sellers, setSellers] = useState<SellerOption[]>([]);
+  const [storesList, setStoresList] = useState<{ id: string; name: string; type: string }[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  const SITE_STORE_ID = 'e0b8ebbc-1b3b-4aec-b5f7-6925762e6ea1';
+
+  // Set default store for non-admin users
+  useEffect(() => {
+    if (!isAdmin && !isManager && userStoreId && selectedStoreId === 'all') {
+      setSelectedStoreId(userStoreId);
+    }
+  }, [isAdmin, isManager, userStoreId]);
+
+  const showStoreSelector = isAdmin || accessibleStoreIds.length > 1;
+  const activeStoreFilter = isAdmin ? (selectedStoreId === 'all' ? null : selectedStoreId) : (selectedStoreId === 'all' ? userStoreId : selectedStoreId);
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [activeStoreFilter]);
 
   const loadData = async () => {
     setIsLoading(true);
+
+    // Fetch stores for selector
+    if (isAdmin) {
+      const { data } = await supabase.from('stores').select('id, name, type').eq('is_active', true).order('name');
+      setStoresList(data || []);
+    } else if (accessibleStoreIds.length > 1) {
+      const { data } = await supabase.from('stores').select('id, name, type').in('id', accessibleStoreIds).eq('is_active', true).order('name');
+      setStoresList(data || []);
+    }
+
+    // Build queries with store filter
+    let ordersQuery = supabase.from('orders').select('id, status, total, customer_name, customer_email, payment_method, payment_status, items, created_at, shipping_address');
+    let posQuery = supabase.from('pos_sales').select('id, customer_name, user_id, total, subtotal, discount_amount, payment_method, status, items, created_at, notes, sale_type');
+
+    const isSiteStore = activeStoreFilter === SITE_STORE_ID;
+
+    if (isSiteStore) {
+      ordersQuery = ordersQuery.eq('store_id', SITE_STORE_ID);
+      posQuery = posQuery.eq('store_id', SITE_STORE_ID).limit(0); // No POS for site
+    } else if (activeStoreFilter) {
+      ordersQuery = ordersQuery.eq('store_id', SITE_STORE_ID).limit(0); // No online orders for physical stores
+      posQuery = posQuery.eq('store_id', activeStoreFilter);
+    }
+
     const [ordersRes, posRes, rolesRes] = await Promise.all([
-      supabase.from('orders').select('id, status, total, customer_name, customer_email, payment_method, payment_status, items, created_at, shipping_address'),
-      supabase.from('pos_sales').select('id, customer_name, user_id, total, subtotal, discount_amount, payment_method, status, items, created_at, notes, sale_type'),
+      ordersQuery,
+      posQuery,
       supabase.from('user_roles').select('user_id'),
     ]);
     setOrders((ordersRes.data || []).map(o => ({
@@ -623,7 +661,21 @@ const Reports = () => {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* Seller Filter */}
+            {/* Store Filter */}
+            {showStoreSelector && storesList.length > 0 && (
+              <Select value={selectedStoreId} onValueChange={setSelectedStoreId}>
+                <SelectTrigger className="w-[170px]">
+                  <Store className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="Todas unidades" />
+                </SelectTrigger>
+                <SelectContent>
+                  {isAdmin && <SelectItem value="all">Todas unidades</SelectItem>}
+                  {storesList.map((store) => (
+                    <SelectItem key={store.id} value={store.id}>{store.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
             {sellers.length > 0 && (
               <Select value={selectedSellerId} onValueChange={setSelectedSellerId}>
                 <SelectTrigger className="w-[170px]">
