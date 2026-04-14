@@ -286,7 +286,10 @@ const ServiceOrders = () => {
       setDeptForm({ name: '', editingId: '' });
       toast.success(deptForm.editingId ? 'Departamento atualizado!' : 'Departamento criado!');
     },
-    onError: () => toast.error('Erro ao salvar departamento'),
+    onError: (err: any) => {
+      console.error('Erro ao salvar departamento:', err);
+      toast.error('Erro ao salvar departamento: ' + (err?.message || 'desconhecido'));
+    },
   });
 
   const deleteDeptMutation = useMutation({
