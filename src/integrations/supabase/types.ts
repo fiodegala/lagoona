@@ -3249,6 +3249,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      has_vm_stock_role: { Args: { _user_id: string }; Returns: boolean }
       increment_affiliate_clicks: {
         Args: { ref_code: string }
         Returns: undefined
