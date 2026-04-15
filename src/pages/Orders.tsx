@@ -459,7 +459,7 @@ const Orders = () => {
                         <TableCell className="text-xs text-muted-foreground">
                           {format(new Date(order.created_at), "dd/MM/yy HH:mm", { locale: ptBR })}
                         </TableCell>
-                        <TableCell className="flex items-center gap-1">
+                        <TableCell className="flex items-center gap-1 whitespace-nowrap">
                           <Button variant="outline" size="sm" onClick={() => setDetailOrder(order)}>
                             <Eye className="h-3 w-3 mr-1" />
                             Detalhes
