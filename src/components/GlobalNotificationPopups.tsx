@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { playServiceOrderSound, playTransferAlertSound } from '@/lib/alertSounds';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, ClipboardList, Clock, ArrowRight } from 'lucide-react';
@@ -328,9 +328,10 @@ const GlobalNotificationPopups = () => {
           </div>
         </div>
 
-        <DialogFooter className="flex flex-row items-center justify-between gap-2 sm:justify-between">
+        <div className="flex items-center justify-between gap-3 pt-2">
           <Button
             variant="ghost"
+            className="shrink-0"
             onClick={() => {
               dismissedIdsRef.current.add(currentItem.id);
               handleDismissAndNext();
@@ -338,17 +339,18 @@ const GlobalNotificationPopups = () => {
           >
             Fechar
           </Button>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-end gap-2">
             <Button
               variant="outline"
               onClick={handleSnooze}
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 shrink-0"
             >
               <Clock className="h-4 w-4" />
               Lembrar em {SNOOZE_MINUTES}min
             </Button>
             <Button
               variant="default"
+              className="shrink-0"
               onClick={() => {
                 const route = isOS ? '/admin/ordens-servico' : '/admin/stock';
                 dismissedIdsRef.current.add(currentItem.id);
@@ -359,7 +361,7 @@ const GlobalNotificationPopups = () => {
               {isOS ? 'Ir para Ordens de Serviço' : 'Ir para Estoque'}
             </Button>
           </div>
-        </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );
