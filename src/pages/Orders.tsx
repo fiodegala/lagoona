@@ -20,10 +20,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { ShoppingCart, Truck, ExternalLink, Package, Search, MessageCircle, Clock, CheckCircle2, XCircle, Printer, Eye, Trash2, Pencil } from 'lucide-react';
+import { ShoppingCart, Truck, ExternalLink, Package, Search, MessageCircle, Clock, CheckCircle2, XCircle, Printer, Eye, Trash2, Pencil, ArrowLeftRight } from 'lucide-react';
 import ShippingLabelModal from '@/components/ShippingLabelModal';
 import OrderDetailModal from '@/components/OrderDetailModal';
 import OrderEditModal from '@/components/OrderEditModal';
+import OrderExchangeModal from '@/components/OrderExchangeModal';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
@@ -82,7 +83,7 @@ const Orders = () => {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [deleteConfirm, setDeleteConfirm] = useState<{ type: 'single' | 'bulk'; id?: string } | null>(null);
   const [editOrder, setEditOrder] = useState<any>(null);
-
+  const [exchangeOrder, setExchangeOrder] = useState<any>(null);
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ['orders'],
     queryFn: async () => {
@@ -475,6 +476,10 @@ const Orders = () => {
                             <Printer className="h-3 w-3 mr-1" />
                             Etiqueta
                           </Button>
+                          <Button variant="outline" size="sm" onClick={() => setExchangeOrder(order)}>
+                            <ArrowLeftRight className="h-3 w-3 mr-1" />
+                            Troca
+                          </Button>
                           <Button
                             size="icon"
                             variant="ghost"
@@ -609,6 +614,13 @@ const Orders = () => {
         onOpenChange={(open) => !open && setEditOrder(null)}
         order={editOrder}
         onSaved={() => queryClient.invalidateQueries({ queryKey: ['orders'] })}
+      />
+
+      <OrderExchangeModal
+        open={!!exchangeOrder}
+        onOpenChange={(open) => !open && setExchangeOrder(null)}
+        order={exchangeOrder}
+        onExchangeComplete={() => queryClient.invalidateQueries({ queryKey: ['orders'] })}
       />
 
       {/* Delete Confirmation */}
