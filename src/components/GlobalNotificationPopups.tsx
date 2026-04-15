@@ -262,10 +262,11 @@ const GlobalNotificationPopups = () => {
   const handleDismissAndNext = () => {
     if (!currentItem) return;
     
-    // Remove from list (it was actioned externally)
+    dismissedIdsRef.current.add(currentItem.id);
     setItems(prev => {
       const remaining = prev.filter(i => i.id !== currentItem.id);
-      const unsnoozed = remaining.filter(i => !i.snoozedUntil);
+      const unsnoozed = remaining.filter(i => !i.snoozedUntil)
+        .filter(i => !dismissedIdsRef.current.has(i.id));
       if (unsnoozed.length > 0) {
         setCurrentItem(unsnoozed[0]);
       } else {
@@ -328,6 +329,15 @@ const GlobalNotificationPopups = () => {
         </div>
 
         <DialogFooter className="flex-col sm:flex-row gap-2">
+          <Button
+            variant="ghost"
+            onClick={() => {
+              dismissedIdsRef.current.add(currentItem.id);
+              handleDismissAndNext();
+            }}
+          >
+            Fechar
+          </Button>
           <Button
             variant="outline"
             onClick={handleSnooze}
