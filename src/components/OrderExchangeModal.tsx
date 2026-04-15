@@ -72,8 +72,7 @@ const OrderExchangeModal = ({ open, onOpenChange, order, onExchangeComplete }: O
         const { data: variations } = await supabase
           .from('product_variations')
           .select('id, product_id, sku, price, stock, is_active, image_url')
-          .in('product_id', productIds)
-          .eq('is_active', true);
+          .in('product_id', productIds);
         variationsList = variations || [];
       }
 
@@ -244,7 +243,8 @@ const OrderExchangeModal = ({ open, onOpenChange, order, onExchangeComplete }: O
                   </Button>
                 </div>
 
-                <div className="space-y-2">
+                <ScrollArea className="max-h-[40vh]">
+                  <div className="space-y-2 pr-2">
                   {searchResults.map(product => (
                     <div key={product.id} className="rounded-md border">
                       {product.variations.length > 0 ? (
@@ -258,7 +258,7 @@ const OrderExchangeModal = ({ open, onOpenChange, order, onExchangeComplete }: O
                             <p className="font-medium truncate">{product.name}</p>
                           </div>
                           <div className="p-2 space-y-1">
-                            {product.variations.filter(v => v.stock > 0).map(v => (
+                            {product.variations.map(v => (
                               <button
                                 key={v.id}
                                 onClick={() => handleSelectNewProduct(product, v)}
@@ -266,14 +266,13 @@ const OrderExchangeModal = ({ open, onOpenChange, order, onExchangeComplete }: O
                               >
                                 <span className="font-medium">{v.label}</span>
                                 <div className="flex items-center gap-2">
-                                  <Badge variant="outline" className="text-[10px]">Est: {v.stock}</Badge>
+                                  <Badge variant="outline" className={`text-[10px] ${v.stock <= 0 ? 'border-destructive text-destructive' : ''}`}>
+                                    Est: {v.stock}
+                                  </Badge>
                                   <span className="font-medium">R$ {Number(v.price || product.price).toFixed(2)}</span>
                                 </div>
                               </button>
                             ))}
-                            {product.variations.filter(v => v.stock > 0).length === 0 && (
-                              <p className="text-xs text-muted-foreground text-center py-1">Sem estoque</p>
-                            )}
                           </div>
                         </>
                       ) : (
@@ -294,7 +293,8 @@ const OrderExchangeModal = ({ open, onOpenChange, order, onExchangeComplete }: O
                       )}
                     </div>
                   ))}
-                </div>
+                  </div>
+                </ScrollArea>
 
                 <Button variant="ghost" size="sm" className="mt-3" onClick={() => { setStep('select-return'); setReturnItem(null); }}>
                   ← Voltar
