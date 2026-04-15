@@ -72,24 +72,6 @@ const OrderExchangeModal = ({ open, onOpenChange, order, onExchangeComplete }: O
         .in('product_id', productIds)
         .eq('is_active', true);
 
-      // Load attribute values for labels
-      const variationIds = (variations || []).map(v => v.id);
-      const { data: attrValues } = variationIds.length > 0 
-        ? await supabase
-            .from('product_attribute_values')
-            .select('id, value, attribute_id, product_attribute_values_attribute_id_fkey:product_attributes!inner(product_id)')
-            .in('attribute_id', 
-              await (async () => {
-                const { data: attrs } = await supabase
-                  .from('product_attributes')
-                  .select('id, product_id')
-                  .in('product_id', productIds);
-                return (attrs || []).map(a => a.id);
-              })()
-            )
-        : { data: [] };
-
-      // Build variation-to-label map via variation_attributes or SKU fallback
       const results: SearchResult[] = (data || []).map(p => ({
         ...p,
         variations: (variations || [])
