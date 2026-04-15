@@ -56,25 +56,30 @@ const OrderExchangeModal = ({ open, onOpenChange, order, onExchangeComplete }: O
     if (!searchQuery.trim()) return;
     setSearching(true);
     try {
+      const term = searchQuery.trim();
       const { data, error } = await supabase
         .from('products')
         .select('id, name, price, image_url')
-        .or(`name.ilike.%${searchQuery}%,barcode.eq.${searchQuery}`)
+        .ilike('name', `%${term}%`)
         .eq('is_active', true)
         .limit(10);
 
       if (error) throw error;
 
       const productIds = (data || []).map(p => p.id);
-      const { data: variations } = await supabase
-        .from('product_variations')
-        .select('id, product_id, sku, price, stock, is_active, image_url')
-        .in('product_id', productIds)
-        .eq('is_active', true);
+      let variationsList: any[] = [];
+      if (productIds.length > 0) {
+        const { data: variations } = await supabase
+          .from('product_variations')
+          .select('id, product_id, sku, price, stock, is_active, image_url')
+          .in('product_id', productIds)
+          .eq('is_active', true);
+        variationsList = variations || [];
+      }
 
       const results: SearchResult[] = (data || []).map(p => ({
         ...p,
-        variations: (variations || [])
+        variations: variationsList
           .filter(v => v.product_id === p.id)
           .map(v => ({
             ...v,
