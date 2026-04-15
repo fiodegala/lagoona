@@ -71,14 +71,42 @@ const OrderExchangeModal = ({ open, onOpenChange, order, onExchangeComplete }: O
         const { data: variations } = await supabase
           .from('product_variations')
           .select(`
-            id, product_id, sku, price, stock, is_active, image_url,
-            product_attribute_values (
-              value,
-              product_attributes ( name )
-            )
+            id, product_id, sku, price, stock, is_active, image_url
           `)
           .in('product_id', productIds);
-        variationsList = variations || [];
+
+        const variationIds = (variations || []).map(v => v.id);
+        let valuesMap: Record<string, Array<{ attr_name: string; value: string }>> = {};
+
+        if (variationIds.length > 0) {
+          const { data: pvvData } = await supabase
+            .from('product_variation_values')
+            .select(`
+              variation_id,
+              product_attribute_values (
+                value,
+                product_attributes ( name )
+              )
+            `)
+            .in('variation_id', variationIds);
+
+          for (const row of (pvvData || [])) {
+            const vid = row.variation_id;
+            if (!valuesMap[vid]) valuesMap[vid] = [];
+            const pav = row.product_attribute_values as any;
+            if (pav) {
+              valuesMap[vid].push({
+                attr_name: pav.product_attributes?.name || '',
+                value: pav.value || '',
+              });
+            }
+          }
+        }
+
+        variationsList = (variations || []).map(v => ({
+          ...v,
+          _attrs: valuesMap[v.id] || [],
+        }));
       }
 
       const results: SearchResult[] = (data || []).map(p => ({
@@ -86,8 +114,8 @@ const OrderExchangeModal = ({ open, onOpenChange, order, onExchangeComplete }: O
         variations: variationsList
           .filter(v => v.product_id === p.id)
           .map(v => {
-            const attrParts = (v.product_attribute_values || [])
-              .map((av: any) => av.value)
+            const attrParts = (v._attrs || [])
+              .map((a: any) => `${a.value}`)
               .filter(Boolean);
             const label = attrParts.length > 0 ? attrParts.join(' / ') : (v.sku || v.id.slice(0, 6));
             return { ...v, label };
