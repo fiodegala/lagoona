@@ -27,7 +27,7 @@ const routeMap: Record<NotificationType, string> = {
   pos_sale: '/admin/sales',
   stock_transfer: '/admin/stock',
   service_order: '/admin/ordens-servico',
-  announcement: '/admin/announcements',
+  announcement: '/admin/comunicados',
 };
 
 function NotificationToast({ notification, onDismiss }: { notification: AdminNotification; onDismiss: () => void }) {

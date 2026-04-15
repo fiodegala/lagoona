@@ -699,7 +699,7 @@ const UsersPage = () => {
                         type="button"
                         variant="outline"
                         size="sm"
-                        onClick={() => setFormData({ ...formData, allowed_menus: [] })}
+                        onClick={() => setFormData({ ...formData, allowed_menus: ['manual', 'service-orders', 'announcements'] })}
                       >
                         Desmarcar
                       </Button>
