@@ -287,7 +287,7 @@ const GlobalNotificationPopups = () => {
   return (
     <Dialog open={showPopup}>
       <DialogContent
-        className="sm:max-w-md [&>button]:hidden"
+        className="w-[calc(100vw-2rem)] max-w-[calc(100vw-2rem)] sm:max-w-lg [&>button]:hidden"
         onPointerDownOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
         onInteractOutside={(e) => e.preventDefault()}
@@ -312,8 +312,8 @@ const GlobalNotificationPopups = () => {
             </Badge>
           )}
 
-          <div className="p-4 rounded-lg border bg-muted/50 space-y-2">
-            <p className="font-semibold text-sm">{currentItem.title}</p>
+          <div className="min-w-0 space-y-2 rounded-lg border bg-muted/50 p-4">
+            <p className="break-words text-sm font-semibold">{currentItem.title}</p>
             <p className="text-sm text-muted-foreground">{currentItem.description}</p>
             {isTransfer && currentItem.extra && (
               <div className="flex items-center gap-2 text-sm">
@@ -328,10 +328,10 @@ const GlobalNotificationPopups = () => {
           </div>
         </div>
 
-        <div className="flex items-center justify-between gap-3 pt-2">
+        <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:items-center sm:justify-between">
           <Button
             variant="ghost"
-            className="shrink-0"
+            className="w-full sm:w-auto sm:shrink-0"
             onClick={() => {
               dismissedIdsRef.current.add(currentItem.id);
               handleDismissAndNext();
@@ -339,18 +339,20 @@ const GlobalNotificationPopups = () => {
           >
             Fechar
           </Button>
-          <div className="flex items-center justify-end gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
             <Button
               variant="outline"
               onClick={handleSnooze}
-              className="flex items-center gap-2 shrink-0"
+              className="h-auto w-full whitespace-normal sm:w-auto sm:shrink-0"
             >
-              <Clock className="h-4 w-4" />
-              Lembrar em {SNOOZE_MINUTES}min
+              <span className="flex items-center justify-center gap-2">
+                <Clock className="h-4 w-4" />
+                Lembrar em {SNOOZE_MINUTES}min
+              </span>
             </Button>
             <Button
               variant="default"
-              className="shrink-0"
+              className="h-auto w-full whitespace-normal sm:w-auto sm:shrink-0"
               onClick={() => {
                 const route = isOS ? '/admin/ordens-servico' : '/admin/stock';
                 dismissedIdsRef.current.add(currentItem.id);
