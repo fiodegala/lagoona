@@ -328,7 +328,7 @@ const GlobalNotificationPopups = () => {
           </div>
         </div>
 
-        <DialogFooter className="flex-col sm:flex-row gap-2">
+        <DialogFooter className="flex flex-row items-center justify-between gap-2 sm:justify-between">
           <Button
             variant="ghost"
             onClick={() => {
@@ -338,25 +338,27 @@ const GlobalNotificationPopups = () => {
           >
             Fechar
           </Button>
-          <Button
-            variant="outline"
-            onClick={handleSnooze}
-            className="flex items-center gap-2"
-          >
-            <Clock className="h-4 w-4" />
-            Lembrar em {SNOOZE_MINUTES}min
-          </Button>
-          <Button
-            variant="default"
-            onClick={() => {
-              const route = isOS ? '/admin/ordens-servico' : '/admin/stock';
-              dismissedIdsRef.current.add(currentItem.id);
-              handleDismissAndNext();
-              navigate(route);
-            }}
-          >
-            {isOS ? 'Ir para Ordens de Serviço' : 'Ir para Estoque'}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={handleSnooze}
+              className="flex items-center gap-2"
+            >
+              <Clock className="h-4 w-4" />
+              Lembrar em {SNOOZE_MINUTES}min
+            </Button>
+            <Button
+              variant="default"
+              onClick={() => {
+                const route = isOS ? '/admin/ordens-servico' : '/admin/stock';
+                dismissedIdsRef.current.add(currentItem.id);
+                handleDismissAndNext();
+                navigate(route);
+              }}
+            >
+              {isOS ? 'Ir para Ordens de Serviço' : 'Ir para Estoque'}
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
