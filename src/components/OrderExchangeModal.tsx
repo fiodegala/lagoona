@@ -188,7 +188,7 @@ const OrderExchangeModal = ({ open, onOpenChange, order, onExchangeComplete }: O
           </DialogTitle>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 min-h-0 pr-2">
+        <div className="flex-1 min-h-0 overflow-y-auto pr-2">
           <div className="space-y-4 py-2">
             {/* Step 1: Select item to return */}
             {step === 'select-return' && (
