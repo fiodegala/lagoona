@@ -476,6 +476,10 @@ const Orders = () => {
                             <Printer className="h-3 w-3 mr-1" />
                             Etiqueta
                           </Button>
+                          <Button variant="outline" size="sm" onClick={() => setExchangeOrder(order)}>
+                            <ArrowLeftRight className="h-3 w-3 mr-1" />
+                            Troca
+                          </Button>
                           <Button
                             size="icon"
                             variant="ghost"
