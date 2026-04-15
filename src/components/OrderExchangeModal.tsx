@@ -56,16 +56,50 @@ const OrderExchangeModal = ({ open, onOpenChange, order, onExchangeComplete }: O
     setSearching(true);
     try {
       const term = searchQuery.trim();
-      const { data, error } = await supabase
+      
+      // Search products by name or barcode
+      const { data: byName } = await supabase
         .from('products')
         .select('id, name, price, image_url')
         .ilike('name', `%${term}%`)
         .eq('is_active', true)
         .limit(10);
 
-      if (error) throw error;
+      // Search variations by barcode or SKU to find additional products
+      const { data: varMatches } = await supabase
+        .from('product_variations')
+        .select('product_id')
+        .or(`barcode.ilike.%${term}%,sku.ilike.%${term}%`)
+        .limit(10);
 
-      const productIds = (data || []).map(p => p.id);
+      // Also search product-level barcode
+      const { data: byBarcode } = await supabase
+        .from('products')
+        .select('id, name, price, image_url')
+        .ilike('barcode', `%${term}%`)
+        .eq('is_active', true)
+        .limit(10);
+
+      // Merge unique product IDs
+      const nameIds = (byName || []).map(p => p.id);
+      const barcodeIds = (byBarcode || []).map(p => p.id);
+      const varProductIds = (varMatches || []).map(v => v.product_id);
+      const allIds = [...new Set([...nameIds, ...barcodeIds, ...varProductIds])];
+
+      // Fetch full product data for any IDs found via variation/barcode that weren't in name search
+      const missingIds = allIds.filter(id => !nameIds.includes(id) && !barcodeIds.includes(id));
+      let extraProducts: any[] = [];
+      if (missingIds.length > 0) {
+        const { data: extra } = await supabase
+          .from('products')
+          .select('id, name, price, image_url')
+          .in('id', missingIds)
+          .eq('is_active', true);
+        extraProducts = extra || [];
+      }
+
+      const data = [...(byName || []), ...(byBarcode || []).filter(p => !nameIds.includes(p.id)), ...extraProducts];
+      const productIds = data.map(p => p.id);
       let variationsList: any[] = [];
       if (productIds.length > 0) {
         const { data: variations } = await supabase
