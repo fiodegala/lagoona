@@ -2,7 +2,6 @@
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { alwaysVisibleMenuKeys } from '@/config/menuItems';
 
 type AppRole = 'admin' | 'manager' | 'support' | 'seller' | 'vm_stock' | 'cashier';
 
@@ -68,8 +67,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const currentUserIdRef = useRef<string | null>(null);
   const authBootstrappedRef = useRef(false);
 
+  const ALWAYS_VISIBLE = ['manual', 'service-orders', 'announcements'];
+
   const normalizeAllowedMenus = (menus?: string[] | null) =>
-    Array.from(new Set([...(menus ?? []), ...alwaysVisibleMenuKeys]));
+    Array.from(new Set([...(menus ?? []), ...ALWAYS_VISIBLE]));
 
   const fetchUserData = async (userId: string): Promise<void> => {
     try {
