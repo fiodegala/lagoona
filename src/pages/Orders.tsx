@@ -83,7 +83,7 @@ const Orders = () => {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [deleteConfirm, setDeleteConfirm] = useState<{ type: 'single' | 'bulk'; id?: string } | null>(null);
   const [editOrder, setEditOrder] = useState<any>(null);
-
+  const [exchangeOrder, setExchangeOrder] = useState<any>(null);
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ['orders'],
     queryFn: async () => {
