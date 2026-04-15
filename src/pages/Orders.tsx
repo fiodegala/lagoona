@@ -616,6 +616,13 @@ const Orders = () => {
         onSaved={() => queryClient.invalidateQueries({ queryKey: ['orders'] })}
       />
 
+      <OrderExchangeModal
+        open={!!exchangeOrder}
+        onOpenChange={(open) => !open && setExchangeOrder(null)}
+        order={exchangeOrder}
+        onExchangeComplete={() => queryClient.invalidateQueries({ queryKey: ['orders'] })}
+      />
+
       {/* Delete Confirmation */}
       <AlertDialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
         <AlertDialogContent>
