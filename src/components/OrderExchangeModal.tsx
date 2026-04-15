@@ -3,7 +3,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { ArrowLeftRight, Search, RotateCcw, Package, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -252,8 +251,8 @@ const OrderExchangeModal = ({ open, onOpenChange, order, onExchangeComplete }: O
                   </Button>
                 </div>
 
-                <ScrollArea className="max-h-[40vh]">
-                  <div className="space-y-2 pr-2">
+                <div className="max-h-[42vh] overflow-y-auto overflow-x-hidden rounded-md border bg-background pr-1">
+                  <div className="space-y-2 p-2">
                   {searchResults.map(product => (
                     <div key={product.id} className="rounded-md border">
                       {product.variations.length > 0 ? (
@@ -302,8 +301,14 @@ const OrderExchangeModal = ({ open, onOpenChange, order, onExchangeComplete }: O
                       )}
                     </div>
                   ))}
+
+                  {searchResults.length === 0 && !searching && (
+                    <p className="py-6 text-center text-sm text-muted-foreground">
+                      Nenhum produto encontrado.
+                    </p>
+                  )}
                   </div>
-                </ScrollArea>
+                </div>
 
                 <Button variant="ghost" size="sm" className="mt-3" onClick={() => { setStep('select-return'); setReturnItem(null); }}>
                   ← Voltar
