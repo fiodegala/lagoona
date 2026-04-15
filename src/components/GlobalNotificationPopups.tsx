@@ -292,19 +292,21 @@ const GlobalNotificationPopups = () => {
         onEscapeKeyDown={(e) => e.preventDefault()}
         onInteractOutside={(e) => e.preventDefault()}
       >
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="absolute right-4 top-4 h-8 w-8 rounded-full text-muted-foreground hover:text-foreground"
-          onClick={() => {
-            dismissedIdsRef.current.add(currentItem.id);
-            handleDismissAndNext();
-          }}
-          aria-label="Fechar notificação"
-        >
-          <X className="h-4 w-4" />
-        </Button>
+        <div className="absolute right-4 top-4 z-10">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 rounded-full text-muted-foreground hover:text-foreground"
+            onClick={() => {
+              dismissedIdsRef.current.add(currentItem.id);
+              handleDismissAndNext();
+            }}
+            aria-label="Fechar notificação"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
 
         <DialogHeader className="pr-10">
           <DialogTitle className="flex items-center gap-2">
