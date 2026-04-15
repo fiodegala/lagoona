@@ -37,6 +37,8 @@ interface AdminLayoutProps {
   children: React.ReactNode;
 }
 
+const pinnedMenuKeys = new Set(['service-orders', 'announcements']);
+
 const AdminLayout = ({ children }: AdminLayoutProps) => {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -44,6 +46,8 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
   const navigate = useNavigate();
   const { profile, roles, signOut, isAdmin, userStore, allowedMenus } = useAuth();
   const { unreadCount } = useChatUnread();
+  const pinnedNavItems = navItems.filter((item) => pinnedMenuKeys.has(item.menuKey));
+  const primaryNavItems = navItems.filter((item) => !pinnedMenuKeys.has(item.menuKey));
 
   // Filter menu items: admins see everything, others see only allowed menus
   const alwaysVisibleMenus = ['manual', 'service-orders', 'announcements'];
@@ -157,9 +161,22 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
         </a>
       </div>
 
+      <div className="px-2 py-2 border-b border-sidebar-border">
+        {!collapsed && (
+          <span className="px-3 text-xs font-semibold text-sidebar-foreground/60 uppercase tracking-wider">
+            Acesso rápido
+          </span>
+        )}
+        <div className="space-y-1 mt-2">
+          {pinnedNavItems.map((item) => (
+            <NavItem key={item.menuKey} {...item} />
+          ))}
+        </div>
+      </div>
+
       {/* Navigation */}
       <div className="flex-1 overflow-y-auto py-4 px-2 space-y-1">
-        {navItems.map((item) => (
+        {primaryNavItems.map((item) => (
           <NavItem key={item.menuKey} {...item} />
         ))}
 
