@@ -6,7 +6,7 @@ import { playServiceOrderSound, playTransferAlertSound } from '@/lib/alertSounds
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { AlertTriangle, ClipboardList, Clock, ArrowRight } from 'lucide-react';
+import { AlertTriangle, ClipboardList, Clock, ArrowRight, X } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface PendingItem {
@@ -292,7 +292,21 @@ const GlobalNotificationPopups = () => {
         onEscapeKeyDown={(e) => e.preventDefault()}
         onInteractOutside={(e) => e.preventDefault()}
       >
-        <DialogHeader>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="absolute right-4 top-4 h-8 w-8 rounded-full text-muted-foreground hover:text-foreground"
+          onClick={() => {
+            dismissedIdsRef.current.add(currentItem.id);
+            handleDismissAndNext();
+          }}
+          aria-label="Fechar notificação"
+        >
+          <X className="h-4 w-4" />
+        </Button>
+
+        <DialogHeader className="pr-10">
           <DialogTitle className="flex items-center gap-2">
             {isOS && <ClipboardList className="h-5 w-5 text-amber-600 animate-pulse" />}
             {isTransfer && <AlertTriangle className="h-5 w-5 text-destructive animate-pulse" />}
@@ -328,41 +342,29 @@ const GlobalNotificationPopups = () => {
           </div>
         </div>
 
-        <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-2 pt-2 sm:flex-row sm:items-center sm:justify-end">
           <Button
-            variant="ghost"
-            className="w-full sm:w-auto sm:shrink-0"
+            variant="outline"
+            onClick={handleSnooze}
+            className="h-auto w-full whitespace-normal sm:w-auto sm:shrink-0"
+          >
+            <span className="flex items-center justify-center gap-2">
+              <Clock className="h-4 w-4" />
+              Lembrar em {SNOOZE_MINUTES}min
+            </span>
+          </Button>
+          <Button
+            variant="default"
+            className="h-auto w-full whitespace-normal sm:w-auto sm:shrink-0"
             onClick={() => {
+              const route = isOS ? '/admin/ordens-servico' : '/admin/stock';
               dismissedIdsRef.current.add(currentItem.id);
               handleDismissAndNext();
+              navigate(route);
             }}
           >
-            Fechar
+            {isOS ? 'Ir para Ordens de Serviço' : 'Ir para Estoque'}
           </Button>
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
-            <Button
-              variant="outline"
-              onClick={handleSnooze}
-              className="h-auto w-full whitespace-normal sm:w-auto sm:shrink-0"
-            >
-              <span className="flex items-center justify-center gap-2">
-                <Clock className="h-4 w-4" />
-                Lembrar em {SNOOZE_MINUTES}min
-              </span>
-            </Button>
-            <Button
-              variant="default"
-              className="h-auto w-full whitespace-normal sm:w-auto sm:shrink-0"
-              onClick={() => {
-                const route = isOS ? '/admin/ordens-servico' : '/admin/stock';
-                dismissedIdsRef.current.add(currentItem.id);
-                handleDismissAndNext();
-                navigate(route);
-              }}
-            >
-              {isOS ? 'Ir para Ordens de Serviço' : 'Ir para Estoque'}
-            </Button>
-          </div>
         </div>
       </DialogContent>
     </Dialog>
