@@ -72,8 +72,7 @@ const OrderExchangeModal = ({ open, onOpenChange, order, onExchangeComplete }: O
         const { data: variations } = await supabase
           .from('product_variations')
           .select('id, product_id, sku, price, stock, is_active, image_url')
-          .in('product_id', productIds)
-          .eq('is_active', true);
+          .in('product_id', productIds);
         variationsList = variations || [];
       }
 
