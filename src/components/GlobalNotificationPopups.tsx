@@ -343,29 +343,28 @@ const GlobalNotificationPopups = () => {
         </div>
 
         <div className="flex flex-col gap-2 pt-2 sm:flex-row sm:items-center sm:justify-end">
-            <Button
-              variant="outline"
-              onClick={handleSnooze}
-              className="h-auto w-full whitespace-normal sm:w-auto sm:shrink-0"
-            >
-              <span className="flex items-center justify-center gap-2">
-                <Clock className="h-4 w-4" />
-                Lembrar em {SNOOZE_MINUTES}min
-              </span>
-            </Button>
-            <Button
-              variant="default"
-              className="h-auto w-full whitespace-normal sm:w-auto sm:shrink-0"
-              onClick={() => {
-                const route = isOS ? '/admin/ordens-servico' : '/admin/stock';
-                dismissedIdsRef.current.add(currentItem.id);
-                handleDismissAndNext();
-                navigate(route);
-              }}
-            >
-              {isOS ? 'Ir para Ordens de Serviço' : 'Ir para Estoque'}
-            </Button>
-          </div>
+          <Button
+            variant="outline"
+            onClick={handleSnooze}
+            className="h-auto w-full whitespace-normal sm:w-auto sm:shrink-0"
+          >
+            <span className="flex items-center justify-center gap-2">
+              <Clock className="h-4 w-4" />
+              Lembrar em {SNOOZE_MINUTES}min
+            </span>
+          </Button>
+          <Button
+            variant="default"
+            className="h-auto w-full whitespace-normal sm:w-auto sm:shrink-0"
+            onClick={() => {
+              const route = isOS ? '/admin/ordens-servico' : '/admin/stock';
+              dismissedIdsRef.current.add(currentItem.id);
+              handleDismissAndNext();
+              navigate(route);
+            }}
+          >
+            {isOS ? 'Ir para Ordens de Serviço' : 'Ir para Estoque'}
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
