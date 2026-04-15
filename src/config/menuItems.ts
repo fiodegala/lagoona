@@ -43,6 +43,11 @@ export interface MenuItem {
   requireAdmin?: boolean;
 }
 
+export const alwaysVisibleMenuKeys = ['manual', 'service-orders', 'announcements'] as const;
+
+export const isAlwaysVisibleMenu = (menuKey: string) =>
+  alwaysVisibleMenuKeys.includes(menuKey as (typeof alwaysVisibleMenuKeys)[number]);
+
 export const navItems: MenuItem[] = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/admin', menuKey: 'dashboard' },
   { icon: Monitor, label: 'PDV', path: '/admin/pos', menuKey: 'pos' },
