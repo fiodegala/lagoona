@@ -71,7 +71,13 @@ const OrderExchangeModal = ({ open, onOpenChange, order, onExchangeComplete }: O
       if (productIds.length > 0) {
         const { data: variations } = await supabase
           .from('product_variations')
-          .select('id, product_id, sku, price, stock, is_active, image_url')
+          .select(`
+            id, product_id, sku, price, stock, is_active, image_url,
+            product_attribute_values (
+              value,
+              product_attributes ( name )
+            )
+          `)
           .in('product_id', productIds);
         variationsList = variations || [];
       }
@@ -80,10 +86,13 @@ const OrderExchangeModal = ({ open, onOpenChange, order, onExchangeComplete }: O
         ...p,
         variations: variationsList
           .filter(v => v.product_id === p.id)
-          .map(v => ({
-            ...v,
-            label: v.sku || v.id.slice(0, 6),
-          })),
+          .map(v => {
+            const attrParts = (v.product_attribute_values || [])
+              .map((av: any) => av.value)
+              .filter(Boolean);
+            const label = attrParts.length > 0 ? attrParts.join(' / ') : (v.sku || v.id.slice(0, 6));
+            return { ...v, label };
+          }),
       }));
 
       setSearchResults(results);
@@ -179,7 +188,7 @@ const OrderExchangeModal = ({ open, onOpenChange, order, onExchangeComplete }: O
           </DialogTitle>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 min-h-0 pr-2">
+        <div className="flex-1 min-h-0 overflow-y-auto pr-2">
           <div className="space-y-4 py-2">
             {/* Step 1: Select item to return */}
             {step === 'select-return' && (
@@ -361,7 +370,7 @@ const OrderExchangeModal = ({ open, onOpenChange, order, onExchangeComplete }: O
               </div>
             )}
           </div>
-        </ScrollArea>
+        </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={handleClose}>Cancelar</Button>
