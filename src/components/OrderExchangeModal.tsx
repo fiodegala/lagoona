@@ -370,7 +370,7 @@ const OrderExchangeModal = ({ open, onOpenChange, order, onExchangeComplete }: O
               </div>
             )}
           </div>
-        </ScrollArea>
+        </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={handleClose}>Cancelar</Button>
