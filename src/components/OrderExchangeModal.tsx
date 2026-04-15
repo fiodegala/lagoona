@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
@@ -66,36 +65,43 @@ const OrderExchangeModal = ({ open, onOpenChange, order, onExchangeComplete }: O
 
       if (error) throw error;
 
-      // Load variations for each product
       const productIds = (data || []).map(p => p.id);
       const { data: variations } = await supabase
         .from('product_variations')
-        .select('id, product_id, sku, price, stock, is_active, image_url, attributes')
+        .select('id, product_id, sku, price, stock, is_active, image_url')
         .in('product_id', productIds)
         .eq('is_active', true);
 
+      // Load attribute values for labels
+      const variationIds = (variations || []).map(v => v.id);
+      const { data: attrValues } = variationIds.length > 0 
+        ? await supabase
+            .from('product_attribute_values')
+            .select('id, value, attribute_id, product_attribute_values_attribute_id_fkey:product_attributes!inner(product_id)')
+            .in('attribute_id', 
+              await (async () => {
+                const { data: attrs } = await supabase
+                  .from('product_attributes')
+                  .select('id, product_id')
+                  .in('product_id', productIds);
+                return (attrs || []).map(a => a.id);
+              })()
+            )
+        : { data: [] };
+
+      // Build variation-to-label map via variation_attributes or SKU fallback
       const results: SearchResult[] = (data || []).map(p => ({
         ...p,
         variations: (variations || [])
           .filter(v => v.product_id === p.id)
           .map(v => ({
             ...v,
-            label: (() => {
-              try {
-                const attrs = typeof v.attributes === 'string' ? JSON.parse(v.attributes) : v.attributes;
-                if (attrs && typeof attrs === 'object') {
-                  return Object.values(attrs).join(' / ');
-                }
-                return v.sku || v.id.slice(0, 6);
-              } catch {
-                return v.sku || v.id.slice(0, 6);
-              }
-            })(),
+            label: v.sku || v.id.slice(0, 6),
           })),
       }));
 
       setSearchResults(results);
-    } catch (err) {
+    } catch {
       toast.error('Erro ao buscar produtos');
     } finally {
       setSearching(false);
