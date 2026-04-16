@@ -182,6 +182,47 @@ const CheckoutPage = () => {
       document.getElementById('document')?.focus();
       return;
     }
+    // Reject sequences of repeated digits (e.g. 00000000000)
+    if (/^(\d)\1+$/.test(docDigits)) {
+      toast.error('CPF/CNPJ inválido');
+      document.getElementById('document')?.focus();
+      return;
+    }
+    // Validate CPF check digits
+    if (docDigits.length === 11) {
+      const calcDigit = (base: string, factor: number) => {
+        let sum = 0;
+        for (let i = 0; i < base.length; i++) sum += parseInt(base[i]) * (factor - i);
+        const rest = (sum * 10) % 11;
+        return rest === 10 ? 0 : rest;
+      };
+      const d1 = calcDigit(docDigits.substring(0, 9), 10);
+      const d2 = calcDigit(docDigits.substring(0, 10), 11);
+      if (d1 !== parseInt(docDigits[9]) || d2 !== parseInt(docDigits[10])) {
+        toast.error('CPF inválido. Verifique os dígitos.');
+        document.getElementById('document')?.focus();
+        return;
+      }
+    }
+    // Validate CNPJ check digits
+    if (docDigits.length === 14) {
+      const calcCnpj = (base: string) => {
+        const weights = base.length === 12
+          ? [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
+          : [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+        let sum = 0;
+        for (let i = 0; i < base.length; i++) sum += parseInt(base[i]) * weights[i];
+        const rest = sum % 11;
+        return rest < 2 ? 0 : 11 - rest;
+      };
+      const d1 = calcCnpj(docDigits.substring(0, 12));
+      const d2 = calcCnpj(docDigits.substring(0, 13));
+      if (d1 !== parseInt(docDigits[12]) || d2 !== parseInt(docDigits[13])) {
+        toast.error('CNPJ inválido. Verifique os dígitos.');
+        document.getElementById('document')?.focus();
+        return;
+      }
+    }
 
     if (!trimmedName || !trimmedEmail || !trimmedPhone || !trimmedAddress || !trimmedNumber || !trimmedCity || !trimmedState || !trimmedZipCode) {
       toast.error('Preencha todos os campos obrigatórios');
