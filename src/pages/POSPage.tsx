@@ -222,10 +222,14 @@ const POSPage = () => {
   const returnSubtotal = returnItems.reduce((sum, item) => sum + item.unit_price * item.quantity, 0);
   const subtotal = newSubtotal;
   const itemDiscounts = newItems.reduce((sum, item) => sum + item.discount_amount, 0);
-  const generalDiscountAmount = generalDiscount.type === 'percentage'
-    ? (subtotal - itemDiscounts) * (generalDiscount.value / 100)
+  const baseForGeneralDiscount = Math.max(0, subtotal - itemDiscounts);
+  const rawGeneralDiscount = generalDiscount.type === 'percentage'
+    ? baseForGeneralDiscount * (generalDiscount.value / 100)
     : generalDiscount.value;
+  // TRAVA: desconto geral nunca pode exceder o subtotal menos descontos por item
+  const generalDiscountAmount = Math.min(rawGeneralDiscount, baseForGeneralDiscount);
   const totalDiscount = itemDiscounts + generalDiscountAmount + returnSubtotal;
+  // TRAVA: total nunca pode ser negativo
   const total = Math.max(0, subtotal - totalDiscount);
 
   // For quotes, use the selected quotePriceMode to determine pricing
@@ -359,10 +363,13 @@ const POSPage = () => {
     setCartItems((items) =>
       items.map((item) => {
         if (item.id !== itemId) return item;
-        const discountAmount = discountType === 'percentage'
-          ? item.unit_price * item.quantity * (discountValue / 100)
+        const lineTotal = item.unit_price * item.quantity;
+        const rawDiscount = discountType === 'percentage'
+          ? lineTotal * (discountValue / 100)
           : discountValue;
-        return { ...item, discount_type: discountType, discount_value: discountValue, discount_amount: discountAmount, total: item.unit_price * item.quantity - discountAmount };
+        // TRAVA: desconto por item nunca pode exceder o valor da linha
+        const discountAmount = Math.min(rawDiscount, lineTotal);
+        return { ...item, discount_type: discountType, discount_value: discountValue, discount_amount: discountAmount, total: lineTotal - discountAmount };
       })
     );
   };
@@ -390,14 +397,16 @@ const POSPage = () => {
     setCartItems((items) =>
       items.map((item) => {
         if (item.id !== itemId) return item;
-        const discountAmount = item.discount_type === 'percentage'
-          ? newPrice * item.quantity * ((item.discount_value || 0) / 100)
+        const lineTotal = newPrice * item.quantity;
+        const rawDiscount = item.discount_type === 'percentage'
+          ? lineTotal * ((item.discount_value || 0) / 100)
           : (item.discount_value || 0);
+        const discountAmount = Math.min(rawDiscount, lineTotal);
         return {
           ...item,
           unit_price: newPrice,
           discount_amount: discountAmount,
-          total: newPrice * item.quantity - discountAmount,
+          total: lineTotal - discountAmount,
         };
       })
     );
@@ -420,16 +429,18 @@ const POSPage = () => {
           default:
             newPrice = retailPrice;
         }
-        const discountAmount = item.discount_type === 'percentage'
-          ? newPrice * item.quantity * ((item.discount_value || 0) / 100)
+        const lineTotal = newPrice * item.quantity;
+        const rawDiscount = item.discount_type === 'percentage'
+          ? lineTotal * ((item.discount_value || 0) / 100)
           : (item.discount_value || 0);
+        const discountAmount = Math.min(rawDiscount, lineTotal);
         return {
           ...item,
           unit_price: newPrice,
           is_promotional: undefined,
           original_price: undefined,
           discount_amount: discountAmount,
-          total: newPrice * item.quantity - discountAmount,
+          total: lineTotal - discountAmount,
         };
       })
     );

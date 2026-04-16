@@ -116,10 +116,16 @@ const POSCart = ({
   };
 
   const handleApplyGeneralDiscount = () => {
-    const value = parseFloat(discountInput.replace(',', '.')) || 0;
-    if (value > 0) {
-      onApplyGeneralDiscount(discountType, value);
+    let value = parseFloat(discountInput.replace(',', '.')) || 0;
+    if (value <= 0) return;
+    // TRAVA: percentual máximo 100%, valor fixo máximo = subtotal
+    if (discountType === 'percentage') {
+      value = Math.min(value, 100);
+    } else {
+      value = Math.min(value, subtotal);
     }
+    setDiscountInput(value.toString());
+    onApplyGeneralDiscount(discountType, value);
   };
 
   const handleRemoveGeneralDiscount = () => {

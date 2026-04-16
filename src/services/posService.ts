@@ -327,6 +327,13 @@ export const posService = {
       return fullSale as unknown as POSSale;
     }
 
+    // TRAVA DE SEGURANÇA: validar que desconto não excede subtotal
+    const validatedDiscountAmount = Math.min(saleData.discount_amount || 0, saleData.subtotal);
+    const validatedTotal = Math.max(0, saleData.subtotal - validatedDiscountAmount);
+
+    // Se o total informado divergir do calculado, usar o validado
+    const finalTotal = saleData.total < 0 ? validatedTotal : Math.max(0, saleData.total);
+
     const insertData = {
       local_id: saleData.local_id,
       session_id: saleData.session_id || null,
@@ -339,8 +346,8 @@ export const posService = {
       subtotal: saleData.subtotal,
       discount_type: saleData.discount_type || null,
       discount_value: saleData.discount_value || 0,
-      discount_amount: saleData.discount_amount || 0,
-      total: saleData.total,
+      discount_amount: validatedDiscountAmount,
+      total: finalTotal,
       payment_method: saleData.payment_method,
       payment_details: saleData.payment_details || {},
       amount_received: saleData.amount_received || null,
