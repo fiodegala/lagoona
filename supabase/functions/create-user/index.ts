@@ -1,6 +1,16 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders, getUserIdFromAuthHeader } from "../_shared/utils.ts";
 
+const ALWAYS_VISIBLE_MENUS = ["manual", "service-orders", "announcements"] as const;
+
+const sanitizeAllowedMenus = (menus: unknown): string[] => {
+  const normalizedMenus = Array.isArray(menus)
+    ? menus.filter((menu): menu is string => typeof menu === "string" && menu.length > 0 && !ALWAYS_VISIBLE_MENUS.includes(menu as (typeof ALWAYS_VISIBLE_MENUS)[number]))
+    : [];
+
+  return Array.from(new Set(normalizedMenus));
+};
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -44,6 +54,7 @@ Deno.serve(async (req) => {
 
     const body = await req.json();
     const { action, email, password, fullName, role, store_id, allowed_menus, user_id: targetUserId, new_password } = body;
+    const normalizedAllowedMenus = sanitizeAllowedMenus(allowed_menus);
 
     // adminClient already created above
 
@@ -118,12 +129,12 @@ Deno.serve(async (req) => {
     }
 
     // Save menu permissions if provided
-    if (allowed_menus && Array.isArray(allowed_menus) && allowed_menus.length > 0) {
+    if (normalizedAllowedMenus.length > 0) {
       const { error: menuError } = await adminClient
         .from("user_menu_permissions")
         .insert({
           user_id: newUser.user.id,
-          allowed_menus,
+          allowed_menus: normalizedAllowedMenus,
         });
 
       if (menuError) {

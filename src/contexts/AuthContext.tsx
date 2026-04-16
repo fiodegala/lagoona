@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { normalizeAllowedMenuKeys } from '@/config/menuItems';
 
 type AppRole = 'admin' | 'manager' | 'support' | 'seller' | 'vm_stock' | 'cashier';
 
@@ -25,6 +26,7 @@ interface AuthContextType {
   profile: Profile | null;
   roles: AppRole[];
   allowedMenus: string[];
+  hasExplicitMenuPermissions: boolean;
   userStore: UserStore | null;
   userStoreId: string | null;
   accessibleStoreIds: string[];
@@ -60,17 +62,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [userStore, setUserStore] = useState<UserStore | null>(null);
   const [accessibleStoreIds, setAccessibleStoreIds] = useState<string[]>([]);
   const [allowedMenus, setAllowedMenus] = useState<string[]>([]);
+  const [hasExplicitMenuPermissions, setHasExplicitMenuPermissions] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [userDataLoaded, setUserDataLoaded] = useState(false);
 
   // Refs prevent stale-closure behavior inside onAuthStateChange
   const currentUserIdRef = useRef<string | null>(null);
   const authBootstrappedRef = useRef(false);
-
-  const ALWAYS_VISIBLE = ['manual', 'service-orders', 'announcements'];
-
-  const normalizeAllowedMenus = (menus?: string[] | null) =>
-    Array.from(new Set([...(menus ?? []), ...ALWAYS_VISIBLE]));
 
   const fetchUserData = async (userId: string): Promise<void> => {
     try {
@@ -93,7 +91,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .eq('user_id', userId)
         .maybeSingle();
 
-      setAllowedMenus(normalizeAllowedMenus(menuPerms?.allowed_menus as string[] | null | undefined));
+      setHasExplicitMenuPermissions(!!menuPerms);
+      setAllowedMenus(normalizeAllowedMenuKeys(menuPerms?.allowed_menus as string[] | null | undefined));
 
       // Fetch roles with store_id
       const { data: rolesData } = await supabase
@@ -184,6 +183,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setRoles([]);
       setUserStore(null);
       setAllowedMenus([]);
+      setHasExplicitMenuPermissions(false);
       setAccessibleStoreIds([]);
       setUserDataLoaded(false);
       setIsLoading(false);
@@ -239,6 +239,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUserStore(null);
     setAccessibleStoreIds([]);
     setAllowedMenus([]);
+    setHasExplicitMenuPermissions(false);
     setUserDataLoaded(false);
   };
 
@@ -263,6 +264,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         profile,
         roles,
         allowedMenus,
+        hasExplicitMenuPermissions,
         userStore,
         userStoreId,
         accessibleStoreIds,

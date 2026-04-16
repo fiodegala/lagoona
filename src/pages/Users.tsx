@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { allMenuItems } from '@/config/menuItems';
+import { allMenuItems, isAlwaysVisibleMenu, normalizeAllowedMenuKeys, stripAlwaysVisibleMenuKeys } from '@/config/menuItems';
 import {
   Table,
   TableBody,
@@ -91,6 +91,9 @@ const roleColors: Record<AppRole, string> = {
   cashier: 'bg-chart-4 text-primary-foreground',
 };
 
+const countOptionalMenus = (menus: string[] = []) =>
+  stripAlwaysVisibleMenuKeys(menus).length;
+
 const UsersPage = () => {
   const { isAdmin, user } = useAuth();
   const { toast } = useToast();
@@ -107,7 +110,7 @@ const UsersPage = () => {
     fullName: '',
     role: 'seller' as AppRole,
     store_id: '' as string,
-    allowed_menus: [] as string[],
+    allowed_menus: normalizeAllowedMenuKeys([]) as string[],
   });
 
   // Fetch stores
@@ -186,6 +189,8 @@ const UsersPage = () => {
 
   const createUserMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
+      const normalizedAllowedMenus = stripAlwaysVisibleMenuKeys(data.allowed_menus);
+
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('Sessão não encontrada');
 
@@ -196,7 +201,7 @@ const UsersPage = () => {
           fullName: data.fullName,
           role: data.role,
           store_id: data.store_id || null,
-          allowed_menus: data.allowed_menus,
+          allowed_menus: normalizedAllowedMenus,
         },
       });
 
@@ -236,6 +241,8 @@ const UsersPage = () => {
 
   const updateRoleMutation = useMutation({
     mutationFn: async ({ userId, role, store_id, allowed_menus }: { userId: string; role: AppRole; store_id: string | null; allowed_menus: string[] }) => {
+      const normalizedAllowedMenus = stripAlwaysVisibleMenuKeys(allowed_menus);
+
       // Delete all existing roles for this user, then insert the new one
       const { error: deleteError } = await supabase
         .from('user_roles')
@@ -251,9 +258,19 @@ const UsersPage = () => {
       if (insertError) throw insertError;
 
       // Upsert menu permissions
+      if (normalizedAllowedMenus.length === 0) {
+        const { error: menuDeleteError } = await supabase
+          .from('user_menu_permissions')
+          .delete()
+          .eq('user_id', userId);
+
+        if (menuDeleteError) throw menuDeleteError;
+        return;
+      }
+
       const { error: menuError } = await supabase
         .from('user_menu_permissions')
-        .upsert({ user_id: userId, allowed_menus, updated_at: new Date().toISOString() } as never, { onConflict: 'user_id' });
+        .upsert({ user_id: userId, allowed_menus: normalizedAllowedMenus, updated_at: new Date().toISOString() } as never, { onConflict: 'user_id' });
 
       if (menuError) throw menuError;
     },
@@ -307,7 +324,7 @@ const UsersPage = () => {
         fullName: userRole.profile?.full_name || '',
         role: userRole.role,
         store_id: userRole.store_id || '',
-        allowed_menus: (menuPerms?.allowed_menus as string[]) || [],
+        allowed_menus: normalizeAllowedMenuKeys((menuPerms?.allowed_menus as string[]) || []),
       });
     } else {
       setSelectedUser(null);
@@ -317,7 +334,7 @@ const UsersPage = () => {
         fullName: '',
         role: 'seller',
         store_id: '',
-        allowed_menus: [],
+        allowed_menus: normalizeAllowedMenuKeys([]),
       });
     }
     setIsFormOpen(true);
@@ -333,7 +350,7 @@ const UsersPage = () => {
       fullName: '',
       role: 'seller',
       store_id: '',
-      allowed_menus: [],
+      allowed_menus: normalizeAllowedMenuKeys([]),
     });
   };
 
@@ -691,7 +708,7 @@ const UsersPage = () => {
                         type="button"
                         variant="outline"
                         size="sm"
-                        onClick={() => setFormData({ ...formData, allowed_menus: allMenuItems.map(i => i.menuKey) })}
+                        onClick={() => setFormData({ ...formData, allowed_menus: normalizeAllowedMenuKeys(allMenuItems.map(i => i.menuKey)) })}
                       >
                         Marcar todos
                       </Button>
@@ -699,31 +716,37 @@ const UsersPage = () => {
                         type="button"
                         variant="outline"
                         size="sm"
-                        onClick={() => setFormData({ ...formData, allowed_menus: ['manual', 'service-orders', 'announcements'] })}
+                        onClick={() => setFormData({ ...formData, allowed_menus: normalizeAllowedMenuKeys([]) })}
                       >
                         Desmarcar
                       </Button>
                     </div>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Selecione quais páginas este usuário poderá acessar. Se nenhuma for selecionada, o acesso padrão da role será aplicado.
+                    Selecione quais páginas este usuário poderá acessar. <strong>Manual</strong>, <strong>Ordens de Serviço</strong> e <strong>Comunicados</strong> são obrigatórios e sempre visíveis.
                   </p>
                   <ScrollArea className="h-[200px] rounded-md border p-3">
                     <div className="grid gap-2">
                       {allMenuItems.map((item) => (
                         <label key={item.menuKey} className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 rounded px-2 py-1">
                           <Checkbox
-                            checked={formData.allowed_menus.includes(item.menuKey)}
+                            checked={isAlwaysVisibleMenu(item.menuKey) || formData.allowed_menus.includes(item.menuKey)}
+                            disabled={isAlwaysVisibleMenu(item.menuKey)}
                             onCheckedChange={(checked) => {
+                              if (isAlwaysVisibleMenu(item.menuKey)) return;
+
                               if (checked) {
-                                setFormData({ ...formData, allowed_menus: [...formData.allowed_menus, item.menuKey] });
+                                setFormData({ ...formData, allowed_menus: normalizeAllowedMenuKeys([...formData.allowed_menus, item.menuKey]) });
                               } else {
-                                setFormData({ ...formData, allowed_menus: formData.allowed_menus.filter(k => k !== item.menuKey) });
+                                setFormData({ ...formData, allowed_menus: normalizeAllowedMenuKeys(formData.allowed_menus.filter(k => k !== item.menuKey)) });
                               }
                             }}
                           />
                           <item.icon className="h-4 w-4 text-muted-foreground" />
                           <span className="text-sm">{item.label}</span>
+                          {isAlwaysVisibleMenu(item.menuKey) && (
+                            <Badge variant="secondary" className="ml-auto">Sempre visível</Badge>
+                          )}
                         </label>
                       ))}
                     </div>
@@ -743,8 +766,8 @@ const UsersPage = () => {
                   )}
                   {formData.role !== 'admin' && (
                     <div className="flex items-center gap-2 text-muted-foreground">
-                      {formData.allowed_menus.length > 0
-                        ? `${formData.allowed_menus.length} menu(s) selecionado(s)`
+                      {countOptionalMenus(formData.allowed_menus) > 0
+                        ? `${countOptionalMenus(formData.allowed_menus)} menu(s) opcionais selecionado(s) + 3 fixos`
                         : 'Acesso padrão da role (todos os menus permitidos)'}
                     </div>
                   )}

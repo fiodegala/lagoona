@@ -11,7 +11,7 @@ import {
   Settings,
 } from 'lucide-react';
 import AdminNotificationBell from '@/components/AdminNotificationBell';
-import { navItems, settingsItems } from '@/config/menuItems';
+import { isAlwaysVisibleMenu, navItems, settingsItems } from '@/config/menuItems';
 import logoLagoona from '@/assets/logo-lagoona-white.png';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -44,17 +44,16 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { profile, roles, signOut, isAdmin, userStore, allowedMenus } = useAuth();
+  const { profile, roles, signOut, isAdmin, userStore, allowedMenus, hasExplicitMenuPermissions } = useAuth();
   const { unreadCount } = useChatUnread();
   const pinnedNavItems = navItems.filter((item) => pinnedMenuKeys.has(item.menuKey));
   const primaryNavItems = navItems.filter((item) => !pinnedMenuKeys.has(item.menuKey));
 
   // Filter menu items: admins see everything, others see only allowed menus
-  const alwaysVisibleMenus = ['manual', 'service-orders', 'announcements'];
   const hasMenuAccess = (key: string) => {
-    if (alwaysVisibleMenus.includes(key)) return true;
+    if (isAlwaysVisibleMenu(key)) return true;
     if (isAdmin) return true;
-    if (allowedMenus.length === 0) return true; // no restrictions set = show all role-based defaults
+    if (!hasExplicitMenuPermissions) return true; // no restrictions set = show all role-based defaults
     return allowedMenus.includes(key);
   };
 
@@ -73,10 +72,11 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
   };
 
   const NavItem = ({ icon: Icon, label, path, menuKey, requireAdmin }: typeof navItems[0]) => {
+    const isPinnedVisible = isAlwaysVisibleMenu(menuKey);
     // If user has explicit menu permission, show it regardless of requireAdmin
     const hasExplicitPermission = allowedMenus.length > 0 && allowedMenus.includes(menuKey);
-    if (requireAdmin && !isAdmin && !hasExplicitPermission) return null;
-    if (!hasMenuAccess(menuKey)) return null;
+    if (requireAdmin && !isAdmin && !hasExplicitPermission && !isPinnedVisible) return null;
+    if (!hasMenuAccess(menuKey) && !isPinnedVisible) return null;
     
     const isActive = location.pathname === path;
     const showBadge = menuKey === 'internal-chat' && unreadCount > 0;
