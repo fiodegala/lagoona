@@ -429,16 +429,18 @@ const POSPage = () => {
           default:
             newPrice = retailPrice;
         }
-        const discountAmount = item.discount_type === 'percentage'
-          ? newPrice * item.quantity * ((item.discount_value || 0) / 100)
+        const lineTotal = newPrice * item.quantity;
+        const rawDiscount = item.discount_type === 'percentage'
+          ? lineTotal * ((item.discount_value || 0) / 100)
           : (item.discount_value || 0);
+        const discountAmount = Math.min(rawDiscount, lineTotal);
         return {
           ...item,
           unit_price: newPrice,
           is_promotional: undefined,
           original_price: undefined,
           discount_amount: discountAmount,
-          total: newPrice * item.quantity - discountAmount,
+          total: lineTotal - discountAmount,
         };
       })
     );
