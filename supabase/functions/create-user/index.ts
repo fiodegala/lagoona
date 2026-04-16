@@ -3,12 +3,12 @@ import { corsHeaders, getUserIdFromAuthHeader } from "../_shared/utils.ts";
 
 const ALWAYS_VISIBLE_MENUS = ["manual", "service-orders", "announcements"] as const;
 
-const normalizeAllowedMenus = (menus: unknown): string[] => {
-  const baseMenus = Array.isArray(menus)
+const sanitizeAllowedMenus = (menus: unknown): string[] => {
+  const normalizedMenus = Array.isArray(menus)
     ? menus.filter((menu): menu is string => typeof menu === "string" && menu.length > 0 && !ALWAYS_VISIBLE_MENUS.includes(menu as (typeof ALWAYS_VISIBLE_MENUS)[number]))
     : [];
 
-  return Array.from(new Set([...baseMenus, ...ALWAYS_VISIBLE_MENUS]));
+  return Array.from(new Set(normalizedMenus));
 };
 
 Deno.serve(async (req) => {
@@ -54,7 +54,7 @@ Deno.serve(async (req) => {
 
     const body = await req.json();
     const { action, email, password, fullName, role, store_id, allowed_menus, user_id: targetUserId, new_password } = body;
-    const normalizedAllowedMenus = normalizeAllowedMenus(allowed_menus);
+    const normalizedAllowedMenus = sanitizeAllowedMenus(allowed_menus);
 
     // adminClient already created above
 

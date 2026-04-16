@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { allMenuItems, alwaysVisibleMenuKeys, isAlwaysVisibleMenu } from '@/config/menuItems';
+import { allMenuItems, isAlwaysVisibleMenu, normalizeAllowedMenuKeys, stripAlwaysVisibleMenuKeys } from '@/config/menuItems';
 import {
   Table,
   TableBody,
@@ -91,11 +91,8 @@ const roleColors: Record<AppRole, string> = {
   cashier: 'bg-chart-4 text-primary-foreground',
 };
 
-const normalizeAllowedMenus = (menus: string[] = []) =>
-  Array.from(new Set([...menus.filter((menuKey) => !isAlwaysVisibleMenu(menuKey)), ...alwaysVisibleMenuKeys]));
-
 const countOptionalMenus = (menus: string[] = []) =>
-  menus.filter((menuKey) => !isAlwaysVisibleMenu(menuKey)).length;
+  stripAlwaysVisibleMenuKeys(menus).length;
 
 const UsersPage = () => {
   const { isAdmin, user } = useAuth();
@@ -113,7 +110,7 @@ const UsersPage = () => {
     fullName: '',
     role: 'seller' as AppRole,
     store_id: '' as string,
-    allowed_menus: normalizeAllowedMenus([]) as string[],
+    allowed_menus: normalizeAllowedMenuKeys([]) as string[],
   });
 
   // Fetch stores
@@ -192,7 +189,7 @@ const UsersPage = () => {
 
   const createUserMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
-      const normalizedAllowedMenus = normalizeAllowedMenus(data.allowed_menus);
+      const normalizedAllowedMenus = stripAlwaysVisibleMenuKeys(data.allowed_menus);
 
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('Sessão não encontrada');
@@ -244,7 +241,7 @@ const UsersPage = () => {
 
   const updateRoleMutation = useMutation({
     mutationFn: async ({ userId, role, store_id, allowed_menus }: { userId: string; role: AppRole; store_id: string | null; allowed_menus: string[] }) => {
-      const normalizedAllowedMenus = normalizeAllowedMenus(allowed_menus);
+      const normalizedAllowedMenus = stripAlwaysVisibleMenuKeys(allowed_menus);
 
       // Delete all existing roles for this user, then insert the new one
       const { error: deleteError } = await supabase
@@ -261,6 +258,16 @@ const UsersPage = () => {
       if (insertError) throw insertError;
 
       // Upsert menu permissions
+      if (normalizedAllowedMenus.length === 0) {
+        const { error: menuDeleteError } = await supabase
+          .from('user_menu_permissions')
+          .delete()
+          .eq('user_id', userId);
+
+        if (menuDeleteError) throw menuDeleteError;
+        return;
+      }
+
       const { error: menuError } = await supabase
         .from('user_menu_permissions')
         .upsert({ user_id: userId, allowed_menus: normalizedAllowedMenus, updated_at: new Date().toISOString() } as never, { onConflict: 'user_id' });
@@ -317,7 +324,7 @@ const UsersPage = () => {
         fullName: userRole.profile?.full_name || '',
         role: userRole.role,
         store_id: userRole.store_id || '',
-        allowed_menus: normalizeAllowedMenus((menuPerms?.allowed_menus as string[]) || []),
+        allowed_menus: normalizeAllowedMenuKeys((menuPerms?.allowed_menus as string[]) || []),
       });
     } else {
       setSelectedUser(null);
@@ -327,7 +334,7 @@ const UsersPage = () => {
         fullName: '',
         role: 'seller',
         store_id: '',
-        allowed_menus: normalizeAllowedMenus([]),
+        allowed_menus: normalizeAllowedMenuKeys([]),
       });
     }
     setIsFormOpen(true);
@@ -343,7 +350,7 @@ const UsersPage = () => {
       fullName: '',
       role: 'seller',
       store_id: '',
-      allowed_menus: normalizeAllowedMenus([]),
+      allowed_menus: normalizeAllowedMenuKeys([]),
     });
   };
 
@@ -701,7 +708,7 @@ const UsersPage = () => {
                         type="button"
                         variant="outline"
                         size="sm"
-                        onClick={() => setFormData({ ...formData, allowed_menus: allMenuItems.map(i => i.menuKey) })}
+                        onClick={() => setFormData({ ...formData, allowed_menus: normalizeAllowedMenuKeys(allMenuItems.map(i => i.menuKey)) })}
                       >
                         Marcar todos
                       </Button>
@@ -709,7 +716,7 @@ const UsersPage = () => {
                         type="button"
                         variant="outline"
                         size="sm"
-                        onClick={() => setFormData({ ...formData, allowed_menus: ['manual', 'service-orders', 'announcements'] })}
+                        onClick={() => setFormData({ ...formData, allowed_menus: normalizeAllowedMenuKeys([]) })}
                       >
                         Desmarcar
                       </Button>
@@ -729,9 +736,9 @@ const UsersPage = () => {
                               if (isAlwaysVisibleMenu(item.menuKey)) return;
 
                               if (checked) {
-                                setFormData({ ...formData, allowed_menus: normalizeAllowedMenus([...formData.allowed_menus, item.menuKey]) });
+                                setFormData({ ...formData, allowed_menus: normalizeAllowedMenuKeys([...formData.allowed_menus, item.menuKey]) });
                               } else {
-                                setFormData({ ...formData, allowed_menus: normalizeAllowedMenus(formData.allowed_menus.filter(k => k !== item.menuKey)) });
+                                setFormData({ ...formData, allowed_menus: normalizeAllowedMenuKeys(formData.allowed_menus.filter(k => k !== item.menuKey)) });
                               }
                             }}
                           />

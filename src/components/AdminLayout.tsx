@@ -44,7 +44,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { profile, roles, signOut, isAdmin, userStore, allowedMenus } = useAuth();
+  const { profile, roles, signOut, isAdmin, userStore, allowedMenus, hasExplicitMenuPermissions } = useAuth();
   const { unreadCount } = useChatUnread();
   const pinnedNavItems = navItems.filter((item) => pinnedMenuKeys.has(item.menuKey));
   const primaryNavItems = navItems.filter((item) => !pinnedMenuKeys.has(item.menuKey));
@@ -53,7 +53,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
   const hasMenuAccess = (key: string) => {
     if (isAlwaysVisibleMenu(key)) return true;
     if (isAdmin) return true;
-    if (allowedMenus.length === 0) return true; // no restrictions set = show all role-based defaults
+    if (!hasExplicitMenuPermissions) return true; // no restrictions set = show all role-based defaults
     return allowedMenus.includes(key);
   };
 

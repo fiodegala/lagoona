@@ -45,8 +45,16 @@ export interface MenuItem {
 
 export const alwaysVisibleMenuKeys = ['manual', 'service-orders', 'announcements'] as const;
 
+export type AlwaysVisibleMenuKey = (typeof alwaysVisibleMenuKeys)[number];
+
 export const isAlwaysVisibleMenu = (menuKey: string) =>
-  alwaysVisibleMenuKeys.includes(menuKey as (typeof alwaysVisibleMenuKeys)[number]);
+  alwaysVisibleMenuKeys.includes(menuKey as AlwaysVisibleMenuKey);
+
+export const normalizeAllowedMenuKeys = (menus?: string[] | null) =>
+  Array.from(new Set([...(menus ?? []), ...alwaysVisibleMenuKeys]));
+
+export const stripAlwaysVisibleMenuKeys = (menus?: string[] | null) =>
+  (menus ?? []).filter((menuKey) => !isAlwaysVisibleMenu(menuKey));
 
 export const navItems: MenuItem[] = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/admin', menuKey: 'dashboard' },
