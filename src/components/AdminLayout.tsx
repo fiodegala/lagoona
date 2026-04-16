@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import {
@@ -9,6 +9,8 @@ import {
   X,
   ExternalLink,
   Settings,
+  ClipboardList,
+  Megaphone,
 } from 'lucide-react';
 import AdminNotificationBell from '@/components/AdminNotificationBell';
 import { isAlwaysVisibleMenu, navItems, settingsItems } from '@/config/menuItems';
@@ -38,6 +40,20 @@ interface AdminLayoutProps {
 }
 
 const pinnedMenuKeys = new Set(['service-orders', 'announcements']);
+const pinnedMenuFallbackItems = [
+  {
+    icon: ClipboardList,
+    label: 'Ordens de Serviço',
+    path: '/admin/ordens-servico',
+    menuKey: 'service-orders',
+  },
+  {
+    icon: Megaphone,
+    label: 'Comunicados',
+    path: '/admin/comunicados',
+    menuKey: 'announcements',
+  },
+] as const;
 
 const AdminLayout = ({ children }: AdminLayoutProps) => {
   const [collapsed, setCollapsed] = useState(false);
@@ -46,7 +62,18 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
   const navigate = useNavigate();
   const { profile, roles, signOut, isAdmin, userStore, allowedMenus, hasExplicitMenuPermissions } = useAuth();
   const { unreadCount } = useChatUnread();
-  const pinnedNavItems = navItems.filter((item) => pinnedMenuKeys.has(item.menuKey));
+  const pinnedNavItems = useMemo(
+    () =>
+      Array.from(
+        new Map(
+          [...pinnedMenuFallbackItems, ...navItems.filter((item) => pinnedMenuKeys.has(item.menuKey))].map((item) => [
+            item.menuKey,
+            item,
+          ])
+        ).values()
+      ),
+    []
+  );
   const primaryNavItems = navItems.filter((item) => !pinnedMenuKeys.has(item.menuKey));
 
   // Filter menu items: admins see everything, others see only allowed menus
@@ -71,12 +98,12 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
       .slice(0, 2);
   };
 
-  const NavItem = ({ icon: Icon, label, path, menuKey, requireAdmin }: typeof navItems[0]) => {
-    const isPinnedVisible = isAlwaysVisibleMenu(menuKey);
+  const NavItem = ({ icon: Icon, label, path, menuKey, requireAdmin, forceVisible = false }: typeof navItems[0] & { forceVisible?: boolean }) => {
+    const isPinnedVisible = forceVisible || isAlwaysVisibleMenu(menuKey);
     // If user has explicit menu permission, show it regardless of requireAdmin
-    const hasExplicitPermission = allowedMenus.length > 0 && allowedMenus.includes(menuKey);
-    if (requireAdmin && !isAdmin && !hasExplicitPermission && !isPinnedVisible) return null;
-    if (!hasMenuAccess(menuKey) && !isPinnedVisible) return null;
+    const hasExplicitPermission = hasExplicitMenuPermissions && allowedMenus.includes(menuKey);
+    if (!forceVisible && requireAdmin && !isAdmin && !hasExplicitPermission && !isPinnedVisible) return null;
+    if (!forceVisible && !hasMenuAccess(menuKey) && !isPinnedVisible) return null;
     
     const isActive = location.pathname === path;
     const showBadge = menuKey === 'internal-chat' && unreadCount > 0;
@@ -169,7 +196,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
         )}
         <div className="space-y-1 mt-2">
           {pinnedNavItems.map((item) => (
-            <NavItem key={item.menuKey} {...item} />
+            <NavItem key={item.menuKey} {...item} forceVisible />
           ))}
         </div>
       </div>
