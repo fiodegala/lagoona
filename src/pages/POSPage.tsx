@@ -641,11 +641,16 @@ const POSPage = () => {
       ? TIKTOK_SHOP_STORE_ID
       : (selectedSeller?.store_id || userStoreId || undefined);
 
+    // For colaborador sales, the "customer" is actually a user profile (user_id),
+    // not a row in the customers table. Avoid sending customer_id to prevent
+    // foreign key violation against customers(id).
+    const isColaboradorSale = saleType === 'colaborador';
+
     const saleData: CreateSaleData = {
       local_id: offlineService.generateLocalId(),
       session_id: session?.id,
       store_id: resolvedStoreId,
-      customer_id: selectedCustomer?.id,
+      customer_id: isColaboradorSale ? undefined : selectedCustomer?.id,
       customer_name: selectedCustomer?.name,
       customer_document: selectedCustomer?.document || undefined,
       items: cartItems.filter(i => !i.is_return).map((item) => ({
