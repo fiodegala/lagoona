@@ -693,6 +693,7 @@ const POSPage = () => {
       change_amount: amountReceived ? Math.max(0, amountReceived - total) : 0,
       notes: [
         selectedSeller ? `Vendedor: ${selectedSeller.full_name}` : '',
+        isColaboradorSale && selectedCustomer ? `Colaborador: ${selectedCustomer.name}` : '',
         returnItems.length > 0 ? `TROCA - Devolvidos: ${returnItems.map(i => `${i.quantity}x ${i.name}`).join(', ')}` : '',
       ].filter(Boolean).join(' | ') || undefined,
       sale_date: saleDate,
