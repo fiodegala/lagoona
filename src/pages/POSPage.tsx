@@ -754,9 +754,13 @@ const POSPage = () => {
         setCompletedCustomerData(null);
       }
       setFiscalModalOpen(true);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error processing sale:', error);
-      toast({ title: 'Erro ao processar venda', variant: 'destructive' });
+      toast({
+        title: 'Erro ao processar venda',
+        description: error?.message || error?.details || 'Tente novamente.',
+        variant: 'destructive',
+      });
     } finally {
       isProcessingRef.current = false;
       setIsProcessing(false);
