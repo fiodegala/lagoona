@@ -641,11 +641,16 @@ const POSPage = () => {
       ? TIKTOK_SHOP_STORE_ID
       : (selectedSeller?.store_id || userStoreId || undefined);
 
+    // For colaborador sales, the "customer" is actually a user profile (user_id),
+    // not a row in the customers table. Avoid sending customer_id to prevent
+    // foreign key violation against customers(id).
+    const isColaboradorSale = saleType === 'colaborador';
+
     const saleData: CreateSaleData = {
       local_id: offlineService.generateLocalId(),
       session_id: session?.id,
       store_id: resolvedStoreId,
-      customer_id: selectedCustomer?.id,
+      customer_id: isColaboradorSale ? undefined : selectedCustomer?.id,
       customer_name: selectedCustomer?.name,
       customer_document: selectedCustomer?.document || undefined,
       items: cartItems.filter(i => !i.is_return).map((item) => ({
@@ -688,6 +693,7 @@ const POSPage = () => {
       change_amount: amountReceived ? Math.max(0, amountReceived - total) : 0,
       notes: [
         selectedSeller ? `Vendedor: ${selectedSeller.full_name}` : '',
+        isColaboradorSale && selectedCustomer ? `Colaborador: ${selectedCustomer.name}` : '',
         returnItems.length > 0 ? `TROCA - Devolvidos: ${returnItems.map(i => `${i.quantity}x ${i.name}`).join(', ')}` : '',
       ].filter(Boolean).join(' | ') || undefined,
       sale_date: saleDate,
@@ -748,9 +754,13 @@ const POSPage = () => {
         setCompletedCustomerData(null);
       }
       setFiscalModalOpen(true);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error processing sale:', error);
-      toast({ title: 'Erro ao processar venda', variant: 'destructive' });
+      toast({
+        title: 'Erro ao processar venda',
+        description: error?.message || error?.details || 'Tente novamente.',
+        variant: 'destructive',
+      });
     } finally {
       isProcessingRef.current = false;
       setIsProcessing(false);
