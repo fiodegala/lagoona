@@ -208,7 +208,7 @@ const EventFormModal = ({ open, onOpenChange, event, defaultDate, onSaved, canEd
           )}
         </DialogHeader>
 
-        <ScrollArea className="flex-1 pr-4 -mr-4">
+        <div className="flex-1 overflow-y-auto pr-2 -mr-2">
           <fieldset disabled={isReadOnly} className="space-y-4">
             <div>
               <Label>Título *</Label>
@@ -344,7 +344,7 @@ const EventFormModal = ({ open, onOpenChange, event, defaultDate, onSaved, canEd
               </div>
             </div>
           </fieldset>
-        </ScrollArea>
+        </div>
 
         <DialogFooter className="flex justify-between sm:justify-between gap-2 pt-4 border-t">
           <div>
