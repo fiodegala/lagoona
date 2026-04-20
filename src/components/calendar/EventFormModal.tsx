@@ -208,9 +208,8 @@ const EventFormModal = ({ open, onOpenChange, event, defaultDate, onSaved, canEd
           )}
         </DialogHeader>
 
-        <fieldset disabled={isReadOnly} className="contents">
-        <ScrollArea className="flex-1 pr-4">
-          <div className="space-y-4">
+        <ScrollArea className="flex-1 pr-4 -mr-4">
+          <fieldset disabled={isReadOnly} className="space-y-4">
             <div>
               <Label>Título *</Label>
               <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Ex: Reunião com equipe" />
