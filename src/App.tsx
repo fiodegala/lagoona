@@ -54,6 +54,7 @@ const ABCCurve = lazy(() => import("./pages/ABCCurve"));
 const CashRegisterReport = lazy(() => import("./pages/CashRegisterReport"));
 const VisualMerchandising = lazy(() => import("./pages/VisualMerchandising"));
 const InternalChat = lazy(() => import("./pages/InternalChat"));
+const CalendarPage = lazy(() => import("./pages/Calendar"));
 
 // Lazy-loaded Store Pages
 const HomePage = lazy(() => import("./pages/store/HomePage"));
@@ -416,6 +417,15 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <InternalChat />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/admin/agenda"
+                element={
+                  <ProtectedRoute>
+                    <CalendarPage />
                   </ProtectedRoute>
                 }
               />

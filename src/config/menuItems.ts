@@ -33,6 +33,7 @@ import {
   KeyRound,
   FileCode2,
   MessageSquare,
+  Calendar,
 } from 'lucide-react';
 
 export interface MenuItem {
@@ -91,6 +92,7 @@ export const navItems: MenuItem[] = [
   { icon: Megaphone, label: 'Comunicados', path: '/admin/comunicados', menuKey: 'announcements' },
   { icon: Eye, label: 'Visual de Loja', path: '/admin/vm', menuKey: 'visual-merchandising' },
   { icon: MessageSquare, label: 'Chat Interno', path: '/admin/chat', menuKey: 'internal-chat' },
+  { icon: Calendar, label: 'Agenda', path: '/admin/agenda', menuKey: 'calendar' },
   { icon: BookOpen, label: 'Manual', path: '/admin/manual', menuKey: 'manual' },
 ];
 
