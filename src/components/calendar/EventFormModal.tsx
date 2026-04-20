@@ -26,7 +26,7 @@ interface Props {
   event?: CalendarEventWithDetails | null;
   defaultDate?: Date;
   onSaved: () => void;
-  canDelete?: boolean;
+  canEdit?: boolean;
 }
 
 const REMINDER_OPTIONS = [
