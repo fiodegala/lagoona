@@ -26,7 +26,7 @@ interface Props {
   event?: CalendarEventWithDetails | null;
   defaultDate?: Date;
   onSaved: () => void;
-  canDelete?: boolean;
+  canEdit?: boolean;
 }
 
 const REMINDER_OPTIONS = [
@@ -46,7 +46,8 @@ const toInputDateTime = (iso: string) => {
 
 const fromInputDateTime = (s: string) => new Date(s).toISOString();
 
-const EventFormModal = ({ open, onOpenChange, event, defaultDate, onSaved, canDelete }: Props) => {
+const EventFormModal = ({ open, onOpenChange, event, defaultDate, onSaved, canEdit = true }: Props) => {
+  const isReadOnly = !!event && !canEdit;
   const [loading, setLoading] = useState(false);
   const [users, setUsers] = useState<{ user_id: string; full_name: string }[]>([]);
 
@@ -186,9 +187,15 @@ const EventFormModal = ({ open, onOpenChange, event, defaultDate, onSaved, canDe
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
-          <DialogTitle>{event ? 'Editar Evento' : 'Novo Evento'}</DialogTitle>
+          <DialogTitle>
+            {event ? (isReadOnly ? 'Detalhes do Evento' : 'Editar Evento') : 'Novo Evento'}
+          </DialogTitle>
+          {isReadOnly && (
+            <p className="text-xs text-muted-foreground">Somente o criador pode editar este evento.</p>
+          )}
         </DialogHeader>
 
+        <fieldset disabled={isReadOnly} className="contents">
         <ScrollArea className="flex-1 pr-4">
           <div className="space-y-4">
             <div>
@@ -304,21 +311,26 @@ const EventFormModal = ({ open, onOpenChange, event, defaultDate, onSaved, canDe
             </div>
           </div>
         </ScrollArea>
+        </fieldset>
 
         <DialogFooter className="flex justify-between sm:justify-between gap-2 pt-4 border-t">
           <div>
-            {event && canDelete && (
+            {event && canEdit && (
               <Button variant="destructive" onClick={handleDelete} disabled={loading}>
                 <Trash2 className="h-4 w-4 mr-2" /> Excluir
               </Button>
             )}
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>Cancelar</Button>
-            <Button onClick={handleSubmit} disabled={loading}>
-              {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              {event ? 'Salvar' : 'Criar Evento'}
+            <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
+              {isReadOnly ? 'Fechar' : 'Cancelar'}
             </Button>
+            {!isReadOnly && (
+              <Button onClick={handleSubmit} disabled={loading}>
+                {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                {event ? 'Salvar' : 'Criar Evento'}
+              </Button>
+            )}
           </div>
         </DialogFooter>
       </DialogContent>
