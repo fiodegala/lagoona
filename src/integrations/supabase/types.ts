@@ -494,6 +494,124 @@ export type Database = {
         }
         Relationships: []
       }
+      calendar_event_participants: {
+        Row: {
+          created_at: string
+          event_id: string
+          id: string
+          status: Database["public"]["Enums"]["calendar_participant_status"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          id?: string
+          status?: Database["public"]["Enums"]["calendar_participant_status"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          id?: string
+          status?: Database["public"]["Enums"]["calendar_participant_status"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_event_participants_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "calendar_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      calendar_event_reminders: {
+        Row: {
+          created_at: string
+          event_id: string
+          id: string
+          minutes_before: number
+          notified_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          id?: string
+          minutes_before?: number
+          notified_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          id?: string
+          minutes_before?: number
+          notified_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_event_reminders_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "calendar_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      calendar_events: {
+        Row: {
+          all_day: boolean
+          category: Database["public"]["Enums"]["calendar_event_category"]
+          color: string
+          created_at: string
+          created_by: string
+          description: string | null
+          ends_at: string
+          id: string
+          link: string | null
+          location: string | null
+          recurrence: Database["public"]["Enums"]["calendar_recurrence"]
+          recurrence_until: string | null
+          starts_at: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          all_day?: boolean
+          category?: Database["public"]["Enums"]["calendar_event_category"]
+          color?: string
+          created_at?: string
+          created_by: string
+          description?: string | null
+          ends_at: string
+          id?: string
+          link?: string | null
+          location?: string | null
+          recurrence?: Database["public"]["Enums"]["calendar_recurrence"]
+          recurrence_until?: string | null
+          starts_at: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          all_day?: boolean
+          category?: Database["public"]["Enums"]["calendar_event_category"]
+          color?: string
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          ends_at?: string
+          id?: string
+          link?: string | null
+          location?: string | null
+          recurrence?: Database["public"]["Enums"]["calendar_recurrence"]
+          recurrence_until?: string | null
+          starts_at?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       categories: {
         Row: {
           created_at: string
@@ -3259,6 +3377,10 @@ export type Database = {
         Args: { _conversation_id: string; _user_id: string }
         Returns: boolean
       }
+      is_event_participant: {
+        Args: { _event_id: string; _user_id: string }
+        Returns: boolean
+      }
       is_online_store_user: { Args: { _user_id: string }; Returns: boolean }
       is_vm_editor: { Args: { _user_id: string }; Returns: boolean }
       process_stock_transfer: {
@@ -3280,6 +3402,14 @@ export type Database = {
         | "seller"
         | "vm_stock"
         | "cashier"
+      calendar_event_category:
+        | "meeting"
+        | "task"
+        | "training"
+        | "reminder"
+        | "other"
+      calendar_participant_status: "pending" | "confirmed" | "declined"
+      calendar_recurrence: "none" | "daily" | "weekly" | "monthly"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -3416,6 +3546,15 @@ export const Constants = {
         "vm_stock",
         "cashier",
       ],
+      calendar_event_category: [
+        "meeting",
+        "task",
+        "training",
+        "reminder",
+        "other",
+      ],
+      calendar_participant_status: ["pending", "confirmed", "declined"],
+      calendar_recurrence: ["none", "daily", "weekly", "monthly"],
     },
   },
 } as const
