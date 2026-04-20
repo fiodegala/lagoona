@@ -343,9 +343,8 @@ const EventFormModal = ({ open, onOpenChange, event, defaultDate, onSaved, canEd
                 ))}
               </div>
             </div>
-          </div>
+          </fieldset>
         </ScrollArea>
-        </fieldset>
 
         <DialogFooter className="flex justify-between sm:justify-between gap-2 pt-4 border-t">
           <div>
