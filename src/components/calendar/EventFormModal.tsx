@@ -50,6 +50,7 @@ const EventFormModal = ({ open, onOpenChange, event, defaultDate, onSaved, canEd
   const isReadOnly = !!event && !canEdit;
   const [loading, setLoading] = useState(false);
   const [users, setUsers] = useState<{ user_id: string; full_name: string }[]>([]);
+  const [participantSearch, setParticipantSearch] = useState('');
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -64,6 +65,18 @@ const EventFormModal = ({ open, onOpenChange, event, defaultDate, onSaved, canEd
   const [recurrenceUntil, setRecurrenceUntil] = useState('');
   const [participantIds, setParticipantIds] = useState<string[]>([]);
   const [reminders, setReminders] = useState<number[]>([15]);
+
+  const filteredUsers = users.filter((u) =>
+    (u.full_name || '').toLowerCase().includes(participantSearch.toLowerCase())
+  );
+  const allFilteredSelected = filteredUsers.length > 0 && filteredUsers.every((u) => participantIds.includes(u.user_id));
+  const toggleAllFiltered = () => {
+    if (allFilteredSelected) {
+      setParticipantIds((prev) => prev.filter((id) => !filteredUsers.some((u) => u.user_id === id)));
+    } else {
+      setParticipantIds((prev) => Array.from(new Set([...prev, ...filteredUsers.map((u) => u.user_id)])));
+    }
+  };
 
   useEffect(() => {
     if (!open) return;
@@ -295,10 +308,32 @@ const EventFormModal = ({ open, onOpenChange, event, defaultDate, onSaved, canEd
             </div>
 
             <div>
-              <Label className="mb-2 block">Participantes ({participantIds.length})</Label>
+              <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
+                <Label className="m-0">Participantes ({participantIds.length})</Label>
+                {filteredUsers.length > 0 && !isReadOnly && (
+                  <button
+                    type="button"
+                    onClick={toggleAllFiltered}
+                    className="text-xs text-primary hover:underline"
+                  >
+                    {allFilteredSelected ? 'Desmarcar todos' : 'Selecionar todos'}
+                  </button>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground mb-2">
+                Os participantes selecionados verão este evento em sua própria agenda.
+              </p>
+              <Input
+                placeholder="Buscar usuário..."
+                value={participantSearch}
+                onChange={(e) => setParticipantSearch(e.target.value)}
+                className="mb-2"
+              />
               <div className="border rounded-md max-h-48 overflow-y-auto p-2 space-y-1">
-                {users.length === 0 && <p className="text-sm text-muted-foreground p-2">Nenhum usuário</p>}
-                {users.map((u) => (
+                {filteredUsers.length === 0 && (
+                  <p className="text-sm text-muted-foreground p-2">Nenhum usuário encontrado</p>
+                )}
+                {filteredUsers.map((u) => (
                   <label key={u.user_id} className="flex items-center gap-2 p-2 rounded hover:bg-muted cursor-pointer">
                     <Checkbox
                       checked={participantIds.includes(u.user_id)}
