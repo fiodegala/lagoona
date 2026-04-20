@@ -292,7 +292,7 @@ const CalendarPage = () => {
         event={selectedEvent}
         defaultDate={defaultDate}
         onSaved={loadEvents}
-        canDelete={selectedEvent?.created_by === user?.id}
+        canEdit={!selectedEvent || selectedEvent.created_by === user?.id}
       />
     </AdminLayout>
   );
