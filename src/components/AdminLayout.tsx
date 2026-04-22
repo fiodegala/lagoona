@@ -9,8 +9,6 @@ import {
   X,
   ExternalLink,
   Settings,
-  ClipboardList,
-  Megaphone,
 } from 'lucide-react';
 import AdminNotificationBell from '@/components/AdminNotificationBell';
 import { isAlwaysVisibleMenu, navItems, settingsItems } from '@/config/menuItems';
