@@ -37,22 +37,6 @@ interface AdminLayoutProps {
   children: React.ReactNode;
 }
 
-const pinnedMenuKeys = new Set(['service-orders', 'announcements']);
-const pinnedSidebarLinks = [
-  {
-    icon: ClipboardList,
-    label: 'Ordens de Serviço',
-    path: '/admin/ordens-servico',
-    menuKey: 'service-orders',
-  },
-  {
-    icon: Megaphone,
-    label: 'Comunicados',
-    path: '/admin/comunicados',
-    menuKey: 'announcements',
-  },
-] as const;
-
 const AdminLayout = ({ children }: AdminLayoutProps) => {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -60,7 +44,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
   const navigate = useNavigate();
   const { profile, roles, signOut, isAdmin, userStore, allowedMenus, hasExplicitMenuPermissions } = useAuth();
   const { unreadCount } = useChatUnread();
-  const primaryNavItems = navItems.filter((item) => !pinnedMenuKeys.has(item.menuKey));
+  const primaryNavItems = navItems;
 
   // Filter menu items: admins see everything, others see only allowed menus
   const hasMenuAccess = (key: string) => {
