@@ -9,8 +9,6 @@ import {
   X,
   ExternalLink,
   Settings,
-  ClipboardList,
-  Megaphone,
 } from 'lucide-react';
 import AdminNotificationBell from '@/components/AdminNotificationBell';
 import { isAlwaysVisibleMenu, navItems, settingsItems } from '@/config/menuItems';
@@ -39,22 +37,6 @@ interface AdminLayoutProps {
   children: React.ReactNode;
 }
 
-const pinnedMenuKeys = new Set(['service-orders', 'announcements']);
-const pinnedSidebarLinks = [
-  {
-    icon: ClipboardList,
-    label: 'Ordens de Serviço',
-    path: '/admin/ordens-servico',
-    menuKey: 'service-orders',
-  },
-  {
-    icon: Megaphone,
-    label: 'Comunicados',
-    path: '/admin/comunicados',
-    menuKey: 'announcements',
-  },
-] as const;
-
 const AdminLayout = ({ children }: AdminLayoutProps) => {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -62,7 +44,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
   const navigate = useNavigate();
   const { profile, roles, signOut, isAdmin, userStore, allowedMenus, hasExplicitMenuPermissions } = useAuth();
   const { unreadCount } = useChatUnread();
-  const primaryNavItems = navItems.filter((item) => !pinnedMenuKeys.has(item.menuKey));
+  const primaryNavItems = navItems;
 
   // Filter menu items: admins see everything, others see only allowed menus
   const hasMenuAccess = (key: string) => {
@@ -86,27 +68,6 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
       .slice(0, 2);
   };
 
-  const PinnedNavLink = ({ icon: Icon, label, path, menuKey }: (typeof pinnedSidebarLinks)[number]) => {
-    const isActive = location.pathname === path;
-
-    return (
-      <Link
-        to={path}
-        onClick={() => setMobileOpen(false)}
-        title={label}
-        data-menu-key={menuKey}
-        className={cn(
-          'flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group relative',
-          isActive
-            ? 'bg-sidebar-primary text-sidebar-primary-foreground'
-            : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
-        )}
-      >
-        <Icon className={cn('h-5 w-5 flex-shrink-0', collapsed && 'mx-auto')} />
-        {!collapsed && <span className="font-medium flex-1">{label}</span>}
-      </Link>
-    );
-  };
 
   const NavItem = ({ icon: Icon, label, path, menuKey, requireAdmin, forceVisible = false }: typeof navItems[0] & { forceVisible?: boolean }) => {
     const isPinnedVisible = forceVisible || isAlwaysVisibleMenu(menuKey);
@@ -196,19 +157,6 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
           <ExternalLink className={cn('h-5 w-5 flex-shrink-0', collapsed && !isMobile && 'mx-auto')} />
           {(!collapsed || isMobile) && <span className="font-medium">Visitar Loja</span>}
         </a>
-      </div>
-
-      <div className="px-2 py-2 border-b border-sidebar-border">
-        {!collapsed && (
-          <span className="px-3 text-xs font-semibold text-sidebar-foreground/60 uppercase tracking-wider">
-            Acesso rápido
-          </span>
-        )}
-        <div className="space-y-1 mt-2">
-          {pinnedSidebarLinks.map((item) => (
-            <PinnedNavLink key={item.menuKey} {...item} />
-          ))}
-        </div>
       </div>
 
       {/* Navigation */}
