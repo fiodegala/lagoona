@@ -194,11 +194,9 @@ const Dashboard = () => {
   }, [isAdmin, accessibleStoreIds, userStoreId]);
   const showStoreSelector = isAdmin || accessibleStoreIds.length > 1;
   const activeStoreFilter = isAdmin ? (selectedStoreId === 'all' ? null : selectedStoreId) : (accessibleStoreIds.length > 1 ? (selectedStoreId === 'all' ? (userStoreId || null) : selectedStoreId) : userStoreId);
-  const canAccessSiteStore = isAdmin || accessibleStoreIds.includes(SITE_STORE_ID);
   const isSiteStoreSelected = activeStoreFilter === SITE_STORE_ID;
   const isLagoonaStoreSelected = activeStoreFilter === LAGOONA_STORE_ID;
   const isViewingAllStores = !activeStoreFilter;
-  const selectedStoreType = stores.find(s => s.id === activeStoreFilter)?.type || userStore?.type || null;
 
   useEffect(() => {
     loadDashboardData();
@@ -211,14 +209,16 @@ const Dashboard = () => {
       // Fetch all data in parallel
       const storeFilter = activeStoreFilter;
 
-      // Orders: filter by store
-      let ordersQuery = supabase.from('orders').select('id, status, total, customer_name, customer_email, payment_method, created_at, shipping_address, items').in('status', ['confirmed', 'completed', 'delivered', 'processing', 'shipped']);
+      // Orders: only include site orders when the Site store is selected.
+      // Physical/PDV stores must not inherit website revenue in goal cards.
+      let ordersQuery = supabase
+        .from('orders')
+        .select('id, status, total, customer_name, customer_email, payment_method, created_at, shipping_address, items')
+        .in('status', ['confirmed', 'completed', 'delivered', 'processing', 'shipped']);
       if (isSiteStoreSelected) {
         ordersQuery = ordersQuery.eq('store_id', SITE_STORE_ID);
-      } else if (storeFilter && canAccessSiteStore) {
-        ordersQuery = ordersQuery.eq('store_id', SITE_STORE_ID);
       } else if (storeFilter) {
-        ordersQuery = ordersQuery.eq('store_id', SITE_STORE_ID).limit(0);
+        ordersQuery = ordersQuery.limit(0);
       }
 
       // POS Sales: filter by store (Lagoona needs all sales to filter by items)
