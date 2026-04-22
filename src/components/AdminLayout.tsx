@@ -68,27 +68,6 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
       .slice(0, 2);
   };
 
-  const PinnedNavLink = ({ icon: Icon, label, path, menuKey }: (typeof pinnedSidebarLinks)[number]) => {
-    const isActive = location.pathname === path;
-
-    return (
-      <Link
-        to={path}
-        onClick={() => setMobileOpen(false)}
-        title={label}
-        data-menu-key={menuKey}
-        className={cn(
-          'flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group relative',
-          isActive
-            ? 'bg-sidebar-primary text-sidebar-primary-foreground'
-            : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
-        )}
-      >
-        <Icon className={cn('h-5 w-5 flex-shrink-0', collapsed && 'mx-auto')} />
-        {!collapsed && <span className="font-medium flex-1">{label}</span>}
-      </Link>
-    );
-  };
 
   const NavItem = ({ icon: Icon, label, path, menuKey, requireAdmin, forceVisible = false }: typeof navItems[0] & { forceVisible?: boolean }) => {
     const isPinnedVisible = forceVisible || isAlwaysVisibleMenu(menuKey);
