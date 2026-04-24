@@ -26,6 +26,8 @@ import {
   Video,
   Plus,
   Trash2,
+  FileText,
+  ScrollText,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
