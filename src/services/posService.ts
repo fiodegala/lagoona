@@ -98,7 +98,7 @@ export interface CreateSaleData {
   discount_value?: number;
   discount_amount?: number;
   total: number;
-  payment_method: 'cash' | 'card' | 'pix' | 'mixed';
+  payment_method: 'cash' | 'card' | 'pix' | 'mixed' | 'boleto' | 'cheque';
   payment_details?: Record<string, number>;
   amount_received?: number;
   change_amount?: number;
