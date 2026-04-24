@@ -158,6 +158,67 @@ const PaymentStep = ({
           )}
         </div>
 
+        {/* Quote Validity Picker */}
+        {isQuote && (
+          <div className="flex items-start gap-3 p-3 sm:p-4 rounded-lg border mb-4 sm:mb-6 bg-primary/5 border-primary/20">
+            <Clock className="h-5 w-5 flex-shrink-0 text-primary mt-0.5" />
+            <div className="flex-1 min-w-0 space-y-2">
+              <div className="text-xs sm:text-sm text-muted-foreground">Validade do Orçamento</div>
+              <div className="flex flex-wrap items-center gap-2">
+                <Select value={validityOption} onValueChange={(v) => setValidityOption(v as typeof validityOption)}>
+                  <SelectTrigger className="h-9 w-auto min-w-[170px] bg-background">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="7">7 dias</SelectItem>
+                    <SelectItem value="15">15 dias</SelectItem>
+                    <SelectItem value="30">30 dias</SelectItem>
+                    <SelectItem value="60">60 dias</SelectItem>
+                    <SelectItem value="custom">Data personalizada</SelectItem>
+                    <SelectItem value="none">Sem validade</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {validityOption === 'custom' && (
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" size="sm" className="h-9 font-medium">
+                        <CalendarIcon className="h-4 w-4 mr-2" />
+                        {format(customValidityDate, "dd/MM/yyyy", { locale: ptBR })}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0 bg-popover" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={customValidityDate}
+                        onSelect={(date) => date && setCustomValidityDate(date)}
+                        disabled={(date) => date < today}
+                        locale={ptBR}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                )}
+
+                {validityOption !== 'none' && (
+                  <span className="text-xs text-muted-foreground">
+                    Válido até{' '}
+                    <strong className="text-foreground">
+                      {format(
+                        validityOption === 'custom'
+                          ? customValidityDate
+                          : addDays(today, parseInt(validityOption, 10)),
+                        "dd/MM/yyyy",
+                        { locale: ptBR }
+                      )}
+                    </strong>
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
         {selectedCustomer && (
           <div className="flex items-center gap-3 p-3 sm:p-4 rounded-lg border bg-card mb-4 sm:mb-6">
             <User className="h-5 w-5 text-muted-foreground flex-shrink-0" />
