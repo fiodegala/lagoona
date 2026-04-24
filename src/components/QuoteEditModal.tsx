@@ -140,6 +140,13 @@ const QuoteEditModal = ({ quote, open, onOpenChange, onSaved }: QuoteEditModalPr
       setSearchResults([]);
       setShowResults(false);
       setVariationPickerProduct(null);
+      // Restore expires_at
+      const exp = quote.expires_at ? new Date(quote.expires_at) : null;
+      setExpiresAt(exp);
+      setOriginalExpiresAt(quote.expires_at || null);
+      setValidityUnlocked(false);
+      setPasswordInput('');
+      setPasswordError(false);
     }
   }, [quote, open]);
 
