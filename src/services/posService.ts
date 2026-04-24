@@ -73,7 +73,7 @@ export interface POSSale {
   discount_value: number;
   discount_amount: number;
   total: number;
-  payment_method: 'cash' | 'card' | 'pix' | 'mixed';
+  payment_method: 'cash' | 'card' | 'pix' | 'mixed' | 'boleto' | 'cheque';
   payment_details: Record<string, number>;
   amount_received: number | null;
   change_amount: number;
