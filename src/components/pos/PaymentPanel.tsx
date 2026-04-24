@@ -265,7 +265,7 @@ const PaymentPanel = ({
 
       <div>
         <h3 className="font-semibold mb-3">Forma de Pagamento</h3>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-3 gap-2">
           <Button
             variant={selectedMethod === 'cash' ? 'default' : 'outline'}
             className="h-16 flex-col gap-1"
@@ -292,6 +292,24 @@ const PaymentPanel = ({
           >
             <QrCode className="h-6 w-6" />
             <span>PIX</span>
+          </Button>
+          <Button
+            variant={selectedMethod === 'boleto' ? 'default' : 'outline'}
+            className="h-16 flex-col gap-1"
+            onClick={() => handleMethodChange('boleto')}
+            disabled={disabled}
+          >
+            <FileText className="h-6 w-6" />
+            <span>Boleto</span>
+          </Button>
+          <Button
+            variant={selectedMethod === 'cheque' ? 'default' : 'outline'}
+            className="h-16 flex-col gap-1"
+            onClick={() => handleMethodChange('cheque')}
+            disabled={disabled}
+          >
+            <ScrollText className="h-6 w-6" />
+            <span>Cheque</span>
           </Button>
           <Button
             variant={selectedMethod === 'mixed' ? 'default' : 'outline'}
