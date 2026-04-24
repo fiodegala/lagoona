@@ -160,6 +160,20 @@ const PaymentPanel = ({
         installments: cardType === 'credit' ? parseInt(installments) : 1,
         installmentValue: cardType === 'credit' ? installmentValue : total,
       });
+    } else if (selectedMethod === 'boleto') {
+      const inst = parseInt(boletoInstallments);
+      onPayment('boleto', undefined, {
+        ...channelInfo,
+        installments: inst,
+        installmentValue: total / inst,
+      });
+    } else if (selectedMethod === 'cheque') {
+      const inst = parseInt(chequeInstallments);
+      onPayment('cheque', undefined, {
+        ...channelInfo,
+        installments: inst,
+        installmentValue: total / inst,
+      });
     } else if (selectedMethod === 'mixed') {
       // Build payment details from lines
       const payments = mixedLines
@@ -215,12 +229,14 @@ const PaymentPanel = ({
     Math.ceil(total / 100) * 100,
   ].filter((v, i, arr) => arr.indexOf(v) === i);
 
-  const handleMethodChange = (method: 'cash' | 'card' | 'pix' | 'mixed') => {
+  const handleMethodChange = (method: 'cash' | 'card' | 'pix' | 'mixed' | 'boleto' | 'cheque') => {
     setSelectedMethod(method);
     if (method !== 'card') {
       setCardType('credit');
       setInstallments('1');
     }
+    if (method !== 'boleto') setBoletoInstallments('1');
+    if (method !== 'cheque') setChequeInstallments('1');
   };
 
   return (
