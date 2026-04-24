@@ -27,9 +27,13 @@ import { auditService } from '@/services/auditService';
 
 const paymentMethodLabels: Record<string, string> = {
   cash: 'Dinheiro',
+  card: 'Cartão',
   credit: 'Cartão de Crédito',
   debit: 'Cartão de Débito',
   pix: 'PIX',
+  mixed: 'Misto',
+  boleto: 'Boleto',
+  cheque: 'Cheque',
 };
 
 const Sales = () => {
