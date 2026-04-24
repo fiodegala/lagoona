@@ -2,11 +2,12 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { ChevronLeft, User, ShoppingBag, CalendarIcon, Gift } from 'lucide-react';
+import { ChevronLeft, User, ShoppingBag, CalendarIcon, Gift, Clock } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { format } from 'date-fns';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { format, addDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import PaymentPanel from '@/components/pos/PaymentPanel';
 import ProductSearch, { ProductResult } from '@/components/pos/ProductSearch';
@@ -63,9 +64,30 @@ const PaymentStep = ({
   const isBackdated = saleDate.toDateString() !== today.toDateString();
   const [giftDialogOpen, setGiftDialogOpen] = useState(false);
 
+  const isQuote = saleType === 'orcamento';
+  const [validityOption, setValidityOption] = useState<'7' | '15' | '30' | '60' | 'custom' | 'none'>('15');
+  const [customValidityDate, setCustomValidityDate] = useState<Date>(addDays(today, 15));
+
+  const computeExpiresAt = (): string | null => {
+    if (!isQuote) return null;
+    switch (validityOption) {
+      case '7': return addDays(today, 7).toISOString();
+      case '15': return addDays(today, 15).toISOString();
+      case '30': return addDays(today, 30).toISOString();
+      case '60': return addDays(today, 60).toISOString();
+      case 'custom': return customValidityDate.toISOString();
+      case 'none': return null;
+      default: return null;
+    }
+  };
+
   const handlePaymentWithDate = (method: 'cash' | 'card' | 'pix' | 'mixed', amountReceived?: number, paymentDetails?: Record<string, unknown>) => {
     const saleDateISO = isBackdated ? saleDate.toISOString() : undefined;
-    onPayment(method, amountReceived, paymentDetails as Record<string, number>, saleDateISO);
+    const extraDetails: Record<string, unknown> = { ...(paymentDetails || {}) };
+    if (isQuote) {
+      extraDetails.__expires_at = computeExpiresAt();
+    }
+    onPayment(method, amountReceived, extraDetails as Record<string, number>, saleDateISO);
   };
 
   const handleGiftProductSelect = (product: ProductResult, variationId?: string) => {
@@ -135,6 +157,67 @@ const PaymentStep = ({
             </span>
           )}
         </div>
+
+        {/* Quote Validity Picker */}
+        {isQuote && (
+          <div className="flex items-start gap-3 p-3 sm:p-4 rounded-lg border mb-4 sm:mb-6 bg-primary/5 border-primary/20">
+            <Clock className="h-5 w-5 flex-shrink-0 text-primary mt-0.5" />
+            <div className="flex-1 min-w-0 space-y-2">
+              <div className="text-xs sm:text-sm text-muted-foreground">Validade do Orçamento</div>
+              <div className="flex flex-wrap items-center gap-2">
+                <Select value={validityOption} onValueChange={(v) => setValidityOption(v as typeof validityOption)}>
+                  <SelectTrigger className="h-9 w-auto min-w-[170px] bg-background">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="7">7 dias</SelectItem>
+                    <SelectItem value="15">15 dias</SelectItem>
+                    <SelectItem value="30">30 dias</SelectItem>
+                    <SelectItem value="60">60 dias</SelectItem>
+                    <SelectItem value="custom">Data personalizada</SelectItem>
+                    <SelectItem value="none">Sem validade</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {validityOption === 'custom' && (
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" size="sm" className="h-9 font-medium">
+                        <CalendarIcon className="h-4 w-4 mr-2" />
+                        {format(customValidityDate, "dd/MM/yyyy", { locale: ptBR })}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0 bg-popover" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={customValidityDate}
+                        onSelect={(date) => date && setCustomValidityDate(date)}
+                        disabled={(date) => date < today}
+                        locale={ptBR}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                )}
+
+                {validityOption !== 'none' && (
+                  <span className="text-xs text-muted-foreground">
+                    Válido até{' '}
+                    <strong className="text-foreground">
+                      {format(
+                        validityOption === 'custom'
+                          ? customValidityDate
+                          : addDays(today, parseInt(validityOption, 10)),
+                        "dd/MM/yyyy",
+                        { locale: ptBR }
+                      )}
+                    </strong>
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {selectedCustomer && (
           <div className="flex items-center gap-3 p-3 sm:p-4 rounded-lg border bg-card mb-4 sm:mb-6">

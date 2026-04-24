@@ -8,8 +8,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Trash2, Plus, Minus, Save, Loader2, User, Package, CreditCard, StickyNote, Search, X } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { Trash2, Plus, Minus, Save, Loader2, User, Package, CreditCard, StickyNote, Search, X, Clock, CalendarIcon, Lock, Unlock } from 'lucide-react';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
 import { posService } from '@/services/posService';
 import { useToast } from '@/hooks/use-toast';
@@ -42,6 +45,7 @@ interface QuoteData {
   notes: string | null;
   payment_method: string | null;
   payment_details: Record<string, any> | null;
+  expires_at?: string | null;
 }
 
 interface QuoteEditModalProps {
@@ -93,6 +97,15 @@ const QuoteEditModal = ({ quote, open, onOpenChange, onSaved }: QuoteEditModalPr
   const [cardType, setCardType] = useState<'credit' | 'debit'>('credit');
   const [installments, setInstallments] = useState('1');
 
+  // Validity (expires_at) — protected by password
+  const QUOTE_EDIT_PASSWORD = '2309fdg';
+  const [expiresAt, setExpiresAt] = useState<Date | null>(null);
+  const [originalExpiresAt, setOriginalExpiresAt] = useState<string | null>(null);
+  const [validityUnlocked, setValidityUnlocked] = useState(false);
+  const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
+  const [passwordInput, setPasswordInput] = useState('');
+  const [passwordError, setPasswordError] = useState(false);
+
   // Product search state
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
@@ -126,6 +139,13 @@ const QuoteEditModal = ({ quote, open, onOpenChange, onSaved }: QuoteEditModalPr
       setSearchResults([]);
       setShowResults(false);
       setVariationPickerProduct(null);
+      // Restore expires_at
+      const exp = quote.expires_at ? new Date(quote.expires_at) : null;
+      setExpiresAt(exp);
+      setOriginalExpiresAt(quote.expires_at || null);
+      setValidityUnlocked(false);
+      setPasswordInput('');
+      setPasswordError(false);
     }
   }, [quote, open]);
 
@@ -399,6 +419,8 @@ const QuoteEditModal = ({ quote, open, onOpenChange, onSaved }: QuoteEditModalPr
         };
       }
 
+      const newExpiresAt = validityUnlocked ? (expiresAt ? expiresAt.toISOString() : null) : originalExpiresAt;
+
       const updatePayload = {
         customer_name: customerName.trim() || null,
         customer_document: customerDocument.trim() || null,
@@ -410,6 +432,7 @@ const QuoteEditModal = ({ quote, open, onOpenChange, onSaved }: QuoteEditModalPr
         notes: notes.trim() || null,
         payment_method: paymentMethod || null,
         payment_details: paymentDetails || {},
+        expires_at: newExpiresAt,
       };
 
       console.log('[QuoteEdit] Saving quote', quote.id, 'with', updatedItems.length, 'items, total:', total);
@@ -743,6 +766,67 @@ const QuoteEditModal = ({ quote, open, onOpenChange, onSaved }: QuoteEditModalPr
 
           <Separator />
 
+          {/* Validade */}
+          <div>
+            <h4 className="text-sm font-semibold mb-3 flex items-center gap-1.5">
+              <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+              Validade do Orçamento
+              {!validityUnlocked && <Lock className="h-3 w-3 text-muted-foreground ml-1" />}
+              {validityUnlocked && <Unlock className="h-3 w-3 text-primary ml-1" />}
+            </h4>
+            <div className="flex flex-wrap items-center gap-2">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={!validityUnlocked}
+                    className="h-9 font-medium"
+                  >
+                    <CalendarIcon className="h-4 w-4 mr-2" />
+                    {expiresAt ? format(expiresAt, "dd/MM/yyyy", { locale: ptBR }) : 'Sem validade'}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0 bg-popover" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={expiresAt || undefined}
+                    onSelect={(date) => setExpiresAt(date || null)}
+                    locale={ptBR}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+
+              {validityUnlocked && expiresAt && (
+                <Button variant="ghost" size="sm" onClick={() => setExpiresAt(null)} className="h-9">
+                  <X className="h-4 w-4 mr-1" /> Sem validade
+                </Button>
+              )}
+
+              {!validityUnlocked ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-9"
+                  onClick={() => { setPasswordInput(''); setPasswordError(false); setPasswordDialogOpen(true); }}
+                >
+                  <Lock className="h-4 w-4 mr-1" /> Desbloquear edição
+                </Button>
+              ) : (
+                <Badge variant="secondary" className="h-7">Edição liberada</Badge>
+              )}
+            </div>
+            {!validityUnlocked && (
+              <p className="text-xs text-muted-foreground mt-2">
+                Para alterar a validade deste orçamento é necessário informar a senha.
+              </p>
+            )}
+          </div>
+
+          <Separator />
+
           {/* Observações */}
           <div>
             <h4 className="text-sm font-semibold mb-3 flex items-center gap-1.5">
@@ -752,6 +836,55 @@ const QuoteEditModal = ({ quote, open, onOpenChange, onSaved }: QuoteEditModalPr
             <Textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Observações do orçamento..." rows={3} maxLength={1000} />
           </div>
         </div>
+
+        {/* Password dialog to unlock validity editing */}
+        <Dialog open={passwordDialogOpen} onOpenChange={setPasswordDialogOpen}>
+          <DialogContent className="max-w-sm">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Lock className="h-4 w-4" />
+                Confirmar edição de validade
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3 py-2">
+              <Label>Senha</Label>
+              <Input
+                type="password"
+                value={passwordInput}
+                onChange={(e) => { setPasswordInput(e.target.value); setPasswordError(false); }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    if (passwordInput === QUOTE_EDIT_PASSWORD) {
+                      setValidityUnlocked(true);
+                      setPasswordDialogOpen(false);
+                    } else {
+                      setPasswordError(true);
+                    }
+                  }
+                }}
+                placeholder="Digite a senha"
+                autoFocus
+              />
+              {passwordError && <p className="text-xs text-destructive">Senha incorreta.</p>}
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setPasswordDialogOpen(false)}>Cancelar</Button>
+              <Button
+                onClick={() => {
+                  if (passwordInput === QUOTE_EDIT_PASSWORD) {
+                    setValidityUnlocked(true);
+                    setPasswordDialogOpen(false);
+                    toast({ title: 'Edição de validade liberada' });
+                  } else {
+                    setPasswordError(true);
+                  }
+                }}
+              >
+                Confirmar
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         <DialogFooter className="gap-2 pt-4 border-t">
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>Cancelar</Button>
