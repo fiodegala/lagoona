@@ -420,6 +420,8 @@ const QuoteEditModal = ({ quote, open, onOpenChange, onSaved }: QuoteEditModalPr
         };
       }
 
+      const newExpiresAt = validityUnlocked ? (expiresAt ? expiresAt.toISOString() : null) : originalExpiresAt;
+
       const updatePayload = {
         customer_name: customerName.trim() || null,
         customer_document: customerDocument.trim() || null,
@@ -431,6 +433,7 @@ const QuoteEditModal = ({ quote, open, onOpenChange, onSaved }: QuoteEditModalPr
         notes: notes.trim() || null,
         payment_method: paymentMethod || null,
         payment_details: paymentDetails || {},
+        expires_at: newExpiresAt,
       };
 
       console.log('[QuoteEdit] Saving quote', quote.id, 'with', updatedItems.length, 'items, total:', total);
