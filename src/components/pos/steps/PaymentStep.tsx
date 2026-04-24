@@ -64,9 +64,30 @@ const PaymentStep = ({
   const isBackdated = saleDate.toDateString() !== today.toDateString();
   const [giftDialogOpen, setGiftDialogOpen] = useState(false);
 
+  const isQuote = saleType === 'orcamento';
+  const [validityOption, setValidityOption] = useState<'7' | '15' | '30' | '60' | 'custom' | 'none'>('15');
+  const [customValidityDate, setCustomValidityDate] = useState<Date>(addDays(today, 15));
+
+  const computeExpiresAt = (): string | null => {
+    if (!isQuote) return null;
+    switch (validityOption) {
+      case '7': return addDays(today, 7).toISOString();
+      case '15': return addDays(today, 15).toISOString();
+      case '30': return addDays(today, 30).toISOString();
+      case '60': return addDays(today, 60).toISOString();
+      case 'custom': return customValidityDate.toISOString();
+      case 'none': return null;
+      default: return null;
+    }
+  };
+
   const handlePaymentWithDate = (method: 'cash' | 'card' | 'pix' | 'mixed', amountReceived?: number, paymentDetails?: Record<string, unknown>) => {
     const saleDateISO = isBackdated ? saleDate.toISOString() : undefined;
-    onPayment(method, amountReceived, paymentDetails as Record<string, number>, saleDateISO);
+    const extraDetails: Record<string, unknown> = { ...(paymentDetails || {}) };
+    if (isQuote) {
+      extraDetails.__expires_at = computeExpiresAt();
+    }
+    onPayment(method, amountReceived, extraDetails as Record<string, number>, saleDateISO);
   };
 
   const handleGiftProductSelect = (product: ProductResult, variationId?: string) => {
