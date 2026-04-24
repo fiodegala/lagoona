@@ -27,7 +27,7 @@ interface PaymentStepProps {
   selectedCustomer: Customer | null;
   isProcessing: boolean;
   isAdmin?: boolean;
-  onPayment: (method: 'cash' | 'card' | 'pix' | 'mixed', amountReceived?: number, paymentDetails?: Record<string, number>, saleDate?: string) => void;
+  onPayment: (method: 'cash' | 'card' | 'pix' | 'mixed' | 'boleto' | 'cheque', amountReceived?: number, paymentDetails?: Record<string, number>, saleDate?: string) => void;
   onBack: () => void;
   onAddGiftItem?: (product: ProductResult, variationId?: string) => void;
 }
