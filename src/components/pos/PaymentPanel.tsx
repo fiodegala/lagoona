@@ -44,7 +44,7 @@ const allChannelOptions: { value: SaleChannel; label: string; icon: React.ReactN
   { value: 'tiktok', label: 'TikTok Shop', icon: <Video className="h-4 w-4" />, adminOnly: true },
 ];
 
-type MixedPaymentType = 'cash' | 'credit' | 'debit' | 'pix';
+type MixedPaymentType = 'cash' | 'credit' | 'debit' | 'pix' | 'boleto' | 'cheque';
 
 interface MixedPaymentLine {
   id: string;
@@ -58,6 +58,18 @@ const paymentTypeLabels: Record<MixedPaymentType, { label: string; icon: React.R
   credit: { label: 'Crédito', icon: <CreditCard className="h-4 w-4" /> },
   debit: { label: 'Débito', icon: <CreditCard className="h-4 w-4" /> },
   pix: { label: 'PIX', icon: <QrCode className="h-4 w-4" /> },
+  boleto: { label: 'Boleto', icon: <FileText className="h-4 w-4" /> },
+  cheque: { label: 'Cheque', icon: <ScrollText className="h-4 w-4" /> },
+};
+
+const installmentEligibleTypes: MixedPaymentType[] = ['credit', 'boleto', 'cheque'];
+const maxInstallmentsByType: Record<MixedPaymentType, number> = {
+  cash: 1,
+  credit: 6,
+  debit: 1,
+  pix: 1,
+  boleto: 12,
+  cheque: 12,
 };
 
 interface PaymentPanelProps {
