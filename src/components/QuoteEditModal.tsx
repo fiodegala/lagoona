@@ -46,6 +46,7 @@ interface QuoteData {
   notes: string | null;
   payment_method: string | null;
   payment_details: Record<string, any> | null;
+  expires_at?: string | null;
 }
 
 interface QuoteEditModalProps {
