@@ -546,8 +546,8 @@ const PaymentPanel = ({
                 </div>
 
                 {/* Payment type selector */}
-                <div className="grid grid-cols-4 gap-1">
-                  {(['cash', 'credit', 'debit', 'pix'] as MixedPaymentType[]).map((type) => (
+                <div className="grid grid-cols-3 gap-1">
+                  {(['cash', 'credit', 'debit', 'pix', 'boleto', 'cheque'] as MixedPaymentType[]).map((type) => (
                     <Button
                       key={type}
                       variant={line.type === type ? 'default' : 'outline'}
@@ -582,8 +582,8 @@ const PaymentPanel = ({
                   </Button>
                 </div>
 
-                {/* Credit installments */}
-                {line.type === 'credit' && parseCurrency(line.amount) > 0 && (
+                {/* Installments (credit / boleto / cheque) */}
+                {installmentEligibleTypes.includes(line.type) && parseCurrency(line.amount) > 0 && (
                   <Select
                     value={line.installments}
                     onValueChange={(v) => updateMixedLine(line.id, { installments: v })}
@@ -592,7 +592,7 @@ const PaymentPanel = ({
                       <SelectValue placeholder="Parcelas" />
                     </SelectTrigger>
                     <SelectContent className="bg-popover">
-                      {Array.from({ length: 6 }, (_, i) => i + 1).map((num) => {
+                      {Array.from({ length: maxInstallmentsByType[line.type] }, (_, i) => i + 1).map((num) => {
                         const val = parseCurrency(line.amount) / num;
                         return (
                           <SelectItem key={num} value={num.toString()}>
