@@ -570,10 +570,15 @@ const Quotes = () => {
                                     notes: 'Observações',
                                     payment_method: 'Pagamento',
                                     total: 'Total',
+                                    expires_at: 'Validade',
+                                    items_count: 'Itens',
                                   };
                                   const label = labels[key] || key;
                                   if (key === 'total') {
                                     return <p key={key}>{label}: {formatCurrency(val.from)} → {formatCurrency(val.to)}</p>;
+                                  }
+                                  if (key === 'expires_at') {
+                                    return <p key={key}>{label}: {val.from_formatted || 'Sem validade'} → {val.to_formatted || 'Sem validade'}</p>;
                                   }
                                   return <p key={key}>{label} alterado</p>;
                                 })}
