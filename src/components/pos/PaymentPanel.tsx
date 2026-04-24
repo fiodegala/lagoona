@@ -193,7 +193,7 @@ const PaymentPanel = ({
         .map(l => ({
           type: l.type,
           amount: parseCurrency(l.amount),
-          installments: l.type === 'credit' ? parseInt(l.installments) : 1,
+          installments: installmentEligibleTypes.includes(l.type) ? parseInt(l.installments) : 1,
         }));
 
       // Build legacy-compatible format + new multi-payment array
@@ -201,6 +201,8 @@ const PaymentPanel = ({
       const pixTotal = payments.filter(p => p.type === 'pix').reduce((s, p) => s + p.amount, 0);
       const creditTotal = payments.filter(p => p.type === 'credit').reduce((s, p) => s + p.amount, 0);
       const debitTotal = payments.filter(p => p.type === 'debit').reduce((s, p) => s + p.amount, 0);
+      const boletoTotal = payments.filter(p => p.type === 'boleto').reduce((s, p) => s + p.amount, 0);
+      const chequeTotal = payments.filter(p => p.type === 'cheque').reduce((s, p) => s + p.amount, 0);
       const cardTotal = creditTotal + debitTotal;
 
       // For legacy compat: pick the first card line's type/installments
@@ -213,6 +215,8 @@ const PaymentPanel = ({
         pix: pixTotal,
         debit: debitTotal,
         credit: creditTotal,
+        boleto: boletoTotal,
+        cheque: chequeTotal,
         mixedCardType: firstCardLine?.type === 'credit' ? 'credit' : 'debit',
         mixedInstallments: firstCardLine?.installments || 1,
         payments, // New: full array of all payment lines
