@@ -432,6 +432,80 @@ const PaymentPanel = ({
         </div>
       )}
 
+      {/* Boleto payment details */}
+      {selectedMethod === 'boleto' && (
+        <div className="space-y-2">
+          <Separator />
+          <Label>Parcelas</Label>
+          <Select value={boletoInstallments} onValueChange={setBoletoInstallments}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Selecione as parcelas" />
+            </SelectTrigger>
+            <SelectContent className="bg-popover">
+              {Array.from({ length: 12 }, (_, i) => i + 1).map((num) => {
+                const value = total / num;
+                return (
+                  <SelectItem key={num} value={num.toString()}>
+                    {num}x de {formatCurrency(value)}
+                    {num === 1 && ' (à vista)'}
+                  </SelectItem>
+                );
+              })}
+            </SelectContent>
+          </Select>
+          <div className="bg-primary/10 rounded-lg p-3 text-center mt-3">
+            <div className="text-sm text-muted-foreground">
+              {parseInt(boletoInstallments) === 1 ? 'Boleto à vista' : `${boletoInstallments}x de`}
+            </div>
+            <div className="text-2xl font-bold text-primary">
+              {formatCurrency(total / parseInt(boletoInstallments))}
+            </div>
+            {parseInt(boletoInstallments) > 1 && (
+              <div className="text-xs text-muted-foreground mt-1">
+                Total: {formatCurrency(total)}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Cheque payment details */}
+      {selectedMethod === 'cheque' && (
+        <div className="space-y-2">
+          <Separator />
+          <Label>Parcelas</Label>
+          <Select value={chequeInstallments} onValueChange={setChequeInstallments}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Selecione as parcelas" />
+            </SelectTrigger>
+            <SelectContent className="bg-popover">
+              {Array.from({ length: 12 }, (_, i) => i + 1).map((num) => {
+                const value = total / num;
+                return (
+                  <SelectItem key={num} value={num.toString()}>
+                    {num}x de {formatCurrency(value)}
+                    {num === 1 && ' (à vista)'}
+                  </SelectItem>
+                );
+              })}
+            </SelectContent>
+          </Select>
+          <div className="bg-primary/10 rounded-lg p-3 text-center mt-3">
+            <div className="text-sm text-muted-foreground">
+              {parseInt(chequeInstallments) === 1 ? 'Cheque à vista' : `${chequeInstallments}x de`}
+            </div>
+            <div className="text-2xl font-bold text-primary">
+              {formatCurrency(total / parseInt(chequeInstallments))}
+            </div>
+            {parseInt(chequeInstallments) > 1 && (
+              <div className="text-xs text-muted-foreground mt-1">
+                Total: {formatCurrency(total)}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Mixed payment details — MULTIMODAL */}
       {selectedMethod === 'mixed' && (
         <div className="space-y-3">
