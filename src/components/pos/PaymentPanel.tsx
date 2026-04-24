@@ -44,7 +44,7 @@ const allChannelOptions: { value: SaleChannel; label: string; icon: React.ReactN
   { value: 'tiktok', label: 'TikTok Shop', icon: <Video className="h-4 w-4" />, adminOnly: true },
 ];
 
-type MixedPaymentType = 'cash' | 'credit' | 'debit' | 'pix';
+type MixedPaymentType = 'cash' | 'credit' | 'debit' | 'pix' | 'boleto' | 'cheque';
 
 interface MixedPaymentLine {
   id: string;
@@ -58,6 +58,18 @@ const paymentTypeLabels: Record<MixedPaymentType, { label: string; icon: React.R
   credit: { label: 'Crédito', icon: <CreditCard className="h-4 w-4" /> },
   debit: { label: 'Débito', icon: <CreditCard className="h-4 w-4" /> },
   pix: { label: 'PIX', icon: <QrCode className="h-4 w-4" /> },
+  boleto: { label: 'Boleto', icon: <FileText className="h-4 w-4" /> },
+  cheque: { label: 'Cheque', icon: <ScrollText className="h-4 w-4" /> },
+};
+
+const installmentEligibleTypes: MixedPaymentType[] = ['credit', 'boleto', 'cheque'];
+const maxInstallmentsByType: Record<MixedPaymentType, number> = {
+  cash: 1,
+  credit: 6,
+  debit: 1,
+  pix: 1,
+  boleto: 12,
+  cheque: 12,
 };
 
 interface PaymentPanelProps {
@@ -130,8 +142,8 @@ const PaymentPanel = ({
     setMixedLines(prev => prev.map(l => {
       if (l.id !== id) return l;
       const updated = { ...l, ...updates };
-      // Reset installments when switching to non-credit
-      if (updates.type && updates.type !== 'credit') {
+      // Reset installments when switching to a type that doesn't support installments
+      if (updates.type && !installmentEligibleTypes.includes(updates.type)) {
         updated.installments = '1';
       }
       return updated;
@@ -181,7 +193,7 @@ const PaymentPanel = ({
         .map(l => ({
           type: l.type,
           amount: parseCurrency(l.amount),
-          installments: l.type === 'credit' ? parseInt(l.installments) : 1,
+          installments: installmentEligibleTypes.includes(l.type) ? parseInt(l.installments) : 1,
         }));
 
       // Build legacy-compatible format + new multi-payment array
@@ -189,6 +201,8 @@ const PaymentPanel = ({
       const pixTotal = payments.filter(p => p.type === 'pix').reduce((s, p) => s + p.amount, 0);
       const creditTotal = payments.filter(p => p.type === 'credit').reduce((s, p) => s + p.amount, 0);
       const debitTotal = payments.filter(p => p.type === 'debit').reduce((s, p) => s + p.amount, 0);
+      const boletoTotal = payments.filter(p => p.type === 'boleto').reduce((s, p) => s + p.amount, 0);
+      const chequeTotal = payments.filter(p => p.type === 'cheque').reduce((s, p) => s + p.amount, 0);
       const cardTotal = creditTotal + debitTotal;
 
       // For legacy compat: pick the first card line's type/installments
@@ -201,6 +215,8 @@ const PaymentPanel = ({
         pix: pixTotal,
         debit: debitTotal,
         credit: creditTotal,
+        boleto: boletoTotal,
+        cheque: chequeTotal,
         mixedCardType: firstCardLine?.type === 'credit' ? 'credit' : 'debit',
         mixedInstallments: firstCardLine?.installments || 1,
         payments, // New: full array of all payment lines
@@ -530,8 +546,8 @@ const PaymentPanel = ({
                 </div>
 
                 {/* Payment type selector */}
-                <div className="grid grid-cols-4 gap-1">
-                  {(['cash', 'credit', 'debit', 'pix'] as MixedPaymentType[]).map((type) => (
+                <div className="grid grid-cols-3 gap-1">
+                  {(['cash', 'credit', 'debit', 'pix', 'boleto', 'cheque'] as MixedPaymentType[]).map((type) => (
                     <Button
                       key={type}
                       variant={line.type === type ? 'default' : 'outline'}
@@ -566,8 +582,8 @@ const PaymentPanel = ({
                   </Button>
                 </div>
 
-                {/* Credit installments */}
-                {line.type === 'credit' && parseCurrency(line.amount) > 0 && (
+                {/* Installments (credit / boleto / cheque) */}
+                {installmentEligibleTypes.includes(line.type) && parseCurrency(line.amount) > 0 && (
                   <Select
                     value={line.installments}
                     onValueChange={(v) => updateMixedLine(line.id, { installments: v })}
@@ -576,7 +592,7 @@ const PaymentPanel = ({
                       <SelectValue placeholder="Parcelas" />
                     </SelectTrigger>
                     <SelectContent className="bg-popover">
-                      {Array.from({ length: 6 }, (_, i) => i + 1).map((num) => {
+                      {Array.from({ length: maxInstallmentsByType[line.type] }, (_, i) => i + 1).map((num) => {
                         const val = parseCurrency(line.amount) / num;
                         return (
                           <SelectItem key={num} value={num.toString()}>
