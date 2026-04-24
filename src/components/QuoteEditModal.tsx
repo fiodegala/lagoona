@@ -455,6 +455,18 @@ const QuoteEditModal = ({ quote, open, onOpenChange, onSaved }: QuoteEditModalPr
       if (Math.abs(total - quote.total) > 0.01) changes.total = { from: quote.total, to: total };
       if (items.length !== (quote.items || []).length) changes.items_count = { from: (quote.items || []).length, to: items.length };
 
+      // Track validity (expires_at) change specifically
+      const normalizedOld = originalExpiresAt || null;
+      const normalizedNew = newExpiresAt || null;
+      if (validityUnlocked && normalizedOld !== normalizedNew) {
+        changes.expires_at = {
+          from: normalizedOld,
+          to: normalizedNew,
+          from_formatted: normalizedOld ? format(new Date(normalizedOld), "dd/MM/yyyy", { locale: ptBR }) : 'Sem validade',
+          to_formatted: normalizedNew ? format(new Date(normalizedNew), "dd/MM/yyyy", { locale: ptBR }) : 'Sem validade',
+        };
+      }
+
       await supabase.from('quote_history' as any).insert({
         quote_id: quote.id,
         user_id: user?.id,
