@@ -142,8 +142,8 @@ const PaymentPanel = ({
     setMixedLines(prev => prev.map(l => {
       if (l.id !== id) return l;
       const updated = { ...l, ...updates };
-      // Reset installments when switching to non-credit
-      if (updates.type && updates.type !== 'credit') {
+      // Reset installments when switching to a type that doesn't support installments
+      if (updates.type && !installmentEligibleTypes.includes(updates.type)) {
         updated.installments = '1';
       }
       return updated;
