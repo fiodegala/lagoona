@@ -63,7 +63,7 @@ const paymentTypeLabels: Record<MixedPaymentType, { label: string; icon: React.R
 interface PaymentPanelProps {
   total: number;
   onPayment: (
-    method: 'cash' | 'card' | 'pix' | 'mixed',
+    method: 'cash' | 'card' | 'pix' | 'mixed' | 'boleto' | 'cheque',
     amountReceived?: number,
     paymentDetails?: Record<string, unknown>
   ) => void;
@@ -81,10 +81,12 @@ const PaymentPanel = ({
 }: PaymentPanelProps) => {
   const channelOptions = allChannelOptions.filter(ch => !ch.adminOnly || isAdmin);
   const [selectedChannel, setSelectedChannel] = useState<SaleChannel | null>(null);
-  const [selectedMethod, setSelectedMethod] = useState<'cash' | 'card' | 'pix' | 'mixed' | null>(null);
+  const [selectedMethod, setSelectedMethod] = useState<'cash' | 'card' | 'pix' | 'mixed' | 'boleto' | 'cheque' | null>(null);
   const [cashReceived, setCashReceived] = useState('');
   const [cardType, setCardType] = useState<'credit' | 'debit'>('credit');
   const [installments, setInstallments] = useState('1');
+  const [boletoInstallments, setBoletoInstallments] = useState('1');
+  const [chequeInstallments, setChequeInstallments] = useState('1');
 
   // Multi-line mixed payments
   const [mixedLines, setMixedLines] = useState<MixedPaymentLine[]>([
