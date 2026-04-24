@@ -48,6 +48,8 @@ const paymentMethodLabels: Record<string, string> = {
   card: 'Cartão',
   pix: 'PIX',
   mixed: 'Misto',
+  boleto: 'Boleto',
+  cheque: 'Cheque',
 };
 
 const handlePrintQuote = (quote: Quote) => {

@@ -571,7 +571,7 @@ const POSPage = () => {
     }
   }, [cartItems]);
 
-  const handlePayment = async (method: 'cash' | 'card' | 'pix' | 'mixed', amountReceived?: number, paymentDetails?: Record<string, number>, saleDate?: string) => {
+  const handlePayment = async (method: 'cash' | 'card' | 'pix' | 'mixed' | 'boleto' | 'cheque', amountReceived?: number, paymentDetails?: Record<string, number>, saleDate?: string) => {
     if (cartItems.length === 0) return;
     // Guard against double-clicks / re-entrant calls
     if (isProcessingRef.current) return;

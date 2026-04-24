@@ -26,6 +26,8 @@ import {
   Video,
   Plus,
   Trash2,
+  FileText,
+  ScrollText,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -61,7 +63,7 @@ const paymentTypeLabels: Record<MixedPaymentType, { label: string; icon: React.R
 interface PaymentPanelProps {
   total: number;
   onPayment: (
-    method: 'cash' | 'card' | 'pix' | 'mixed',
+    method: 'cash' | 'card' | 'pix' | 'mixed' | 'boleto' | 'cheque',
     amountReceived?: number,
     paymentDetails?: Record<string, unknown>
   ) => void;
@@ -79,10 +81,12 @@ const PaymentPanel = ({
 }: PaymentPanelProps) => {
   const channelOptions = allChannelOptions.filter(ch => !ch.adminOnly || isAdmin);
   const [selectedChannel, setSelectedChannel] = useState<SaleChannel | null>(null);
-  const [selectedMethod, setSelectedMethod] = useState<'cash' | 'card' | 'pix' | 'mixed' | null>(null);
+  const [selectedMethod, setSelectedMethod] = useState<'cash' | 'card' | 'pix' | 'mixed' | 'boleto' | 'cheque' | null>(null);
   const [cashReceived, setCashReceived] = useState('');
   const [cardType, setCardType] = useState<'credit' | 'debit'>('credit');
   const [installments, setInstallments] = useState('1');
+  const [boletoInstallments, setBoletoInstallments] = useState('1');
+  const [chequeInstallments, setChequeInstallments] = useState('1');
 
   // Multi-line mixed payments
   const [mixedLines, setMixedLines] = useState<MixedPaymentLine[]>([
@@ -156,6 +160,20 @@ const PaymentPanel = ({
         installments: cardType === 'credit' ? parseInt(installments) : 1,
         installmentValue: cardType === 'credit' ? installmentValue : total,
       });
+    } else if (selectedMethod === 'boleto') {
+      const inst = parseInt(boletoInstallments);
+      onPayment('boleto', undefined, {
+        ...channelInfo,
+        installments: inst,
+        installmentValue: total / inst,
+      });
+    } else if (selectedMethod === 'cheque') {
+      const inst = parseInt(chequeInstallments);
+      onPayment('cheque', undefined, {
+        ...channelInfo,
+        installments: inst,
+        installmentValue: total / inst,
+      });
     } else if (selectedMethod === 'mixed') {
       // Build payment details from lines
       const payments = mixedLines
@@ -211,12 +229,14 @@ const PaymentPanel = ({
     Math.ceil(total / 100) * 100,
   ].filter((v, i, arr) => arr.indexOf(v) === i);
 
-  const handleMethodChange = (method: 'cash' | 'card' | 'pix' | 'mixed') => {
+  const handleMethodChange = (method: 'cash' | 'card' | 'pix' | 'mixed' | 'boleto' | 'cheque') => {
     setSelectedMethod(method);
     if (method !== 'card') {
       setCardType('credit');
       setInstallments('1');
     }
+    if (method !== 'boleto') setBoletoInstallments('1');
+    if (method !== 'cheque') setChequeInstallments('1');
   };
 
   return (
@@ -245,7 +265,7 @@ const PaymentPanel = ({
 
       <div>
         <h3 className="font-semibold mb-3">Forma de Pagamento</h3>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-3 gap-2">
           <Button
             variant={selectedMethod === 'cash' ? 'default' : 'outline'}
             className="h-16 flex-col gap-1"
@@ -272,6 +292,24 @@ const PaymentPanel = ({
           >
             <QrCode className="h-6 w-6" />
             <span>PIX</span>
+          </Button>
+          <Button
+            variant={selectedMethod === 'boleto' ? 'default' : 'outline'}
+            className="h-16 flex-col gap-1"
+            onClick={() => handleMethodChange('boleto')}
+            disabled={disabled}
+          >
+            <FileText className="h-6 w-6" />
+            <span>Boleto</span>
+          </Button>
+          <Button
+            variant={selectedMethod === 'cheque' ? 'default' : 'outline'}
+            className="h-16 flex-col gap-1"
+            onClick={() => handleMethodChange('cheque')}
+            disabled={disabled}
+          >
+            <ScrollText className="h-6 w-6" />
+            <span>Cheque</span>
           </Button>
           <Button
             variant={selectedMethod === 'mixed' ? 'default' : 'outline'}
@@ -391,6 +429,80 @@ const PaymentPanel = ({
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Boleto payment details */}
+      {selectedMethod === 'boleto' && (
+        <div className="space-y-2">
+          <Separator />
+          <Label>Parcelas</Label>
+          <Select value={boletoInstallments} onValueChange={setBoletoInstallments}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Selecione as parcelas" />
+            </SelectTrigger>
+            <SelectContent className="bg-popover">
+              {Array.from({ length: 12 }, (_, i) => i + 1).map((num) => {
+                const value = total / num;
+                return (
+                  <SelectItem key={num} value={num.toString()}>
+                    {num}x de {formatCurrency(value)}
+                    {num === 1 && ' (à vista)'}
+                  </SelectItem>
+                );
+              })}
+            </SelectContent>
+          </Select>
+          <div className="bg-primary/10 rounded-lg p-3 text-center mt-3">
+            <div className="text-sm text-muted-foreground">
+              {parseInt(boletoInstallments) === 1 ? 'Boleto à vista' : `${boletoInstallments}x de`}
+            </div>
+            <div className="text-2xl font-bold text-primary">
+              {formatCurrency(total / parseInt(boletoInstallments))}
+            </div>
+            {parseInt(boletoInstallments) > 1 && (
+              <div className="text-xs text-muted-foreground mt-1">
+                Total: {formatCurrency(total)}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Cheque payment details */}
+      {selectedMethod === 'cheque' && (
+        <div className="space-y-2">
+          <Separator />
+          <Label>Parcelas</Label>
+          <Select value={chequeInstallments} onValueChange={setChequeInstallments}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Selecione as parcelas" />
+            </SelectTrigger>
+            <SelectContent className="bg-popover">
+              {Array.from({ length: 12 }, (_, i) => i + 1).map((num) => {
+                const value = total / num;
+                return (
+                  <SelectItem key={num} value={num.toString()}>
+                    {num}x de {formatCurrency(value)}
+                    {num === 1 && ' (à vista)'}
+                  </SelectItem>
+                );
+              })}
+            </SelectContent>
+          </Select>
+          <div className="bg-primary/10 rounded-lg p-3 text-center mt-3">
+            <div className="text-sm text-muted-foreground">
+              {parseInt(chequeInstallments) === 1 ? 'Cheque à vista' : `${chequeInstallments}x de`}
+            </div>
+            <div className="text-2xl font-bold text-primary">
+              {formatCurrency(total / parseInt(chequeInstallments))}
+            </div>
+            {parseInt(chequeInstallments) > 1 && (
+              <div className="text-xs text-muted-foreground mt-1">
+                Total: {formatCurrency(total)}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
