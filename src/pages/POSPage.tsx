@@ -584,6 +584,13 @@ const POSPage = () => {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error('Usuário não autenticado');
 
+        // Extract quote validity from paymentDetails (set by PaymentStep)
+        const details = (paymentDetails || {}) as Record<string, unknown>;
+        const expiresAtRaw = details.__expires_at;
+        const expires_at = typeof expiresAtRaw === 'string' ? expiresAtRaw : null;
+        const cleanPaymentDetails: Record<string, unknown> = { ...details };
+        delete cleanPaymentDetails.__expires_at;
+
         const quoteData = {
           local_id: offlineService.generateLocalId(),
           user_id: user.id,
@@ -609,9 +616,10 @@ const POSPage = () => {
           discount_amount: totalDiscount,
           total,
           payment_method: method,
-          payment_details: paymentDetails || {},
+          payment_details: cleanPaymentDetails,
           notes: selectedSeller ? `Vendedor: ${selectedSeller.full_name}` : null,
           status: 'pending',
+          expires_at,
         };
 
         await supabase.from('quotes').insert(quoteData as never);
