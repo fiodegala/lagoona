@@ -81,7 +81,7 @@ const PaymentStep = ({
     }
   };
 
-  const handlePaymentWithDate = (method: 'cash' | 'card' | 'pix' | 'mixed', amountReceived?: number, paymentDetails?: Record<string, unknown>) => {
+  const handlePaymentWithDate = (method: 'cash' | 'card' | 'pix' | 'mixed' | 'boleto' | 'cheque', amountReceived?: number, paymentDetails?: Record<string, unknown>) => {
     const saleDateISO = isBackdated ? saleDate.toISOString() : undefined;
     const extraDetails: Record<string, unknown> = { ...(paymentDetails || {}) };
     if (isQuote) {
