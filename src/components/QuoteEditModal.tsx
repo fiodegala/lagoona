@@ -98,6 +98,15 @@ const QuoteEditModal = ({ quote, open, onOpenChange, onSaved }: QuoteEditModalPr
   const [cardType, setCardType] = useState<'credit' | 'debit'>('credit');
   const [installments, setInstallments] = useState('1');
 
+  // Validity (expires_at) — protected by password
+  const QUOTE_EDIT_PASSWORD = '2309fdg';
+  const [expiresAt, setExpiresAt] = useState<Date | null>(null);
+  const [originalExpiresAt, setOriginalExpiresAt] = useState<string | null>(null);
+  const [validityUnlocked, setValidityUnlocked] = useState(false);
+  const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
+  const [passwordInput, setPasswordInput] = useState('');
+  const [passwordError, setPasswordError] = useState(false);
+
   // Product search state
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
