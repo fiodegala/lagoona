@@ -71,11 +71,11 @@ const GlobalNotificationPopups = () => {
   const dismissedIdsRef = useRef<Set<string>>(new Set());
 
   const isOnServiceOrdersPage = location.pathname === '/admin/ordens-servico';
-  const canSeeGlobalServiceOrderPopups = isAdmin && normalizeName(profile?.full_name) === SERVICE_ORDER_POPUP_ADMIN_NAME;
+  const canSeeAllServiceOrderPopups = isAdmin && normalizeName(profile?.full_name) === SERVICE_ORDER_POPUP_ADMIN_NAME;
 
   // Load pending service orders for this user
   const loadPendingServiceOrders = useCallback(async () => {
-    if (!user || !canSeeGlobalServiceOrderPopups) return [];
+    if (!user) return [];
     
     // Get departments this user manages
     const { data: myDepts } = await supabase
@@ -106,9 +106,9 @@ const GlobalNotificationPopups = () => {
     
     if (!orders) return [];
     
-    // Filter: admin sees all, managers see their departments
+    // Filter: Fio de Gala Jeans sees all; every other user only sees departments they manage
     const filtered = orders.filter(o => {
-      if (isAdmin) return true;
+      if (canSeeAllServiceOrderPopups) return true;
       return deptNames.includes(o.department);
     });
     
@@ -120,7 +120,7 @@ const GlobalNotificationPopups = () => {
       extra: { orderId: o.id, department: o.department, priority: o.priority, osTitle: o.title },
       createdAt: o.created_at,
     }));
-  }, [user, isAdmin, canSeeGlobalServiceOrderPopups]);
+  }, [user, canSeeAllServiceOrderPopups]);
 
   // Load pending stock transfers for this user's store  
   const loadPendingTransfers = useCallback(async () => {
