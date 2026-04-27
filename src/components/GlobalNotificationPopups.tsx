@@ -233,7 +233,8 @@ const GlobalNotificationPopups = () => {
     const now = Date.now();
     const unsnoozed = items.filter(i => !i.snoozedUntil || i.snoozedUntil <= now)
       .filter(i => !dismissedIdsRef.current.has(i.id))
-      .filter(i => !(i.type === 'service_order' && isOnServiceOrdersPage));
+      .filter(i => !(i.type === 'service_order' && isOnServiceOrdersPage))
+      .filter(i => i.type !== 'service_order' || getDismissedServiceOrderUntil(i.id) <= now);
     
     if (unsnoozed.length > 0 && !showPopup) {
       setCurrentItem(unsnoozed[0]);
@@ -257,7 +258,9 @@ const GlobalNotificationPopups = () => {
         });
         // Check if any became unsnoozed
         const unsnoozed = updated.filter(i => !i.snoozedUntil)
-          .filter(i => !(i.type === 'service_order' && isOnServiceOrdersPage));
+          .filter(i => !(i.type === 'service_order' && isOnServiceOrdersPage))
+          .filter(i => i.type !== 'service_order' || getDismissedServiceOrderUntil(i.id) <= now)
+          .filter(i => !dismissedIdsRef.current.has(i.id));
         if (unsnoozed.length > 0 && !showPopup) {
           setCurrentItem(unsnoozed[0]);
           setShowPopup(true);
@@ -300,12 +303,17 @@ const GlobalNotificationPopups = () => {
 
   const handleDismissAndNext = () => {
     if (!currentItem) return;
+    const now = Date.now();
+    if (currentItem.type === 'service_order') {
+      dismissServiceOrderFor12Hours(currentItem.id);
+    }
     
     dismissedIdsRef.current.add(currentItem.id);
     setItems(prev => {
       const remaining = prev.filter(i => i.id !== currentItem.id);
       const unsnoozed = remaining.filter(i => !i.snoozedUntil)
-        .filter(i => !dismissedIdsRef.current.has(i.id));
+        .filter(i => !dismissedIdsRef.current.has(i.id))
+        .filter(i => i.type !== 'service_order' || getDismissedServiceOrderUntil(i.id) <= now);
       if (unsnoozed.length > 0) {
         setCurrentItem(unsnoozed[0]);
       } else {
