@@ -20,11 +20,49 @@ interface PendingItem {
 }
 
 const SNOOZE_MINUTES = 5;
+const OS_DISMISS_HOURS = 12;
+const OS_DISMISS_STORAGE_KEY = 'service-order-popup-dismissed-until';
+const SERVICE_ORDER_POPUP_ADMIN_NAME = 'fio de gala jeans';
+
+const normalizeName = (name?: string | null) =>
+  (name || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toLowerCase();
+
+const getDismissedServiceOrderUntil = (id: string) => {
+  try {
+    const stored = localStorage.getItem(OS_DISMISS_STORAGE_KEY);
+    const dismissedUntilById = stored ? JSON.parse(stored) as Record<string, number> : {};
+    return dismissedUntilById[id] || 0;
+  } catch {
+    return 0;
+  }
+};
+
+const dismissServiceOrderFor12Hours = (id: string) => {
+  try {
+    const stored = localStorage.getItem(OS_DISMISS_STORAGE_KEY);
+    const dismissedUntilById = stored ? JSON.parse(stored) as Record<string, number> : {};
+    const now = Date.now();
+    const twelveHoursFromNow = now + OS_DISMISS_HOURS * 60 * 60 * 1000;
+    const freshDismissals = Object.fromEntries(
+      Object.entries(dismissedUntilById).filter(([, until]) => Number(until) > now)
+    );
+    localStorage.setItem(OS_DISMISS_STORAGE_KEY, JSON.stringify({
+      ...freshDismissals,
+      [id]: twelveHoursFromNow,
+    }));
+  } catch {
+    // Ignore storage errors; the in-memory dismissal still prevents immediate repeat.
+  }
+};
 
 const GlobalNotificationPopups = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, isAdmin, userStoreId, accessibleStoreIds } = useAuth();
+  const { user, isAdmin, profile, userStoreId, accessibleStoreIds } = useAuth();
   const [items, setItems] = useState<PendingItem[]>([]);
   const [currentItem, setCurrentItem] = useState<PendingItem | null>(null);
   const [showPopup, setShowPopup] = useState(false);
@@ -33,10 +71,11 @@ const GlobalNotificationPopups = () => {
   const dismissedIdsRef = useRef<Set<string>>(new Set());
 
   const isOnServiceOrdersPage = location.pathname === '/admin/ordens-servico';
+  const canSeeGlobalServiceOrderPopups = isAdmin && normalizeName(profile?.full_name) === SERVICE_ORDER_POPUP_ADMIN_NAME;
 
   // Load pending service orders for this user
   const loadPendingServiceOrders = useCallback(async () => {
-    if (!user) return [];
+    if (!user || !canSeeGlobalServiceOrderPopups) return [];
     
     // Get departments this user manages
     const { data: myDepts } = await supabase
@@ -81,7 +120,7 @@ const GlobalNotificationPopups = () => {
       extra: { orderId: o.id, department: o.department, priority: o.priority, osTitle: o.title },
       createdAt: o.created_at,
     }));
-  }, [user, isAdmin]);
+  }, [user, isAdmin, canSeeGlobalServiceOrderPopups]);
 
   // Load pending stock transfers for this user's store  
   const loadPendingTransfers = useCallback(async () => {
@@ -194,7 +233,8 @@ const GlobalNotificationPopups = () => {
     const now = Date.now();
     const unsnoozed = items.filter(i => !i.snoozedUntil || i.snoozedUntil <= now)
       .filter(i => !dismissedIdsRef.current.has(i.id))
-      .filter(i => !(i.type === 'service_order' && isOnServiceOrdersPage));
+      .filter(i => !(i.type === 'service_order' && isOnServiceOrdersPage))
+      .filter(i => i.type !== 'service_order' || getDismissedServiceOrderUntil(i.id) <= now);
     
     if (unsnoozed.length > 0 && !showPopup) {
       setCurrentItem(unsnoozed[0]);
@@ -218,7 +258,9 @@ const GlobalNotificationPopups = () => {
         });
         // Check if any became unsnoozed
         const unsnoozed = updated.filter(i => !i.snoozedUntil)
-          .filter(i => !(i.type === 'service_order' && isOnServiceOrdersPage));
+          .filter(i => !(i.type === 'service_order' && isOnServiceOrdersPage))
+          .filter(i => i.type !== 'service_order' || getDismissedServiceOrderUntil(i.id) <= now)
+          .filter(i => !dismissedIdsRef.current.has(i.id));
         if (unsnoozed.length > 0 && !showPopup) {
           setCurrentItem(unsnoozed[0]);
           setShowPopup(true);
@@ -261,12 +303,17 @@ const GlobalNotificationPopups = () => {
 
   const handleDismissAndNext = () => {
     if (!currentItem) return;
+    const now = Date.now();
+    if (currentItem.type === 'service_order') {
+      dismissServiceOrderFor12Hours(currentItem.id);
+    }
     
     dismissedIdsRef.current.add(currentItem.id);
     setItems(prev => {
       const remaining = prev.filter(i => i.id !== currentItem.id);
       const unsnoozed = remaining.filter(i => !i.snoozedUntil)
-        .filter(i => !dismissedIdsRef.current.has(i.id));
+        .filter(i => !dismissedIdsRef.current.has(i.id))
+        .filter(i => i.type !== 'service_order' || getDismissedServiceOrderUntil(i.id) <= now);
       if (unsnoozed.length > 0) {
         setCurrentItem(unsnoozed[0]);
       } else {
