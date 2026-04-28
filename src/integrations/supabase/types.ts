@@ -3377,6 +3377,10 @@ export type Database = {
         Args: { _conversation_id: string; _user_id: string }
         Returns: boolean
       }
+      is_department_manager_for_department: {
+        Args: { _department: string; _user_id: string }
+        Returns: boolean
+      }
       is_event_participant: {
         Args: { _event_id: string; _user_id: string }
         Returns: boolean
