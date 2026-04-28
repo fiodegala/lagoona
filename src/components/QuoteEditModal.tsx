@@ -80,6 +80,8 @@ const paymentMethods = [
   { value: 'cash', label: 'Dinheiro' },
   { value: 'card', label: 'Cartão' },
   { value: 'pix', label: 'PIX' },
+  { value: 'boleto', label: 'Boleto' },
+  { value: 'cheque', label: 'Cheque' },
   { value: 'mixed', label: 'Misto' },
 ];
 
@@ -409,13 +411,19 @@ const QuoteEditModal = ({ quote, open, onOpenChange, onSaved }: QuoteEditModalPr
         total: item.quantity * item.unit_price - (item.discount_amount || 0),
       }));
 
-      // Build payment_details for card
+      // Build payment_details for methods with installments
       let paymentDetails: Record<string, unknown> | null = null;
       if (paymentMethod === 'card') {
         paymentDetails = {
           cardType,
           installments: cardType === 'credit' ? parseInt(installments) : 1,
           installmentValue: cardType === 'credit' ? total / parseInt(installments) : total,
+        };
+      } else if (paymentMethod === 'boleto' || paymentMethod === 'cheque') {
+        const inst = parseInt(installments);
+        paymentDetails = {
+          installments: inst,
+          installmentValue: total / inst,
         };
       }
 
@@ -711,7 +719,7 @@ const QuoteEditModal = ({ quote, open, onOpenChange, onSaved }: QuoteEditModalPr
               <CreditCard className="h-3.5 w-3.5 text-muted-foreground" />
               Forma de Pagamento
             </h4>
-            <Select value={paymentMethod} onValueChange={(v) => { setPaymentMethod(v); if (v !== 'card') { setCardType('credit'); setInstallments('1'); } }}>
+            <Select value={paymentMethod} onValueChange={(v) => { setPaymentMethod(v); if (!['card', 'boleto', 'cheque'].includes(v)) { setCardType('credit'); setInstallments('1'); } }}>
               <SelectTrigger className="w-full sm:w-48">
                 <SelectValue placeholder="Selecione..." />
               </SelectTrigger>
@@ -772,6 +780,31 @@ const QuoteEditModal = ({ quote, open, onOpenChange, onSaved }: QuoteEditModalPr
                 {cardType === 'debit' && (
                   <p className="text-xs text-muted-foreground">Débito à vista — {formatCurrency(total)}</p>
                 )}
+              </div>
+            )}
+
+            {(paymentMethod === 'boleto' || paymentMethod === 'cheque') && (
+              <div className="mt-3 space-y-2 pl-1">
+                <Label className="text-xs">Parcelas</Label>
+                <Select value={installments} onValueChange={setInstallments}>
+                  <SelectTrigger className="w-full sm:w-64">
+                    <SelectValue placeholder="Selecione as parcelas" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Array.from({ length: 6 }, (_, i) => i + 1).map((num) => {
+                      const value = total / num;
+                      return (
+                        <SelectItem key={num} value={num.toString()}>
+                          {num}x de {formatCurrency(value)}{num === 1 && ' (à vista)'}
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  {parseInt(installments) === 1 ? `${paymentMethod === 'boleto' ? 'Boleto' : 'Cheque'} à vista` : `${installments}x de`}{' '}
+                  <span className="font-semibold text-primary">{formatCurrency(total / parseInt(installments))}</span>
+                </p>
               </div>
             )}
           </div>
