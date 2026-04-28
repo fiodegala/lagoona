@@ -106,10 +106,12 @@ const GlobalNotificationPopups = () => {
     
     if (!orders) return [];
     
+    const normalizedDeptNames = new Set(deptNames.map(normalizeName));
+
     // Filter: Fio de Gala Jeans sees all; every other user only sees departments they manage
     const filtered = orders.filter(o => {
       if (canSeeAllServiceOrderPopups) return true;
-      return deptNames.includes(o.department);
+      return normalizedDeptNames.has(normalizeName(o.department));
     });
     
     return filtered.map(o => ({
