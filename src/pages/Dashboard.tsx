@@ -1196,6 +1196,68 @@ const Dashboard = () => {
           </div>
         )}
 
+        {goalProgress.daily.target > 0 && (
+          <Card className="card-elevated">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Target className="h-5 w-5 text-primary" />
+                Cálculo da meta diária de hoje
+              </CardTitle>
+              <CardDescription>
+                Conferência dos dados usados para calcular e validar a meta do dia.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="rounded-lg border bg-muted/30 p-3">
+                  <p className="text-xs text-muted-foreground">Meta mensal</p>
+                  <p className="text-lg font-semibold">{formatCurrency(goalProgress.monthly.target)}</p>
+                </div>
+                <div className="rounded-lg border bg-muted/30 p-3">
+                  <p className="text-xs text-muted-foreground">Dias úteis do mês</p>
+                  <p className="text-lg font-semibold">{goalProgress.daily.businessDaysInMonth}</p>
+                </div>
+                <div className="rounded-lg border bg-muted/30 p-3">
+                  <p className="text-xs text-muted-foreground">Dias úteis restantes</p>
+                  <p className="text-lg font-semibold">{goalProgress.daily.remainingDays}</p>
+                </div>
+                <div className="rounded-lg border bg-muted/30 p-3">
+                  <p className="text-xs text-muted-foreground">Meta de hoje</p>
+                  <p className="text-lg font-semibold">{formatCurrency(goalProgress.daily.target)}</p>
+                </div>
+              </div>
+
+              <div className="rounded-lg border p-4 space-y-3">
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                  <span className="text-sm font-medium">Origem do cálculo</span>
+                  <Badge variant="outline">{goalProgress.daily.calculationSource}</Badge>
+                </div>
+                <div className="grid gap-2 text-sm text-muted-foreground sm:grid-cols-2">
+                  <div className="flex justify-between gap-3">
+                    <span>Meta diária cadastrada</span>
+                    <strong className="text-foreground">{formatCurrency(goalProgress.daily.configuredTarget)}</strong>
+                  </div>
+                  <div className="flex justify-between gap-3">
+                    <span>Fórmula alternativa</span>
+                    <strong className="text-foreground">{formatCurrency(goalProgress.monthly.target / goalProgress.daily.businessDaysInMonth)}</strong>
+                  </div>
+                  <div className="flex justify-between gap-3">
+                    <span>Vendas de hoje no site</span>
+                    <strong className="text-foreground">{formatCurrency(goalProgress.daily.onlineSales)}</strong>
+                  </div>
+                  <div className="flex justify-between gap-3">
+                    <span>Vendas de hoje no PDV</span>
+                    <strong className="text-foreground">{formatCurrency(goalProgress.daily.posSales)}</strong>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Fontes: tabela de metas ativas, vendas PDV concluídas do dia e pedidos do site confirmados/processados/enviados/entregues. Brindes e vendas canceladas não entram no cálculo.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Main Stats Grid */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {isLoading ? (
