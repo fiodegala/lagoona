@@ -21,6 +21,8 @@ const routeToMenuKey: Record<string, string> = {
   '/admin/importar-csv': 'import-csv',
   '/admin/importar-legado': 'import-legacy',
   '/admin/importar-dados': 'import-data',
+  '/admin/ordens-servico': 'service-orders',
+  '/admin/service-orders': 'service-orders',
   '/admin/comunicados': 'announcements',
   '/admin/settings/api-keys': 'api-keys',
   '/admin/settings/api-docs': 'api-docs',

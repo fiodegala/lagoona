@@ -60,6 +60,8 @@ export const stripAlwaysVisibleMenuKeys = (menus?: string[] | null) =>
 export const navItems: MenuItem[] = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/admin', menuKey: 'dashboard' },
   { icon: Monitor, label: 'PDV', path: '/admin/pos', menuKey: 'pos' },
+  { icon: ClipboardList, label: 'Ordens de Serviço', path: '/admin/ordens-servico', menuKey: 'service-orders' },
+  { icon: Megaphone, label: 'Comunicados', path: '/admin/comunicados', menuKey: 'announcements' },
   { icon: Package, label: 'Produtos', path: '/admin/products', menuKey: 'products', requireAdmin: true },
   { icon: DollarSign, label: 'Valores de Produtos', path: '/admin/valores-produtos', menuKey: 'product-pricing' },
   { icon: FolderTree, label: 'Categorias', path: '/admin/categories', menuKey: 'categories', requireAdmin: true },
@@ -88,8 +90,6 @@ export const navItems: MenuItem[] = [
   { icon: Upload, label: 'Importar CSV', path: '/admin/importar-csv', menuKey: 'import-csv', requireAdmin: true },
   { icon: Upload, label: 'Importar Legado', path: '/admin/importar-legado', menuKey: 'import-legacy', requireAdmin: true },
   { icon: Upload, label: 'Importar Dados (BI)', path: '/admin/importar-dados', menuKey: 'import-data', requireAdmin: true },
-  { icon: ClipboardList, label: 'Ordens de Serviço', path: '/admin/ordens-servico', menuKey: 'service-orders' },
-  { icon: Megaphone, label: 'Comunicados', path: '/admin/comunicados', menuKey: 'announcements' },
   { icon: Eye, label: 'Visual de Loja', path: '/admin/vm', menuKey: 'visual-merchandising' },
   { icon: MessageSquare, label: 'Chat Interno', path: '/admin/chat', menuKey: 'internal-chat' },
   { icon: Calendar, label: 'Agenda', path: '/admin/agenda', menuKey: 'calendar' },
