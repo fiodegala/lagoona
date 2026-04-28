@@ -632,7 +632,7 @@ const Dashboard = () => {
         isComplete: monthlyTarget ? monthTotal >= monthlyTarget : false,
       },
     };
-  }, [rawOrders, rawPOSSales, salesGoals, activeStoreFilter, isLagoonaStoreSelected, lagoonaProductIds]);
+  }, [rawOrders, rawPOSSales, salesGoals, activeStoreFilter, isLagoonaStoreSelected, isLagoonaItem, getItemTotal]);
 
   // Recent orders (always show latest 5 within period)
   const recentOrders = useMemo(() => {
