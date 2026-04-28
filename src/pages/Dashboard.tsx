@@ -88,7 +88,7 @@ interface RawOrder {
   payment_method: string | null;
   created_at: string;
   shipping_address: { state?: string; city?: string } | null;
-  items: { name?: string; qty?: number; quantity?: number; price?: number; is_promotional?: boolean; original_price?: number }[];
+  items: { product_id?: string; name?: string; qty?: number; quantity?: number; price?: number; total?: number; is_lagoona?: boolean; is_promotional?: boolean; original_price?: number }[];
 }
 
 interface RawPOSSale {
@@ -103,7 +103,7 @@ interface RawPOSSale {
   status: string;
   sale_type: string | null;
   notes: string | null;
-  items: { name?: string; qty?: number; quantity?: number; unit_price?: number; price?: number; is_promotional?: boolean; original_price?: number; total?: number }[];
+  items: { product_id?: string; name?: string; qty?: number; quantity?: number; unit_price?: number; price?: number; is_lagoona?: boolean; is_promotional?: boolean; original_price?: number; total?: number }[];
   created_at: string;
 }
 
@@ -153,7 +153,7 @@ const Dashboard = () => {
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [rawOrders, setRawOrders] = useState<RawOrder[]>([]);
   const [rawPOSSales, setRawPOSSales] = useState<RawPOSSale[]>([]);
-  const [products, setProducts] = useState<{ id: string; is_active: boolean }[]>([]);
+  const [products, setProducts] = useState<{ id: string; is_active: boolean; is_lagoona?: boolean }[]>([]);
   const [reviews, setReviews] = useState<{ id: string; is_approved: boolean }[]>([]);
   const [coupons, setCoupons] = useState<{ id: string; is_active: boolean }[]>([]);
   const [categories, setCategories] = useState<{ id: string; is_active: boolean }[]>([]);
@@ -217,6 +217,8 @@ const Dashboard = () => {
         .in('status', ['confirmed', 'completed', 'delivered', 'processing', 'shipped']);
       if (isSiteStoreSelected) {
         ordersQuery = ordersQuery.eq('store_id', SITE_STORE_ID);
+      } else if (isLagoonaStoreSelected) {
+        // Fetch all site orders and isolate Lagoona items client-side.
       } else if (storeFilter) {
         ordersQuery = ordersQuery.limit(0);
       }
@@ -241,7 +243,7 @@ const Dashboard = () => {
         goalsRes,
         customersRes
       ] = await Promise.all([
-        supabase.from('products').select('id, is_active'),
+        supabase.from('products').select('id, is_active, is_lagoona'),
         ordersQuery,
         supabase.from('product_reviews').select('id, is_approved'),
         supabase.from('coupons').select('id, is_active'),
