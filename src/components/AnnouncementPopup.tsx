@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -44,19 +44,39 @@ const AnnouncementPopup = () => {
     refetchInterval: 60000,
   });
 
+  const announcementIds = useMemo(() => announcements.map((a: any) => a.id).join('|'), [announcements]);
+
   useEffect(() => {
-    if (announcements.length > 0) {
+    if (announcements.length > 0 && !open) {
       setCurrentIndex(0);
       setOpen(true);
       playAnnouncementSound();
     }
-  }, [announcements.length]);
+  }, [announcements.length, announcementIds, open]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel('announcement-popup-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'admin_announcements' }, () => {
+        queryClient.invalidateQueries({ queryKey: ['active-announcements'] });
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient, user]);
 
   const dismissMutation = useMutation({
     mutationFn: async (announcementId: string) => {
-      await supabase.from('announcement_dismissals').insert({
+      await supabase.from('announcement_dismissals').upsert({
         announcement_id: announcementId,
         user_id: user!.id,
+      }, {
+        onConflict: 'announcement_id,user_id',
+        ignoreDuplicates: true,
       });
     },
     onSuccess: () => {
