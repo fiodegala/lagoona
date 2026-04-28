@@ -12,7 +12,6 @@ const AnnouncementPopup = () => {
   const queryClient = useQueryClient();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [open, setOpen] = useState(false);
-  const announcementIds = useMemo(() => announcements.map((a: any) => a.id).join('|'), [announcements]);
 
   const { data: announcements = [] } = useQuery({
     queryKey: ['active-announcements', user?.id],
@@ -44,6 +43,8 @@ const AnnouncementPopup = () => {
     },
     refetchInterval: 60000,
   });
+
+  const announcementIds = useMemo(() => announcements.map((a: any) => a.id).join('|'), [announcements]);
 
   useEffect(() => {
     if (announcements.length > 0 && !open) {
