@@ -555,13 +555,12 @@ const Dashboard = () => {
 
     const monthTotal = monthOnlineSales + monthPOSSales;
 
-    // Dynamic daily goal: (monthly target - sold so far) / remaining business days
-    const getRemainingWorkingDays = (): number => {
+    const getBusinessDays = (mode: 'remaining' | 'month'): number => {
       const now = new Date();
       const year = now.getFullYear();
       const month = now.getMonth();
       const lastDay = new Date(year, month + 1, 0).getDate();
-      const currentDay = now.getDate();
+      const firstDay = mode === 'remaining' ? now.getDate() : 1;
 
       // Brazilian national holidays (fixed dates)
       const fixedHolidays = [
@@ -603,7 +602,7 @@ const Dashboard = () => {
       ]);
 
       let count = 0;
-      for (let d = currentDay; d <= lastDay; d++) {
+      for (let d = firstDay; d <= lastDay; d++) {
         const date = new Date(year, month, d);
         const dayOfWeek = date.getDay();
         if (dayOfWeek === 0) continue; // Sunday
@@ -614,10 +613,13 @@ const Dashboard = () => {
       return Math.max(count, 1);
     };
 
-    const remainingDays = getRemainingWorkingDays();
-    const remainingTarget = Math.max(monthlyTarget - monthTotal, 0);
-    const dynamicDailyTarget = monthlyTarget > 0 ? Math.ceil(remainingTarget / remainingDays) : 0;
-    const resolvedDailyTarget = dailyTarget > 0 ? dailyTarget : dynamicDailyTarget;
+    const remainingDays = getBusinessDays('remaining');
+    const businessDaysInMonth = getBusinessDays('month');
+    const resolvedDailyTarget = dailyTarget > 0
+      ? dailyTarget
+      : monthlyTarget > 0
+        ? Math.ceil(monthlyTarget / businessDaysInMonth)
+        : 0;
 
     return {
       daily: {
