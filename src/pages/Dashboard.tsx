@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import AdminLayout from '@/components/AdminLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -323,14 +323,14 @@ const Dashboard = () => {
     [products]
   );
 
-  const getItemTotal = (item: { total?: number; price?: number; unit_price?: number; qty?: number; quantity?: number }) => {
+  const getItemTotal = useCallback((item: { total?: number; price?: number; unit_price?: number; qty?: number; quantity?: number }) => {
     const quantity = Number(item.quantity || item.qty || 1);
     return Number(item.total ?? ((item.price ?? item.unit_price ?? 0) * quantity));
-  };
+  }, []);
 
-  const isLagoonaItem = (item: { product_id?: string; is_lagoona?: boolean }) => {
+  const isLagoonaItem = useCallback((item: { product_id?: string; is_lagoona?: boolean }) => {
     return item.is_lagoona === true || (!!item.product_id && lagoonaProductIds.has(item.product_id));
-  };
+  }, [lagoonaProductIds]);
 
   // Filter data by period
   const filteredOrders = useMemo(() => {
@@ -352,7 +352,7 @@ const Dashboard = () => {
         return { ...order, items: lagoonaItems, total: lagoonaItems.reduce((sum, item) => sum + getItemTotal(item), 0) };
       })
       .filter(Boolean) as RawOrder[];
-  }, [rawOrders, periodStartDate, periodEndDate, isLagoonaStoreSelected, lagoonaProductIds]);
+  }, [rawOrders, periodStartDate, periodEndDate, isLagoonaStoreSelected, isLagoonaItem, getItemTotal]);
 
   const filteredPOSSales = useMemo(() => {
     let activeSales = rawPOSSales.filter(s => s.status !== 'cancelled' && s.sale_type !== 'brinde');
@@ -396,7 +396,7 @@ const Dashboard = () => {
     }
 
     return activeSales;
-  }, [rawPOSSales, periodStartDate, periodEndDate, selectedSellerId, isLagoonaStoreSelected, activeStoreFilter, lagoonaProductIds]);
+  }, [rawPOSSales, periodStartDate, periodEndDate, selectedSellerId, isLagoonaStoreSelected, activeStoreFilter, isLagoonaItem, getItemTotal]);
 
   // Calculate online stats based on filtered data
   const stats: DashboardStats | null = useMemo(() => {
