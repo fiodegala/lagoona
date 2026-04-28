@@ -334,6 +334,10 @@ const Dashboard = () => {
 
   // Filter data by period
   const filteredOrders = useMemo(() => {
+    if (activeStoreFilter && activeStoreFilter !== SITE_STORE_ID && !isLagoonaStoreSelected) {
+      return [];
+    }
+
     const periodOrders = periodStartDate
       ? rawOrders.filter(o => {
           const orderDate = new Date(o.created_at);
@@ -352,7 +356,7 @@ const Dashboard = () => {
         return { ...order, items: lagoonaItems, total: lagoonaItems.reduce((sum, item) => sum + getItemTotal(item), 0) };
       })
       .filter(Boolean) as RawOrder[];
-  }, [rawOrders, periodStartDate, periodEndDate, isLagoonaStoreSelected, isLagoonaItem, getItemTotal]);
+  }, [rawOrders, periodStartDate, periodEndDate, activeStoreFilter, isLagoonaStoreSelected, isLagoonaItem, getItemTotal]);
 
   const filteredPOSSales = useMemo(() => {
     let activeSales = rawPOSSales.filter(s => s.status !== 'cancelled' && s.sale_type !== 'brinde');
@@ -494,6 +498,7 @@ const Dashboard = () => {
 
     const dailyTarget = findGoalTarget('daily');
     const monthlyTarget = findGoalTarget('monthly');
+    const includeOnlineSales = !activeStoreFilter || activeStoreFilter === SITE_STORE_ID || isLagoonaStoreSelected;
 
     // Get today's sales (online + POS)
     const today = new Date();
@@ -519,12 +524,14 @@ const Dashboard = () => {
       return Number(sale.total);
     };
 
-    const todayOnlineSales = rawOrders
-      .filter(o => {
-        const orderDate = new Date(o.created_at);
-        return orderDate >= today && orderDate < tomorrow && ['confirmed', 'completed', 'delivered', 'processing', 'shipped'].includes(o.status);
-      })
-      .reduce((sum, o) => sum + isolateLagoonaOrderTotal(o), 0);
+    const todayOnlineSales = includeOnlineSales
+      ? rawOrders
+          .filter(o => {
+            const orderDate = new Date(o.created_at);
+            return orderDate >= today && orderDate < tomorrow && ['confirmed', 'completed', 'delivered', 'processing', 'shipped'].includes(o.status);
+          })
+          .reduce((sum, o) => sum + isolateLagoonaOrderTotal(o), 0)
+      : 0;
 
     const todayPOSSales = rawPOSSales
       .filter(s => {
@@ -539,12 +546,14 @@ const Dashboard = () => {
     const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
     const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59, 999);
 
-    const monthOnlineSales = rawOrders
-      .filter(o => {
-        const orderDate = new Date(o.created_at);
-        return orderDate >= monthStart && orderDate <= monthEnd && ['confirmed', 'completed', 'delivered', 'processing', 'shipped'].includes(o.status);
-      })
-      .reduce((sum, o) => sum + isolateLagoonaOrderTotal(o), 0);
+    const monthOnlineSales = includeOnlineSales
+      ? rawOrders
+          .filter(o => {
+            const orderDate = new Date(o.created_at);
+            return orderDate >= monthStart && orderDate <= monthEnd && ['confirmed', 'completed', 'delivered', 'processing', 'shipped'].includes(o.status);
+          })
+          .reduce((sum, o) => sum + isolateLagoonaOrderTotal(o), 0)
+      : 0;
 
     const monthPOSSales = rawPOSSales
       .filter(s => {
