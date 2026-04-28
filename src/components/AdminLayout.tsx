@@ -44,7 +44,9 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
   const navigate = useNavigate();
   const { profile, roles, signOut, isAdmin, userStore, allowedMenus, hasExplicitMenuPermissions } = useAuth();
   const { unreadCount } = useChatUnread();
-  const primaryNavItems = navItems;
+  const pinnedShortcutKeys = ['service-orders', 'announcements'];
+  const pinnedShortcutItems = navItems.filter((item) => pinnedShortcutKeys.includes(item.menuKey));
+  const primaryNavItems = navItems.filter((item) => !pinnedShortcutKeys.includes(item.menuKey));
 
   // Filter menu items: admins see everything, others see only allowed menus
   const hasMenuAccess = (key: string) => {
@@ -157,6 +159,12 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
           <ExternalLink className={cn('h-5 w-5 flex-shrink-0', collapsed && !isMobile && 'mx-auto')} />
           {(!collapsed || isMobile) && <span className="font-medium">Visitar Loja</span>}
         </a>
+
+        <div className="mt-2 space-y-1">
+          {pinnedShortcutItems.map((item) => (
+            <NavItem key={item.menuKey} {...item} forceVisible />
+          ))}
+        </div>
       </div>
 
       {/* Navigation */}
