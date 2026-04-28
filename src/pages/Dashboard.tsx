@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import AdminLayout from '@/components/AdminLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -88,7 +88,7 @@ interface RawOrder {
   payment_method: string | null;
   created_at: string;
   shipping_address: { state?: string; city?: string } | null;
-  items: { name?: string; qty?: number; quantity?: number; price?: number; is_promotional?: boolean; original_price?: number }[];
+  items: { product_id?: string; name?: string; qty?: number; quantity?: number; price?: number; total?: number; is_lagoona?: boolean; is_promotional?: boolean; original_price?: number }[];
 }
 
 interface RawPOSSale {
@@ -103,7 +103,7 @@ interface RawPOSSale {
   status: string;
   sale_type: string | null;
   notes: string | null;
-  items: { name?: string; qty?: number; quantity?: number; unit_price?: number; price?: number; is_promotional?: boolean; original_price?: number; total?: number }[];
+  items: { product_id?: string; name?: string; qty?: number; quantity?: number; unit_price?: number; price?: number; is_lagoona?: boolean; is_promotional?: boolean; original_price?: number; total?: number }[];
   created_at: string;
 }
 
@@ -153,7 +153,7 @@ const Dashboard = () => {
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [rawOrders, setRawOrders] = useState<RawOrder[]>([]);
   const [rawPOSSales, setRawPOSSales] = useState<RawPOSSale[]>([]);
-  const [products, setProducts] = useState<{ id: string; is_active: boolean }[]>([]);
+  const [products, setProducts] = useState<{ id: string; is_active: boolean; is_lagoona?: boolean }[]>([]);
   const [reviews, setReviews] = useState<{ id: string; is_approved: boolean }[]>([]);
   const [coupons, setCoupons] = useState<{ id: string; is_active: boolean }[]>([]);
   const [categories, setCategories] = useState<{ id: string; is_active: boolean }[]>([]);
@@ -217,6 +217,8 @@ const Dashboard = () => {
         .in('status', ['confirmed', 'completed', 'delivered', 'processing', 'shipped']);
       if (isSiteStoreSelected) {
         ordersQuery = ordersQuery.eq('store_id', SITE_STORE_ID);
+      } else if (isLagoonaStoreSelected) {
+        // Fetch all site orders and isolate Lagoona items client-side.
       } else if (storeFilter) {
         ordersQuery = ordersQuery.limit(0);
       }
@@ -241,7 +243,7 @@ const Dashboard = () => {
         goalsRes,
         customersRes
       ] = await Promise.all([
-        supabase.from('products').select('id, is_active'),
+        supabase.from('products').select('id, is_active, is_lagoona'),
         ordersQuery,
         supabase.from('product_reviews').select('id, is_approved'),
         supabase.from('coupons').select('id, is_active'),
@@ -316,17 +318,41 @@ const Dashboard = () => {
   };
 
   const { start: periodStartDate, end: periodEndDate } = getDateRange(periodFilter);
+  const lagoonaProductIds = useMemo(
+    () => new Set(products.filter(product => product.is_lagoona).map(product => product.id)),
+    [products]
+  );
+
+  const getItemTotal = useCallback((item: { total?: number; price?: number; unit_price?: number; qty?: number; quantity?: number }) => {
+    const quantity = Number(item.quantity || item.qty || 1);
+    return Number(item.total ?? ((item.price ?? item.unit_price ?? 0) * quantity));
+  }, []);
+
+  const isLagoonaItem = useCallback((item: { product_id?: string; is_lagoona?: boolean }) => {
+    return item.is_lagoona === true || (!!item.product_id && lagoonaProductIds.has(item.product_id));
+  }, [lagoonaProductIds]);
 
   // Filter data by period
   const filteredOrders = useMemo(() => {
-    if (!periodStartDate) return rawOrders;
-    return rawOrders.filter(o => {
-      const orderDate = new Date(o.created_at);
-      const afterStart = orderDate >= periodStartDate;
-      const beforeEnd = !periodEndDate || orderDate <= periodEndDate;
-      return afterStart && beforeEnd;
-    });
-  }, [rawOrders, periodStartDate, periodEndDate]);
+    const periodOrders = periodStartDate
+      ? rawOrders.filter(o => {
+          const orderDate = new Date(o.created_at);
+          const afterStart = orderDate >= periodStartDate;
+          const beforeEnd = !periodEndDate || orderDate <= periodEndDate;
+          return afterStart && beforeEnd;
+        })
+      : rawOrders;
+
+    if (!isLagoonaStoreSelected) return periodOrders;
+
+    return periodOrders
+      .map(order => {
+        const lagoonaItems = (order.items || []).filter(isLagoonaItem);
+        if (lagoonaItems.length === 0) return null;
+        return { ...order, items: lagoonaItems, total: lagoonaItems.reduce((sum, item) => sum + getItemTotal(item), 0) };
+      })
+      .filter(Boolean) as RawOrder[];
+  }, [rawOrders, periodStartDate, periodEndDate, isLagoonaStoreSelected, isLagoonaItem, getItemTotal]);
 
   const filteredPOSSales = useMemo(() => {
     let activeSales = rawPOSSales.filter(s => s.status !== 'cancelled' && s.sale_type !== 'brinde');
@@ -347,9 +373,9 @@ const Dashboard = () => {
     if (isLagoonaStoreSelected) {
       return activeSales
         .map(sale => {
-          const lagoonaItems = (sale.items || []).filter((item: any) => item.is_lagoona);
+          const lagoonaItems = (sale.items || []).filter(isLagoonaItem);
           if (lagoonaItems.length === 0) return null;
-          const lagoonaTotal = lagoonaItems.reduce((sum: number, item: any) => sum + (Number(item.total) || 0), 0);
+          const lagoonaTotal = lagoonaItems.reduce((sum: number, item: any) => sum + getItemTotal(item), 0);
           return { ...sale, items: lagoonaItems, total: lagoonaTotal };
         })
         .filter(Boolean) as typeof activeSales;
@@ -359,30 +385,31 @@ const Dashboard = () => {
     if (activeStoreFilter && activeStoreFilter !== SITE_STORE_ID && activeStoreFilter !== LAGOONA_STORE_ID) {
       return activeSales
         .map(sale => {
-          const hasLagoonaItems = (sale.items || []).some((item: any) => item.is_lagoona);
+          const hasLagoonaItems = (sale.items || []).some(isLagoonaItem);
           if (!hasLagoonaItems) return sale;
-          const nonLagoonaItems = (sale.items || []).filter((item: any) => !item.is_lagoona);
+          const nonLagoonaItems = (sale.items || []).filter((item: any) => !isLagoonaItem(item));
           if (nonLagoonaItems.length === 0) return null;
-          const adjustedTotal = nonLagoonaItems.reduce((sum: number, item: any) => sum + (Number(item.total) || 0), 0);
+          const adjustedTotal = nonLagoonaItems.reduce((sum: number, item: any) => sum + getItemTotal(item), 0);
           return { ...sale, items: nonLagoonaItems, total: adjustedTotal };
         })
         .filter(Boolean) as typeof activeSales;
     }
 
     return activeSales;
-  }, [rawPOSSales, periodStartDate, periodEndDate, selectedSellerId, isLagoonaStoreSelected, activeStoreFilter]);
+  }, [rawPOSSales, periodStartDate, periodEndDate, selectedSellerId, isLagoonaStoreSelected, activeStoreFilter, isLagoonaItem, getItemTotal]);
 
   // Calculate online stats based on filtered data
   const stats: DashboardStats | null = useMemo(() => {
     if (isLoading) return null;
     
+    const visibleProducts = isLagoonaStoreSelected ? products.filter(p => p.is_lagoona) : products;
     const completedOrders = filteredOrders.filter(o => ['confirmed', 'completed', 'delivered', 'processing', 'shipped'].includes(o.status));
     const pendingOrders = filteredOrders.filter(o => o.status === 'pending' || o.status === 'processing');
     const cancelledOrders = filteredOrders.filter(o => o.status === 'cancelled');
 
     return {
-      totalProducts: products.length,
-      activeProducts: products.filter(p => p.is_active).length,
+      totalProducts: visibleProducts.length,
+      activeProducts: visibleProducts.filter(p => p.is_active).length,
       totalOrders: filteredOrders.length,
       pendingOrders: pendingOrders.length,
       completedOrders: completedOrders.length,
@@ -393,7 +420,7 @@ const Dashboard = () => {
       activeCoupons: coupons.filter(c => c.is_active).length,
       totalCategories: categories.filter(c => c.is_active).length,
     };
-  }, [filteredOrders, products, reviews, coupons, categories, isLoading]);
+  }, [filteredOrders, products, reviews, coupons, categories, isLoading, isLagoonaStoreSelected]);
 
   // Calculate POS stats based on filtered data
   const posStats: POSStats | null = useMemo(() => {
@@ -473,19 +500,37 @@ const Dashboard = () => {
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
+    const isolateLagoonaOrderTotal = (order: RawOrder) => {
+      if (!isLagoonaStoreSelected) return Number(order.total);
+      const lagoonaItems = (order.items || []).filter(isLagoonaItem);
+      return lagoonaItems.reduce((sum, item) => sum + getItemTotal(item), 0);
+    };
+
+    const isolatePOSSaleTotal = (sale: RawPOSSale) => {
+      if (isLagoonaStoreSelected) {
+        const lagoonaItems = (sale.items || []).filter(isLagoonaItem);
+        return lagoonaItems.reduce((sum, item) => sum + getItemTotal(item), 0);
+      }
+      if (activeStoreFilter && activeStoreFilter !== SITE_STORE_ID && activeStoreFilter !== LAGOONA_STORE_ID) {
+        const nonLagoonaItems = (sale.items || []).filter(item => !isLagoonaItem(item));
+        return nonLagoonaItems.reduce((sum, item) => sum + getItemTotal(item), 0);
+      }
+      return Number(sale.total);
+    };
+
     const todayOnlineSales = rawOrders
       .filter(o => {
         const orderDate = new Date(o.created_at);
         return orderDate >= today && orderDate < tomorrow && ['confirmed', 'completed', 'delivered', 'processing', 'shipped'].includes(o.status);
       })
-      .reduce((sum, o) => sum + Number(o.total), 0);
+      .reduce((sum, o) => sum + isolateLagoonaOrderTotal(o), 0);
 
     const todayPOSSales = rawPOSSales
       .filter(s => {
         const saleDate = new Date(s.created_at);
         return saleDate >= today && saleDate < tomorrow && s.status !== 'cancelled';
       })
-      .reduce((sum, s) => sum + Number(s.total), 0);
+      .reduce((sum, s) => sum + isolatePOSSaleTotal(s), 0);
 
     const todayTotal = todayOnlineSales + todayPOSSales;
 
@@ -498,14 +543,14 @@ const Dashboard = () => {
         const orderDate = new Date(o.created_at);
         return orderDate >= monthStart && orderDate <= monthEnd && ['confirmed', 'completed', 'delivered', 'processing', 'shipped'].includes(o.status);
       })
-      .reduce((sum, o) => sum + Number(o.total), 0);
+      .reduce((sum, o) => sum + isolateLagoonaOrderTotal(o), 0);
 
     const monthPOSSales = rawPOSSales
       .filter(s => {
         const saleDate = new Date(s.created_at);
         return saleDate >= monthStart && saleDate <= monthEnd && s.status !== 'cancelled';
       })
-      .reduce((sum, s) => sum + Number(s.total), 0);
+      .reduce((sum, s) => sum + isolatePOSSaleTotal(s), 0);
 
     const monthTotal = monthOnlineSales + monthPOSSales;
 
@@ -587,7 +632,7 @@ const Dashboard = () => {
         isComplete: monthlyTarget ? monthTotal >= monthlyTarget : false,
       },
     };
-  }, [rawOrders, rawPOSSales, salesGoals, activeStoreFilter]);
+  }, [rawOrders, rawPOSSales, salesGoals, activeStoreFilter, isLagoonaStoreSelected, isLagoonaItem, getItemTotal]);
 
   // Recent orders (always show latest 5 within period)
   const recentOrders = useMemo(() => {
@@ -644,12 +689,12 @@ const Dashboard = () => {
       const nextDate = new Date(date);
       nextDate.setDate(nextDate.getDate() + 1);
 
-      const dayOrders = rawOrders.filter(o => {
+      const dayOrders = filteredOrders.filter(o => {
         const orderDate = new Date(o.created_at);
         return orderDate >= date && orderDate < nextDate && o.status !== 'cancelled';
       });
 
-      const dayPOSSales = rawPOSSales.filter(s => {
+      const dayPOSSales = filteredPOSSales.filter(s => {
         const saleDate = new Date(s.created_at);
         return saleDate >= date && saleDate < nextDate && s.status !== 'cancelled';
       });
@@ -683,7 +728,7 @@ const Dashboard = () => {
     }));
 
     return { salesData: chartData, posSalesData: chartDataPOS, comparisonData };
-  }, [rawOrders, rawPOSSales, periodFilter, customDateRange]);
+  }, [filteredOrders, filteredPOSSales, periodFilter, customDateRange]);
 
   // Calculate sales by state/city for map
   const salesByState = useMemo((): SalesByState => {
