@@ -688,12 +688,12 @@ const Dashboard = () => {
       const nextDate = new Date(date);
       nextDate.setDate(nextDate.getDate() + 1);
 
-      const dayOrders = rawOrders.filter(o => {
+      const dayOrders = filteredOrders.filter(o => {
         const orderDate = new Date(o.created_at);
         return orderDate >= date && orderDate < nextDate && o.status !== 'cancelled';
       });
 
-      const dayPOSSales = rawPOSSales.filter(s => {
+      const dayPOSSales = filteredPOSSales.filter(s => {
         const saleDate = new Date(s.created_at);
         return saleDate >= date && saleDate < nextDate && s.status !== 'cancelled';
       });
@@ -727,7 +727,7 @@ const Dashboard = () => {
     }));
 
     return { salesData: chartData, posSalesData: chartDataPOS, comparisonData };
-  }, [rawOrders, rawPOSSales, periodFilter, customDateRange]);
+  }, [filteredOrders, filteredPOSSales, periodFilter, customDateRange]);
 
   // Calculate sales by state/city for map
   const salesByState = useMemo((): SalesByState => {
