@@ -7,6 +7,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Megaphone } from 'lucide-react';
 
+const ANNOUNCEMENT_DISMISS_HOURS = 12;
+
 const AnnouncementPopup = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -28,11 +30,17 @@ const AnnouncementPopup = () => {
       // Get dismissals
       const { data: dismissals } = await supabase
         .from('announcement_dismissals')
-        .select('announcement_id')
+        .select('announcement_id, dismissed_at')
         .eq('user_id', user!.id);
 
-      const dismissedIds = new Set((dismissals || []).map((d: any) => d.announcement_id));
       const now = new Date();
+      const dismissedIds = new Set((dismissals || [])
+        .filter((d: any) => {
+          if (!d.dismissed_at) return false;
+          const dismissedAt = new Date(d.dismissed_at).getTime();
+          return now.getTime() - dismissedAt < ANNOUNCEMENT_DISMISS_HOURS * 60 * 60 * 1000;
+        })
+        .map((d: any) => d.announcement_id));
 
       return (all || []).filter((a: any) => {
         if (dismissedIds.has(a.id)) return false;
@@ -74,9 +82,9 @@ const AnnouncementPopup = () => {
       await supabase.from('announcement_dismissals').upsert({
         announcement_id: announcementId,
         user_id: user!.id,
+        dismissed_at: new Date().toISOString(),
       }, {
         onConflict: 'announcement_id,user_id',
-        ignoreDuplicates: true,
       });
     },
     onSuccess: () => {
