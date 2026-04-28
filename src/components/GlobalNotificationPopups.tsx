@@ -209,6 +209,9 @@ const GlobalNotificationPopups = () => {
     if (!user) return;
     
     loadAll();
+    const reloadInterval = window.setInterval(() => {
+      loadAll();
+    }, 60000);
     
     const osChannel = supabase
       .channel('global-os-notifications')
@@ -225,6 +228,7 @@ const GlobalNotificationPopups = () => {
       .subscribe();
     
     return () => {
+      window.clearInterval(reloadInterval);
       supabase.removeChannel(osChannel);
       supabase.removeChannel(transferChannel);
     };
