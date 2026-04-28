@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import AdminLayout from '@/components/AdminLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -93,6 +93,7 @@ interface RawOrder {
 
 interface RawPOSSale {
   id: string;
+  store_id: string | null;
   customer_name: string | null;
   customer_id: string | null;
   user_id: string;
@@ -143,7 +144,7 @@ const SITE_STORE_ID = 'e0b8ebbc-1b3b-4aec-b5f7-6925762e6ea1';
 const LAGOONA_STORE_ID = '5e76470a-609c-4e75-a8e3-1c663e66c076';
 
 const Dashboard = () => {
-  const { user, profile, roles, isAdmin, userStoreId, userStore, accessibleStoreIds } = useAuth();
+  const { user, profile, roles, isAdmin, userStoreId, userStore, accessibleStoreIds, isLoading: authLoading } = useAuth();
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('all');
   const [selectedStoreId, setSelectedStoreId] = useState<string>('all');
   const [selectedSellerId, setSelectedSellerId] = useState<string>('all');
@@ -160,6 +161,7 @@ const Dashboard = () => {
   const [salesGoals, setSalesGoals] = useState<SalesGoal[]>([]);
   const [customers, setCustomers] = useState<CustomerWithLocation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const loadRequestRef = useRef(0);
 
   // Load stores for selector (admin sees all, online users see their accessible stores)
   useEffect(() => {
@@ -199,10 +201,15 @@ const Dashboard = () => {
   const isViewingAllStores = !activeStoreFilter;
 
   useEffect(() => {
+    if (authLoading || (user && !isAdmin && !userStoreId && accessibleStoreIds.length === 0)) {
+      return;
+    }
+
     loadDashboardData();
-  }, [activeStoreFilter]);
+  }, [authLoading, user?.id, isAdmin, userStoreId, accessibleStoreIds.length, activeStoreFilter]);
 
   const loadDashboardData = async () => {
+    const requestId = ++loadRequestRef.current;
     try {
       setIsLoading(true);
 
@@ -253,6 +260,8 @@ const Dashboard = () => {
         supabase.from('customers').select('id, state, city'),
       ]);
 
+      if (requestId !== loadRequestRef.current) return;
+
       setProducts(productsRes.data || []);
       setRawOrders((ordersRes.data || []).map(order => ({
         ...order,
@@ -266,6 +275,7 @@ const Dashboard = () => {
       setCustomers((customersRes.data || []) as CustomerWithLocation[]);
       setRawPOSSales((posSalesRes.data || []).map(sale => ({
         id: sale.id,
+        store_id: sale.store_id,
         customer_name: sale.customer_name,
         customer_id: sale.customer_id,
         user_id: sale.user_id,
@@ -283,7 +293,9 @@ const Dashboard = () => {
     } catch (error) {
       console.error('Error loading dashboard:', error);
     } finally {
-      setIsLoading(false);
+      if (requestId === loadRequestRef.current) {
+        setIsLoading(false);
+      }
     }
   };
 
