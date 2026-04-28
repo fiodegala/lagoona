@@ -9,6 +9,8 @@ import {
   X,
   ExternalLink,
   Settings,
+  ClipboardList,
+  Megaphone,
 } from 'lucide-react';
 import AdminNotificationBell from '@/components/AdminNotificationBell';
 import { isAlwaysVisibleMenu, navItems, settingsItems } from '@/config/menuItems';
@@ -45,7 +47,10 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
   const { profile, roles, signOut, isAdmin, userStore, allowedMenus, hasExplicitMenuPermissions } = useAuth();
   const { unreadCount } = useChatUnread();
   const pinnedShortcutKeys = ['service-orders', 'announcements'];
-  const pinnedShortcutItems = navItems.filter((item) => pinnedShortcutKeys.includes(item.menuKey));
+  const pinnedShortcutItems = [
+    { icon: ClipboardList, label: 'Ordens de Serviço', path: '/admin/ordens-servico', menuKey: 'service-orders' },
+    { icon: Megaphone, label: 'Comunicados', path: '/admin/comunicados', menuKey: 'announcements' },
+  ];
   const primaryNavItems = navItems.filter((item) => !pinnedShortcutKeys.includes(item.menuKey));
 
   // Filter menu items: admins see everything, others see only allowed menus
@@ -160,7 +165,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
           {(!collapsed || isMobile) && <span className="font-medium">Visitar Loja</span>}
         </a>
 
-        <div className="mt-2 space-y-1">
+        <div className="mt-2 space-y-1 border-t border-sidebar-border pt-2">
           {pinnedShortcutItems.map((item) => (
             <NavItem key={item.menuKey} {...item} forceVisible />
           ))}
