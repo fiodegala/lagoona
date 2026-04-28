@@ -61,11 +61,17 @@ const handlePrintQuote = (quote: Quote) => {
     const cardLabel = quote.payment_details.cardType === 'credit' ? 'Crédito' : 'Débito';
     const inst = quote.payment_details.installments || 1;
     paymentDetail = `${cardLabel}${inst > 1 ? ` - ${inst}x de ${formatCurrency(quote.total / inst)}` : ' - À vista'}`;
+  } else if ((quote.payment_method === 'boleto' || quote.payment_method === 'cheque') && quote.payment_details) {
+    const inst = quote.payment_details.installments || 1;
+    const label = quote.payment_method === 'boleto' ? 'Boleto' : 'Cheque';
+    paymentDetail = inst > 1 ? `${inst}x de ${formatCurrency(quote.total / inst)}` : `${label} à vista`;
   } else if (quote.payment_method === 'mixed' && quote.payment_details) {
     const parts: string[] = [];
     if (quote.payment_details.cash > 0) parts.push(`Dinheiro: ${formatCurrency(quote.payment_details.cash)}`);
     if (quote.payment_details.card > 0) parts.push(`Cartão: ${formatCurrency(quote.payment_details.card)}`);
     if (quote.payment_details.pix > 0) parts.push(`PIX: ${formatCurrency(quote.payment_details.pix)}`);
+    if (quote.payment_details.boleto > 0) parts.push(`Boleto: ${formatCurrency(quote.payment_details.boleto)}`);
+    if (quote.payment_details.cheque > 0) parts.push(`Cheque: ${formatCurrency(quote.payment_details.cheque)}`);
     paymentDetail = parts.join(' | ');
   }
 
@@ -454,11 +460,20 @@ const Quotes = () => {
                             )}
                           </>
                         )}
+                        {(selectedQuote.payment_method === 'boleto' || selectedQuote.payment_method === 'cheque') && selectedQuote.payment_details && (
+                          <p className="text-muted-foreground">
+                            {(selectedQuote.payment_details.installments || 1) > 1
+                              ? `${selectedQuote.payment_details.installments}x de ${formatCurrency(selectedQuote.total / selectedQuote.payment_details.installments)} sem juros`
+                              : `${paymentMethodLabels[selectedQuote.payment_method]} à vista`}
+                          </p>
+                        )}
                         {selectedQuote.payment_method === 'mixed' && selectedQuote.payment_details && (
                           <div className="text-muted-foreground space-y-0.5">
                             {selectedQuote.payment_details.cash > 0 && <p>Dinheiro: {formatCurrency(selectedQuote.payment_details.cash)}</p>}
                             {selectedQuote.payment_details.card > 0 && <p>Cartão: {formatCurrency(selectedQuote.payment_details.card)}</p>}
                             {selectedQuote.payment_details.pix > 0 && <p>PIX: {formatCurrency(selectedQuote.payment_details.pix)}</p>}
+                            {selectedQuote.payment_details.boleto > 0 && <p>Boleto: {formatCurrency(selectedQuote.payment_details.boleto)}</p>}
+                            {selectedQuote.payment_details.cheque > 0 && <p>Cheque: {formatCurrency(selectedQuote.payment_details.cheque)}</p>}
                           </div>
                         )}
                       </div>
