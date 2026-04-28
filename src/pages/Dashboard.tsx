@@ -492,6 +492,7 @@ const Dashboard = () => {
       return globalGoal?.target_amount || 0;
     };
 
+    const dailyTarget = findGoalTarget('daily');
     const monthlyTarget = findGoalTarget('monthly');
 
     // Get today's sales (online + POS)
@@ -528,7 +529,7 @@ const Dashboard = () => {
     const todayPOSSales = rawPOSSales
       .filter(s => {
         const saleDate = new Date(s.created_at);
-        return saleDate >= today && saleDate < tomorrow && s.status !== 'cancelled';
+        return saleDate >= today && saleDate < tomorrow && s.status !== 'cancelled' && s.sale_type !== 'brinde';
       })
       .reduce((sum, s) => sum + isolatePOSSaleTotal(s), 0);
 
@@ -548,7 +549,7 @@ const Dashboard = () => {
     const monthPOSSales = rawPOSSales
       .filter(s => {
         const saleDate = new Date(s.created_at);
-        return saleDate >= monthStart && saleDate <= monthEnd && s.status !== 'cancelled';
+        return saleDate >= monthStart && saleDate <= monthEnd && s.status !== 'cancelled' && s.sale_type !== 'brinde';
       })
       .reduce((sum, s) => sum + isolatePOSSaleTotal(s), 0);
 
@@ -616,13 +617,14 @@ const Dashboard = () => {
     const remainingDays = getRemainingWorkingDays();
     const remainingTarget = Math.max(monthlyTarget - monthTotal, 0);
     const dynamicDailyTarget = monthlyTarget > 0 ? Math.ceil(remainingTarget / remainingDays) : 0;
+    const resolvedDailyTarget = dailyTarget > 0 ? dailyTarget : dynamicDailyTarget;
 
     return {
       daily: {
-        target: dynamicDailyTarget,
+        target: resolvedDailyTarget,
         current: todayTotal,
-        percentage: dynamicDailyTarget ? Math.min((todayTotal / dynamicDailyTarget) * 100, 100) : 0,
-        isComplete: dynamicDailyTarget ? todayTotal >= dynamicDailyTarget : false,
+        percentage: resolvedDailyTarget ? Math.min((todayTotal / resolvedDailyTarget) * 100, 100) : 0,
+        isComplete: resolvedDailyTarget ? todayTotal >= resolvedDailyTarget : false,
         remainingDays,
       },
       monthly: {
