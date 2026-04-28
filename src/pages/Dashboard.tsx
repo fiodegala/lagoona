@@ -499,19 +499,37 @@ const Dashboard = () => {
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
+    const isolateLagoonaOrderTotal = (order: RawOrder) => {
+      if (!isLagoonaStoreSelected) return Number(order.total);
+      const lagoonaItems = (order.items || []).filter(isLagoonaItem);
+      return lagoonaItems.reduce((sum, item) => sum + getItemTotal(item), 0);
+    };
+
+    const isolatePOSSaleTotal = (sale: RawPOSSale) => {
+      if (isLagoonaStoreSelected) {
+        const lagoonaItems = (sale.items || []).filter(isLagoonaItem);
+        return lagoonaItems.reduce((sum, item) => sum + getItemTotal(item), 0);
+      }
+      if (activeStoreFilter && activeStoreFilter !== SITE_STORE_ID && activeStoreFilter !== LAGOONA_STORE_ID) {
+        const nonLagoonaItems = (sale.items || []).filter(item => !isLagoonaItem(item));
+        return nonLagoonaItems.reduce((sum, item) => sum + getItemTotal(item), 0);
+      }
+      return Number(sale.total);
+    };
+
     const todayOnlineSales = rawOrders
       .filter(o => {
         const orderDate = new Date(o.created_at);
         return orderDate >= today && orderDate < tomorrow && ['confirmed', 'completed', 'delivered', 'processing', 'shipped'].includes(o.status);
       })
-      .reduce((sum, o) => sum + Number(o.total), 0);
+      .reduce((sum, o) => sum + isolateLagoonaOrderTotal(o), 0);
 
     const todayPOSSales = rawPOSSales
       .filter(s => {
         const saleDate = new Date(s.created_at);
         return saleDate >= today && saleDate < tomorrow && s.status !== 'cancelled';
       })
-      .reduce((sum, s) => sum + Number(s.total), 0);
+      .reduce((sum, s) => sum + isolatePOSSaleTotal(s), 0);
 
     const todayTotal = todayOnlineSales + todayPOSSales;
 
@@ -524,14 +542,14 @@ const Dashboard = () => {
         const orderDate = new Date(o.created_at);
         return orderDate >= monthStart && orderDate <= monthEnd && ['confirmed', 'completed', 'delivered', 'processing', 'shipped'].includes(o.status);
       })
-      .reduce((sum, o) => sum + Number(o.total), 0);
+      .reduce((sum, o) => sum + isolateLagoonaOrderTotal(o), 0);
 
     const monthPOSSales = rawPOSSales
       .filter(s => {
         const saleDate = new Date(s.created_at);
         return saleDate >= monthStart && saleDate <= monthEnd && s.status !== 'cancelled';
       })
-      .reduce((sum, s) => sum + Number(s.total), 0);
+      .reduce((sum, s) => sum + isolatePOSSaleTotal(s), 0);
 
     const monthTotal = monthOnlineSales + monthPOSSales;
 
@@ -613,7 +631,7 @@ const Dashboard = () => {
         isComplete: monthlyTarget ? monthTotal >= monthlyTarget : false,
       },
     };
-  }, [rawOrders, rawPOSSales, salesGoals, activeStoreFilter]);
+  }, [rawOrders, rawPOSSales, salesGoals, activeStoreFilter, isLagoonaStoreSelected, lagoonaProductIds]);
 
   // Recent orders (always show latest 5 within period)
   const recentOrders = useMemo(() => {
