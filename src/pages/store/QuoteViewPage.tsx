@@ -40,6 +40,8 @@ const paymentMethodLabels: Record<string, string> = {
   card: 'Cartão',
   pix: 'PIX',
   mixed: 'Misto',
+  boleto: 'Boleto',
+  cheque: 'Cheque',
 };
 
 const QuoteViewPage = () => {
@@ -98,11 +100,17 @@ const QuoteViewPage = () => {
     const cardLabel = quote.payment_details.cardType === 'credit' ? 'Cartão de Crédito' : 'Cartão de Débito';
     const inst = quote.payment_details.installments || 1;
     paymentDetail = inst > 1 ? `${cardLabel} — ${inst}x de ${formatCurrency(quote.total / inst)} sem juros` : `${cardLabel} — À vista`;
+  } else if ((quote.payment_method === 'boleto' || quote.payment_method === 'cheque') && quote.payment_details) {
+    const inst = quote.payment_details.installments || 1;
+    const label = quote.payment_method === 'boleto' ? 'Boleto' : 'Cheque';
+    paymentDetail = inst > 1 ? `${inst}x de ${formatCurrency(quote.total / inst)} sem juros` : `${label} à vista`;
   } else if (quote.payment_method === 'mixed' && quote.payment_details) {
     const parts: string[] = [];
     if (quote.payment_details.cash > 0) parts.push(`Dinheiro: ${formatCurrency(quote.payment_details.cash)}`);
     if (quote.payment_details.card > 0) parts.push(`Cartão: ${formatCurrency(quote.payment_details.card)}`);
     if (quote.payment_details.pix > 0) parts.push(`PIX: ${formatCurrency(quote.payment_details.pix)}`);
+    if (quote.payment_details.boleto > 0) parts.push(`Boleto: ${formatCurrency(quote.payment_details.boleto)}`);
+    if (quote.payment_details.cheque > 0) parts.push(`Cheque: ${formatCurrency(quote.payment_details.cheque)}`);
     paymentDetail = parts.join(' • ');
   }
 
