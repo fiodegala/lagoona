@@ -402,13 +402,14 @@ const Dashboard = () => {
   const stats: DashboardStats | null = useMemo(() => {
     if (isLoading) return null;
     
+    const visibleProducts = isLagoonaStoreSelected ? products.filter(p => p.is_lagoona) : products;
     const completedOrders = filteredOrders.filter(o => ['confirmed', 'completed', 'delivered', 'processing', 'shipped'].includes(o.status));
     const pendingOrders = filteredOrders.filter(o => o.status === 'pending' || o.status === 'processing');
     const cancelledOrders = filteredOrders.filter(o => o.status === 'cancelled');
 
     return {
-      totalProducts: products.length,
-      activeProducts: products.filter(p => p.is_active).length,
+      totalProducts: visibleProducts.length,
+      activeProducts: visibleProducts.filter(p => p.is_active).length,
       totalOrders: filteredOrders.length,
       pendingOrders: pendingOrders.length,
       completedOrders: completedOrders.length,
@@ -419,7 +420,7 @@ const Dashboard = () => {
       activeCoupons: coupons.filter(c => c.is_active).length,
       totalCategories: categories.filter(c => c.is_active).length,
     };
-  }, [filteredOrders, products, reviews, coupons, categories, isLoading]);
+  }, [filteredOrders, products, reviews, coupons, categories, isLoading, isLagoonaStoreSelected]);
 
   // Calculate POS stats based on filtered data
   const posStats: POSStats | null = useMemo(() => {
