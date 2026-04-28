@@ -41,7 +41,7 @@ const getDismissedServiceOrderUntil = (id: string) => {
   }
 };
 
-const dismissServiceOrderFor12Hours = (id: string) => {
+const dismissServiceOrderTemporarily = (id: string) => {
   try {
     const stored = localStorage.getItem(OS_DISMISS_STORAGE_KEY);
     const dismissedUntilById = stored ? JSON.parse(stored) as Record<string, number> : {};
@@ -55,7 +55,7 @@ const dismissServiceOrderFor12Hours = (id: string) => {
       [id]: dismissUntil,
     }));
   } catch {
-    // Ignore storage errors; the in-memory dismissal still prevents immediate repeat.
+      // Ignore storage errors; the in-memory dismissal still prevents immediate repeat.
   }
 };
 
@@ -318,7 +318,7 @@ const GlobalNotificationPopups = () => {
     if (!currentItem) return;
     const now = Date.now();
     if (currentItem.type === 'service_order') {
-      dismissServiceOrderFor12Hours(currentItem.id);
+      dismissServiceOrderTemporarily(currentItem.id);
     }
     
     dismissedIdsRef.current.add(currentItem.id);
