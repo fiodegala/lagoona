@@ -527,11 +527,13 @@ const Dashboard = () => {
     const isolatePOSSaleTotal = (sale: RawPOSSale) => {
       if (isLagoonaStoreSelected) {
         const lagoonaItems = (sale.items || []).filter(isLagoonaItem);
-        return lagoonaItems.reduce((sum, item) => sum + getItemTotal(item), 0);
+        if (lagoonaItems.length === 0) return 0;
+        const itemsTotal = (sale.items || []).reduce((sum, item) => sum + getItemTotal(item), 0);
+        return itemsTotal > 0 ? Number(sale.total) * (lagoonaItems.reduce((sum, item) => sum + getItemTotal(item), 0) / itemsTotal) : Number(sale.total);
       }
       if (activeStoreFilter && activeStoreFilter !== SITE_STORE_ID && activeStoreFilter !== LAGOONA_STORE_ID) {
-        const nonLagoonaItems = (sale.items || []).filter(item => !isLagoonaItem(item));
-        return nonLagoonaItems.reduce((sum, item) => sum + getItemTotal(item), 0);
+        if (sale.store_id !== activeStoreFilter) return 0;
+        return Number(sale.total);
       }
       return Number(sale.total);
     };
