@@ -1459,7 +1459,7 @@ const Dashboard = () => {
         )}
 
         {/* Charts Row - Site data */}
-        {(isSiteStoreSelected || isViewingAllStores) && (
+        {(canShowSiteSales || isViewingAllStores) && (
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Sales Chart */}
           <Card className="card-elevated lg:col-span-2">
@@ -1563,7 +1563,7 @@ const Dashboard = () => {
         )}
 
         {/* POS Sales Section - Hidden when viewing Site store */}
-        {!isSiteStoreSelected && (
+        {!canShowSiteSales && (
         <div className="space-y-4">
           <div className="flex items-center gap-2">
             <Store className="h-5 w-5 text-primary" />
@@ -2058,7 +2058,7 @@ const Dashboard = () => {
         )}
 
         {/* Sales by Modality & Exchange Metrics */}
-        {!isSiteStoreSelected && (
+        {!canShowSiteSales && (
           <Card className="card-elevated border-l-4 border-l-primary">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
