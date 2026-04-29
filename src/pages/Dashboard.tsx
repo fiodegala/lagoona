@@ -643,11 +643,13 @@ const Dashboard = () => {
 
     const remainingDays = getBusinessDays('remaining');
     const businessDaysInMonth = getBusinessDays('month');
-    const resolvedDailyTarget = dailyTarget > 0
-      ? dailyTarget
-      : monthlyTarget > 0
-        ? Math.ceil(monthlyTarget / businessDaysInMonth)
-        : 0;
+    const monthlyRemaining = Math.max(monthlyTarget - monthTotal, 0);
+    const dynamicDailyTarget = monthlyTarget > 0
+      ? monthlyRemaining / remainingDays
+      : 0;
+    const resolvedDailyTarget = dynamicDailyTarget > 0
+      ? dynamicDailyTarget
+      : dailyTarget;
 
     return {
       daily: {
@@ -658,9 +660,11 @@ const Dashboard = () => {
         isComplete: resolvedDailyTarget ? todayTotal >= resolvedDailyTarget : false,
         remainingDays,
         businessDaysInMonth,
+        monthlyRemaining,
+        dynamicTarget: dynamicDailyTarget,
         onlineSales: todayOnlineSales,
         posSales: todayPOSSales,
-        calculationSource: dailyTarget > 0 ? 'Meta diária cadastrada' : 'Meta mensal dividida pelos dias úteis do mês',
+        calculationSource: dynamicDailyTarget > 0 ? 'Saldo da meta mensal dividido pelos dias úteis restantes' : 'Meta diária cadastrada',
       },
       monthly: {
         target: monthlyTarget,
@@ -1242,12 +1246,12 @@ const Dashboard = () => {
                   <p className="text-lg font-semibold">{formatCurrency(goalProgress.monthly.target)}</p>
                 </div>
                 <div className="rounded-lg border bg-muted/30 p-3">
-                  <p className="text-xs text-muted-foreground">Dias úteis do mês</p>
-                  <p className="text-lg font-semibold">{goalProgress.daily.businessDaysInMonth}</p>
+                  <p className="text-xs text-muted-foreground">Já vendido no mês</p>
+                  <p className="text-lg font-semibold">{formatCurrency(goalProgress.monthly.current)}</p>
                 </div>
                 <div className="rounded-lg border bg-muted/30 p-3">
-                  <p className="text-xs text-muted-foreground">Dias úteis restantes</p>
-                  <p className="text-lg font-semibold">{goalProgress.daily.remainingDays}</p>
+                  <p className="text-xs text-muted-foreground">Falta para bater</p>
+                  <p className="text-lg font-semibold">{formatCurrency(goalProgress.daily.monthlyRemaining)}</p>
                 </div>
                 <div className="rounded-lg border bg-muted/30 p-3">
                   <p className="text-xs text-muted-foreground">Meta de hoje</p>
@@ -1266,8 +1270,12 @@ const Dashboard = () => {
                     <strong className="text-foreground">{formatCurrency(goalProgress.daily.configuredTarget)}</strong>
                   </div>
                   <div className="flex justify-between gap-3">
-                    <span>Fórmula alternativa</span>
-                    <strong className="text-foreground">{formatCurrency(goalProgress.monthly.target / goalProgress.daily.businessDaysInMonth)}</strong>
+                    <span>Dias úteis restantes</span>
+                    <strong className="text-foreground">{goalProgress.daily.remainingDays}</strong>
+                  </div>
+                  <div className="flex justify-between gap-3">
+                    <span>Fórmula</span>
+                    <strong className="text-foreground">{formatCurrency(goalProgress.daily.monthlyRemaining)} ÷ {goalProgress.daily.remainingDays}</strong>
                   </div>
                   <div className="flex justify-between gap-3">
                     <span>Vendas de hoje no site</span>
