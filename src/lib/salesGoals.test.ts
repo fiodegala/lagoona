@@ -45,6 +45,6 @@ describe('calculateDailyGoalTarget', () => {
   });
 
   it('considera domingos e feriados nacionais fora dos dias úteis restantes', () => {
-    expect(getBusinessDays(new Date(2026, 3, 20), 'remaining')).toBe(10);
+    expect(getBusinessDays(new Date(2026, 3, 20), 'remaining')).toBe(9);
   });
 });
