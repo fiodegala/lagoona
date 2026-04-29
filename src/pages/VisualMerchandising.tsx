@@ -56,6 +56,8 @@ const VisualMerchandising = () => {
   const [search, setSearch] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
   const [filterStore, setFilterStore] = useState('all');
+  const [filterStartDate, setFilterStartDate] = useState('');
+  const [filterEndDate, setFilterEndDate] = useState('');
 
   // Modal
   const [showModal, setShowModal] = useState(false);
@@ -253,6 +255,17 @@ const VisualMerchandising = () => {
     if (search && !p.title.toLowerCase().includes(search.toLowerCase())) return false;
     if (filterCategory !== 'all' && p.category !== filterCategory) return false;
     if (filterStore !== 'all' && p.store_id !== filterStore) return false;
+    if (filterStartDate || filterEndDate) {
+      const createdAt = new Date(p.created_at).getTime();
+      if (filterStartDate) {
+        const start = new Date(`${filterStartDate}T00:00:00`).getTime();
+        if (createdAt < start) return false;
+      }
+      if (filterEndDate) {
+        const end = new Date(`${filterEndDate}T23:59:59.999`).getTime();
+        if (createdAt > end) return false;
+      }
+    }
     return true;
   });
 
