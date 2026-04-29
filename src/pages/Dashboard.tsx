@@ -643,11 +643,13 @@ const Dashboard = () => {
 
     const remainingDays = getBusinessDays('remaining');
     const businessDaysInMonth = getBusinessDays('month');
-    const resolvedDailyTarget = dailyTarget > 0
-      ? dailyTarget
-      : monthlyTarget > 0
-        ? Math.ceil(monthlyTarget / businessDaysInMonth)
-        : 0;
+    const monthlyRemaining = Math.max(monthlyTarget - monthTotal, 0);
+    const dynamicDailyTarget = monthlyTarget > 0
+      ? monthlyRemaining / remainingDays
+      : 0;
+    const resolvedDailyTarget = dynamicDailyTarget > 0
+      ? dynamicDailyTarget
+      : dailyTarget;
 
     return {
       daily: {
@@ -658,9 +660,11 @@ const Dashboard = () => {
         isComplete: resolvedDailyTarget ? todayTotal >= resolvedDailyTarget : false,
         remainingDays,
         businessDaysInMonth,
+        monthlyRemaining,
+        dynamicTarget: dynamicDailyTarget,
         onlineSales: todayOnlineSales,
         posSales: todayPOSSales,
-        calculationSource: dailyTarget > 0 ? 'Meta diária cadastrada' : 'Meta mensal dividida pelos dias úteis do mês',
+        calculationSource: dynamicDailyTarget > 0 ? 'Saldo da meta mensal dividido pelos dias úteis restantes' : 'Meta diária cadastrada',
       },
       monthly: {
         target: monthlyTarget,
