@@ -351,7 +351,7 @@ const Dashboard = () => {
 
   // Filter data by period
   const filteredOrders = useMemo(() => {
-    if (activeStoreFilter && activeStoreFilter !== SITE_STORE_ID && !isLagoonaStoreSelected) {
+    if (activeStoreFilter && !canShowSiteSales && !isLagoonaStoreSelected) {
       return [];
     }
 
@@ -373,7 +373,7 @@ const Dashboard = () => {
         return { ...order, items: lagoonaItems, total: lagoonaItems.reduce((sum, item) => sum + getItemTotal(item), 0) };
       })
       .filter(Boolean) as RawOrder[];
-  }, [rawOrders, periodStartDate, periodEndDate, activeStoreFilter, isLagoonaStoreSelected, isLagoonaItem, getItemTotal]);
+  }, [rawOrders, periodStartDate, periodEndDate, activeStoreFilter, canShowSiteSales, isLagoonaStoreSelected, isLagoonaItem, getItemTotal]);
 
   const filteredPOSSales = useMemo(() => {
     let activeSales = rawPOSSales.filter(s => s.status !== 'cancelled' && s.sale_type !== 'brinde');
@@ -515,7 +515,7 @@ const Dashboard = () => {
 
     const dailyTarget = findGoalTarget('daily');
     const monthlyTarget = findGoalTarget('monthly');
-    const includeOnlineSales = !activeStoreFilter || activeStoreFilter === SITE_STORE_ID || isLagoonaStoreSelected;
+    const includeOnlineSales = canShowSiteSales || isLagoonaStoreSelected;
 
     // Get today's sales (online + POS)
     const today = new Date();
@@ -671,7 +671,7 @@ const Dashboard = () => {
         isComplete: monthlyTarget ? monthTotal >= monthlyTarget : false,
       },
     };
-  }, [rawOrders, rawPOSSales, salesGoals, activeStoreFilter, isLagoonaStoreSelected, isLagoonaItem, getItemTotal]);
+  }, [rawOrders, rawPOSSales, salesGoals, activeStoreFilter, canShowSiteSales, isLagoonaStoreSelected, isLagoonaItem, getItemTotal]);
 
   // Recent orders (always show latest 5 within period)
   const recentOrders = useMemo(() => {
