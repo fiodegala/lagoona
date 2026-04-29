@@ -353,6 +353,43 @@ const VisualMerchandising = () => {
                 ))}
               </SelectContent>
             </Select>
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="space-y-1">
+                <Label htmlFor="vm-start-date" className="text-xs text-muted-foreground">Data inicial</Label>
+                <Input
+                  id="vm-start-date"
+                  type="date"
+                  value={filterStartDate}
+                  onChange={e => setFilterStartDate(e.target.value)}
+                  className="w-[150px]"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="vm-end-date" className="text-xs text-muted-foreground">Data final</Label>
+                <Input
+                  id="vm-end-date"
+                  type="date"
+                  value={filterEndDate}
+                  onChange={e => setFilterEndDate(e.target.value)}
+                  className="w-[150px]"
+                />
+              </div>
+              {(filterStartDate || filterEndDate) && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="mt-5"
+                  onClick={() => {
+                    setFilterStartDate('');
+                    setFilterEndDate('');
+                  }}
+                  aria-label="Limpar filtro de período"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
             {isEditor && (
               <Button onClick={openCreateModal}>
                 <Plus className="h-4 w-4 mr-1" />
