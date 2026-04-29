@@ -2128,9 +2128,9 @@ const Dashboard = () => {
         <BrazilSalesMap salesByState={salesByState} isLoading={isLoading} />
 
         {/* Bottom Row */}
-        <div className={cn("grid gap-6", (isSiteStoreSelected || isViewingAllStores) ? "lg:grid-cols-2" : "lg:grid-cols-1")}>
+        <div className={cn("grid gap-6", (canShowSiteSales || isViewingAllStores) ? "lg:grid-cols-2" : "lg:grid-cols-1")}>
           {/* Recent Orders - Site only */}
-          {(isSiteStoreSelected || isViewingAllStores) && (
+          {(canShowSiteSales || isViewingAllStores) && (
           <Card className="card-elevated">
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
@@ -2188,7 +2188,7 @@ const Dashboard = () => {
           )}
 
           {/* WhatsApp Metrics - Site only */}
-          {(isSiteStoreSelected || isViewingAllStores) && <WhatsAppMetrics />}
+          {(canShowSiteSales || isViewingAllStores) && <WhatsAppMetrics />}
 
           {/* Quick Actions */}
           <Card className="card-elevated">
