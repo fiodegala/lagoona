@@ -1300,13 +1300,13 @@ const Dashboard = () => {
             ))
           ) : (
             <>
-              {(isSiteStoreSelected || isViewingAllStores) && (
+              {(canShowSiteSales || isViewingAllStores) && (
               <Card className="card-elevated">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium text-muted-foreground">
-                        {isSiteStoreSelected ? 'Receita Site' : 'Receita Pedidos'}
+                        {canShowSiteSales ? 'Receita Site' : 'Receita Pedidos'}
                       </p>
                       <p className="text-2xl font-bold mt-1">{formatCurrency(stats?.totalRevenue || 0)}</p>
                       <p className="text-xs text-muted-foreground mt-1">
@@ -1321,7 +1321,7 @@ const Dashboard = () => {
               </Card>
               )}
 
-              {(isSiteStoreSelected || isViewingAllStores) && (
+              {(canShowSiteSales || isViewingAllStores) && (
               <Card className="card-elevated">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
