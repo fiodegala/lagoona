@@ -196,7 +196,12 @@ const Dashboard = () => {
   }, [isAdmin, accessibleStoreIds, userStoreId]);
   const showStoreSelector = isAdmin || accessibleStoreIds.length > 1;
   const activeStoreFilter = isAdmin ? (selectedStoreId === 'all' ? null : selectedStoreId) : (accessibleStoreIds.length > 1 ? (selectedStoreId === 'all' ? (userStoreId || null) : selectedStoreId) : userStoreId);
+  const selectedStore = activeStoreFilter
+    ? stores.find(store => store.id === activeStoreFilter) || (userStore?.id === activeStoreFilter ? userStore : null)
+    : null;
   const isSiteStoreSelected = activeStoreFilter === SITE_STORE_ID;
+  const isOnlineStoreSelected = selectedStore?.type === 'online';
+  const canShowSiteSales = isSiteStoreSelected || isOnlineStoreSelected;
   const isLagoonaStoreSelected = activeStoreFilter === LAGOONA_STORE_ID;
   const isViewingAllStores = !activeStoreFilter;
 
@@ -206,7 +211,7 @@ const Dashboard = () => {
     }
 
     loadDashboardData();
-  }, [authLoading, user?.id, isAdmin, userStoreId, accessibleStoreIds.length, activeStoreFilter]);
+  }, [authLoading, user?.id, isAdmin, userStoreId, accessibleStoreIds.length, activeStoreFilter, canShowSiteSales]);
 
   const loadDashboardData = async () => {
     const requestId = ++loadRequestRef.current;
@@ -216,13 +221,13 @@ const Dashboard = () => {
       // Fetch all data in parallel
       const storeFilter = activeStoreFilter;
 
-      // Orders: only include site orders when the Site store is selected.
+      // Orders: only include site orders when the Online or Site store is selected.
       // Physical/PDV stores must not inherit website revenue in goal cards.
       let ordersQuery = supabase
         .from('orders')
         .select('id, status, total, customer_name, customer_email, payment_method, created_at, shipping_address, items')
         .in('status', ['confirmed', 'completed', 'delivered', 'processing', 'shipped']);
-      if (isSiteStoreSelected) {
+      if (canShowSiteSales) {
         ordersQuery = ordersQuery.eq('store_id', SITE_STORE_ID);
       } else if (isLagoonaStoreSelected) {
         // Fetch all site orders and isolate Lagoona items client-side.
@@ -346,7 +351,7 @@ const Dashboard = () => {
 
   // Filter data by period
   const filteredOrders = useMemo(() => {
-    if (activeStoreFilter && activeStoreFilter !== SITE_STORE_ID && !isLagoonaStoreSelected) {
+    if (activeStoreFilter && !canShowSiteSales && !isLagoonaStoreSelected) {
       return [];
     }
 
@@ -368,7 +373,7 @@ const Dashboard = () => {
         return { ...order, items: lagoonaItems, total: lagoonaItems.reduce((sum, item) => sum + getItemTotal(item), 0) };
       })
       .filter(Boolean) as RawOrder[];
-  }, [rawOrders, periodStartDate, periodEndDate, activeStoreFilter, isLagoonaStoreSelected, isLagoonaItem, getItemTotal]);
+  }, [rawOrders, periodStartDate, periodEndDate, activeStoreFilter, canShowSiteSales, isLagoonaStoreSelected, isLagoonaItem, getItemTotal]);
 
   const filteredPOSSales = useMemo(() => {
     let activeSales = rawPOSSales.filter(s => s.status !== 'cancelled' && s.sale_type !== 'brinde');
@@ -510,7 +515,7 @@ const Dashboard = () => {
 
     const dailyTarget = findGoalTarget('daily');
     const monthlyTarget = findGoalTarget('monthly');
-    const includeOnlineSales = !activeStoreFilter || activeStoreFilter === SITE_STORE_ID || isLagoonaStoreSelected;
+    const includeOnlineSales = canShowSiteSales || isLagoonaStoreSelected;
 
     // Get today's sales (online + POS)
     const today = new Date();
@@ -666,7 +671,7 @@ const Dashboard = () => {
         isComplete: monthlyTarget ? monthTotal >= monthlyTarget : false,
       },
     };
-  }, [rawOrders, rawPOSSales, salesGoals, activeStoreFilter, isLagoonaStoreSelected, isLagoonaItem, getItemTotal]);
+  }, [rawOrders, rawPOSSales, salesGoals, activeStoreFilter, canShowSiteSales, isLagoonaStoreSelected, isLagoonaItem, getItemTotal]);
 
   // Recent orders (always show latest 5 within period)
   const recentOrders = useMemo(() => {
@@ -1295,13 +1300,13 @@ const Dashboard = () => {
             ))
           ) : (
             <>
-              {(isSiteStoreSelected || isViewingAllStores) && (
+              {(canShowSiteSales || isViewingAllStores) && (
               <Card className="card-elevated">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium text-muted-foreground">
-                        {isSiteStoreSelected ? 'Receita Site' : 'Receita Pedidos'}
+                        {canShowSiteSales ? 'Receita Site' : 'Receita Pedidos'}
                       </p>
                       <p className="text-2xl font-bold mt-1">{formatCurrency(stats?.totalRevenue || 0)}</p>
                       <p className="text-xs text-muted-foreground mt-1">
@@ -1316,7 +1321,7 @@ const Dashboard = () => {
               </Card>
               )}
 
-              {(isSiteStoreSelected || isViewingAllStores) && (
+              {(canShowSiteSales || isViewingAllStores) && (
               <Card className="card-elevated">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
@@ -1454,7 +1459,7 @@ const Dashboard = () => {
         )}
 
         {/* Charts Row - Site data */}
-        {(isSiteStoreSelected || isViewingAllStores) && (
+        {(canShowSiteSales || isViewingAllStores) && (
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Sales Chart */}
           <Card className="card-elevated lg:col-span-2">
@@ -1558,7 +1563,7 @@ const Dashboard = () => {
         )}
 
         {/* POS Sales Section - Hidden when viewing Site store */}
-        {!isSiteStoreSelected && (
+        {!canShowSiteSales && (
         <div className="space-y-4">
           <div className="flex items-center gap-2">
             <Store className="h-5 w-5 text-primary" />
@@ -2053,7 +2058,7 @@ const Dashboard = () => {
         )}
 
         {/* Sales by Modality & Exchange Metrics */}
-        {!isSiteStoreSelected && (
+        {!canShowSiteSales && (
           <Card className="card-elevated border-l-4 border-l-primary">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -2123,9 +2128,9 @@ const Dashboard = () => {
         <BrazilSalesMap salesByState={salesByState} isLoading={isLoading} />
 
         {/* Bottom Row */}
-        <div className={cn("grid gap-6", (isSiteStoreSelected || isViewingAllStores) ? "lg:grid-cols-2" : "lg:grid-cols-1")}>
+        <div className={cn("grid gap-6", (canShowSiteSales || isViewingAllStores) ? "lg:grid-cols-2" : "lg:grid-cols-1")}>
           {/* Recent Orders - Site only */}
-          {(isSiteStoreSelected || isViewingAllStores) && (
+          {(canShowSiteSales || isViewingAllStores) && (
           <Card className="card-elevated">
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
@@ -2183,7 +2188,7 @@ const Dashboard = () => {
           )}
 
           {/* WhatsApp Metrics - Site only */}
-          {(isSiteStoreSelected || isViewingAllStores) && <WhatsAppMetrics />}
+          {(canShowSiteSales || isViewingAllStores) && <WhatsAppMetrics />}
 
           {/* Quick Actions */}
           <Card className="card-elevated">
