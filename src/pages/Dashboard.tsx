@@ -196,7 +196,12 @@ const Dashboard = () => {
   }, [isAdmin, accessibleStoreIds, userStoreId]);
   const showStoreSelector = isAdmin || accessibleStoreIds.length > 1;
   const activeStoreFilter = isAdmin ? (selectedStoreId === 'all' ? null : selectedStoreId) : (accessibleStoreIds.length > 1 ? (selectedStoreId === 'all' ? (userStoreId || null) : selectedStoreId) : userStoreId);
+  const selectedStore = activeStoreFilter
+    ? stores.find(store => store.id === activeStoreFilter) || (userStore?.id === activeStoreFilter ? userStore : null)
+    : null;
   const isSiteStoreSelected = activeStoreFilter === SITE_STORE_ID;
+  const isOnlineStoreSelected = selectedStore?.type === 'online';
+  const canShowSiteSales = isSiteStoreSelected || isOnlineStoreSelected;
   const isLagoonaStoreSelected = activeStoreFilter === LAGOONA_STORE_ID;
   const isViewingAllStores = !activeStoreFilter;
 
@@ -206,7 +211,7 @@ const Dashboard = () => {
     }
 
     loadDashboardData();
-  }, [authLoading, user?.id, isAdmin, userStoreId, accessibleStoreIds.length, activeStoreFilter]);
+  }, [authLoading, user?.id, isAdmin, userStoreId, accessibleStoreIds.length, activeStoreFilter, canShowSiteSales]);
 
   const loadDashboardData = async () => {
     const requestId = ++loadRequestRef.current;
@@ -216,13 +221,13 @@ const Dashboard = () => {
       // Fetch all data in parallel
       const storeFilter = activeStoreFilter;
 
-      // Orders: only include site orders when the Site store is selected.
+      // Orders: only include site orders when the Online or Site store is selected.
       // Physical/PDV stores must not inherit website revenue in goal cards.
       let ordersQuery = supabase
         .from('orders')
         .select('id, status, total, customer_name, customer_email, payment_method, created_at, shipping_address, items')
         .in('status', ['confirmed', 'completed', 'delivered', 'processing', 'shipped']);
-      if (isSiteStoreSelected) {
+      if (canShowSiteSales) {
         ordersQuery = ordersQuery.eq('store_id', SITE_STORE_ID);
       } else if (isLagoonaStoreSelected) {
         // Fetch all site orders and isolate Lagoona items client-side.
