@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { Plus, Search, Trash2, Edit2, X, Eye, Play, Image as ImageIcon, Video, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Search, Trash2, Edit2, X, Eye, Play, Image as ImageIcon, Video, ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react';
 import MultiImageUpload from '@/components/MultiImageUpload';
 import VideoUpload from '@/components/VideoUpload';
 import { auditService } from '@/services/auditService';
@@ -265,6 +265,16 @@ const VisualMerchandising = () => {
     return profiles.find(p => p.user_id === userId)?.full_name || 'Usuário';
   };
 
+  const formatVMDate = (date: string) => {
+    return new Intl.DateTimeFormat('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(new Date(date));
+  };
+
   if (loading) {
     return (
       <AdminLayout>
@@ -381,6 +391,9 @@ const VisualMerchandising = () => {
                     )}
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
                       <span>{getStoreName(post.store_id)}</span>
+                      <span>•</span>
+                      <CalendarDays className="h-3 w-3" />
+                      <span>{formatVMDate(post.created_at)}</span>
                       <span>•</span>
                       <span>{post.images.length} fotos</span>
                       {post.videos.length > 0 && <><span>•</span><span>{post.videos.length} vídeos</span></>}
