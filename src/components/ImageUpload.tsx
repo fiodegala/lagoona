@@ -23,8 +23,15 @@ const ImageUpload = ({ value, onChange, bucket, folder = '' }: ImageUploadProps)
     const file = e.target.files?.[0];
     if (!file) return;
 
+    const isHeic = /\.(heic|heif)$/i.test(file.name) || /heic|heif/i.test(file.type);
+    if (isHeic) {
+      toast.error('Formato HEIC/HEIF não é suportado. Converta para JPG ou PNG antes de enviar.');
+      if (inputRef.current) inputRef.current.value = '';
+      return;
+    }
+
     if (!file.type.startsWith('image/')) {
-      toast.error('Por favor, selecione uma imagem');
+      toast.error('Por favor, selecione uma imagem (JPG, PNG ou WEBP)');
       return;
     }
 
@@ -42,8 +49,8 @@ const ImageUpload = ({ value, onChange, bucket, folder = '' }: ImageUploadProps)
   const uploadFile = async (fileOrBlob: Blob) => {
     setIsUploading(true);
     try {
-      const ext = pendingFile?.name.split('.').pop() || 'jpg';
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${ext}`;
+      // Always save as .jpg since the cropper outputs jpeg blobs
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.jpg`;
       const filePath = folder ? `${folder}/${fileName}` : fileName;
 
       const { error: uploadError } = await supabase.storage
@@ -62,9 +69,18 @@ const ImageUpload = ({ value, onChange, bucket, folder = '' }: ImageUploadProps)
 
       onChange(publicUrl);
       toast.success('Imagem enviada com sucesso!');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Upload error:', error);
-      toast.error('Erro ao enviar imagem');
+      const msg = error?.message || error?.error || 'Erro desconhecido';
+      if (/row-level security|permission|unauthor/i.test(msg)) {
+        toast.error('Sem permissão para enviar imagem. Faça login novamente.');
+      } else if (/payload|too large|size/i.test(msg)) {
+        toast.error('Imagem muito grande. Tente uma menor.');
+      } else if (/network|fetch|failed/i.test(msg)) {
+        toast.error('Falha de conexão. Verifique sua internet e tente novamente.');
+      } else {
+        toast.error(`Erro ao enviar imagem: ${msg}`);
+      }
     } finally {
       setIsUploading(false);
       setCropSrc(null);
