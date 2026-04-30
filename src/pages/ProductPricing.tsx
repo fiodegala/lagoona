@@ -34,6 +34,7 @@ interface ProductWithPrices {
   exclusive_price: number | null;
   promotional_price: number | null;
   is_active: boolean;
+  barcode: string | null;
   category_name: string | null;
   variations: VariationPrice[];
 }
@@ -56,7 +57,7 @@ const ProductPricing = () => {
       // Fetch products with category
       const { data: prods } = await supabase
         .from("products")
-        .select("id, name, image_url, price, wholesale_price, exclusive_price, promotional_price, is_active, category_id, categories(name)")
+        .select("id, name, image_url, price, wholesale_price, exclusive_price, promotional_price, is_active, barcode, category_id, categories(name)")
         .order("name", { ascending: true });
 
       if (!prods) { setLoading(false); return; }
@@ -70,7 +71,7 @@ const ProductPricing = () => {
         const batch = productIds.slice(i, i + 500);
         const { data: vars } = await supabase
           .from("product_variations")
-          .select("id, product_id, sku, price, wholesale_price, exclusive_price, promotional_price, is_active")
+          .select("id, product_id, sku, barcode, price, wholesale_price, exclusive_price, promotional_price, is_active")
           .in("product_id", batch)
           .order("sort_order", { ascending: true });
         if (vars) allVariations.push(...vars);
@@ -103,6 +104,7 @@ const ProductPricing = () => {
         varsByProduct[v.product_id].push({
           id: v.id,
           sku: v.sku,
+          barcode: v.barcode,
           price: v.price,
           wholesale_price: v.wholesale_price,
           exclusive_price: v.exclusive_price,
