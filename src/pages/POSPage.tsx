@@ -618,7 +618,7 @@ const POSPage = () => {
         const quoteData = {
           local_id: offlineService.generateLocalId(),
           user_id: user.id,
-          store_id: selectedSeller?.store_id || userStoreId || null,
+          store_id: selectedSeller?.store_id || effectiveStoreId || null,
           customer_id: selectedCustomer?.id || null,
           customer_name: selectedCustomer?.name || null,
           customer_document: selectedCustomer?.document || null,
@@ -671,7 +671,7 @@ const POSPage = () => {
     const isTiktokChannel = paymentDetails && (paymentDetails as Record<string, unknown>).channel === 'tiktok';
     const resolvedStoreId = isTiktokChannel
       ? TIKTOK_SHOP_STORE_ID
-      : (selectedSeller?.store_id || userStoreId || undefined);
+      : (selectedSeller?.store_id || effectiveStoreId || undefined);
 
     // For colaborador sales, the "customer" is actually a user profile (user_id),
     // not a row in the customers table. Avoid sending customer_id to prevent
@@ -740,7 +740,7 @@ const POSPage = () => {
         // Restore stock for return items
         if (returnItems.length > 0) {
           for (const item of returnItems) {
-            const storeId = selectedSeller?.store_id || userStoreId;
+            const storeId = selectedSeller?.store_id || effectiveStoreId;
             if (storeId) {
               let stockQuery = supabase
                 .from('store_stock')
@@ -815,7 +815,7 @@ const POSPage = () => {
   };
 
   const handleOpenSession = async (openingBalance: number, notes?: string) => {
-    const newSession = await posService.openSession(openingBalance, notes, userStoreId || undefined);
+    const newSession = await posService.openSession(openingBalance, notes, effectiveStoreId || undefined);
     setSession(newSession);
     resetWizard();
     await offlineService.saveCurrentSession({ id: newSession.id, user_id: newSession.user_id, opened_at: newSession.opened_at, opening_balance: newSession.opening_balance, status: 'open' });
