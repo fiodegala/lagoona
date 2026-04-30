@@ -16,6 +16,7 @@ import { Loader2, Search, DollarSign } from "lucide-react";
 interface VariationPrice {
   id: string;
   sku: string | null;
+  barcode: string | null;
   price: number | null;
   wholesale_price: number | null;
   exclusive_price: number | null;
@@ -33,6 +34,7 @@ interface ProductWithPrices {
   exclusive_price: number | null;
   promotional_price: number | null;
   is_active: boolean;
+  barcode: string | null;
   category_name: string | null;
   variations: VariationPrice[];
 }
@@ -55,7 +57,7 @@ const ProductPricing = () => {
       // Fetch products with category
       const { data: prods } = await supabase
         .from("products")
-        .select("id, name, image_url, price, wholesale_price, exclusive_price, promotional_price, is_active, category_id, categories(name)")
+        .select("id, name, image_url, price, wholesale_price, exclusive_price, promotional_price, is_active, barcode, category_id, categories(name)")
         .order("name", { ascending: true });
 
       if (!prods) { setLoading(false); return; }
@@ -69,7 +71,7 @@ const ProductPricing = () => {
         const batch = productIds.slice(i, i + 500);
         const { data: vars } = await supabase
           .from("product_variations")
-          .select("id, product_id, sku, price, wholesale_price, exclusive_price, promotional_price, is_active")
+          .select("id, product_id, sku, barcode, price, wholesale_price, exclusive_price, promotional_price, is_active")
           .in("product_id", batch)
           .order("sort_order", { ascending: true });
         if (vars) allVariations.push(...vars);
@@ -102,6 +104,7 @@ const ProductPricing = () => {
         varsByProduct[v.product_id].push({
           id: v.id,
           sku: v.sku,
+          barcode: v.barcode,
           price: v.price,
           wholesale_price: v.wholesale_price,
           exclusive_price: v.exclusive_price,
@@ -120,6 +123,7 @@ const ProductPricing = () => {
         exclusive_price: p.exclusive_price,
         promotional_price: p.promotional_price,
         is_active: p.is_active,
+        barcode: p.barcode,
         category_name: p.categories?.name || null,
         variations: varsByProduct[p.id] || [],
       }));
@@ -139,9 +143,11 @@ const ProductPricing = () => {
       (p) =>
         p.name.toLowerCase().includes(q) ||
         p.category_name?.toLowerCase().includes(q) ||
+        p.barcode?.toLowerCase().includes(q) ||
         p.variations.some(
           (v) =>
             v.sku?.toLowerCase().includes(q) ||
+            v.barcode?.toLowerCase().includes(q) ||
             v.attribute_label.toLowerCase().includes(q)
         )
     );
@@ -160,10 +166,12 @@ const ProductPricing = () => {
               </p>
             </div>
           </div>
-          <div className="relative w-full sm:w-80">
+          <div className="relative w-full sm:w-96">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Buscar produto, SKU ou atributo..."
+              data-barcode-input
+              autoFocus
+              placeholder="Buscar por nome, SKU, código de barras ou atributo..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9"
