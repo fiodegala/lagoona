@@ -123,6 +123,7 @@ const ProductPricing = () => {
         exclusive_price: p.exclusive_price,
         promotional_price: p.promotional_price,
         is_active: p.is_active,
+        barcode: p.barcode,
         category_name: p.categories?.name || null,
         variations: varsByProduct[p.id] || [],
       }));
