@@ -14,6 +14,7 @@ import PaymentStep from '@/components/pos/steps/PaymentStep';
 // ExchangePanel no longer used - exchange integrated into main cart
 import FiscalReceiptModal from '@/components/pos/FiscalReceiptModal';
 import { OpenSessionModal, CloseSessionModal, CashMovementModal } from '@/components/pos/CashDrawerModals';
+import AdminStoreSelectModal from '@/components/pos/AdminStoreSelectModal';
 import { posService, POSSession, CreateSaleData } from '@/services/posService';
 import { offlineService } from '@/services/offlineService';
 import { supabase } from '@/integrations/supabase/client';
@@ -55,6 +56,29 @@ const POSPage = () => {
   const { toast } = useToast();
   const { userStoreId, isAdmin } = useAuth();
   const TIKTOK_SHOP_STORE_ID = '2e77df46-e984-4480-bb0c-a890ed57d7da';
+
+  // Admin scope: when an admin opens the PDV they must pick a store for the session
+  const ADMIN_STORE_KEY = 'pos_admin_store_v1';
+  const [adminStoreId, setAdminStoreId] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null;
+    return window.sessionStorage.getItem(ADMIN_STORE_KEY);
+  });
+  const [adminStoreName, setAdminStoreName] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null;
+    return window.sessionStorage.getItem(`${ADMIN_STORE_KEY}_name`);
+  });
+  const effectiveStoreId = isAdmin ? (adminStoreId || userStoreId) : userStoreId;
+  const showAdminStorePicker = isAdmin && !adminStoreId;
+
+  const handleAdminStorePicked = (storeId: string, storeName: string) => {
+    setAdminStoreId(storeId);
+    setAdminStoreName(storeName);
+    if (typeof window !== 'undefined') {
+      window.sessionStorage.setItem(ADMIN_STORE_KEY, storeId);
+      window.sessionStorage.setItem(`${ADMIN_STORE_KEY}_name`, storeName);
+    }
+    toast({ title: `PDV operando como: ${storeName}` });
+  };
   const [session, setSession] = useState<POSSession | null>(null);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [isLoading, setIsLoading] = useState(true);
@@ -594,7 +618,7 @@ const POSPage = () => {
         const quoteData = {
           local_id: offlineService.generateLocalId(),
           user_id: user.id,
-          store_id: selectedSeller?.store_id || userStoreId || null,
+          store_id: selectedSeller?.store_id || effectiveStoreId || null,
           customer_id: selectedCustomer?.id || null,
           customer_name: selectedCustomer?.name || null,
           customer_document: selectedCustomer?.document || null,
@@ -647,7 +671,7 @@ const POSPage = () => {
     const isTiktokChannel = paymentDetails && (paymentDetails as Record<string, unknown>).channel === 'tiktok';
     const resolvedStoreId = isTiktokChannel
       ? TIKTOK_SHOP_STORE_ID
-      : (selectedSeller?.store_id || userStoreId || undefined);
+      : (selectedSeller?.store_id || effectiveStoreId || undefined);
 
     // For colaborador sales, the "customer" is actually a user profile (user_id),
     // not a row in the customers table. Avoid sending customer_id to prevent
@@ -716,7 +740,7 @@ const POSPage = () => {
         // Restore stock for return items
         if (returnItems.length > 0) {
           for (const item of returnItems) {
-            const storeId = selectedSeller?.store_id || userStoreId;
+            const storeId = selectedSeller?.store_id || effectiveStoreId;
             if (storeId) {
               let stockQuery = supabase
                 .from('store_stock')
@@ -791,7 +815,7 @@ const POSPage = () => {
   };
 
   const handleOpenSession = async (openingBalance: number, notes?: string) => {
-    const newSession = await posService.openSession(openingBalance, notes, userStoreId || undefined);
+    const newSession = await posService.openSession(openingBalance, notes, effectiveStoreId || undefined);
     setSession(newSession);
     resetWizard();
     await offlineService.saveCurrentSession({ id: newSession.id, user_id: newSession.user_id, opened_at: newSession.opened_at, opening_balance: newSession.opening_balance, status: 'open' });
@@ -806,6 +830,13 @@ const POSPage = () => {
     await offlineService.clearCurrentSession();
     if (typeof window !== 'undefined') {
       window.sessionStorage.removeItem(POS_DRAFT_STORAGE_KEY);
+      // Reset admin store choice so next session asks again
+      if (isAdmin) {
+        window.sessionStorage.removeItem(ADMIN_STORE_KEY);
+        window.sessionStorage.removeItem(`${ADMIN_STORE_KEY}_name`);
+        setAdminStoreId(null);
+        setAdminStoreName(null);
+      }
     }
     toast({ title: 'Caixa fechado!' });
   };
@@ -828,9 +859,13 @@ const POSPage = () => {
         <DollarSign className="h-12 w-12 sm:h-16 sm:w-16 text-muted-foreground" />
         <h1 className="text-xl sm:text-2xl font-bold">Caixa Fechado</h1>
         <p className="text-muted-foreground text-center text-sm sm:text-base">Abra o caixa para iniciar as vendas</p>
-        <Button size="lg" onClick={() => setOpenSessionModal(true)}>Abrir Caixa</Button>
+        {isAdmin && adminStoreName && (
+          <Badge variant="secondary" className="gap-1">Loja: {adminStoreName}</Badge>
+        )}
+        <Button size="lg" onClick={() => setOpenSessionModal(true)} disabled={showAdminStorePicker}>Abrir Caixa</Button>
         <Button variant="ghost" onClick={() => navigate('/admin')}>Voltar ao Admin</Button>
         <OpenSessionModal open={openSessionModal} onOpenChange={setOpenSessionModal} onConfirm={handleOpenSession} />
+        <AdminStoreSelectModal open={showAdminStorePicker} onSelect={handleAdminStorePicked} />
       </div>
     );
   }
@@ -1011,6 +1046,7 @@ const POSPage = () => {
         total={completedSaleTotal}
         onComplete={resetWizard}
       />
+      <AdminStoreSelectModal open={showAdminStorePicker} onSelect={handleAdminStorePicked} />
     </POSLayout>
   );
 };
