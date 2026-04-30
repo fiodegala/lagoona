@@ -47,6 +47,11 @@ const MultiImageUpload = ({
 
     // Validate file types
     const validFiles = filesToUpload.filter(file => {
+      const isHeic = /\.(heic|heif)$/i.test(file.name) || /heic|heif/i.test(file.type);
+      if (isHeic) {
+        toast.error(`${file.name}: HEIC/HEIF não é suportado. Converta para JPG ou PNG.`);
+        return false;
+      }
       if (!file.type.startsWith('image/')) {
         toast.error(`${file.name} não é uma imagem válida`);
         return false;
@@ -67,30 +72,39 @@ const MultiImageUpload = ({
 
     for (const file of validFiles) {
       try {
-        // Generate unique filename
-        const ext = file.name.split('.').pop();
+        // Generate unique filename — preserve original extension
+        const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${ext}`;
         const filePath = folder ? `${folder}/${fileName}` : fileName;
 
-        // Upload to Supabase Storage
+        // Upload to Supabase Storage with explicit content type
         const { error: uploadError } = await supabase.storage
           .from(bucket)
           .upload(filePath, file, {
             cacheControl: '3600',
             upsert: false,
+            contentType: file.type || 'image/jpeg',
           });
 
         if (uploadError) throw uploadError;
 
-        // Get public URL
         const { data: { publicUrl } } = supabase.storage
           .from(bucket)
           .getPublicUrl(filePath);
 
         uploadedUrls.push(publicUrl);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Upload error:', error);
-        toast.error(`Erro ao enviar ${file.name}`);
+        const msg = error?.message || error?.error || 'Erro desconhecido';
+        if (/row-level security|permission|unauthor/i.test(msg)) {
+          toast.error(`${file.name}: sem permissão. Faça login novamente.`);
+        } else if (/payload|too large|size/i.test(msg)) {
+          toast.error(`${file.name}: imagem muito grande.`);
+        } else if (/network|fetch|failed/i.test(msg)) {
+          toast.error(`${file.name}: falha de conexão.`);
+        } else {
+          toast.error(`Erro ao enviar ${file.name}: ${msg}`);
+        }
       }
     }
 
