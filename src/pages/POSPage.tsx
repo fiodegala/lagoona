@@ -1039,6 +1039,7 @@ const POSPage = () => {
         total={completedSaleTotal}
         onComplete={resetWizard}
       />
+      <AdminStoreSelectModal open={showAdminStorePicker} onSelect={handleAdminStorePicked} />
     </POSLayout>
   );
 };
