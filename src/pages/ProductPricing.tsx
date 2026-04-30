@@ -16,6 +16,7 @@ import { Loader2, Search, DollarSign } from "lucide-react";
 interface VariationPrice {
   id: string;
   sku: string | null;
+  barcode: string | null;
   price: number | null;
   wholesale_price: number | null;
   exclusive_price: number | null;
