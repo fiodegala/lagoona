@@ -991,6 +991,18 @@ const Sales = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      {/* Edit Payment Method Modal */}
+      {detailSale && (
+        <EditPaymentMethodModal
+          open={isEditingPayment}
+          onOpenChange={setIsEditingPayment}
+          sale={detailSale}
+          onUpdated={(updated) => {
+            setDetailSale(updated);
+            queryClient.invalidateQueries({ queryKey: ['pos-sales'] });
+          }}
+        />
+      )}
     </AdminLayout>
   );
 };
