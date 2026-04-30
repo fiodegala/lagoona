@@ -143,9 +143,11 @@ const ProductPricing = () => {
       (p) =>
         p.name.toLowerCase().includes(q) ||
         p.category_name?.toLowerCase().includes(q) ||
+        p.barcode?.toLowerCase().includes(q) ||
         p.variations.some(
           (v) =>
             v.sku?.toLowerCase().includes(q) ||
+            v.barcode?.toLowerCase().includes(q) ||
             v.attribute_label.toLowerCase().includes(q)
         )
     );
@@ -164,10 +166,12 @@ const ProductPricing = () => {
               </p>
             </div>
           </div>
-          <div className="relative w-full sm:w-80">
+          <div className="relative w-full sm:w-96">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Buscar produto, SKU ou atributo..."
+              data-barcode-input
+              autoFocus
+              placeholder="Buscar por nome, SKU, código de barras ou atributo..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9"
