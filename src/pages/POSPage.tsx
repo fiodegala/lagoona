@@ -852,9 +852,13 @@ const POSPage = () => {
         <DollarSign className="h-12 w-12 sm:h-16 sm:w-16 text-muted-foreground" />
         <h1 className="text-xl sm:text-2xl font-bold">Caixa Fechado</h1>
         <p className="text-muted-foreground text-center text-sm sm:text-base">Abra o caixa para iniciar as vendas</p>
-        <Button size="lg" onClick={() => setOpenSessionModal(true)}>Abrir Caixa</Button>
+        {isAdmin && adminStoreName && (
+          <Badge variant="secondary" className="gap-1">Loja: {adminStoreName}</Badge>
+        )}
+        <Button size="lg" onClick={() => setOpenSessionModal(true)} disabled={showAdminStorePicker}>Abrir Caixa</Button>
         <Button variant="ghost" onClick={() => navigate('/admin')}>Voltar ao Admin</Button>
         <OpenSessionModal open={openSessionModal} onOpenChange={setOpenSessionModal} onConfirm={handleOpenSession} />
+        <AdminStoreSelectModal open={showAdminStorePicker} onSelect={handleAdminStorePicked} />
       </div>
     );
   }
