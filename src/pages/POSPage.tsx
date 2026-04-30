@@ -830,6 +830,13 @@ const POSPage = () => {
     await offlineService.clearCurrentSession();
     if (typeof window !== 'undefined') {
       window.sessionStorage.removeItem(POS_DRAFT_STORAGE_KEY);
+      // Reset admin store choice so next session asks again
+      if (isAdmin) {
+        window.sessionStorage.removeItem(ADMIN_STORE_KEY);
+        window.sessionStorage.removeItem(`${ADMIN_STORE_KEY}_name`);
+        setAdminStoreId(null);
+        setAdminStoreName(null);
+      }
     }
     toast({ title: 'Caixa fechado!' });
   };
