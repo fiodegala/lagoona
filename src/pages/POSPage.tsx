@@ -56,6 +56,29 @@ const POSPage = () => {
   const { toast } = useToast();
   const { userStoreId, isAdmin } = useAuth();
   const TIKTOK_SHOP_STORE_ID = '2e77df46-e984-4480-bb0c-a890ed57d7da';
+
+  // Admin scope: when an admin opens the PDV they must pick a store for the session
+  const ADMIN_STORE_KEY = 'pos_admin_store_v1';
+  const [adminStoreId, setAdminStoreId] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null;
+    return window.sessionStorage.getItem(ADMIN_STORE_KEY);
+  });
+  const [adminStoreName, setAdminStoreName] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null;
+    return window.sessionStorage.getItem(`${ADMIN_STORE_KEY}_name`);
+  });
+  const effectiveStoreId = isAdmin ? (adminStoreId || userStoreId) : userStoreId;
+  const showAdminStorePicker = isAdmin && !adminStoreId;
+
+  const handleAdminStorePicked = (storeId: string, storeName: string) => {
+    setAdminStoreId(storeId);
+    setAdminStoreName(storeName);
+    if (typeof window !== 'undefined') {
+      window.sessionStorage.setItem(ADMIN_STORE_KEY, storeId);
+      window.sessionStorage.setItem(`${ADMIN_STORE_KEY}_name`, storeName);
+    }
+    toast({ title: `PDV operando como: ${storeName}` });
+  };
   const [session, setSession] = useState<POSSession | null>(null);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [isLoading, setIsLoading] = useState(true);
