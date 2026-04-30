@@ -14,6 +14,7 @@ import PaymentStep from '@/components/pos/steps/PaymentStep';
 // ExchangePanel no longer used - exchange integrated into main cart
 import FiscalReceiptModal from '@/components/pos/FiscalReceiptModal';
 import { OpenSessionModal, CloseSessionModal, CashMovementModal } from '@/components/pos/CashDrawerModals';
+import AdminStoreSelectModal from '@/components/pos/AdminStoreSelectModal';
 import { posService, POSSession, CreateSaleData } from '@/services/posService';
 import { offlineService } from '@/services/offlineService';
 import { supabase } from '@/integrations/supabase/client';
