@@ -29,7 +29,7 @@ const AdminStoreSelectModal = ({ open, onSelect }: AdminStoreSelectModalProps) =
       const { data } = await supabase
         .from('stores')
         .select('id, name, type')
-        .eq('type', 'physical')
+        .in('type', ['physical', 'online'])
         .order('name');
       setStores((data as StoreOption[]) || []);
       setLoading(false);
