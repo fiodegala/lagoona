@@ -24,6 +24,7 @@ import { format, startOfDay, endOfDay, startOfWeek, startOfMonth, subDays } from
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { auditService } from '@/services/auditService';
+import EditPaymentMethodModal from '@/components/EditPaymentMethodModal';
 
 const paymentMethodLabels: Record<string, string> = {
   cash: 'Dinheiro',
@@ -59,6 +60,7 @@ const Sales = () => {
   const [logoBase64, setLogoBase64] = useState<string>('');
   const [sellerFilter, setSellerFilter] = useState('all');
   const [storeFilter, setStoreFilter] = useState('all');
+  const [isEditingPayment, setIsEditingPayment] = useState(false);
 
   const WEBSITE_STORE_ID = 'e0b8ebbc-1b3b-4aec-b5f7-6925762e6ea1';
 
@@ -753,6 +755,17 @@ const Sales = () => {
                     <Badge variant="outline" className="text-xs">
                       {paymentMethodLabels[detailSale.payment_method] || detailSale.payment_method}
                     </Badge>
+                    {canCancel && detailSale.status !== 'cancelled' && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        onClick={() => setIsEditingPayment(true)}
+                        title="Alterar forma de pagamento"
+                      >
+                        <Pencil className="h-3 w-3" />
+                      </Button>
+                    )}
                   </div>
                 </div>
                 {detailSale.coupon_code && (
