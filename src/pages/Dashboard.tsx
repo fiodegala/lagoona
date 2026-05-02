@@ -203,7 +203,9 @@ const Dashboard = () => {
     : null;
   const isSiteStoreSelected = activeStoreFilter === SITE_STORE_ID;
   const isOnlineStoreSelected = selectedStore?.type === 'online';
-  const canShowSiteSales = isSiteStoreSelected || isOnlineStoreSelected;
+  // Only the 'Site' (website) store represents e-commerce orders.
+  // The 'Online' store is a PDV/seller channel and must show POS sales like physical stores.
+  const canShowSiteSales = isSiteStoreSelected;
   const isLagoonaStoreSelected = activeStoreFilter === LAGOONA_STORE_ID;
   const isViewingAllStores = !activeStoreFilter;
 
