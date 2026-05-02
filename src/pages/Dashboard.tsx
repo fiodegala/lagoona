@@ -29,7 +29,7 @@ import { DateRange } from 'react-day-picker';
 import BrazilSalesMap from '@/components/dashboard/BrazilSalesMap';
 import WhatsAppMetrics from '@/components/dashboard/WhatsAppMetrics';
 
-type PeriodFilter = 'today' | 'week' | 'month' | 'all' | 'custom';
+type PeriodFilter = 'today' | 'week' | 'month' | 'currentMonth' | 'lastMonth' | 'all' | 'custom';
 
 interface DashboardStats {
   totalProducts: number;
