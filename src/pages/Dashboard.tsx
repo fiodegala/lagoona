@@ -850,12 +850,19 @@ const Dashboard = () => {
   }, [filteredPOSSales, filteredOrders]);
 
   // Individual sales (current user only) vs store total
+  // storeRevenue/storeSales = PDV + Site orders consolidados
+  // (para "Todas as lojas" soma tudo; para "Online" soma PDV Online + orders Site/TikTok)
   const individualStats = useMemo(() => {
     if (!user) return { mySales: 0, myRevenue: 0, myTicket: 0, storeSales: 0, storeRevenue: 0, storeTicket: 0 };
     const mySales = filteredPOSSales.filter(s => s.user_id === user.id);
     const myRevenue = mySales.reduce((sum, s) => sum + s.total, 0);
-    const storeSales = filteredPOSSales.length;
-    const storeRevenue = filteredPOSSales.reduce((sum, s) => sum + s.total, 0);
+
+    const completedOrders = filteredOrders.filter(o => ['confirmed', 'completed', 'delivered', 'processing', 'shipped'].includes(o.status));
+    const ordersRevenue = completedOrders.reduce((sum, o) => sum + Number(o.total), 0);
+    const posRevenue = filteredPOSSales.reduce((sum, s) => sum + s.total, 0);
+
+    const storeSales = filteredPOSSales.length + completedOrders.length;
+    const storeRevenue = posRevenue + ordersRevenue;
     return {
       mySales: mySales.length,
       myRevenue,
@@ -864,7 +871,7 @@ const Dashboard = () => {
       storeRevenue,
       storeTicket: storeSales > 0 ? storeRevenue / storeSales : 0,
     };
-  }, [filteredPOSSales, user]);
+  }, [filteredPOSSales, filteredOrders, user]);
 
   // Sales by Modality (Varejo, Atacado, Exclusivo) and Exchange metrics
   const modalityStats = useMemo(() => {
