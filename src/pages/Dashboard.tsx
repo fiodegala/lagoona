@@ -202,10 +202,11 @@ const Dashboard = () => {
     ? stores.find(store => store.id === activeStoreFilter) || (userStore?.id === activeStoreFilter ? userStore : null)
     : null;
   const isSiteStoreSelected = activeStoreFilter === SITE_STORE_ID;
-  const isOnlineStoreSelected = selectedStore?.type === 'online';
-  // Only the 'Site' (website) store represents e-commerce orders.
-  // The 'Online' store is a PDV/seller channel and must show POS sales like physical stores.
-  const canShowSiteSales = isSiteStoreSelected;
+  const isOnlineStoreSelected = selectedStore?.id === '8c5a3cf3-7f68-4cf7-b1fa-10ce6debf64e';
+  // 'Site' (website) store displays e-commerce orders only (no PDV).
+  // 'Online' store is a hybrid: shows its own PDV sales + ALL site orders (Site + TikTok via store_id=Site).
+  // Other physical stores never inherit website revenue.
+  const canShowSiteSales = isSiteStoreSelected || isOnlineStoreSelected;
   const isLagoonaStoreSelected = activeStoreFilter === LAGOONA_STORE_ID;
   const isViewingAllStores = !activeStoreFilter;
 
@@ -849,12 +850,19 @@ const Dashboard = () => {
   }, [filteredPOSSales, filteredOrders]);
 
   // Individual sales (current user only) vs store total
+  // storeRevenue/storeSales = PDV + Site orders consolidados
+  // (para "Todas as lojas" soma tudo; para "Online" soma PDV Online + orders Site/TikTok)
   const individualStats = useMemo(() => {
     if (!user) return { mySales: 0, myRevenue: 0, myTicket: 0, storeSales: 0, storeRevenue: 0, storeTicket: 0 };
     const mySales = filteredPOSSales.filter(s => s.user_id === user.id);
     const myRevenue = mySales.reduce((sum, s) => sum + s.total, 0);
-    const storeSales = filteredPOSSales.length;
-    const storeRevenue = filteredPOSSales.reduce((sum, s) => sum + s.total, 0);
+
+    const completedOrders = filteredOrders.filter(o => ['confirmed', 'completed', 'delivered', 'processing', 'shipped'].includes(o.status));
+    const ordersRevenue = completedOrders.reduce((sum, o) => sum + Number(o.total), 0);
+    const posRevenue = filteredPOSSales.reduce((sum, s) => sum + s.total, 0);
+
+    const storeSales = filteredPOSSales.length + completedOrders.length;
+    const storeRevenue = posRevenue + ordersRevenue;
     return {
       mySales: mySales.length,
       myRevenue,
@@ -863,7 +871,7 @@ const Dashboard = () => {
       storeRevenue,
       storeTicket: storeSales > 0 ? storeRevenue / storeSales : 0,
     };
-  }, [filteredPOSSales, user]);
+  }, [filteredPOSSales, filteredOrders, user]);
 
   // Sales by Modality (Varejo, Atacado, Exclusivo) and Exchange metrics
   const modalityStats = useMemo(() => {
@@ -1680,6 +1688,15 @@ const Dashboard = () => {
                       <p className="text-2xl font-bold mt-1">{formatCurrency(individualStats.storeRevenue)}</p>
                       <p className="text-xs text-muted-foreground mt-1">
                         {individualStats.storeSales} vendas • Ticket: {formatCurrency(individualStats.storeTicket)}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground/70 mt-1">
+                        {isViewingAllStores
+                          ? 'PDV (todas) + Site + TikTok + Lagoona'
+                          : isOnlineStoreSelected
+                            ? 'PDV Online + Site (e-commerce)'
+                            : isSiteStoreSelected
+                              ? 'Pedidos do e-commerce'
+                              : 'Vendas do PDV desta loja'}
                       </p>
                     </div>
                     <div className="bg-success/10 p-3 rounded-xl">
