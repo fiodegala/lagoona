@@ -458,7 +458,7 @@ const Sales = () => {
       const lagoonaItems = items.filter(isLagoonaItem);
       if (lagoonaItems.length === 0) return acc;
       const lagoonaTotal = lagoonaItems.reduce((sum: number, it: any) => sum + getItemTotal(it), 0);
-      acc.push({ ...s, items: lagoonaItems, total: lagoonaTotal });
+      acc.push({ ...s, items: lagoonaItems, subtotal: lagoonaTotal, discount_amount: 0, total: lagoonaTotal });
       return acc;
     }
 
