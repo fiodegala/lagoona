@@ -28,6 +28,7 @@ import { calculateDailyGoalTarget } from '@/lib/salesGoals';
 import { DateRange } from 'react-day-picker';
 import BrazilSalesMap from '@/components/dashboard/BrazilSalesMap';
 import WhatsAppMetrics from '@/components/dashboard/WhatsAppMetrics';
+import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 type PeriodFilter = 'today' | 'week' | 'month' | 'currentMonth' | 'lastMonth' | 'all' | 'custom';
 
@@ -1002,23 +1003,40 @@ const Dashboard = () => {
           <div className="flex items-center gap-2 flex-wrap">
             <Calendar className="h-4 w-4 text-muted-foreground" />
             <div className="flex bg-muted rounded-lg p-1 gap-1">
-              {(['today', 'week', 'month', 'currentMonth', 'lastMonth', 'all'] as PeriodFilter[]).map((period) => (
-                <Button
-                  key={period}
-                  variant={periodFilter === period ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => {
-                    setPeriodFilter(period);
-                    if (period !== 'custom') {
-                      setCustomDateRange(undefined);
-                      setIsDatePickerOpen(false);
-                    }
-                  }}
-                  className="text-xs px-3"
-                >
-                  {getPeriodLabel(period)}
-                </Button>
-              ))}
+              <TooltipProvider delayDuration={200}>
+                {(['today', 'week', 'month', 'currentMonth', 'lastMonth', 'all'] as PeriodFilter[]).map((period) => {
+                  const range = getDateRange(period);
+                  const tooltipText = (() => {
+                    if (period === 'all') return 'Inclui todas as vendas registradas, sem limite de data.';
+                    if (period === 'today') return `Apenas hoje (${format(new Date(), 'dd/MM/yyyy', { locale: ptBR })}).`;
+                    if (!range.start) return '';
+                    const startStr = format(range.start, 'dd/MM/yyyy', { locale: ptBR });
+                    const endStr = range.end ? format(range.end, 'dd/MM/yyyy', { locale: ptBR }) : format(new Date(), 'dd/MM/yyyy', { locale: ptBR });
+                    return `De ${startStr} até ${endStr}`;
+                  })();
+                  return (
+                    <UITooltip key={period}>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant={periodFilter === period ? 'default' : 'ghost'}
+                          size="sm"
+                          onClick={() => {
+                            setPeriodFilter(period);
+                            if (period !== 'custom') {
+                              setCustomDateRange(undefined);
+                              setIsDatePickerOpen(false);
+                            }
+                          }}
+                          className="text-xs px-3"
+                        >
+                          {getPeriodLabel(period)}
+                        </Button>
+                      </TooltipTrigger>
+                      {tooltipText && <TooltipContent side="bottom">{tooltipText}</TooltipContent>}
+                    </UITooltip>
+                  );
+                })}
+              </TooltipProvider>
               
               {/* Custom Date Range Picker */}
               <Popover open={isDatePickerOpen} onOpenChange={setIsDatePickerOpen}>
