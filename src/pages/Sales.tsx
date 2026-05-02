@@ -63,6 +63,37 @@ const Sales = () => {
   const [isEditingPayment, setIsEditingPayment] = useState(false);
 
   const WEBSITE_STORE_ID = 'e0b8ebbc-1b3b-4aec-b5f7-6925762e6ea1';
+  const saleItems = (items: any) => {
+    try {
+      if (Array.isArray(items)) return items;
+      return JSON.parse(items);
+    } catch {
+      return [];
+    }
+  };
+
+  const LAGOONA_STORE_ID = '5e76470a-609c-4e75-a8e3-1c663e66c076';
+
+  // Fetch Lagoona product IDs to filter sales by item flag (Lagoona shares physical stock)
+  const { data: lagoonaProductIds = new Set<string>() } = useQuery({
+    queryKey: ['lagoona-product-ids'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('products')
+        .select('id')
+        .eq('is_lagoona', true);
+      if (error) throw error;
+      return new Set((data || []).map(p => p.id));
+    },
+  });
+
+  const isLagoonaItem = (item: any) =>
+    item?.is_lagoona === true || (!!item?.product_id && lagoonaProductIds.has(item.product_id));
+
+  const getItemTotal = (item: any) => {
+    const qty = Number(item?.quantity || item?.qty || 1);
+    return Number(item?.total ?? ((item?.price ?? item?.unit_price ?? 0) * qty));
+  };
 
   // Fetch stores for admin filter
   const { data: stores = [] } = useQuery({
@@ -412,18 +443,40 @@ const Sales = () => {
     },
   });
 
-  const filteredSales = sales.filter(s => {
+  const filteredSales = sales.reduce<any[]>((acc, s) => {
     const matchesSearch =
       s.customer_name?.toLowerCase().includes(search.toLowerCase()) ||
       s.customer_document?.toLowerCase().includes(search.toLowerCase()) ||
       s.id.toLowerCase().includes(search.toLowerCase());
-    
-    // Admin filters
+
     const matchesSeller = sellerFilter === 'all' || s.user_id === sellerFilter;
-    const matchesStore = storeFilter === 'all' || s.store_id === storeFilter;
-    
-    return matchesSearch && matchesSeller && matchesStore;
-  });
+    if (!matchesSearch || !matchesSeller) return acc;
+
+    // Lagoona store: filter by item flag, recompute total
+    if (storeFilter === LAGOONA_STORE_ID) {
+      const items = saleItems(s.items);
+      const lagoonaItems = items.filter(isLagoonaItem);
+      if (lagoonaItems.length === 0) return acc;
+      const lagoonaTotal = lagoonaItems.reduce((sum: number, it: any) => sum + getItemTotal(it), 0);
+      acc.push({ ...s, items: lagoonaItems, total: lagoonaTotal });
+      return acc;
+    }
+
+    // Other physical stores: exclude Lagoona items from totals
+    if (storeFilter !== 'all' && storeFilter !== WEBSITE_STORE_ID && storeFilter !== LAGOONA_STORE_ID) {
+      if (s.store_id !== storeFilter) return acc;
+      const items = saleItems(s.items);
+      const nonLagoona = items.filter((it: any) => !isLagoonaItem(it));
+      if (nonLagoona.length === 0) return acc;
+      const adjustedTotal = nonLagoona.reduce((sum: number, it: any) => sum + getItemTotal(it), 0);
+      acc.push({ ...s, items: nonLagoona, total: adjustedTotal });
+      return acc;
+    }
+
+    if (storeFilter !== 'all' && s.store_id !== storeFilter) return acc;
+    acc.push(s);
+    return acc;
+  }, []);
 
   const activeSales = filteredSales.filter(s => (s as any).status !== 'cancelled');
   const nonGiftSales = activeSales.filter(s => (s as any).sale_type !== 'brinde');
@@ -431,14 +484,6 @@ const Sales = () => {
   const totalDiscount = nonGiftSales.reduce((sum, s) => sum + Number(s.discount_amount || 0), 0);
   const avgTicket = nonGiftSales.length > 0 ? totalRevenue / nonGiftSales.length : 0;
 
-  const saleItems = (items: any) => {
-    try {
-      if (Array.isArray(items)) return items;
-      return JSON.parse(items);
-    } catch {
-      return [];
-    }
-  };
 
   return (
     <AdminLayout>
