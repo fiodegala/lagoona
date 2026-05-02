@@ -329,6 +329,16 @@ const Dashboard = () => {
         const monthStart = new Date(now);
         monthStart.setDate(monthStart.getDate() - 30);
         return { start: monthStart, end: null };
+      case 'currentMonth': {
+        const start = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+        const end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+        return { start, end };
+      }
+      case 'lastMonth': {
+        const start = new Date(now.getFullYear(), now.getMonth() - 1, 1, 0, 0, 0, 0);
+        const end = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
+        return { start, end };
+      }
       case 'all':
       default:
         return { start: null, end: null };
