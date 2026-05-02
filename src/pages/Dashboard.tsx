@@ -1689,7 +1689,15 @@ const Dashboard = () => {
                       <p className="text-xs text-muted-foreground mt-1">
                         {individualStats.storeSales} vendas • Ticket: {formatCurrency(individualStats.storeTicket)}
                       </p>
-                    </div>
+                      <p className="text-[10px] text-muted-foreground/70 mt-1">
+                        {isViewingAllStores
+                          ? 'PDV (todas) + Site + TikTok + Lagoona'
+                          : isOnlineStoreSelected
+                            ? 'PDV Online + Site (e-commerce)'
+                            : isSiteStoreSelected
+                              ? 'Pedidos do e-commerce'
+                              : 'Vendas do PDV desta loja'}
+                      </p>
                     <div className="bg-success/10 p-3 rounded-xl">
                       <Store className="h-6 w-6 text-success" />
                     </div>
