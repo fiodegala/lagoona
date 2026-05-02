@@ -63,6 +63,15 @@ const Sales = () => {
   const [isEditingPayment, setIsEditingPayment] = useState(false);
 
   const WEBSITE_STORE_ID = 'e0b8ebbc-1b3b-4aec-b5f7-6925762e6ea1';
+  const saleItems = (items: any) => {
+    try {
+      if (Array.isArray(items)) return items;
+      return JSON.parse(items);
+    } catch {
+      return [];
+    }
+  };
+
   const LAGOONA_STORE_ID = '5e76470a-609c-4e75-a8e3-1c663e66c076';
 
   // Fetch Lagoona product IDs to filter sales by item flag (Lagoona shares physical stock)
