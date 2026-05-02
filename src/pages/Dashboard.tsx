@@ -235,7 +235,8 @@ const Dashboard = () => {
       if (canShowSiteSales) {
         ordersQuery = ordersQuery.eq('store_id', SITE_STORE_ID);
       } else if (isLagoonaStoreSelected) {
-        // Fetch all site orders and isolate Lagoona items client-side.
+        // Lagoona dashboard counts only PDV sales (matches Vendas page)
+        ordersQuery = ordersQuery.limit(0);
       } else if (storeFilter) {
         ordersQuery = ordersQuery.limit(0);
       }
