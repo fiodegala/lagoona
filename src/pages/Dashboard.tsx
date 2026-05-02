@@ -202,10 +202,11 @@ const Dashboard = () => {
     ? stores.find(store => store.id === activeStoreFilter) || (userStore?.id === activeStoreFilter ? userStore : null)
     : null;
   const isSiteStoreSelected = activeStoreFilter === SITE_STORE_ID;
-  const isOnlineStoreSelected = selectedStore?.type === 'online';
-  // Only the 'Site' (website) store represents e-commerce orders.
-  // The 'Online' store is a PDV/seller channel and must show POS sales like physical stores.
-  const canShowSiteSales = isSiteStoreSelected;
+  const isOnlineStoreSelected = selectedStore?.id === '8c5a3cf3-7f68-4cf7-b1fa-10ce6debf64e';
+  // 'Site' (website) store displays e-commerce orders only (no PDV).
+  // 'Online' store is a hybrid: shows its own PDV sales + ALL site orders (Site + TikTok via store_id=Site).
+  // Other physical stores never inherit website revenue.
+  const canShowSiteSales = isSiteStoreSelected || isOnlineStoreSelected;
   const isLagoonaStoreSelected = activeStoreFilter === LAGOONA_STORE_ID;
   const isViewingAllStores = !activeStoreFilter;
 
