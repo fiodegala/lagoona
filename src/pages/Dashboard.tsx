@@ -1698,6 +1698,7 @@ const Dashboard = () => {
                               ? 'Pedidos do e-commerce'
                               : 'Vendas do PDV desta loja'}
                       </p>
+                    </div>
                     <div className="bg-success/10 p-3 rounded-xl">
                       <Store className="h-6 w-6 text-success" />
                     </div>
