@@ -1002,7 +1002,7 @@ const Dashboard = () => {
           <div className="flex items-center gap-2 flex-wrap">
             <Calendar className="h-4 w-4 text-muted-foreground" />
             <div className="flex bg-muted rounded-lg p-1 gap-1">
-              {(['today', 'week', 'month', 'all'] as PeriodFilter[]).map((period) => (
+              {(['today', 'week', 'month', 'currentMonth', 'lastMonth', 'all'] as PeriodFilter[]).map((period) => (
                 <Button
                   key={period}
                   variant={periodFilter === period ? 'default' : 'ghost'}
