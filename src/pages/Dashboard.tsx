@@ -28,6 +28,7 @@ import { calculateDailyGoalTarget } from '@/lib/salesGoals';
 import { DateRange } from 'react-day-picker';
 import BrazilSalesMap from '@/components/dashboard/BrazilSalesMap';
 import WhatsAppMetrics from '@/components/dashboard/WhatsAppMetrics';
+import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 type PeriodFilter = 'today' | 'week' | 'month' | 'currentMonth' | 'lastMonth' | 'all' | 'custom';
 
