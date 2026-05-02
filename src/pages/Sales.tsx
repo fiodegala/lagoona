@@ -462,14 +462,10 @@ const Sales = () => {
       return acc;
     }
 
-    // Other physical stores: exclude Lagoona items from totals
+    // Other physical stores: include the entire sale (Lagoona items also count for the store where it was sold)
     if (storeFilter !== 'all' && storeFilter !== WEBSITE_STORE_ID && storeFilter !== LAGOONA_STORE_ID) {
       if (s.store_id !== storeFilter) return acc;
-      const items = saleItems(s.items);
-      const nonLagoona = items.filter((it: any) => !isLagoonaItem(it));
-      if (nonLagoona.length === 0) return acc;
-      const adjustedTotal = nonLagoona.reduce((sum: number, it: any) => sum + getItemTotal(it), 0);
-      acc.push({ ...s, items: nonLagoona, total: adjustedTotal });
+      acc.push(s);
       return acc;
     }
 

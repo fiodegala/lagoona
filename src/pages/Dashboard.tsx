@@ -417,19 +417,8 @@ const Dashboard = () => {
         .filter(Boolean) as typeof activeSales;
     }
 
-    // For non-Lagoona physical stores, exclude Lagoona items from totals
-    if (activeStoreFilter && activeStoreFilter !== SITE_STORE_ID && activeStoreFilter !== LAGOONA_STORE_ID) {
-      return activeSales
-        .map(sale => {
-          const hasLagoonaItems = (sale.items || []).some(isLagoonaItem);
-          if (!hasLagoonaItems) return sale;
-          const nonLagoonaItems = (sale.items || []).filter((item: any) => !isLagoonaItem(item));
-          if (nonLagoonaItems.length === 0) return null;
-          const adjustedTotal = nonLagoonaItems.reduce((sum: number, item: any) => sum + getItemTotal(item), 0);
-          return { ...sale, items: nonLagoonaItems, total: adjustedTotal };
-        })
-        .filter(Boolean) as typeof activeSales;
-    }
+    // For non-Lagoona physical stores: include full sale (Lagoona items count for the store too)
+    return activeSales;
 
     return activeSales;
   }, [rawPOSSales, periodStartDate, periodEndDate, selectedSellerId, isLagoonaStoreSelected, activeStoreFilter, isLagoonaItem, getItemTotal]);
