@@ -475,14 +475,6 @@ const Sales = () => {
   const totalDiscount = nonGiftSales.reduce((sum, s) => sum + Number(s.discount_amount || 0), 0);
   const avgTicket = nonGiftSales.length > 0 ? totalRevenue / nonGiftSales.length : 0;
 
-  const saleItems = (items: any) => {
-    try {
-      if (Array.isArray(items)) return items;
-      return JSON.parse(items);
-    } catch {
-      return [];
-    }
-  };
 
   return (
     <AdminLayout>
