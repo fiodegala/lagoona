@@ -29,7 +29,7 @@ import { DateRange } from 'react-day-picker';
 import BrazilSalesMap from '@/components/dashboard/BrazilSalesMap';
 import WhatsAppMetrics from '@/components/dashboard/WhatsAppMetrics';
 
-type PeriodFilter = 'today' | 'week' | 'month' | 'all' | 'custom';
+type PeriodFilter = 'today' | 'week' | 'month' | 'currentMonth' | 'lastMonth' | 'all' | 'custom';
 
 interface DashboardStats {
   totalProducts: number;
@@ -329,6 +329,16 @@ const Dashboard = () => {
         const monthStart = new Date(now);
         monthStart.setDate(monthStart.getDate() - 30);
         return { start: monthStart, end: null };
+      case 'currentMonth': {
+        const start = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+        const end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+        return { start, end };
+      }
+      case 'lastMonth': {
+        const start = new Date(now.getFullYear(), now.getMonth() - 1, 1, 0, 0, 0, 0);
+        const end = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
+        return { start, end };
+      }
       case 'all':
       default:
         return { start: null, end: null };
@@ -913,6 +923,8 @@ const Dashboard = () => {
       case 'today': return 'Hoje';
       case 'week': return 'Últimos 7 dias';
       case 'month': return 'Últimos 30 dias';
+      case 'currentMonth': return 'Mês atual';
+      case 'lastMonth': return 'Mês passado';
       case 'all': return 'Todo período';
       case 'custom': 
         if (customDateRange?.from) {
@@ -990,7 +1002,7 @@ const Dashboard = () => {
           <div className="flex items-center gap-2 flex-wrap">
             <Calendar className="h-4 w-4 text-muted-foreground" />
             <div className="flex bg-muted rounded-lg p-1 gap-1">
-              {(['today', 'week', 'month', 'all'] as PeriodFilter[]).map((period) => (
+              {(['today', 'week', 'month', 'currentMonth', 'lastMonth', 'all'] as PeriodFilter[]).map((period) => (
                 <Button
                   key={period}
                   variant={periodFilter === period ? 'default' : 'ghost'}
