@@ -923,6 +923,8 @@ const Dashboard = () => {
       case 'today': return 'Hoje';
       case 'week': return 'Últimos 7 dias';
       case 'month': return 'Últimos 30 dias';
+      case 'currentMonth': return 'Mês atual';
+      case 'lastMonth': return 'Mês passado';
       case 'all': return 'Todo período';
       case 'custom': 
         if (customDateRange?.from) {
