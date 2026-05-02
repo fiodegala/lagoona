@@ -63,6 +63,28 @@ const Sales = () => {
   const [isEditingPayment, setIsEditingPayment] = useState(false);
 
   const WEBSITE_STORE_ID = 'e0b8ebbc-1b3b-4aec-b5f7-6925762e6ea1';
+  const LAGOONA_STORE_ID = '5e76470a-609c-4e75-a8e3-1c663e66c076';
+
+  // Fetch Lagoona product IDs to filter sales by item flag (Lagoona shares physical stock)
+  const { data: lagoonaProductIds = new Set<string>() } = useQuery({
+    queryKey: ['lagoona-product-ids'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('products')
+        .select('id')
+        .eq('is_lagoona', true);
+      if (error) throw error;
+      return new Set((data || []).map(p => p.id));
+    },
+  });
+
+  const isLagoonaItem = (item: any) =>
+    item?.is_lagoona === true || (!!item?.product_id && lagoonaProductIds.has(item.product_id));
+
+  const getItemTotal = (item: any) => {
+    const qty = Number(item?.quantity || item?.qty || 1);
+    return Number(item?.total ?? ((item?.price ?? item?.unit_price ?? 0) * qty));
+  };
 
   // Fetch stores for admin filter
   const { data: stores = [] } = useQuery({
