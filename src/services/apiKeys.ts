@@ -149,5 +149,8 @@ export const AVAILABLE_SCOPES = [
   { value: 'products:read', label: 'Ler produtos', description: 'Visualizar lista de produtos' },
   { value: 'orders:read', label: 'Ler pedidos', description: 'Visualizar pedidos' },
   { value: 'orders:write', label: 'Criar pedidos', description: 'Criar novos pedidos' },
+  { value: 'variations:read', label: 'Ler variações', description: 'Visualizar variações de produtos (cor, tamanho, SKU)' },
+  { value: 'stock:read', label: 'Ler estoque', description: 'Visualizar estoque por loja (físicas e online)' },
+  { value: 'prices:read', label: 'Ler preços', description: 'Visualizar 4 tabelas de preço (varejo, atacado, exclusivo, promocional)' },
   { value: 'webhooks', label: 'Webhooks', description: 'Receber webhooks de pagamento' },
 ];

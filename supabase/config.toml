@@ -72,3 +72,12 @@ verify_jwt = false
 
 [functions.olist-webhooks]
 verify_jwt = false
+
+[functions.api-variations]
+verify_jwt = false
+
+[functions.api-stock]
+verify_jwt = false
+
+[functions.api-prices]
+verify_jwt = false
