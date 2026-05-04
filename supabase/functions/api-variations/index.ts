@@ -50,7 +50,13 @@ serve(async (req) => {
         sort_order,
         created_at,
         updated_at,
-        product_variation_values ( attribute, value )
+        product_variation_values (
+          product_attribute_values (
+            value,
+            color_hex,
+            product_attributes ( name )
+          )
+        )
       `, { count: "exact" })
       .eq("is_active", true)
       .order("sort_order", { ascending: true })
@@ -65,9 +71,18 @@ serve(async (req) => {
       return errorResponse("Failed to fetch variations", 500);
     }
 
+    const flattened = (data || []).map((v: any) => ({
+      ...v,
+      product_variation_values: (v.product_variation_values || []).map((pvv: any) => ({
+        attribute: pvv?.product_attribute_values?.product_attributes?.name ?? null,
+        value: pvv?.product_attribute_values?.value ?? null,
+        color_hex: pvv?.product_attribute_values?.color_hex ?? null,
+      })),
+    }));
+
     await logApiRequest(authResult.apiKey!.id, path, method, 200, clientIp, userAgent, Date.now() - startTime);
     return jsonResponse({
-      data,
+      data: flattened,
       pagination: { page, limit, total: count, pages: Math.ceil((count || 0) / limit) },
     });
   } catch (err) {

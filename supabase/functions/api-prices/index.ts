@@ -16,6 +16,9 @@ import {
  *  - promotional (promotional_price)
  *
  * If a tier is null/0, falls back to retail price.
+ *
+ * NOTE: products table has no `sku` column — we expose `barcode` as the
+ * product-level identifier. product_variations DO have `sku`.
  */
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -85,7 +88,7 @@ serve(async (req) => {
       const [{ data: product, error: pErr }, { data: variations, error: vErr }] = await Promise.all([
         supabase
           .from("products")
-          .select("id, sku, price, wholesale_price, exclusive_price, promotional_price")
+          .select("id, barcode, external_id, price, wholesale_price, exclusive_price, promotional_price")
           .eq("id", productId)
           .single(),
         supabase
@@ -106,7 +109,9 @@ serve(async (req) => {
       return jsonResponse({
         data: {
           product_id: product.id,
-          sku: product.sku,
+          sku: product.barcode ?? product.external_id ?? null,
+          barcode: product.barcode,
+          external_id: product.external_id,
           tiers: buildTiers(product.price, product.wholesale_price, product.exclusive_price, product.promotional_price),
           variations: (variations || []).map((v) => ({
             variation_id: v.id,
@@ -120,7 +125,7 @@ serve(async (req) => {
     // Bulk listing — products only
     const { data, error, count } = await supabase
       .from("products")
-      .select("id, sku, price, wholesale_price, exclusive_price, promotional_price", { count: "exact" })
+      .select("id, barcode, external_id, price, wholesale_price, exclusive_price, promotional_price", { count: "exact" })
       .eq("is_active", true)
       .order("created_at", { ascending: false })
       .range(from, to);
@@ -133,7 +138,9 @@ serve(async (req) => {
 
     const result = (data || []).map((p) => ({
       product_id: p.id,
-      sku: p.sku,
+      sku: p.barcode ?? p.external_id ?? null,
+      barcode: p.barcode,
+      external_id: p.external_id,
       tiers: buildTiers(p.price, p.wholesale_price, p.exclusive_price, p.promotional_price),
     }));
 
