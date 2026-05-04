@@ -50,7 +50,13 @@ serve(async (req) => {
         sort_order,
         created_at,
         updated_at,
-        product_variation_values ( attribute, value )
+        product_variation_values (
+          product_attribute_values (
+            value,
+            color_hex,
+            product_attributes ( name )
+          )
+        )
       `, { count: "exact" })
       .eq("is_active", true)
       .order("sort_order", { ascending: true })
