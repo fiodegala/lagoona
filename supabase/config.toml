@@ -81,3 +81,6 @@ verify_jwt = false
 
 [functions.api-prices]
 verify_jwt = false
+
+[functions.api-debug-sign]
+verify_jwt = false
