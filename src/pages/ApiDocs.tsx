@@ -41,6 +41,27 @@ const ApiDocs = () => {
       description: 'Cria um novo pedido',
     },
     {
+      method: 'GET',
+      path: '/api-variations',
+      scope: 'variations:read',
+      description: 'Lista variações de produtos (cor, tamanho, SKU, código de barras)',
+      params: 'product_id, page, limit',
+    },
+    {
+      method: 'GET',
+      path: '/api-stock',
+      scope: 'stock:read',
+      description: 'Consulta estoque por loja, com opção de agregação',
+      params: 'product_id, variation_id, store_id, aggregate (true|false), page, limit',
+    },
+    {
+      method: 'GET',
+      path: '/api-prices',
+      scope: 'prices:read',
+      description: 'Retorna as 4 tabelas de preço (varejo, atacado, exclusivo, promocional)',
+      params: 'product_id, variation_id, page, limit',
+    },
+    {
       method: 'POST',
       path: '/api-import',
       scope: 'import:write',
