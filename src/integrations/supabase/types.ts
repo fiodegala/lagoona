@@ -861,6 +861,162 @@ export type Database = {
         }
         Relationships: []
       }
+      crm_entity_mappings: {
+        Row: {
+          created_at: string
+          entity_type: string
+          external_id: string
+          external_sku: string | null
+          id: string
+          last_synced_at: string | null
+          local_id: string | null
+          local_sku: string | null
+          metadata: Json
+          sync_status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          entity_type: string
+          external_id: string
+          external_sku?: string | null
+          id?: string
+          last_synced_at?: string | null
+          local_id?: string | null
+          local_sku?: string | null
+          metadata?: Json
+          sync_status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          entity_type?: string
+          external_id?: string
+          external_sku?: string | null
+          id?: string
+          last_synced_at?: string | null
+          local_id?: string | null
+          local_sku?: string | null
+          metadata?: Json
+          sync_status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      crm_integration_config: {
+        Row: {
+          auth_header_name: string
+          auth_header_prefix: string
+          auto_sync_interval_minutes: number
+          base_url: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          last_error: string | null
+          last_full_sync_at: string | null
+          metadata: Json
+          sync_customers: boolean
+          sync_orders: boolean
+          sync_prices: boolean
+          sync_products: boolean
+          sync_stock: boolean
+          sync_variations: boolean
+          updated_at: string
+          webhook_secret: string | null
+        }
+        Insert: {
+          auth_header_name?: string
+          auth_header_prefix?: string
+          auto_sync_interval_minutes?: number
+          base_url?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_error?: string | null
+          last_full_sync_at?: string | null
+          metadata?: Json
+          sync_customers?: boolean
+          sync_orders?: boolean
+          sync_prices?: boolean
+          sync_products?: boolean
+          sync_stock?: boolean
+          sync_variations?: boolean
+          updated_at?: string
+          webhook_secret?: string | null
+        }
+        Update: {
+          auth_header_name?: string
+          auth_header_prefix?: string
+          auto_sync_interval_minutes?: number
+          base_url?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_error?: string | null
+          last_full_sync_at?: string | null
+          metadata?: Json
+          sync_customers?: boolean
+          sync_orders?: boolean
+          sync_prices?: boolean
+          sync_products?: boolean
+          sync_stock?: boolean
+          sync_variations?: boolean
+          updated_at?: string
+          webhook_secret?: string | null
+        }
+        Relationships: []
+      }
+      crm_sync_logs: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          details: Json
+          direction: string
+          entity_type: string
+          error_message: string | null
+          id: string
+          records_failed: number
+          records_inserted: number
+          records_processed: number
+          records_updated: number
+          started_at: string
+          status: string
+          triggered_by: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          details?: Json
+          direction?: string
+          entity_type: string
+          error_message?: string | null
+          id?: string
+          records_failed?: number
+          records_inserted?: number
+          records_processed?: number
+          records_updated?: number
+          started_at?: string
+          status?: string
+          triggered_by?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          details?: Json
+          direction?: string
+          entity_type?: string
+          error_message?: string | null
+          id?: string
+          records_failed?: number
+          records_inserted?: number
+          records_processed?: number
+          records_updated?: number
+          started_at?: string
+          status?: string
+          triggered_by?: string | null
+        }
+        Relationships: []
+      }
       customer_addresses: {
         Row: {
           address: string
