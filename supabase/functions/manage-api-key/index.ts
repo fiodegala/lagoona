@@ -1,5 +1,4 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import bcrypt from "npm:bcryptjs@2.4.3";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -17,6 +16,14 @@ const generateKey = (prefix: string, length: number) => {
   }
   return result;
 };
+
+async function sha256(message: string): Promise<string> {
+  const data = new TextEncoder().encode(message);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(hashBuffer))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -103,8 +110,9 @@ Deno.serve(async (req) => {
       const accessToken = generateKey("at_", 64);
       const webhookSecret = generateKey("whsec_", 32);
 
-      // Hash with bcrypt (cost factor 12)
-      const secretKeyHash = await bcrypt.hash(secretKey, await bcrypt.genSalt(12));
+      // Store the deterministic HMAC key material used by the public API verifier.
+      // The client signs with HMAC-SHA256(sha256(SECRET_API_KEY).hex(), payload).
+      const secretKeyHash = await sha256(secretKey);
 
       const { data, error } = await supabase
         .from("api_keys")
@@ -149,7 +157,7 @@ Deno.serve(async (req) => {
       const accessToken = generateKey("at_", 64);
       const webhookSecret = generateKey("whsec_", 32);
 
-      const secretKeyHash = await bcrypt.hash(secretKey, await bcrypt.genSalt(12));
+      const secretKeyHash = await sha256(secretKey);
 
       const { error } = await supabase
         .from("api_keys")
