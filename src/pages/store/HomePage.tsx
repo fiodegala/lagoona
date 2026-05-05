@@ -35,10 +35,22 @@ const normalizeBannerUrl = (url: string | null): string | null => {
   return url;
 };
 
+const WELCOME_COUPON = 'BEMVINDO10';
+
+const formatPhoneBR = (raw: string) => {
+  const d = raw.replace(/\D/g, '').slice(0, 11);
+  if (d.length <= 2) return d;
+  if (d.length <= 7) return `(${d.slice(0, 2)}) ${d.slice(2)}`;
+  if (d.length <= 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
+  return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
+};
+
 const NewsletterSection = () => {
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
   const [subscribed, setSubscribed] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,14 +58,22 @@ const NewsletterSection = () => {
       toast.error('Digite um e-mail válido');
       return;
     }
+    const phoneDigits = phone.replace(/\D/g, '');
+    if (phoneDigits && (phoneDigits.length < 10 || phoneDigits.length > 11)) {
+      toast.error('WhatsApp inválido. Use DDD + número.');
+      return;
+    }
     setLoading(true);
     try {
       const { error } = await supabase
         .from('newsletter_subscribers')
-        .insert({ email: email.trim().toLowerCase() });
+        .insert({
+          email: email.trim().toLowerCase(),
+          phone: phoneDigits || null,
+        } as any);
       if (error) {
         if (error.code === '23505') {
-          toast.info('Este e-mail já está cadastrado!');
+          toast.info('Você já está cadastrado! Use o cupom abaixo. 🎉');
         } else {
           throw error;
         }
@@ -69,30 +89,76 @@ const NewsletterSection = () => {
     }
   };
 
+  const handleCopyCoupon = async () => {
+    try {
+      await navigator.clipboard.writeText(WELCOME_COUPON);
+      setCopied(true);
+      toast.success('Cupom copiado!');
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error('Não foi possível copiar. Anote o cupom.');
+    }
+  };
+
   return (
     <section className="py-14 md:py-20 bg-store-accent">
       <div className="container mx-auto px-4 text-center">
-        <h2 className="text-3xl font-display font-bold text-white mb-2 italic">
+        <p className="text-store-gold uppercase tracking-[0.3em] text-xs mb-3 font-medium">
+          Oferta exclusiva
+        </p>
+        <h2 className="text-3xl md:text-4xl font-display font-bold text-white mb-2 italic">
           Ganhe 10% OFF na primeira compra!
         </h2>
         <p className="text-white/50 mb-8 max-w-xl mx-auto font-light tracking-wide">
-          Cadastre seu e-mail e receba ofertas exclusivas, novidades e promoções.
+          Cadastre seu e-mail e WhatsApp e receba ofertas exclusivas, novidades e o seu cupom de boas-vindas.
         </p>
         {subscribed ? (
-          <p className="text-white font-semibold text-lg">✅ Obrigado! Fique de olho no seu e-mail.</p>
+          <div className="max-w-md mx-auto space-y-4">
+            <p className="text-white font-semibold text-lg">✅ Obrigado! Use seu cupom abaixo:</p>
+            <button
+              type="button"
+              onClick={handleCopyCoupon}
+              className="w-full group flex items-center justify-between gap-3 px-5 py-4 bg-store-gold/10 border-2 border-dashed border-store-gold rounded-lg hover:bg-store-gold/20 transition-colors"
+              aria-label={`Copiar cupom ${WELCOME_COUPON}`}
+            >
+              <span className="text-store-gold font-display text-2xl font-bold tracking-widest">
+                {WELCOME_COUPON}
+              </span>
+              <span className="text-xs uppercase tracking-wider text-white/70 group-hover:text-white">
+                {copied ? 'Copiado ✓' : 'Toque para copiar'}
+              </span>
+            </button>
+            <p className="text-white/50 text-xs">
+              Use o cupom no checkout. Válido na primeira compra.
+            </p>
+          </div>
         ) : (
-          <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row gap-3 justify-center max-w-md mx-auto">
+          <form onSubmit={handleSubscribe} className="flex flex-col gap-3 max-w-md mx-auto">
             <input
               type="email"
               placeholder="Seu melhor e-mail"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="flex-1 px-4 py-3 bg-white/5 border border-white/20 text-white placeholder:text-white/40 focus:outline-none focus:border-store-gold transition-colors rounded-md"
+              className="px-4 py-3 bg-white/5 border border-white/20 text-white placeholder:text-white/40 focus:outline-none focus:border-store-gold transition-colors rounded-md"
               required
+              aria-label="E-mail"
+            />
+            <input
+              type="tel"
+              inputMode="numeric"
+              placeholder="WhatsApp (opcional) — (00) 00000-0000"
+              value={phone}
+              onChange={(e) => setPhone(formatPhoneBR(e.target.value))}
+              maxLength={16}
+              className="px-4 py-3 bg-white/5 border border-white/20 text-white placeholder:text-white/40 focus:outline-none focus:border-store-gold transition-colors rounded-md"
+              aria-label="WhatsApp"
             />
             <Button type="submit" size="lg" disabled={loading} className="font-semibold bg-store-gold text-store-dark hover:bg-store-gold/90 tracking-wide">
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Quero meu cupom!'}
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Quero meu cupom de 10% OFF'}
             </Button>
+            <p className="text-white/40 text-[11px] mt-1">
+              Ao se cadastrar, você concorda em receber comunicações da Fio de Gala.
+            </p>
           </form>
         )}
       </div>
