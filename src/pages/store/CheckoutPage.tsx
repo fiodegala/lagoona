@@ -34,6 +34,7 @@ const CheckoutPage = () => {
   const [orderComplete, setOrderComplete] = useState(false);
   const [orderId, setOrderId] = useState<string | null>(null);
   const [step, setStep] = useState<'info' | 'payment'>('info');
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>('pix');
   const [abandonedCartSaved, setAbandonedCartSaved] = useState(false);
 
   const [formData, setFormData] = useState({
