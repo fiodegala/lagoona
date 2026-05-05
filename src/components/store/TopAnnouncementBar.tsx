@@ -49,7 +49,7 @@ const TopAnnouncementBar = () => {
   const Icon = current.icon;
 
   return (
-    <div className="bg-store-primary text-store-accent text-xs sm:text-sm overflow-hidden">
+    <div className="bg-black text-white text-xs sm:text-sm overflow-hidden">
       <div className="container mx-auto px-4 py-2 flex items-center justify-center min-h-[36px]">
         <div
           className={`flex items-center gap-2 transition-all duration-300 ${
