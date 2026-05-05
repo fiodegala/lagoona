@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { deductStockForOrder, restoreStockForOrder } from "../_shared/stockUtils.ts";
+import { recordCouponUsageForOrder } from "../_shared/couponUsage.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -176,6 +177,11 @@ Deno.serve(async (req) => {
       await recoverAbandonedCart(supabase, orderId);
       // Register affiliate commission if applicable
       await registerAffiliateCommission(supabase, orderId);
+    }
+
+    // Record coupon usage on confirmation (idempotent — safe even if already done)
+    if (orderStatus === 'confirmed' && !updateError) {
+      await recordCouponUsageForOrder(supabase, orderId);
     }
 
     // Restore stock if order was confirmed but now cancelled/refunded

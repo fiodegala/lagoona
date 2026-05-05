@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { deductStockForOrder, restoreStockForOrder } from "../_shared/stockUtils.ts";
+import { recordCouponUsageForOrder } from "../_shared/couponUsage.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -253,6 +254,7 @@ async function createPayment(body: any, accessToken: string) {
     if (data.status === 'approved') {
       await deductStockForOrder(supabase, order_id);
       await recoverAbandonedCart(supabase, order_id);
+      await recordCouponUsageForOrder(supabase, order_id);
     }
   }
 
