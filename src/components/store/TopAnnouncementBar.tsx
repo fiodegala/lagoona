@@ -50,7 +50,7 @@ const TopAnnouncementBar = () => {
 
   return (
     <div className="bg-black text-white text-xs sm:text-sm overflow-hidden">
-      <div className="container mx-auto px-4 py-2 flex items-center justify-center min-h-[36px]">
+      <div className="container mx-auto px-4 py-3.5 flex items-center justify-center min-h-[52px]">
         <div
           className={`flex items-center gap-2 transition-all duration-300 ${
             visible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-1'
