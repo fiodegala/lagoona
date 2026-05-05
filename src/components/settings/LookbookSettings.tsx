@@ -175,6 +175,36 @@ const LookbookSettings = () => {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* Live preview */}
+        <div className="rounded-lg border overflow-hidden bg-store-dark">
+          <div className="flex items-center justify-between gap-2 px-4 py-2 border-b border-white/10 bg-store-dark/80">
+            <div className="flex items-center gap-2 text-white/70 text-xs">
+              <Eye className="h-3.5 w-3.5" />
+              Preview ao vivo {!config.enabled && <span className="text-amber-300">(desativado na home)</span>}
+            </div>
+            <span className="text-[10px] tracking-[0.25em] uppercase text-store-gold/80">
+              {(config.looks || []).filter((l) => l.image_url).length}/3 looks
+            </span>
+          </div>
+          {hasRenderableLook ? (
+            <div className="overflow-x-auto">
+              <div className="origin-top-left scale-[0.6] sm:scale-75 lg:scale-90 transform-gpu w-[166%] sm:w-[133%] lg:w-[111%]">
+                <LookbookSection
+                  config={config}
+                  productsMap={previewMap}
+                  forceRender
+                  disableLinks
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-16 text-white/40 text-sm gap-2">
+              <Layers className="h-8 w-8" />
+              Adicione um look com imagem para ver o preview.
+            </div>
+          )}
+        </div>
+
         <div className="flex items-center justify-between rounded-lg border p-3">
           <div>
             <p className="text-sm font-medium">Exibir lookbook na home</p>
