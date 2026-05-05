@@ -626,40 +626,56 @@ const CheckoutPage = () => {
 
                 <Separator />
 
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Subtotal</span>
-                    <span>{formatPrice(total)}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Frete</span>
-                    <span className={shippingResult?.price === 0 || !shippingResult ? 'text-success' : ''}>
-                      {!shippingResult ? 'Calcule o frete' : shippingResult.price === 0 ? 'Grátis' : formatPrice(shippingResult.price)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-sm text-emerald-600">
-                    <span className="flex items-center gap-1">
-                      <Percent className="h-3 w-3" />
-                      Desconto PIX (5%)
-                    </span>
-                    <span>-{formatPrice(pixDiscountAmount)}</span>
-                  </div>
-                </div>
+                {(() => {
+                  const showPixDiscount = step !== 'payment' || selectedPaymentMethod === 'pix';
+                  const finalTotal = showPixDiscount ? pixGrandTotal : grandTotal;
+                  return (
+                    <>
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Subtotal</span>
+                          <span>{formatPrice(total)}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Frete</span>
+                          <span className={shippingResult?.price === 0 || !shippingResult ? 'text-success' : ''}>
+                            {!shippingResult ? 'Calcule o frete' : shippingResult.price === 0 ? 'Grátis' : formatPrice(shippingResult.price)}
+                          </span>
+                        </div>
+                        {showPixDiscount && (
+                          <div className="flex justify-between text-sm text-emerald-600">
+                            <span className="flex items-center gap-1">
+                              <Percent className="h-3 w-3" />
+                              Desconto PIX (5%)
+                            </span>
+                            <span>-{formatPrice(pixDiscountAmount)}</span>
+                          </div>
+                        )}
+                      </div>
 
-                <Separator />
+                      <Separator />
 
-                <div className="flex justify-between font-semibold text-lg">
-                  <span>Total</span>
-                  <div className="text-right">
-                    <div className="text-sm text-muted-foreground line-through font-normal">
-                      {formatPrice(grandTotal)}
-                    </div>
-                    <span className="text-emerald-600">{formatPrice(pixGrandTotal)}</span>
-                    <p className="text-[11px] text-muted-foreground font-normal mt-0.5">
-                      pagando no PIX
-                    </p>
-                  </div>
-                </div>
+                      <div className="flex justify-between font-semibold text-lg">
+                        <span>Total</span>
+                        <div className="text-right">
+                          {showPixDiscount && (
+                            <div className="text-sm text-muted-foreground line-through font-normal">
+                              {formatPrice(grandTotal)}
+                            </div>
+                          )}
+                          <span className={showPixDiscount ? 'text-emerald-600' : ''}>
+                            {formatPrice(finalTotal)}
+                          </span>
+                          {showPixDiscount && (
+                            <p className="text-[11px] text-muted-foreground font-normal mt-0.5">
+                              {step === 'payment' ? 'desconto aplicado' : 'pagando no PIX'}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </>
+                  );
+                })()}
               </CardContent>
               {step === 'info' && (
                 <CardFooter>
