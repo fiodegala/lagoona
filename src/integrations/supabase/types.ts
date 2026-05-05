@@ -1353,18 +1353,21 @@ export type Database = {
           email: string
           id: string
           is_active: boolean
+          phone: string | null
         }
         Insert: {
           created_at?: string
           email: string
           id?: string
           is_active?: boolean
+          phone?: string | null
         }
         Update: {
           created_at?: string
           email?: string
           id?: string
           is_active?: boolean
+          phone?: string | null
         }
         Relationships: []
       }
