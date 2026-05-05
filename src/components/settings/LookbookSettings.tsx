@@ -37,16 +37,19 @@ const newLook = (): LookbookLook => ({
 });
 
 const LookbookSettings = () => {
-  const [config, setConfig] = useState<LookbookConfig>({
-    enabled: true,
+  const defaultConfig: LookbookConfig = {
+    enabled: false,
     title: 'Como combinar',
     subtitle: 'Looks completos, montados pelo nosso time de estilo.',
     eyebrow: 'Editorial',
     looks: [],
-  });
+  };
+  const [config, setConfig] = useState<LookbookConfig>(defaultConfig);
+  const [publishedConfig, setPublishedConfig] = useState<LookbookConfig>(defaultConfig);
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   useEffect(() => {
     (async () => {
