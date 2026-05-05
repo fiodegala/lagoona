@@ -13,7 +13,7 @@ import ImageUpload from '@/components/ImageUpload';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import LookbookSection, { type LookbookConfig, type LookbookLook, type LookbookMiniProduct } from '@/components/store/LookbookSection';
-import { useMemo } from 'react';
+
 
 const newLook = (): LookbookLook => ({
   id: crypto.randomUUID(),
