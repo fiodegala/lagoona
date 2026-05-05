@@ -155,6 +155,41 @@ const HomePage = () => {
         setPromoBanners(promoData);
         setMidBanners(midData);
 
+        // Best sellers: aggregate quantity from real orders (paid/shipped/delivered) + POS sales (last 90d)
+        try {
+          const since = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
+          const [{ data: ordersData }, { data: posData }] = await Promise.all([
+            supabase
+              .from('orders')
+              .select('items')
+              .gte('created_at', since)
+              .in('status', ['paid', 'processing', 'shipped', 'delivered', 'completed', 'concluido', 'enviado', 'pago']),
+            supabase
+              .from('pos_sales')
+              .select('items')
+              .gte('created_at', since)
+              .neq('status', 'cancelled'),
+          ]);
+          const qtyMap = new Map<string, number>();
+          const accumulate = (rows: { items: unknown }[] | null) => {
+            (rows || []).forEach((row) => {
+              const items = Array.isArray(row.items) ? (row.items as Array<{ product_id?: string; quantity?: number; is_gift?: boolean }>) : [];
+              items.forEach((it) => {
+                if (!it?.product_id || it.is_gift) return;
+                qtyMap.set(it.product_id, (qtyMap.get(it.product_id) || 0) + (Number(it.quantity) || 0));
+              });
+            });
+          };
+          accumulate(ordersData as never);
+          accumulate(posData as never);
+          const ranked = Array.from(qtyMap.entries())
+            .sort((a, b) => b[1] - a[1])
+            .map(([id]) => id);
+          setBestSellerIds(ranked);
+        } catch (e) {
+          console.error('Error computing best sellers:', e);
+        }
+
         // Set featured product from config
         const featuredId = (featuredConfig.data?.value as { product_id?: string })?.product_id;
         if (featuredId && featuredId !== 'none') {
