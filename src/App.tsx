@@ -24,6 +24,7 @@ const ApiKeys = lazy(() => import("./pages/ApiKeys"));
 const ApiDocs = lazy(() => import("./pages/ApiDocs"));
 const Reviews = lazy(() => import("./pages/Reviews"));
 const Coupons = lazy(() => import("./pages/Coupons"));
+const CouponUsages = lazy(() => import("./pages/CouponUsages"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const ProductDetails = lazy(() => import("./pages/ProductDetails"));
 const POSPage = lazy(() => import("./pages/POSPage"));
