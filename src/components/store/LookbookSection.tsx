@@ -127,7 +127,7 @@ const LookbookSection = ({ config: configProp, productsMap: productsMapProp, for
           {looks.map((look, idx) => {
             const products = (look.product_ids || [])
               .map((pid) => productsMap[pid])
-              .filter(Boolean) as MiniProduct[];
+              .filter(Boolean) as LookbookMiniProduct[];
             const primaryHref =
               look.link_url || (products[0] ? `/produto/${products[0].id}` : '/loja');
 
