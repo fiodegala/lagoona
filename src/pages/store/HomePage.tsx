@@ -19,6 +19,7 @@ const DealsCountdownSection = lazy(() => import('@/components/store/DealsCountdo
 const VideoTestimonialsSection = lazy(() => import('@/components/store/VideoTestimonialsSection'));
 const FeaturedProductSection = lazy(() => import('@/components/store/FeaturedProductSection'));
 const CustomerFeedbackSection = lazy(() => import('@/components/store/CustomerFeedbackSection'));
+const LookbookSection = lazy(() => import('@/components/store/LookbookSection'));
 
 // Normalize banner link_url: strip origin for internal links so React Router works
 const normalizeBannerUrl = (url: string | null): string | null => {
@@ -712,6 +713,11 @@ const HomePage = () => {
           )}
         </div>
       </section>
+
+      {/* Lookbook editorial — Como combinar */}
+      <Suspense fallback={null}>
+        <LookbookSection />
+      </Suspense>
 
       {/* Feedbacks de Clientes (Prints + Avaliações) */}
       <Suspense fallback={null}>
