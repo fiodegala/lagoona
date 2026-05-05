@@ -133,16 +133,6 @@ const LookbookSettings = () => {
     }
   };
 
-  if (isLoading) {
-    return (
-      <Card className="card-elevated">
-        <CardContent className="flex items-center justify-center py-8">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-        </CardContent>
-      </Card>
-    );
-  }
-
   // Build product map for live preview from currently-selected products in the editor.
   const previewMap: Record<string, LookbookMiniProduct> = useMemo(() => {
     const ids = new Set<string>();
@@ -163,6 +153,17 @@ const LookbookSettings = () => {
   }, [config.looks, products]);
 
   const hasRenderableLook = (config.looks || []).some((l) => l.image_url);
+
+  if (isLoading) {
+    return (
+      <Card className="card-elevated">
+        <CardContent className="flex items-center justify-center py-8">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="card-elevated">
       <CardHeader>
