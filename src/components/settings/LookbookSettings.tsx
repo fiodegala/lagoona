@@ -5,13 +5,24 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { Loader2, Check, Plus, Trash2, Layers, X, Eye } from 'lucide-react';
+import { Loader2, Check, Plus, Trash2, Layers, X, Eye, Rocket, AlertCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { productsService, Product } from '@/services/products';
 import { toast } from 'sonner';
 import ImageUpload from '@/components/ImageUpload';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import LookbookSection, { type LookbookConfig, type LookbookLook, type LookbookMiniProduct } from '@/components/store/LookbookSection';
 
 
