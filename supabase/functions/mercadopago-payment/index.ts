@@ -254,6 +254,7 @@ async function createPayment(body: any, accessToken: string) {
     if (data.status === 'approved') {
       await deductStockForOrder(supabase, order_id);
       await recoverAbandonedCart(supabase, order_id);
+      await recordCouponUsageForOrder(supabase, order_id);
     }
   }
 
