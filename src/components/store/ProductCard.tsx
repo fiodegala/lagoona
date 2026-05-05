@@ -293,12 +293,17 @@ const ProductCard = memo(forwardRef<HTMLAnchorElement, ProductCardProps>(({ prod
             </p>
           </div>
 
-          {/* Free shipping badge */}
-          {product.price >= 299 && (
-            <Badge variant="outline" className="mt-2 text-store-gold border-store-gold/40 text-xs">
-              Frete Grátis
+          {/* Badges de benefícios */}
+          <div className="mt-2 flex flex-wrap items-center gap-1.5">
+            <Badge variant="outline" className="text-emerald-600 border-emerald-600/40 text-xs font-semibold">
+              Pix -5%
             </Badge>
-          )}
+            {product.price >= 299 && (
+              <Badge variant="outline" className="text-store-gold border-store-gold/40 text-xs">
+                Frete Grátis
+              </Badge>
+            )}
+          </div>
         </div>
       </div>
     </Link>
