@@ -568,7 +568,7 @@ const MercadoPagoPayment = ({
         <CardTitle className="text-lg">Forma de Pagamento</CardTitle>
       </CardHeader>
       <CardContent>
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v); onMethodChange?.(v); }}>
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="pix" className="gap-2">
               <QrCode className="h-4 w-4" />
