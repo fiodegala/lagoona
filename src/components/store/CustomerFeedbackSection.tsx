@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { Star, ChevronLeft, ChevronRight, Quote } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 
 interface FeedbackPrint {
@@ -67,10 +68,12 @@ const CustomerFeedbackSection = () => {
 
   if (prints.length === 0 && reviews.length === 0) return null;
 
+  const defaultTab = prints.length > 0 ? 'prints' : 'reviews';
+
   return (
-    <section className="py-16 md:py-20">
+    <section className="py-12 md:py-16">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-10">
+        <div className="text-center mb-8">
           <h2 className="text-2xl md:text-3xl font-display font-bold italic">
             O que dizem nossos clientes
           </h2>
@@ -80,104 +83,107 @@ const CustomerFeedbackSection = () => {
           </p>
         </div>
 
-        {/* Prints de Feedback (WhatsApp/Instagram) */}
-        {prints.length > 0 && (
-          <div className="mb-12">
-            <h3 className="text-lg font-semibold mb-4 text-center text-muted-foreground">
-              📱 Prints de clientes
-            </h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-              {currentPrints.map((print) => (
-                <div
-                  key={print.id}
-                  className="group relative rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow bg-background border"
-                >
-                  <img
-                    src={print.image_url}
-                    alt={print.customer_name ? `Feedback de ${print.customer_name}` : 'Feedback de cliente'}
-                    className="w-full aspect-[9/16] object-cover"
-                    loading="lazy"
-                  />
-                  {(print.customer_name || print.caption) && (
-                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3 pt-8">
-                      {print.customer_name && (
-                        <p className="text-white text-sm font-semibold">{print.customer_name}</p>
-                      )}
-                      {print.caption && (
-                        <p className="text-white/70 text-xs line-clamp-2">{print.caption}</p>
-                      )}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-
-            {totalPrintPages > 1 && (
-              <div className="flex items-center justify-center gap-4 mt-6">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-8 w-8 rounded-full"
-                  onClick={() => setCurrentPrintPage(prev => Math.max(0, prev - 1))}
-                  disabled={currentPrintPage === 0}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <div className="flex items-center gap-2">
-                  {Array.from({ length: totalPrintPages }).map((_, i) => (
-                    <button
-                      key={i}
-                      className={`w-2 h-2 rounded-full transition-all ${
-                        i === currentPrintPage ? 'bg-store-gold scale-125' : 'bg-muted-foreground/30'
-                      }`}
-                      onClick={() => setCurrentPrintPage(i)}
-                    />
-                  ))}
-                </div>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-8 w-8 rounded-full"
-                  onClick={() => setCurrentPrintPage(prev => Math.min(totalPrintPages - 1, prev + 1))}
-                  disabled={currentPrintPage === totalPrintPages - 1}
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
+        <Tabs defaultValue={defaultTab} className="w-full">
+          <TabsList className="mx-auto mb-8 grid w-full max-w-sm grid-cols-2">
+            {prints.length > 0 && (
+              <TabsTrigger value="prints">📱 Prints</TabsTrigger>
             )}
-          </div>
-        )}
+            {reviews.length > 0 && (
+              <TabsTrigger value="reviews">⭐ Avaliações</TabsTrigger>
+            )}
+          </TabsList>
 
-        {/* Avaliações com Estrelas */}
-        {reviews.length > 0 && (
-          <div>
-            <h3 className="text-lg font-semibold mb-4 text-center text-muted-foreground">
-              ⭐ Avaliações dos clientes
-            </h3>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {reviews.map((review) => (
-                <div
-                  key={review.id}
-                  className="bg-background rounded-xl p-5 shadow-sm border hover:shadow-md transition-shadow relative"
-                >
-                  <Quote className="absolute top-3 right-3 h-6 w-6 text-store-gold/20" />
-                  <StarRating rating={review.rating} />
-                  {review.title && (
-                    <h4 className="font-semibold mt-3 text-sm">{review.title}</h4>
-                  )}
-                  {review.comment && (
-                    <p className="text-muted-foreground text-sm mt-2 line-clamp-3">
-                      {review.comment}
-                    </p>
-                  )}
-                  <p className="text-xs font-medium mt-3 text-store-gold">
-                    — {review.customer_name}
-                  </p>
+          {prints.length > 0 && (
+            <TabsContent value="prints">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+                {currentPrints.map((print) => (
+                  <div
+                    key={print.id}
+                    className="group relative rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow bg-background border"
+                  >
+                    <img
+                      src={print.image_url}
+                      alt={print.customer_name ? `Feedback de ${print.customer_name}` : 'Feedback de cliente'}
+                      className="w-full aspect-[9/16] object-cover"
+                      loading="lazy"
+                    />
+                    {(print.customer_name || print.caption) && (
+                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3 pt-8">
+                        {print.customer_name && (
+                          <p className="text-white text-sm font-semibold">{print.customer_name}</p>
+                        )}
+                        {print.caption && (
+                          <p className="text-white/70 text-xs line-clamp-2">{print.caption}</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {totalPrintPages > 1 && (
+                <div className="flex items-center justify-center gap-4 mt-6">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8 rounded-full"
+                    onClick={() => setCurrentPrintPage(prev => Math.max(0, prev - 1))}
+                    disabled={currentPrintPage === 0}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <div className="flex items-center gap-2">
+                    {Array.from({ length: totalPrintPages }).map((_, i) => (
+                      <button
+                        key={i}
+                        className={`w-2 h-2 rounded-full transition-all ${
+                          i === currentPrintPage ? 'bg-store-gold scale-125' : 'bg-muted-foreground/30'
+                        }`}
+                        onClick={() => setCurrentPrintPage(i)}
+                      />
+                    ))}
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8 rounded-full"
+                    onClick={() => setCurrentPrintPage(prev => Math.min(totalPrintPages - 1, prev + 1))}
+                    disabled={currentPrintPage === totalPrintPages - 1}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
+              )}
+            </TabsContent>
+          )}
+
+          {reviews.length > 0 && (
+            <TabsContent value="reviews">
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {reviews.map((review) => (
+                  <div
+                    key={review.id}
+                    className="bg-background rounded-xl p-5 shadow-sm border hover:shadow-md transition-shadow relative"
+                  >
+                    <Quote className="absolute top-3 right-3 h-6 w-6 text-store-gold/20" />
+                    <StarRating rating={review.rating} />
+                    {review.title && (
+                      <h4 className="font-semibold mt-3 text-sm">{review.title}</h4>
+                    )}
+                    {review.comment && (
+                      <p className="text-muted-foreground text-sm mt-2 line-clamp-3">
+                        {review.comment}
+                      </p>
+                    )}
+                    <p className="text-xs font-medium mt-3 text-store-gold">
+                      — {review.customer_name}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </TabsContent>
+          )}
+        </Tabs>
       </div>
     </section>
   );
