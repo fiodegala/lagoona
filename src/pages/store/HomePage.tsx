@@ -109,6 +109,7 @@ const HomePage = () => {
   const [currentMidBanner, setCurrentMidBanner] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [featuredProduct, setFeaturedProduct] = useState<Product | null>(null);
+  const [bestSellerIds, setBestSellerIds] = useState<string[]>([]);
   const [wholesaleVideoUrl, setWholesaleVideoUrl] = useState('/assets/atacado-fdg.mp4');
   const [wholesaleAutoplay, setWholesaleAutoplay] = useState(true);
 
@@ -153,6 +154,41 @@ const HomePage = () => {
         setHeroBanners(bannersData.slice(0, 3));
         setPromoBanners(promoData);
         setMidBanners(midData);
+
+        // Best sellers: aggregate quantity from real orders (paid/shipped/delivered) + POS sales (last 90d)
+        try {
+          const since = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
+          const [{ data: ordersData }, { data: posData }] = await Promise.all([
+            supabase
+              .from('orders')
+              .select('items')
+              .gte('created_at', since)
+              .in('status', ['paid', 'processing', 'shipped', 'delivered', 'completed', 'concluido', 'enviado', 'pago']),
+            supabase
+              .from('pos_sales')
+              .select('items')
+              .gte('created_at', since)
+              .neq('status', 'cancelled'),
+          ]);
+          const qtyMap = new Map<string, number>();
+          const accumulate = (rows: { items: unknown }[] | null) => {
+            (rows || []).forEach((row) => {
+              const items = Array.isArray(row.items) ? (row.items as Array<{ product_id?: string; quantity?: number; is_gift?: boolean }>) : [];
+              items.forEach((it) => {
+                if (!it?.product_id || it.is_gift) return;
+                qtyMap.set(it.product_id, (qtyMap.get(it.product_id) || 0) + (Number(it.quantity) || 0));
+              });
+            });
+          };
+          accumulate(ordersData as never);
+          accumulate(posData as never);
+          const ranked = Array.from(qtyMap.entries())
+            .sort((a, b) => b[1] - a[1])
+            .map(([id]) => id);
+          setBestSellerIds(ranked);
+        } catch (e) {
+          console.error('Error computing best sellers:', e);
+        }
 
         // Set featured product from config
         const featuredId = (featuredConfig.data?.value as { product_id?: string })?.product_id;
@@ -226,14 +262,30 @@ const HomePage = () => {
     [products]
   );
 
+  // Best sellers: ordered by real sales (orders + POS) over last 90 days, fallback to most-viewed (current `products` order)
+  const bestSellers = useMemo(() => {
+    if (bestSellerIds.length === 0) return products.slice(0, 10);
+    const byId = new Map(products.map(p => [p.id, p]));
+    const ranked = bestSellerIds
+      .map(id => byId.get(id))
+      .filter((p): p is Product => Boolean(p && (p as Product).is_active));
+    // Fill up to 10 with remaining products to avoid empty grid
+    const seen = new Set(ranked.map(p => p.id));
+    for (const p of products) {
+      if (ranked.length >= 10) break;
+      if (!seen.has(p.id)) ranked.push(p);
+    }
+    return ranked.slice(0, 10);
+  }, [bestSellerIds, products]);
+
   // Batch-fetch meta for all products shown on the page
   const allDisplayedProductIds = useMemo(() => {
     const ids = new Set<string>();
     newProducts.slice(0, 15).forEach(p => ids.add(p.id));
-    products.slice(0, 10).forEach(p => ids.add(p.id));
+    bestSellers.forEach(p => ids.add(p.id));
     dealProducts.forEach(p => ids.add(p.id));
     return Array.from(ids);
-  }, [newProducts, products, dealProducts]);
+  }, [newProducts, bestSellers, dealProducts]);
 
   const { meta: productsMeta } = useProductCardsMeta(allDisplayedProductIds);
 
@@ -624,6 +676,7 @@ const HomePage = () => {
               <div>
                 <h2 className="text-2xl md:text-3xl font-display font-bold italic">Mais vendidos</h2>
                 <div className="w-12 h-0.5 bg-store-gold mt-2" />
+                <p className="text-sm text-muted-foreground mt-3">Os queridinhos dos últimos 90 dias</p>
               </div>
             </div>
             <Button variant="outline" asChild className="gap-2 hidden sm:flex">
@@ -638,10 +691,17 @@ const HomePage = () => {
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
-          ) : products.length > 0 ? (
+          ) : bestSellers.length > 0 ? (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
-              {products.slice(0, 10).map((product) => (
-                <ProductCard key={product.id} product={product} meta={productsMeta[product.id]} />
+              {bestSellers.map((product, idx) => (
+                <div key={product.id} className="relative">
+                  {idx < 3 && bestSellerIds.length > 0 && (
+                    <div className="absolute top-2 left-2 z-10 px-2 py-1 rounded-md bg-store-gold text-store-dark text-[10px] font-bold tracking-wider uppercase shadow-md flex items-center gap-1">
+                      🔥 Top {idx + 1}
+                    </div>
+                  )}
+                  <ProductCard product={product} meta={productsMeta[product.id]} />
+                </div>
               ))}
             </div>
           ) : (
