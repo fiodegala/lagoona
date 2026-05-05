@@ -221,32 +221,34 @@ const ProductCard = memo(forwardRef<HTMLAnchorElement, ProductCardProps>(({ prod
 
         {/* Content */}
         <div className="p-4">
-          {/* Rating - skeleton enquanto carrega */}
-          {!(meta || localLoaded) ? (
-            <div className="flex items-center gap-1 mb-2 animate-pulse">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <div key={star} className="h-3.5 w-3.5 rounded-sm bg-muted" />
-              ))}
-              <div className="h-3 w-12 rounded bg-muted ml-1" />
-            </div>
-          ) : (
-            <div className="flex items-center gap-1 mb-2">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <Star
-                  key={star}
-                  className={cn(
-                    "h-3.5 w-3.5",
-                    reviewCount > 0 && star <= Math.round(avgRating)
-                      ? "fill-warning text-warning"
-                      : "text-muted-foreground/30"
-                  )}
-                />
-              ))}
-              <span className="text-xs text-muted-foreground ml-1">
-                {reviewCount > 0 ? `(${reviewCount})` : 'Sem avaliações'}
-              </span>
-            </div>
-          )}
+          {/* Rating - altura fixa para evitar layout shift */}
+          <div className="flex items-center gap-1 mb-2 h-5">
+            {!(meta || localLoaded) ? (
+              <div className="flex items-center gap-1 animate-pulse w-full">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <div key={star} className="h-4 w-4 sm:h-3.5 sm:w-3.5 rounded-sm bg-muted" />
+                ))}
+                <div className="h-3 w-10 rounded bg-muted ml-1" />
+              </div>
+            ) : (
+              <>
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Star
+                    key={star}
+                    className={cn(
+                      "h-4 w-4 sm:h-3.5 sm:w-3.5",
+                      reviewCount > 0 && star <= Math.round(avgRating)
+                        ? "fill-warning text-warning"
+                        : "text-muted-foreground/30"
+                    )}
+                  />
+                ))}
+                <span className="text-[11px] sm:text-xs text-muted-foreground ml-1 leading-none">
+                  {reviewCount > 0 ? `(${reviewCount})` : 'Sem avaliações'}
+                </span>
+              </>
+            )}
+          </div>
 
           {/* Title */}
           <h3 className="font-medium text-sm line-clamp-2 min-h-[2.5rem] group-hover:text-store-gold transition-colors">
