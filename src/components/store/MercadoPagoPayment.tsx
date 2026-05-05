@@ -19,6 +19,7 @@ interface PaymentFormProps {
   description?: string;
   onPaymentSuccess: (paymentData: any) => void;
   onPaymentError: (error: string) => void;
+  onMethodChange?: (method: string) => void;
 }
 
 const formatPrice = (price: number) =>
