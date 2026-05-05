@@ -180,6 +180,26 @@ const HomePage = () => {
     loadData();
   }, []);
 
+  // Preload first hero image to improve LCP
+  useEffect(() => {
+    const firstBanner = heroBanners[0];
+    if (!firstBanner || firstBanner.media_type === 'video' || !firstBanner.image_url) return;
+
+    const url = getOptimizedImageUrl(firstBanner.image_url, { width: 1920, quality: 80 });
+    if (!url) return;
+
+    const link = document.createElement('link');
+    link.rel = 'preload';
+    link.as = 'image';
+    link.href = url;
+    link.setAttribute('fetchpriority', 'high');
+    document.head.appendChild(link);
+
+    return () => {
+      document.head.removeChild(link);
+    };
+  }, [heroBanners]);
+
   // Auto-rotate hero banners
   useEffect(() => {
     if (heroBanners.length <= 1) return;
