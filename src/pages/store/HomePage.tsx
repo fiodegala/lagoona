@@ -415,6 +415,64 @@ const HomePage = () => {
         </div>
       </section>
 
+      {/* Categorias em Destaque */}
+      {categories.length > 0 && (
+        <section className="py-12 md:py-16 bg-store-secondary/50">
+          <div className="container mx-auto px-4">
+            <div className="flex items-end justify-between mb-8">
+              <div>
+                <h2 className="text-2xl md:text-3xl font-display font-bold italic">Categorias em destaque</h2>
+                <div className="w-12 h-0.5 bg-store-gold mt-2" />
+                <p className="text-sm text-muted-foreground mt-3">Encontre o que procura mais rápido</p>
+              </div>
+              <Button variant="outline" asChild className="gap-2 hidden sm:flex">
+                <Link to="/categorias">
+                  Ver todas
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
+              {categories.slice(0, 6).map((category, index) => (
+                <Link
+                  key={category.id}
+                  to={`/loja/categoria/${category.slug}`}
+                  className="group relative overflow-hidden rounded-xl bg-background hover:shadow-lg transition-all hover:-translate-y-1 aspect-[4/5]"
+                  aria-label={`Ver categoria ${category.name}`}
+                >
+                  <div className="absolute inset-0 bg-muted flex items-center justify-center overflow-hidden">
+                    {category.image_url ? (
+                      <img
+                        src={getOptimizedImageUrl(category.image_url, { width: 400, quality: 75 })}
+                        alt={category.name}
+                        loading="lazy"
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                      />
+                    ) : (
+                      <span className="text-5xl" aria-hidden="true">{categoryIcons[index % categoryIcons.length]}</span>
+                    )}
+                  </div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 p-3 md:p-4">
+                    <span className="text-sm md:text-base font-semibold text-white line-clamp-2">{category.name}</span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+
+            <div className="mt-6 text-center sm:hidden">
+              <Button variant="outline" asChild className="gap-2">
+                <Link to="/categorias">
+                  Ver todas as categorias
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Ofertas do Dia com Countdown */}
       {!isLoading && (
         <Suspense fallback={null}>
@@ -508,57 +566,6 @@ const HomePage = () => {
                   ))}
                 </div>
               )}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Categorias em Destaque */}
-      {categories.length > 0 && (
-        <section className="py-16 md:py-20 bg-store-secondary/50">
-          <div className="container mx-auto px-4">
-            <div className="flex items-center justify-between mb-10">
-              <div>
-                <h2 className="text-2xl md:text-3xl font-display font-bold italic">Categorias em destaque</h2>
-                <div className="w-12 h-0.5 bg-store-gold mt-2" />
-              </div>
-              <Button variant="outline" asChild className="gap-2 hidden sm:flex">
-                <Link to="/categorias">
-                  Ver todas
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </Button>
-            </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 md:gap-6">
-              {categories.slice(0, 8).map((category, index) => (
-                <Link
-                  key={category.id}
-                  to={`/loja/categoria/${category.slug}`}
-                  className="group relative overflow-hidden rounded-xl bg-background hover:shadow-lg transition-all hover:-translate-y-1 aspect-[4/5]"
-                >
-                  <div className="absolute inset-0 bg-muted flex items-center justify-center overflow-hidden">
-                    {category.image_url ? (
-                      <img src={getOptimizedImageUrl(category.image_url, { width: 400, quality: 75 })} alt={category.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                    ) : (
-                      <span className="text-5xl">{categoryIcons[index % categoryIcons.length]}</span>
-                    )}
-                  </div>
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                  <div className="absolute bottom-0 left-0 right-0 p-4">
-                    <span className="text-sm md:text-base font-semibold text-white line-clamp-2">{category.name}</span>
-                  </div>
-                </Link>
-              ))}
-            </div>
-
-            <div className="mt-6 text-center sm:hidden">
-              <Button variant="outline" asChild className="gap-2">
-                <Link to="/categorias">
-                  Ver todas as categorias
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </Button>
             </div>
           </div>
         </section>
