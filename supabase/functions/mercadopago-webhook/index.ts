@@ -179,6 +179,11 @@ Deno.serve(async (req) => {
       await registerAffiliateCommission(supabase, orderId);
     }
 
+    // Record coupon usage on confirmation (idempotent — safe even if already done)
+    if (orderStatus === 'confirmed' && !updateError) {
+      await recordCouponUsageForOrder(supabase, orderId);
+    }
+
     // Restore stock if order was confirmed but now cancelled/refunded
     if (wasAlreadyConfirmed && ['cancelled'].includes(orderStatus) && !updateError) {
       await restoreStockForOrder(supabase, orderId);
