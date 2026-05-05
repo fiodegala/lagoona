@@ -109,6 +109,7 @@ const HomePage = () => {
   const [currentMidBanner, setCurrentMidBanner] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [featuredProduct, setFeaturedProduct] = useState<Product | null>(null);
+  const [bestSellerIds, setBestSellerIds] = useState<string[]>([]);
   const [wholesaleVideoUrl, setWholesaleVideoUrl] = useState('/assets/atacado-fdg.mp4');
   const [wholesaleAutoplay, setWholesaleAutoplay] = useState(true);
 
