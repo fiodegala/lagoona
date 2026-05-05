@@ -75,6 +75,7 @@ export const navItems: MenuItem[] = [
   { icon: FileText, label: 'Orçamentos', path: '/admin/orcamentos', menuKey: 'quotes' },
   { icon: Star, label: 'Avaliações', path: '/admin/reviews', menuKey: 'reviews', requireAdmin: true },
   { icon: Tag, label: 'Cupons', path: '/admin/coupons', menuKey: 'coupons', requireAdmin: true },
+  { icon: History, label: 'Usos de Cupons', path: '/admin/coupons/usos', menuKey: 'coupon-usages', requireAdmin: true },
   { icon: Package, label: 'Combos', path: '/admin/combos', menuKey: 'combos', requireAdmin: true },
   { icon: Target, label: 'Compre Junto', path: '/admin/upsells', menuKey: 'upsells', requireAdmin: true },
   { icon: Truck, label: 'Frete', path: '/admin/shipping', menuKey: 'shipping', requireAdmin: true },
