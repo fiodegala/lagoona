@@ -1,18 +1,19 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { Loader2, Check, Plus, Trash2, Layers, X } from 'lucide-react';
+import { Loader2, Check, Plus, Trash2, Layers, X, Eye } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { productsService, Product } from '@/services/products';
 import { toast } from 'sonner';
 import ImageUpload from '@/components/ImageUpload';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import type { LookbookConfig, LookbookLook } from '@/components/store/LookbookSection';
+import LookbookSection, { type LookbookConfig, type LookbookLook, type LookbookMiniProduct } from '@/components/store/LookbookSection';
+
 
 const newLook = (): LookbookLook => ({
   id: crypto.randomUUID(),
@@ -132,6 +133,27 @@ const LookbookSettings = () => {
     }
   };
 
+  // Build product map for live preview from currently-selected products in the editor.
+  const previewMap: Record<string, LookbookMiniProduct> = useMemo(() => {
+    const ids = new Set<string>();
+    (config.looks || []).forEach((l) => (l.product_ids || []).forEach((id) => ids.add(id)));
+    const map: Record<string, LookbookMiniProduct> = {};
+    products.forEach((p) => {
+      if (ids.has(p.id)) {
+        map[p.id] = {
+          id: p.id,
+          name: p.name,
+          price: Number(p.price) || 0,
+          promotional_price:
+            (p as Product & { promotional_price?: number | null }).promotional_price ?? null,
+        };
+      }
+    });
+    return map;
+  }, [config.looks, products]);
+
+  const hasRenderableLook = (config.looks || []).some((l) => l.image_url);
+
   if (isLoading) {
     return (
       <Card className="card-elevated">
@@ -154,6 +176,36 @@ const LookbookSettings = () => {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* Live preview */}
+        <div className="rounded-lg border overflow-hidden bg-store-dark">
+          <div className="flex items-center justify-between gap-2 px-4 py-2 border-b border-white/10 bg-store-dark/80">
+            <div className="flex items-center gap-2 text-white/70 text-xs">
+              <Eye className="h-3.5 w-3.5" />
+              Preview ao vivo {!config.enabled && <span className="text-amber-300">(desativado na home)</span>}
+            </div>
+            <span className="text-[10px] tracking-[0.25em] uppercase text-store-gold/80">
+              {(config.looks || []).filter((l) => l.image_url).length}/3 looks
+            </span>
+          </div>
+          {hasRenderableLook ? (
+            <div className="overflow-x-auto">
+              <div className="origin-top-left scale-[0.6] sm:scale-75 lg:scale-90 transform-gpu w-[166%] sm:w-[133%] lg:w-[111%]">
+                <LookbookSection
+                  config={config}
+                  productsMap={previewMap}
+                  forceRender
+                  disableLinks
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-16 text-white/40 text-sm gap-2">
+              <Layers className="h-8 w-8" />
+              Adicione um look com imagem para ver o preview.
+            </div>
+          )}
+        </div>
+
         <div className="flex items-center justify-between rounded-lg border p-3">
           <div>
             <p className="text-sm font-medium">Exibir lookbook na home</p>

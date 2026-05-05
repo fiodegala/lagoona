@@ -22,21 +22,37 @@ export interface LookbookConfig {
   looks?: LookbookLook[];
 }
 
-interface MiniProduct {
+export interface LookbookMiniProduct {
   id: string;
   name: string;
   price: number;
   promotional_price: number | null;
 }
 
+interface LookbookSectionProps {
+  /** When provided, skips DB fetch and renders this config (used for live preview). */
+  config?: LookbookConfig | null;
+  /** Optional product map for preview; otherwise fetched from DB based on config. */
+  productsMap?: Record<string, LookbookMiniProduct>;
+  /** When true, renders even if `enabled` is false (for preview). */
+  forceRender?: boolean;
+  /** Disable navigation links (preview). */
+  disableLinks?: boolean;
+}
+
 const formatPrice = (n: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(n);
 
-const LookbookSection = () => {
-  const [config, setConfig] = useState<LookbookConfig | null>(null);
-  const [productsMap, setProductsMap] = useState<Record<string, MiniProduct>>({});
+const LookbookSection = ({ config: configProp, productsMap: productsMapProp, forceRender, disableLinks }: LookbookSectionProps = {}) => {
+  const [fetchedConfig, setFetchedConfig] = useState<LookbookConfig | null>(null);
+  const [fetchedMap, setFetchedMap] = useState<Record<string, LookbookMiniProduct>>({});
+
+  const config = configProp !== undefined ? configProp : fetchedConfig;
+  const productsMap = productsMapProp ?? fetchedMap;
+  const usingProps = configProp !== undefined;
 
   useEffect(() => {
+    if (usingProps) return;
     let active = true;
     (async () => {
       const { data } = await supabase
@@ -46,7 +62,7 @@ const LookbookSection = () => {
         .maybeSingle();
       if (!active) return;
       const cfg = (data?.value as LookbookConfig | null) || null;
-      setConfig(cfg);
+      setFetchedConfig(cfg);
 
       const ids = Array.from(
         new Set((cfg?.looks || []).flatMap((l) => l.product_ids || []).filter(Boolean))
@@ -57,20 +73,22 @@ const LookbookSection = () => {
           .select('id, name, price, promotional_price')
           .in('id', ids);
         if (!active) return;
-        const map: Record<string, MiniProduct> = {};
+        const map: Record<string, LookbookMiniProduct> = {};
         (prods || []).forEach((p) => {
-          map[p.id] = p as MiniProduct;
+          map[p.id] = p as LookbookMiniProduct;
         });
-        setProductsMap(map);
+        setFetchedMap(map);
       }
     })();
     return () => {
       active = false;
     };
-  }, []);
+  }, [usingProps]);
 
   const looks = (config?.looks || []).filter((l) => l.image_url).slice(0, 3);
-  if (!config?.enabled || looks.length === 0) return null;
+  if (!config) return null;
+  if (!forceRender && !config.enabled) return null;
+  if (looks.length === 0) return null;
 
   const eyebrow = config.eyebrow || 'Editorial';
   const title = config.title || 'Como combinar';
@@ -109,20 +127,38 @@ const LookbookSection = () => {
           {looks.map((look, idx) => {
             const products = (look.product_ids || [])
               .map((pid) => productsMap[pid])
-              .filter(Boolean) as MiniProduct[];
+              .filter(Boolean) as LookbookMiniProduct[];
             const primaryHref =
               look.link_url || (products[0] ? `/produto/${products[0].id}` : '/loja');
+
+            const ImageWrap = disableLinks
+              ? ({ children, className }: { children: React.ReactNode; className?: string }) => (
+                  <div className={className} aria-label={`Ver look: ${look.title}`}>{children}</div>
+                )
+              : ({ children, className }: { children: React.ReactNode; className?: string }) => (
+                  <Link to={primaryHref} className={className} aria-label={`Ver look: ${look.title}`}>
+                    {children}
+                  </Link>
+                );
+
+            const ProductRow = ({ id, children }: { id: string; children: React.ReactNode }) =>
+              disableLinks ? (
+                <span className="flex items-center justify-between gap-3 py-1.5 text-sm">{children}</span>
+              ) : (
+                <Link
+                  to={`/produto/${id}`}
+                  className="flex items-center justify-between gap-3 py-1.5 text-sm hover:text-store-gold transition-colors group/item"
+                >
+                  {children}
+                </Link>
+              );
 
             return (
               <article
                 key={look.id}
                 className="group relative flex flex-col overflow-hidden rounded-sm bg-store-secondary/30 border border-store-gold/10"
               >
-                <Link
-                  to={primaryHref}
-                  className="relative block overflow-hidden aspect-[3/4]"
-                  aria-label={`Ver look: ${look.title}`}
-                >
+                <ImageWrap className="relative block overflow-hidden aspect-[3/4]">
                   <img
                     src={getOptimizedImageUrl(look.image_url, { width: 900, quality: 80 })}
                     alt={look.title}
@@ -151,7 +187,7 @@ const LookbookSection = () => {
                       </p>
                     )}
                   </div>
-                </Link>
+                </ImageWrap>
 
                 {products.length > 0 && (
                   <div className="p-5 md:p-6 border-t border-store-gold/10 space-y-2">
@@ -166,18 +202,17 @@ const LookbookSection = () => {
                             : p.price;
                         return (
                           <li key={p.id}>
-                            <Link
-                              to={`/produto/${p.id}`}
-                              className="flex items-center justify-between gap-3 py-1.5 text-sm hover:text-store-gold transition-colors group/item"
-                            >
+                            <ProductRow id={p.id}>
                               <span className="truncate font-light">{p.name}</span>
                               <span className="flex items-center gap-2 shrink-0">
                                 <span className="text-white/80 font-medium">
                                   {formatPrice(price)}
                                 </span>
-                                <ArrowUpRight className="h-3.5 w-3.5 opacity-0 -translate-x-1 group-hover/item:opacity-100 group-hover/item:translate-x-0 transition-all" />
+                                {!disableLinks && (
+                                  <ArrowUpRight className="h-3.5 w-3.5 opacity-0 -translate-x-1 group-hover/item:opacity-100 group-hover/item:translate-x-0 transition-all" />
+                                )}
                               </span>
-                            </Link>
+                            </ProductRow>
                           </li>
                         );
                       })}
