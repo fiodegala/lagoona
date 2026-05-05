@@ -346,6 +346,11 @@ const CheckoutPage = () => {
             ...(getAffiliateCode() ? { affiliate_code: getAffiliateCode() } : {}),
             customer_document: formData.document.trim(),
             customer_phone: formData.phone.trim(),
+            ...(appliedCoupon ? {
+              coupon_id: appliedCoupon.coupon.id,
+              coupon_code: appliedCoupon.coupon.code,
+              coupon_discount: appliedCoupon.discount,
+            } : {}),
           },
         });
 
