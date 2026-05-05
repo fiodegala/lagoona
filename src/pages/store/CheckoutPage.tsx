@@ -257,6 +257,22 @@ const CheckoutPage = () => {
     });
 
     try {
+      // Re-validate applied coupon against the checkout email (per-customer limit)
+      if (appliedCoupon) {
+        const productIds = items.map(i => i.productId);
+        const recheck = await couponsService.validateCoupon(
+          appliedCoupon.coupon.code,
+          getSubtotal(),
+          trimmedEmail.toLowerCase(),
+          productIds,
+        );
+        if (!recheck.valid) {
+          toast.error(recheck.error || 'Cupom não pode mais ser utilizado');
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
       // Verify real-time stock availability before creating order
       const stockChecks = await Promise.all(
         items.map(async (item) => {
