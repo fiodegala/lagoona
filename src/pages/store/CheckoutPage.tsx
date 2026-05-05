@@ -586,6 +586,7 @@ const CheckoutPage = () => {
                   description={`Pedido #${orderId.slice(0, 8).toUpperCase()}`}
                   onPaymentSuccess={handlePaymentSuccess}
                   onPaymentError={handlePaymentError}
+                  onMethodChange={setSelectedPaymentMethod}
                 />
               )
             )}
