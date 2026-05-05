@@ -172,11 +172,72 @@ const CouponUsages = () => {
     });
   }, [rows, couponFilter, statusFilter, search, showOnlyDuplicates]);
 
+  type SortKey = 'used_at' | 'coupon_code' | 'customer_email' | 'discount_applied' | 'order_total' | 'status';
+  const [sortKey, setSortKey] = useState<SortKey>('used_at');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
+
+  const toggleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortKey(key);
+      setSortDir(key === 'used_at' || key === 'discount_applied' || key === 'order_total' ? 'desc' : 'asc');
+    }
+    setPage(1);
+  };
+
+  const sorted = useMemo(() => {
+    const arr = [...filtered];
+    const dir = sortDir === 'asc' ? 1 : -1;
+    arr.sort((a, b) => {
+      let av: any; let bv: any;
+      switch (sortKey) {
+        case 'used_at': av = new Date(a.used_at).getTime(); bv = new Date(b.used_at).getTime(); break;
+        case 'coupon_code': av = a.coupon_code; bv = b.coupon_code; break;
+        case 'customer_email': av = a.customer_email; bv = b.customer_email; break;
+        case 'discount_applied': av = a.discount_applied; bv = b.discount_applied; break;
+        case 'order_total': av = a.order_total ?? -1; bv = b.order_total ?? -1; break;
+        case 'status': av = statusFor(a.payment_status, a.order_status).label; bv = statusFor(b.payment_status, b.order_status).label; break;
+      }
+      if (av < bv) return -1 * dir;
+      if (av > bv) return 1 * dir;
+      return 0;
+    });
+    return arr;
+  }, [filtered, sortKey, sortDir]);
+
+  // Reset to first page when filters change
+  useEffect(() => { setPage(1); }, [couponFilter, statusFilter, search, showOnlyDuplicates, pageSize]);
+
+  const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const paged = useMemo(
+    () => sorted.slice((currentPage - 1) * pageSize, currentPage * pageSize),
+    [sorted, currentPage, pageSize],
+  );
+
   const totals = useMemo(() => {
     const totalDiscount = filtered.reduce((s, r) => s + r.discount_applied, 0);
     const duplicates = filtered.filter((r) => r.duplicate).length;
     return { count: filtered.length, totalDiscount, duplicates };
   }, [filtered]);
+
+  const SortHeader = ({ label, k, align = 'left' }: { label: string; k: SortKey; align?: 'left' | 'right' }) => (
+    <button
+      type="button"
+      onClick={() => toggleSort(k)}
+      className={`inline-flex items-center gap-1 hover:text-foreground transition-colors ${align === 'right' ? 'flex-row-reverse' : ''}`}
+    >
+      {label}
+      {sortKey === k ? (
+        sortDir === 'asc' ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />
+      ) : (
+        <ChevronsUpDown className="h-3 w-3 opacity-50" />
+      )}
+    </button>
+  );
 
   const exportCSV = () => {
     const header = [
