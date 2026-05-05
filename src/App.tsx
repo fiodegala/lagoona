@@ -242,6 +242,14 @@ const App = () => (
                 }
               />
               <Route
+                path="/admin/coupons/usos"
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <CouponUsages />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
                 path="/admin/combos"
                 element={
                   <ProtectedRoute requiredRole="admin">
