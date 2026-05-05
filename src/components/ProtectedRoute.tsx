@@ -9,6 +9,7 @@ const routeToMenuKey: Record<string, string> = {
   '/admin/curva-abc': 'abc-curve',
   '/admin/reviews': 'reviews',
   '/admin/coupons': 'coupons',
+  '/admin/coupons/usos': 'coupon-usages',
   '/admin/combos': 'combos',
   '/admin/upsells': 'upsells',
   '/admin/shipping': 'shipping',
