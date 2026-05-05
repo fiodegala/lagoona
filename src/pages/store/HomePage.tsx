@@ -392,26 +392,26 @@ const HomePage = () => {
       </section>
 
       {/* Benefits Bar */}
-      <section className="border-b border-store-gold/10 bg-store-dark">
+      <section className="border-b border-store-gold/10 bg-store-dark" aria-label="Benefícios da loja">
         <div className="container mx-auto px-4 py-5">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <ul className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
             {[
               { icon: Truck, title: 'Frete Grátis', desc: 'Acima de R$ 299,00' },
               { icon: Sparkles, title: 'PIX -5%', desc: 'Desconto à vista' },
               { icon: CreditCard, title: 'Até 6x sem juros', desc: 'No cartão de crédito' },
               { icon: RefreshCw, title: 'Troca Grátis', desc: 'Em até 7 dias' },
             ].map(({ icon: Icon, title, desc }) => (
-              <div key={title} className="flex items-center gap-3">
-                <div className="p-2.5">
-                  <Icon className="h-5 w-5 text-store-gold" />
+              <li key={title} className="flex items-center gap-2.5 sm:gap-3">
+                <div className="p-1.5 sm:p-2.5 flex-shrink-0">
+                  <Icon className="h-5 w-5 text-store-gold" aria-hidden="true" />
                 </div>
-                <div>
-                  <h4 className="font-semibold text-sm text-white">{title}</h4>
-                  <p className="text-xs text-white/50">{desc}</p>
+                <div className="min-w-0">
+                  <h4 className="font-semibold text-sm sm:text-sm text-white leading-tight">{title}</h4>
+                  <p className="text-xs text-white/75 leading-tight mt-0.5">{desc}</p>
                 </div>
-              </div>
+              </li>
             ))}
-          </div>
+          </ul>
         </div>
       </section>
 
