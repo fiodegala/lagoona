@@ -388,67 +388,113 @@ const CouponUsages = () => {
                 Nenhum uso de cupom encontrado para os filtros aplicados.
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Data</TableHead>
-                      <TableHead>Cupom</TableHead>
-                      <TableHead>Cliente</TableHead>
-                      <TableHead>Pedido</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Desconto</TableHead>
-                      <TableHead className="text-right">Total Pedido</TableHead>
-                      <TableHead>Alerta</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filtered.map((r) => {
-                      const s = statusFor(r.payment_status, r.order_status);
-                      return (
-                        <TableRow key={r.id} className={r.duplicate ? 'bg-destructive/5' : ''}>
-                          <TableCell className="whitespace-nowrap">
-                            {format(new Date(r.used_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}
-                          </TableCell>
-                          <TableCell>
-                            <div className="font-medium">{r.coupon_code}</div>
-                            {r.coupon_description && (
-                              <div className="text-xs text-muted-foreground line-clamp-1">
-                                {r.coupon_description}
-                              </div>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-sm">{r.customer_email}</TableCell>
-                          <TableCell>
-                            {r.order_id ? (
-                              <code className="text-xs">{r.order_id.slice(0, 8)}</code>
-                            ) : (
-                              <span className="text-muted-foreground text-xs">—</span>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={s.variant}>{s.label}</Badge>
-                          </TableCell>
-                          <TableCell className="text-right font-medium">
-                            {formatCurrency(r.discount_applied)}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            {r.order_total != null ? formatCurrency(r.order_total) : '—'}
-                          </TableCell>
-                          <TableCell>
-                            {r.duplicate && (
-                              <Badge variant="destructive" className="gap-1">
-                                <AlertTriangle className="h-3 w-3" />
-                                Duplicada
-                              </Badge>
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </div>
+              <>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead><SortHeader label="Data" k="used_at" /></TableHead>
+                        <TableHead><SortHeader label="Cupom" k="coupon_code" /></TableHead>
+                        <TableHead><SortHeader label="Cliente" k="customer_email" /></TableHead>
+                        <TableHead>Pedido</TableHead>
+                        <TableHead><SortHeader label="Status" k="status" /></TableHead>
+                        <TableHead className="text-right"><SortHeader label="Desconto" k="discount_applied" align="right" /></TableHead>
+                        <TableHead className="text-right"><SortHeader label="Total Pedido" k="order_total" align="right" /></TableHead>
+                        <TableHead>Alerta</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {paged.map((r) => {
+                        const s = statusFor(r.payment_status, r.order_status);
+                        return (
+                          <TableRow key={r.id} className={r.duplicate ? 'bg-destructive/5' : ''}>
+                            <TableCell className="whitespace-nowrap">
+                              {format(new Date(r.used_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                            </TableCell>
+                            <TableCell>
+                              <div className="font-medium">{r.coupon_code}</div>
+                              {r.coupon_description && (
+                                <div className="text-xs text-muted-foreground line-clamp-1">
+                                  {r.coupon_description}
+                                </div>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-sm">{r.customer_email}</TableCell>
+                            <TableCell>
+                              {r.order_id ? (
+                                <code className="text-xs">{r.order_id.slice(0, 8)}</code>
+                              ) : (
+                                <span className="text-muted-foreground text-xs">—</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant={s.variant}>{s.label}</Badge>
+                            </TableCell>
+                            <TableCell className="text-right font-medium">
+                              {formatCurrency(r.discount_applied)}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              {r.order_total != null ? formatCurrency(r.order_total) : '—'}
+                            </TableCell>
+                            <TableCell>
+                              {r.duplicate && (
+                                <Badge variant="destructive" className="gap-1">
+                                  <AlertTriangle className="h-3 w-3" />
+                                  Duplicada
+                                </Badge>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 border-t">
+                  <div className="text-sm text-muted-foreground">
+                    Mostrando{' '}
+                    <span className="font-medium text-foreground">
+                      {(currentPage - 1) * pageSize + 1}
+                      {'–'}
+                      {Math.min(currentPage * pageSize, sorted.length)}
+                    </span>{' '}
+                    de <span className="font-medium text-foreground">{sorted.length}</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-muted-foreground">Por página</span>
+                      <Select value={String(pageSize)} onValueChange={(v) => setPageSize(Number(v))}>
+                        <SelectTrigger className="w-[80px] h-8"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {[10, 25, 50, 100, 200].map((n) => (
+                            <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="outline" size="icon" className="h-8 w-8"
+                        onClick={() => setPage((p) => Math.max(1, p - 1))}
+                        disabled={currentPage <= 1}
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                      <span className="text-sm px-2">
+                        Página <span className="font-medium">{currentPage}</span> de{' '}
+                        <span className="font-medium">{totalPages}</span>
+                      </span>
+                      <Button
+                        variant="outline" size="icon" className="h-8 w-8"
+                        onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                        disabled={currentPage >= totalPages}
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </>
             )}
           </CardContent>
         </Card>
