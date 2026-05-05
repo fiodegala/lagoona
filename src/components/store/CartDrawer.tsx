@@ -117,6 +117,38 @@ const CartDrawer = () => {
 
             {/* Footer */}
             <div className="border-t p-4 space-y-3 bg-background">
+              {/* Free shipping progress */}
+              {(() => {
+                const FREE_SHIPPING_THRESHOLD = 299;
+                const remaining = Math.max(0, FREE_SHIPPING_THRESHOLD - total);
+                const progress = Math.min(100, (total / FREE_SHIPPING_THRESHOLD) * 100);
+                const reached = remaining === 0;
+                return (
+                  <div className="space-y-1.5">
+                    <div className="flex items-center gap-2 text-xs">
+                      {reached ? (
+                        <>
+                          <PartyPopper className="h-3.5 w-3.5 text-success shrink-0" />
+                          <span className="font-medium text-success">Você ganhou frete grátis! 🎉</span>
+                        </>
+                      ) : (
+                        <>
+                          <Truck className="h-3.5 w-3.5 text-store-gold shrink-0" />
+                          <span className="text-foreground">
+                            Faltam <span className="font-semibold text-store-accent">{formatPrice(remaining)}</span> para o <span className="font-semibold">frete grátis</span>
+                          </span>
+                        </>
+                      )}
+                    </div>
+                    <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                      <div
+                        className={`h-full transition-all duration-500 ${reached ? 'bg-success' : 'bg-store-gold'}`}
+                        style={{ width: `${progress}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })()}
               <div className="space-y-1.5 text-sm">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Subtotal</span>
