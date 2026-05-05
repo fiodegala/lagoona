@@ -383,19 +383,8 @@ const CheckoutPage = () => {
     }
     localStorage.removeItem(ABANDONED_CART_SESSION_KEY);
 
-    // Record coupon usage (enforces per-customer limit on next attempts)
-    if (appliedCoupon && formData.email) {
-      try {
-        await couponsService.recordUsage(
-          appliedCoupon.coupon.id,
-          formData.email.trim().toLowerCase(),
-          appliedCoupon.discount,
-          orderId || undefined,
-        );
-      } catch (couponErr) {
-        console.error('Error recording coupon usage:', couponErr);
-      }
-    }
+    // Coupon usage is now recorded server-side by the payment webhook
+    // when the payment is confirmed (idempotent via metadata.coupon_id)
 
     // Track checkout_complete event
     trackAnalyticsEvent('checkout_complete', {
