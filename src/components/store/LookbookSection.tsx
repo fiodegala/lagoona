@@ -131,16 +131,34 @@ const LookbookSection = ({ config: configProp, productsMap: productsMapProp, for
             const primaryHref =
               look.link_url || (products[0] ? `/produto/${products[0].id}` : '/loja');
 
+            const ImageWrap = disableLinks
+              ? ({ children, className }: { children: React.ReactNode; className?: string }) => (
+                  <div className={className} aria-label={`Ver look: ${look.title}`}>{children}</div>
+                )
+              : ({ children, className }: { children: React.ReactNode; className?: string }) => (
+                  <Link to={primaryHref} className={className} aria-label={`Ver look: ${look.title}`}>
+                    {children}
+                  </Link>
+                );
+
+            const ProductRow = ({ id, children }: { id: string; children: React.ReactNode }) =>
+              disableLinks ? (
+                <span className="flex items-center justify-between gap-3 py-1.5 text-sm">{children}</span>
+              ) : (
+                <Link
+                  to={`/produto/${id}`}
+                  className="flex items-center justify-between gap-3 py-1.5 text-sm hover:text-store-gold transition-colors group/item"
+                >
+                  {children}
+                </Link>
+              );
+
             return (
               <article
                 key={look.id}
                 className="group relative flex flex-col overflow-hidden rounded-sm bg-store-secondary/30 border border-store-gold/10"
               >
-                <Link
-                  to={primaryHref}
-                  className="relative block overflow-hidden aspect-[3/4]"
-                  aria-label={`Ver look: ${look.title}`}
-                >
+                <ImageWrap className="relative block overflow-hidden aspect-[3/4]">
                   <img
                     src={getOptimizedImageUrl(look.image_url, { width: 900, quality: 80 })}
                     alt={look.title}
@@ -169,7 +187,7 @@ const LookbookSection = ({ config: configProp, productsMap: productsMapProp, for
                       </p>
                     )}
                   </div>
-                </Link>
+                </ImageWrap>
 
                 {products.length > 0 && (
                   <div className="p-5 md:p-6 border-t border-store-gold/10 space-y-2">
@@ -184,18 +202,17 @@ const LookbookSection = ({ config: configProp, productsMap: productsMapProp, for
                             : p.price;
                         return (
                           <li key={p.id}>
-                            <Link
-                              to={`/produto/${p.id}`}
-                              className="flex items-center justify-between gap-3 py-1.5 text-sm hover:text-store-gold transition-colors group/item"
-                            >
+                            <ProductRow id={p.id}>
                               <span className="truncate font-light">{p.name}</span>
                               <span className="flex items-center gap-2 shrink-0">
                                 <span className="text-white/80 font-medium">
                                   {formatPrice(price)}
                                 </span>
-                                <ArrowUpRight className="h-3.5 w-3.5 opacity-0 -translate-x-1 group-hover/item:opacity-100 group-hover/item:translate-x-0 transition-all" />
+                                {!disableLinks && (
+                                  <ArrowUpRight className="h-3.5 w-3.5 opacity-0 -translate-x-1 group-hover/item:opacity-100 group-hover/item:translate-x-0 transition-all" />
+                                )}
                               </span>
-                            </Link>
+                            </ProductRow>
                           </li>
                         );
                       })}
