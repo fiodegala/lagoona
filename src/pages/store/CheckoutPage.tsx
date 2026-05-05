@@ -30,7 +30,7 @@ const getOrCreateSessionId = () => {
 };
 
 const CheckoutPage = () => {
-  const { items, getTotal, getSubtotal, clearCart, getItemCount, comboFreeShipping } = useCart();
+  const { items, getTotal, getSubtotal, clearCart, getItemCount, comboFreeShipping, appliedCoupon } = useCart();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderComplete, setOrderComplete] = useState(false);
   const [orderId, setOrderId] = useState<string | null>(null);
