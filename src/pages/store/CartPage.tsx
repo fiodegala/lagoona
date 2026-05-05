@@ -8,9 +8,11 @@ import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import StoreLayout from '@/components/store/StoreLayout';
 import { useCart } from '@/contexts/CartContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
 const CartPage = () => {
+  const { user } = useAuth();
   const { 
     items, 
     updateQuantity, 
