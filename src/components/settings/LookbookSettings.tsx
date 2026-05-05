@@ -143,6 +143,26 @@ const LookbookSettings = () => {
     );
   }
 
+  // Build product map for live preview from currently-selected products in the editor.
+  const previewMap: Record<string, LookbookMiniProduct> = useMemo(() => {
+    const ids = new Set<string>();
+    (config.looks || []).forEach((l) => (l.product_ids || []).forEach((id) => ids.add(id)));
+    const map: Record<string, LookbookMiniProduct> = {};
+    products.forEach((p) => {
+      if (ids.has(p.id)) {
+        map[p.id] = {
+          id: p.id,
+          name: p.name,
+          price: Number(p.price) || 0,
+          promotional_price:
+            (p as Product & { promotional_price?: number | null }).promotional_price ?? null,
+        };
+      }
+    });
+    return map;
+  }, [config.looks, products]);
+
+  const hasRenderableLook = (config.looks || []).some((l) => l.image_url);
   return (
     <Card className="card-elevated">
       <CardHeader>
