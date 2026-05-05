@@ -306,6 +306,27 @@ const CartPage = () => {
                   <span>Total</span>
                   <span className="text-primary">{formatPrice(total)}</span>
                 </div>
+
+                {/* PIX 5% discount preview */}
+                {(() => {
+                  const pixDiscount = Math.round(total * 5) / 100;
+                  const pixTotal = Math.round((total - pixDiscount) * 100) / 100;
+                  return (
+                    <div className="rounded-md bg-emerald-500/10 border border-emerald-500/30 p-3 text-sm">
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold text-emerald-700 dark:text-emerald-400">
+                          Pagando no PIX (-5%)
+                        </span>
+                        <span className="font-bold text-emerald-700 dark:text-emerald-400">
+                          {formatPrice(pixTotal)}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Economize {formatPrice(pixDiscount)} escolhendo PIX no pagamento.
+                      </p>
+                    </div>
+                  );
+                })()}
               </CardContent>
               <CardFooter className="flex-col gap-3">
                 <Button asChild className="w-full gap-2" size="lg">
