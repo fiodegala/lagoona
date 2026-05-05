@@ -48,6 +48,7 @@ const MercadoPagoPayment = ({
   description = 'Compra na Loja',
   onPaymentSuccess,
   onPaymentError,
+  onMethodChange,
 }: PaymentFormProps) => {
   const [activeTab, setActiveTab] = useState('pix');
   const [isProcessing, setIsProcessing] = useState(false);
