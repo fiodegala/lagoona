@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { deductStockForOrder, restoreStockForOrder } from "../_shared/stockUtils.ts";
+import { recordCouponUsageForOrder } from "../_shared/couponUsage.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
