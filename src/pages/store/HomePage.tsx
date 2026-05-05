@@ -262,14 +262,30 @@ const HomePage = () => {
     [products]
   );
 
+  // Best sellers: ordered by real sales (orders + POS) over last 90 days, fallback to most-viewed (current `products` order)
+  const bestSellers = useMemo(() => {
+    if (bestSellerIds.length === 0) return products.slice(0, 10);
+    const byId = new Map(products.map(p => [p.id, p]));
+    const ranked = bestSellerIds
+      .map(id => byId.get(id))
+      .filter((p): p is Product => Boolean(p && (p as Product).is_active));
+    // Fill up to 10 with remaining products to avoid empty grid
+    const seen = new Set(ranked.map(p => p.id));
+    for (const p of products) {
+      if (ranked.length >= 10) break;
+      if (!seen.has(p.id)) ranked.push(p);
+    }
+    return ranked.slice(0, 10);
+  }, [bestSellerIds, products]);
+
   // Batch-fetch meta for all products shown on the page
   const allDisplayedProductIds = useMemo(() => {
     const ids = new Set<string>();
     newProducts.slice(0, 15).forEach(p => ids.add(p.id));
-    products.slice(0, 10).forEach(p => ids.add(p.id));
+    bestSellers.forEach(p => ids.add(p.id));
     dealProducts.forEach(p => ids.add(p.id));
     return Array.from(ids);
-  }, [newProducts, products, dealProducts]);
+  }, [newProducts, bestSellers, dealProducts]);
 
   const { meta: productsMeta } = useProductCardsMeta(allDisplayedProductIds);
 
