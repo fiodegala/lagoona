@@ -455,10 +455,54 @@ const LookbookSettings = () => {
           </Button>
         </div>
 
-        <Button onClick={handleSave} disabled={isSaving} className="gap-2">
-          {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-          Salvar lookbook
-        </Button>
+        <div className="flex flex-col sm:flex-row gap-2 pt-2 border-t">
+          <Button
+            variant="outline"
+            onClick={handleSaveDraft}
+            disabled={isSaving}
+            className="gap-2"
+          >
+            {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+            Salvar rascunho
+          </Button>
+
+          <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+            <AlertDialogTrigger asChild>
+              <Button
+                disabled={isSaving || !hasRenderableLook}
+                className="gap-2 bg-store-gold text-store-dark hover:bg-store-gold/90"
+              >
+                <Rocket className="h-4 w-4" />
+                {publishedConfig.enabled ? 'Republicar e aplicar' : 'Publicar e aplicar'}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle className="flex items-center gap-2">
+                  <AlertCircle className="h-5 w-5 text-store-gold" />
+                  Publicar Lookbook na home?
+                </AlertDialogTitle>
+                <AlertDialogDescription>
+                  As alterações ficarão visíveis para todos os visitantes da loja imediatamente após confirmar.
+                  {' '}
+                  Você terá <strong>{(config.looks || []).filter((l) => l.image_url).length}</strong> look(s) ativo(s).
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={isSaving}>Cancelar</AlertDialogCancel>
+                <AlertDialogAction onClick={handlePublish} disabled={isSaving}>
+                  {isSaving ? 'Publicando...' : 'Sim, publicar agora'}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+
+          {!hasRenderableLook && (
+            <span className="text-xs text-muted-foreground self-center">
+              Adicione ao menos 1 look com imagem para publicar.
+            </span>
+          )}
+        </div>
       </CardContent>
     </Card>
   );
