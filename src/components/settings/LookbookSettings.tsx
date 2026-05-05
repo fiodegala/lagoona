@@ -5,13 +5,24 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { Loader2, Check, Plus, Trash2, Layers, X, Eye } from 'lucide-react';
+import { Loader2, Check, Plus, Trash2, Layers, X, Eye, Rocket, AlertCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { productsService, Product } from '@/services/products';
 import { toast } from 'sonner';
 import ImageUpload from '@/components/ImageUpload';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import LookbookSection, { type LookbookConfig, type LookbookLook, type LookbookMiniProduct } from '@/components/store/LookbookSection';
 
 
@@ -26,16 +37,19 @@ const newLook = (): LookbookLook => ({
 });
 
 const LookbookSettings = () => {
-  const [config, setConfig] = useState<LookbookConfig>({
-    enabled: true,
+  const defaultConfig: LookbookConfig = {
+    enabled: false,
     title: 'Como combinar',
     subtitle: 'Looks completos, montados pelo nosso time de estilo.',
     eyebrow: 'Editorial',
     looks: [],
-  });
+  };
+  const [config, setConfig] = useState<LookbookConfig>(defaultConfig);
+  const [publishedConfig, setPublishedConfig] = useState<LookbookConfig>(defaultConfig);
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -47,13 +61,15 @@ const LookbookSettings = () => {
         setProducts(allProducts.filter((p) => p.is_active));
         if (configRes.data?.value) {
           const v = configRes.data.value as LookbookConfig;
-          setConfig({
-            enabled: v.enabled ?? true,
+          const loaded: LookbookConfig = {
+            enabled: v.enabled ?? false,
             title: v.title ?? 'Como combinar',
             subtitle: v.subtitle ?? '',
             eyebrow: v.eyebrow ?? 'Editorial',
             looks: Array.isArray(v.looks) ? v.looks : [],
-          });
+          };
+          setConfig(loaded);
+          setPublishedConfig(loaded);
         }
       } catch (err) {
         console.error('Error loading lookbook settings:', err);
@@ -91,43 +107,86 @@ const LookbookSettings = () => {
     updateLook(lookIdx, { product_ids: next });
   };
 
-  const handleSave = async () => {
+  const persist = async (cfg: LookbookConfig) => {
+    const cleaned: LookbookConfig = {
+      ...cfg,
+      looks: (cfg.looks || []).map((l) => ({
+        id: l.id || crypto.randomUUID(),
+        title: l.title?.trim() || 'Sem título',
+        description: l.description?.trim() || '',
+        image_url: l.image_url || '',
+        link_url: l.link_url?.trim() || '',
+        product_ids: (l.product_ids || []).filter(Boolean),
+        tag: l.tag?.trim() || '',
+      })),
+    };
+
+    const { data: existing } = await supabase
+      .from('store_config')
+      .select('id')
+      .eq('key', 'lookbook')
+      .maybeSingle();
+
+    const value = cleaned as unknown as Record<string, unknown>;
+    const res = existing
+      ? await supabase
+          .from('store_config')
+          .update({ value: value as never, is_public: true, updated_at: new Date().toISOString() })
+          .eq('key', 'lookbook')
+      : await supabase
+          .from('store_config')
+          .insert({ key: 'lookbook', value: value as never, is_public: true } as never);
+
+    if (res.error) throw res.error;
+    return cleaned;
+  };
+
+  // Save draft (does NOT change visibility on home).
+  const handleSaveDraft = async () => {
     setIsSaving(true);
     try {
-      const cleaned: LookbookConfig = {
-        ...config,
-        looks: (config.looks || []).map((l) => ({
-          id: l.id || crypto.randomUUID(),
-          title: l.title?.trim() || 'Sem título',
-          description: l.description?.trim() || '',
-          image_url: l.image_url || '',
-          link_url: l.link_url?.trim() || '',
-          product_ids: (l.product_ids || []).filter(Boolean),
-          tag: l.tag?.trim() || '',
-        })),
-      };
-
-      const { data: existing } = await supabase
-        .from('store_config')
-        .select('id')
-        .eq('key', 'lookbook')
-        .maybeSingle();
-
-      const value = cleaned as unknown as Record<string, unknown>;
-      const res = existing
-        ? await supabase
-            .from('store_config')
-            .update({ value: value as never, is_public: true, updated_at: new Date().toISOString() })
-            .eq('key', 'lookbook')
-        : await supabase
-            .from('store_config')
-            .insert({ key: 'lookbook', value: value as never, is_public: true } as never);
-
-      if (res.error) throw res.error;
-      toast.success('Lookbook atualizado!');
+      const draft: LookbookConfig = { ...config, enabled: publishedConfig.enabled ?? false };
+      const saved = await persist(draft);
+      setPublishedConfig(saved);
+      setConfig(saved);
+      toast.success('Rascunho salvo. Lookbook ainda não está visível na home.');
     } catch (err) {
       console.error(err);
-      toast.error('Erro ao salvar lookbook');
+      toast.error('Erro ao salvar rascunho');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Publish: enables on home and persists current edits.
+  const handlePublish = async () => {
+    setIsSaving(true);
+    try {
+      const toPublish: LookbookConfig = { ...config, enabled: true };
+      const saved = await persist(toPublish);
+      setPublishedConfig(saved);
+      setConfig(saved);
+      toast.success('Lookbook publicado e visível na home!');
+    } catch (err) {
+      console.error(err);
+      toast.error('Erro ao publicar');
+    } finally {
+      setIsSaving(false);
+      setConfirmOpen(false);
+    }
+  };
+
+  // Unpublish: hides from home but keeps content.
+  const handleUnpublish = async () => {
+    setIsSaving(true);
+    try {
+      const saved = await persist({ ...config, enabled: false });
+      setPublishedConfig(saved);
+      setConfig(saved);
+      toast.success('Lookbook ocultado da home.');
+    } catch (err) {
+      console.error(err);
+      toast.error('Erro ao ocultar');
     } finally {
       setIsSaving(false);
     }
@@ -206,15 +265,35 @@ const LookbookSettings = () => {
           )}
         </div>
 
-        <div className="flex items-center justify-between rounded-lg border p-3">
-          <div>
-            <p className="text-sm font-medium">Exibir lookbook na home</p>
-            <p className="text-xs text-muted-foreground">Aparece logo após "Mais vendidos".</p>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-lg border p-3">
+          <div className="flex items-start gap-2">
+            {publishedConfig.enabled ? (
+              <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 text-xs font-medium">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                Publicado na home
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-muted text-muted-foreground text-xs font-medium">
+                <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/60" />
+                Não publicado
+              </span>
+            )}
+            <p className="text-xs text-muted-foreground">
+              {publishedConfig.enabled
+                ? 'A seção "Como combinar" está visível na home.'
+                : 'Edite à vontade. A seção só aparece na home depois de publicar.'}
+            </p>
           </div>
-          <Switch
-            checked={!!config.enabled}
-            onCheckedChange={(v) => setConfig((c) => ({ ...c, enabled: v }))}
-          />
+          {publishedConfig.enabled && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleUnpublish}
+              disabled={isSaving}
+            >
+              Despublicar
+            </Button>
+          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -376,10 +455,54 @@ const LookbookSettings = () => {
           </Button>
         </div>
 
-        <Button onClick={handleSave} disabled={isSaving} className="gap-2">
-          {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-          Salvar lookbook
-        </Button>
+        <div className="flex flex-col sm:flex-row gap-2 pt-2 border-t">
+          <Button
+            variant="outline"
+            onClick={handleSaveDraft}
+            disabled={isSaving}
+            className="gap-2"
+          >
+            {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+            Salvar rascunho
+          </Button>
+
+          <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+            <AlertDialogTrigger asChild>
+              <Button
+                disabled={isSaving || !hasRenderableLook}
+                className="gap-2 bg-store-gold text-store-dark hover:bg-store-gold/90"
+              >
+                <Rocket className="h-4 w-4" />
+                {publishedConfig.enabled ? 'Republicar e aplicar' : 'Publicar e aplicar'}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle className="flex items-center gap-2">
+                  <AlertCircle className="h-5 w-5 text-store-gold" />
+                  Publicar Lookbook na home?
+                </AlertDialogTitle>
+                <AlertDialogDescription>
+                  As alterações ficarão visíveis para todos os visitantes da loja imediatamente após confirmar.
+                  {' '}
+                  Você terá <strong>{(config.looks || []).filter((l) => l.image_url).length}</strong> look(s) ativo(s).
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={isSaving}>Cancelar</AlertDialogCancel>
+                <AlertDialogAction onClick={handlePublish} disabled={isSaving}>
+                  {isSaving ? 'Publicando...' : 'Sim, publicar agora'}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+
+          {!hasRenderableLook && (
+            <span className="text-xs text-muted-foreground self-center">
+              Adicione ao menos 1 look com imagem para publicar.
+            </span>
+          )}
+        </div>
       </CardContent>
     </Card>
   );
