@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils';
 import StoreLayout from '@/components/store/StoreLayout';
 import { useCart } from '@/contexts/CartContext';
 import { supabase } from '@/integrations/supabase/client';
+import { couponsService } from '@/services/coupons';
 import { trackAnalyticsEvent } from '@/hooks/useAnalyticsTracker';
 import { getAffiliateCode, clearAffiliateCode } from '@/lib/affiliateUtils';
 import { trackMetaInitiateCheckout, trackMetaPurchase } from '@/lib/metaPixel';
