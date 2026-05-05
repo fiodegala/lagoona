@@ -156,7 +156,7 @@ const HomePage = () => {
 
         setProducts(enrichedProducts);
         setCategories(categoriesData.filter(c => c.is_active));
-        setHeroBanners(bannersData);
+        setHeroBanners(bannersData.slice(0, 3));
         setPromoBanners(promoData);
         setMidBanners(midData);
 
@@ -260,9 +260,14 @@ const HomePage = () => {
                       className="absolute inset-0 w-full h-full object-cover"
                     />
                   ) : (
-                    <div
-                      className="absolute inset-0 bg-cover bg-center"
-                      style={{ backgroundImage: `url('${getOptimizedImageUrl(banner.image_url, { width: 1920, quality: 80 })}')` }}
+                    <img
+                      src={getOptimizedImageUrl(banner.image_url, { width: 1920, quality: 80 })}
+                      alt={banner.title || 'Banner'}
+                      className="absolute inset-0 w-full h-full object-cover"
+                      loading={index === 0 ? 'eager' : 'lazy'}
+                      decoding={index === 0 ? 'sync' : 'async'}
+                      // @ts-ignore - fetchpriority is a valid HTML attribute
+                      fetchpriority={index === 0 ? 'high' : 'low'}
                     />
                   )}
                   <div className="absolute inset-0 bg-store-dark/60" />
