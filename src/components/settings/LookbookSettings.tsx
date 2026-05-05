@@ -265,15 +265,35 @@ const LookbookSettings = () => {
           )}
         </div>
 
-        <div className="flex items-center justify-between rounded-lg border p-3">
-          <div>
-            <p className="text-sm font-medium">Exibir lookbook na home</p>
-            <p className="text-xs text-muted-foreground">Aparece logo após "Mais vendidos".</p>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-lg border p-3">
+          <div className="flex items-start gap-2">
+            {publishedConfig.enabled ? (
+              <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 text-xs font-medium">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                Publicado na home
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-muted text-muted-foreground text-xs font-medium">
+                <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/60" />
+                Não publicado
+              </span>
+            )}
+            <p className="text-xs text-muted-foreground">
+              {publishedConfig.enabled
+                ? 'A seção "Como combinar" está visível na home.'
+                : 'Edite à vontade. A seção só aparece na home depois de publicar.'}
+            </p>
           </div>
-          <Switch
-            checked={!!config.enabled}
-            onCheckedChange={(v) => setConfig((c) => ({ ...c, enabled: v }))}
-          />
+          {publishedConfig.enabled && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleUnpublish}
+              disabled={isSaving}
+            >
+              Despublicar
+            </Button>
+          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
