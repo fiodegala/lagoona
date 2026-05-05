@@ -22,21 +22,37 @@ export interface LookbookConfig {
   looks?: LookbookLook[];
 }
 
-interface MiniProduct {
+export interface LookbookMiniProduct {
   id: string;
   name: string;
   price: number;
   promotional_price: number | null;
 }
 
+interface LookbookSectionProps {
+  /** When provided, skips DB fetch and renders this config (used for live preview). */
+  config?: LookbookConfig | null;
+  /** Optional product map for preview; otherwise fetched from DB based on config. */
+  productsMap?: Record<string, LookbookMiniProduct>;
+  /** When true, renders even if `enabled` is false (for preview). */
+  forceRender?: boolean;
+  /** Disable navigation links (preview). */
+  disableLinks?: boolean;
+}
+
 const formatPrice = (n: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(n);
 
-const LookbookSection = () => {
-  const [config, setConfig] = useState<LookbookConfig | null>(null);
-  const [productsMap, setProductsMap] = useState<Record<string, MiniProduct>>({});
+const LookbookSection = ({ config: configProp, productsMap: productsMapProp, forceRender, disableLinks }: LookbookSectionProps = {}) => {
+  const [fetchedConfig, setFetchedConfig] = useState<LookbookConfig | null>(null);
+  const [fetchedMap, setFetchedMap] = useState<Record<string, LookbookMiniProduct>>({});
+
+  const config = configProp !== undefined ? configProp : fetchedConfig;
+  const productsMap = productsMapProp ?? fetchedMap;
+  const usingProps = configProp !== undefined;
 
   useEffect(() => {
+    if (usingProps) return;
     let active = true;
     (async () => {
       const { data } = await supabase
@@ -46,7 +62,7 @@ const LookbookSection = () => {
         .maybeSingle();
       if (!active) return;
       const cfg = (data?.value as LookbookConfig | null) || null;
-      setConfig(cfg);
+      setFetchedConfig(cfg);
 
       const ids = Array.from(
         new Set((cfg?.looks || []).flatMap((l) => l.product_ids || []).filter(Boolean))
@@ -57,20 +73,22 @@ const LookbookSection = () => {
           .select('id, name, price, promotional_price')
           .in('id', ids);
         if (!active) return;
-        const map: Record<string, MiniProduct> = {};
+        const map: Record<string, LookbookMiniProduct> = {};
         (prods || []).forEach((p) => {
-          map[p.id] = p as MiniProduct;
+          map[p.id] = p as LookbookMiniProduct;
         });
-        setProductsMap(map);
+        setFetchedMap(map);
       }
     })();
     return () => {
       active = false;
     };
-  }, []);
+  }, [usingProps]);
 
   const looks = (config?.looks || []).filter((l) => l.image_url).slice(0, 3);
-  if (!config?.enabled || looks.length === 0) return null;
+  if (!config) return null;
+  if (!forceRender && !config.enabled) return null;
+  if (looks.length === 0) return null;
 
   const eyebrow = config.eyebrow || 'Editorial';
   const title = config.title || 'Como combinar';
