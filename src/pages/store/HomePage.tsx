@@ -1,6 +1,6 @@
 import { useEffect, useState, lazy, Suspense, useCallback, useRef, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Loader2, ShoppingBag, Truck, RefreshCw, Shield, MessageCircle, TrendingUp, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowRight, Loader2, ShoppingBag, Truck, RefreshCw, Shield, MessageCircle, TrendingUp, ChevronLeft, ChevronRight, Sparkles, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import StoreLayout from '@/components/store/StoreLayout';
 import { useSwipe } from '@/hooks/useSwipe';
@@ -396,10 +396,10 @@ const HomePage = () => {
         <div className="container mx-auto px-4 py-5">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {[
-              { icon: Truck, title: 'Frete Grátis', desc: 'Acima de R$299,00' },
-              { icon: RefreshCw, title: 'Trocas Fáceis', desc: 'Em até 30 dias' },
-              { icon: Shield, title: 'Compra Segura', desc: 'Dados protegidos' },
-              { icon: MessageCircle, title: 'Atendimento', desc: 'Suporte rápido' },
+              { icon: Truck, title: 'Frete Grátis', desc: 'Acima de R$ 299,00' },
+              { icon: Sparkles, title: 'PIX -5%', desc: 'Desconto à vista' },
+              { icon: CreditCard, title: 'Até 6x sem juros', desc: 'No cartão de crédito' },
+              { icon: RefreshCw, title: 'Troca Grátis', desc: 'Em até 7 dias' },
             ].map(({ icon: Icon, title, desc }) => (
               <div key={title} className="flex items-center gap-3">
                 <div className="p-2.5">
