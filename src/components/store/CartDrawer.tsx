@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ShoppingCart, Minus, Plus, Trash2, ShoppingBag } from 'lucide-react';
+import { ShoppingCart, Minus, Plus, Trash2, ShoppingBag, Truck, PartyPopper } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
