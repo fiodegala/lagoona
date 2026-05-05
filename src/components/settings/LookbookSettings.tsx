@@ -107,43 +107,86 @@ const LookbookSettings = () => {
     updateLook(lookIdx, { product_ids: next });
   };
 
-  const handleSave = async () => {
+  const persist = async (cfg: LookbookConfig) => {
+    const cleaned: LookbookConfig = {
+      ...cfg,
+      looks: (cfg.looks || []).map((l) => ({
+        id: l.id || crypto.randomUUID(),
+        title: l.title?.trim() || 'Sem título',
+        description: l.description?.trim() || '',
+        image_url: l.image_url || '',
+        link_url: l.link_url?.trim() || '',
+        product_ids: (l.product_ids || []).filter(Boolean),
+        tag: l.tag?.trim() || '',
+      })),
+    };
+
+    const { data: existing } = await supabase
+      .from('store_config')
+      .select('id')
+      .eq('key', 'lookbook')
+      .maybeSingle();
+
+    const value = cleaned as unknown as Record<string, unknown>;
+    const res = existing
+      ? await supabase
+          .from('store_config')
+          .update({ value: value as never, is_public: true, updated_at: new Date().toISOString() })
+          .eq('key', 'lookbook')
+      : await supabase
+          .from('store_config')
+          .insert({ key: 'lookbook', value: value as never, is_public: true } as never);
+
+    if (res.error) throw res.error;
+    return cleaned;
+  };
+
+  // Save draft (does NOT change visibility on home).
+  const handleSaveDraft = async () => {
     setIsSaving(true);
     try {
-      const cleaned: LookbookConfig = {
-        ...config,
-        looks: (config.looks || []).map((l) => ({
-          id: l.id || crypto.randomUUID(),
-          title: l.title?.trim() || 'Sem título',
-          description: l.description?.trim() || '',
-          image_url: l.image_url || '',
-          link_url: l.link_url?.trim() || '',
-          product_ids: (l.product_ids || []).filter(Boolean),
-          tag: l.tag?.trim() || '',
-        })),
-      };
-
-      const { data: existing } = await supabase
-        .from('store_config')
-        .select('id')
-        .eq('key', 'lookbook')
-        .maybeSingle();
-
-      const value = cleaned as unknown as Record<string, unknown>;
-      const res = existing
-        ? await supabase
-            .from('store_config')
-            .update({ value: value as never, is_public: true, updated_at: new Date().toISOString() })
-            .eq('key', 'lookbook')
-        : await supabase
-            .from('store_config')
-            .insert({ key: 'lookbook', value: value as never, is_public: true } as never);
-
-      if (res.error) throw res.error;
-      toast.success('Lookbook atualizado!');
+      const draft: LookbookConfig = { ...config, enabled: publishedConfig.enabled ?? false };
+      const saved = await persist(draft);
+      setPublishedConfig(saved);
+      setConfig(saved);
+      toast.success('Rascunho salvo. Lookbook ainda não está visível na home.');
     } catch (err) {
       console.error(err);
-      toast.error('Erro ao salvar lookbook');
+      toast.error('Erro ao salvar rascunho');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Publish: enables on home and persists current edits.
+  const handlePublish = async () => {
+    setIsSaving(true);
+    try {
+      const toPublish: LookbookConfig = { ...config, enabled: true };
+      const saved = await persist(toPublish);
+      setPublishedConfig(saved);
+      setConfig(saved);
+      toast.success('Lookbook publicado e visível na home!');
+    } catch (err) {
+      console.error(err);
+      toast.error('Erro ao publicar');
+    } finally {
+      setIsSaving(false);
+      setConfirmOpen(false);
+    }
+  };
+
+  // Unpublish: hides from home but keeps content.
+  const handleUnpublish = async () => {
+    setIsSaving(true);
+    try {
+      const saved = await persist({ ...config, enabled: false });
+      setPublishedConfig(saved);
+      setConfig(saved);
+      toast.success('Lookbook ocultado da home.');
+    } catch (err) {
+      console.error(err);
+      toast.error('Erro ao ocultar');
     } finally {
       setIsSaving(false);
     }
