@@ -125,17 +125,17 @@ const CartDrawer = () => {
                 const reached = remaining === 0;
                 return (
                   <div className="space-y-1.5">
-                    <div className="flex items-center gap-2 text-xs">
+                    <div className="flex items-start gap-2 text-[11px] sm:text-xs leading-snug">
                       {reached ? (
                         <>
-                          <PartyPopper className="h-3.5 w-3.5 text-success shrink-0" />
-                          <span className="font-medium text-success">Você ganhou frete grátis! 🎉</span>
+                          <PartyPopper className="h-3.5 w-3.5 text-success shrink-0 mt-0.5" />
+                          <span className="font-medium text-success break-words">Você ganhou frete grátis! 🎉</span>
                         </>
                       ) : (
                         <>
-                          <Truck className="h-3.5 w-3.5 text-store-gold shrink-0" />
-                          <span className="text-foreground">
-                            Faltam <span className="font-semibold text-store-accent">{formatPrice(remaining)}</span> para o <span className="font-semibold">frete grátis</span>
+                          <Truck className="h-3.5 w-3.5 text-store-gold shrink-0 mt-0.5" />
+                          <span className="text-foreground break-words min-w-0">
+                            Faltam <span className="font-semibold text-store-accent whitespace-nowrap">{formatPrice(remaining)}</span> para o <span className="font-semibold">frete grátis</span>
                           </span>
                         </>
                       )}
