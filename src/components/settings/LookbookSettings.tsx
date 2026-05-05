@@ -61,13 +61,15 @@ const LookbookSettings = () => {
         setProducts(allProducts.filter((p) => p.is_active));
         if (configRes.data?.value) {
           const v = configRes.data.value as LookbookConfig;
-          setConfig({
-            enabled: v.enabled ?? true,
+          const loaded: LookbookConfig = {
+            enabled: v.enabled ?? false,
             title: v.title ?? 'Como combinar',
             subtitle: v.subtitle ?? '',
             eyebrow: v.eyebrow ?? 'Editorial',
             looks: Array.isArray(v.looks) ? v.looks : [],
-          });
+          };
+          setConfig(loaded);
+          setPublishedConfig(loaded);
         }
       } catch (err) {
         console.error('Error loading lookbook settings:', err);
