@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils';
 import StoreLayout from '@/components/store/StoreLayout';
 import { useCart } from '@/contexts/CartContext';
 import { supabase } from '@/integrations/supabase/client';
+import { couponsService } from '@/services/coupons';
 import { trackAnalyticsEvent } from '@/hooks/useAnalyticsTracker';
 import { getAffiliateCode, clearAffiliateCode } from '@/lib/affiliateUtils';
 import { trackMetaInitiateCheckout, trackMetaPurchase } from '@/lib/metaPixel';
@@ -29,7 +30,7 @@ const getOrCreateSessionId = () => {
 };
 
 const CheckoutPage = () => {
-  const { items, getTotal, getSubtotal, clearCart, getItemCount, comboFreeShipping } = useCart();
+  const { items, getTotal, getSubtotal, clearCart, getItemCount, comboFreeShipping, appliedCoupon } = useCart();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderComplete, setOrderComplete] = useState(false);
   const [orderId, setOrderId] = useState<string | null>(null);
@@ -256,6 +257,22 @@ const CheckoutPage = () => {
     });
 
     try {
+      // Re-validate applied coupon against the checkout email (per-customer limit)
+      if (appliedCoupon) {
+        const productIds = items.map(i => i.productId);
+        const recheck = await couponsService.validateCoupon(
+          appliedCoupon.coupon.code,
+          getSubtotal(),
+          trimmedEmail.toLowerCase(),
+          productIds,
+        );
+        if (!recheck.valid) {
+          toast.error(recheck.error || 'Cupom não pode mais ser utilizado');
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
       // Verify real-time stock availability before creating order
       const stockChecks = await Promise.all(
         items.map(async (item) => {
@@ -360,7 +377,21 @@ const CheckoutPage = () => {
       }
     }
     localStorage.removeItem(ABANDONED_CART_SESSION_KEY);
-    
+
+    // Record coupon usage (enforces per-customer limit on next attempts)
+    if (appliedCoupon && formData.email) {
+      try {
+        await couponsService.recordUsage(
+          appliedCoupon.coupon.id,
+          formData.email.trim().toLowerCase(),
+          appliedCoupon.discount,
+          orderId || undefined,
+        );
+      } catch (couponErr) {
+        console.error('Error recording coupon usage:', couponErr);
+      }
+    }
+
     // Track checkout_complete event
     trackAnalyticsEvent('checkout_complete', {
       metadata: {

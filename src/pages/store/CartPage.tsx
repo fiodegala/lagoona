@@ -8,9 +8,11 @@ import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import StoreLayout from '@/components/store/StoreLayout';
 import { useCart } from '@/contexts/CartContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
 const CartPage = () => {
+  const { user } = useAuth();
   const { 
     items, 
     updateQuantity, 
@@ -40,13 +42,26 @@ const CartPage = () => {
   const total = getTotal();
 
   const handleApplyCoupon = async () => {
-    if (!couponCode.trim()) {
+    const code = couponCode.trim().toUpperCase();
+    if (!code) {
       toast.error('Digite um código de cupom');
       return;
     }
 
-    const result = await applyCoupon(couponCode.trim());
-    
+    // For per-customer-limited coupons (e.g. BEMVINDO10), require an email to enforce limit
+    let customerEmail = user?.email || undefined;
+    if (!customerEmail) {
+      const input = window.prompt('Digite seu e-mail para aplicar o cupom (necessário para validar o limite por cliente):');
+      if (!input) return;
+      customerEmail = input.trim().toLowerCase();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail)) {
+        toast.error('E-mail inválido');
+        return;
+      }
+    }
+
+    const result = await applyCoupon(code, customerEmail);
+
     if (result.valid) {
       toast.success(`Cupom aplicado! Desconto de ${formatPrice(result.discount || 0)}`);
       setCouponCode('');
