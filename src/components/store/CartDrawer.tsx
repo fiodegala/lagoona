@@ -165,6 +165,21 @@ const CartDrawer = () => {
                   <span>Total</span>
                   <span className="text-store-accent">{formatPrice(total)}</span>
                 </div>
+                {/* PIX 5% discount preview */}
+                {(() => {
+                  const pixDiscount = Math.round(total * 5) / 100;
+                  const pixTotal = Math.round((total - pixDiscount) * 100) / 100;
+                  return (
+                    <div className="mt-1 flex items-center justify-between rounded-md bg-emerald-500/10 border border-emerald-500/30 px-2 py-1.5 text-xs">
+                      <span className="font-semibold text-emerald-700 dark:text-emerald-400">
+                        No PIX (-5%)
+                      </span>
+                      <span className="font-bold text-emerald-700 dark:text-emerald-400">
+                        {formatPrice(pixTotal)}
+                      </span>
+                    </div>
+                  );
+                })()}
               </div>
 
               <div className="grid gap-2">

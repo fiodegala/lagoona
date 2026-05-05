@@ -635,31 +635,28 @@ const CheckoutPage = () => {
                       {!shippingResult ? 'Calcule o frete' : shippingResult.price === 0 ? 'Grátis' : formatPrice(shippingResult.price)}
                     </span>
                   </div>
-                  {step === 'payment' && (
-                    <div className="flex justify-between text-sm text-emerald-600">
-                      <span className="flex items-center gap-1">
-                        <Percent className="h-3 w-3" />
-                        Desconto PIX (5%)
-                      </span>
-                      <span>-{formatPrice(pixDiscountAmount)}</span>
-                    </div>
-                  )}
+                  <div className="flex justify-between text-sm text-emerald-600">
+                    <span className="flex items-center gap-1">
+                      <Percent className="h-3 w-3" />
+                      Desconto PIX (5%)
+                    </span>
+                    <span>-{formatPrice(pixDiscountAmount)}</span>
+                  </div>
                 </div>
 
                 <Separator />
 
                 <div className="flex justify-between font-semibold text-lg">
                   <span>Total</span>
-                  {step === 'payment' ? (
-                    <div className="text-right">
-                      <div className="text-sm text-muted-foreground line-through font-normal">
-                        {formatPrice(grandTotal)}
-                      </div>
-                      <span className="text-emerald-600">{formatPrice(pixGrandTotal)}</span>
+                  <div className="text-right">
+                    <div className="text-sm text-muted-foreground line-through font-normal">
+                      {formatPrice(grandTotal)}
                     </div>
-                  ) : (
-                    <span className="text-primary">{formatPrice(grandTotal)}</span>
-                  )}
+                    <span className="text-emerald-600">{formatPrice(pixGrandTotal)}</span>
+                    <p className="text-[11px] text-muted-foreground font-normal mt-0.5">
+                      pagando no PIX
+                    </p>
+                  </div>
                 </div>
               </CardContent>
               {step === 'info' && (
