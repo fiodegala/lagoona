@@ -676,6 +676,7 @@ const HomePage = () => {
               <div>
                 <h2 className="text-2xl md:text-3xl font-display font-bold italic">Mais vendidos</h2>
                 <div className="w-12 h-0.5 bg-store-gold mt-2" />
+                <p className="text-sm text-muted-foreground mt-3">Os queridinhos dos últimos 90 dias</p>
               </div>
             </div>
             <Button variant="outline" asChild className="gap-2 hidden sm:flex">
@@ -690,10 +691,17 @@ const HomePage = () => {
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
-          ) : products.length > 0 ? (
+          ) : bestSellers.length > 0 ? (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
-              {products.slice(0, 10).map((product) => (
-                <ProductCard key={product.id} product={product} meta={productsMeta[product.id]} />
+              {bestSellers.map((product, idx) => (
+                <div key={product.id} className="relative">
+                  {idx < 3 && bestSellerIds.length > 0 && (
+                    <div className="absolute top-2 left-2 z-10 px-2 py-1 rounded-md bg-store-gold text-store-dark text-[10px] font-bold tracking-wider uppercase shadow-md flex items-center gap-1">
+                      🔥 Top {idx + 1}
+                    </div>
+                  )}
+                  <ProductCard product={product} meta={productsMeta[product.id]} />
+                </div>
               ))}
             </div>
           ) : (
