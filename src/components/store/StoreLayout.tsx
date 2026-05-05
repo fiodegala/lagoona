@@ -1,5 +1,6 @@
 import { ReactNode, useEffect, useState, lazy, Suspense } from 'react';
 import StoreHeader from './StoreHeader';
+import TopAnnouncementBar from './TopAnnouncementBar';
 import StoreFooter from './StoreFooter';
 import WhatsAppButton from './WhatsAppButton';
 import { categoriesService, Category } from '@/services/categories';
@@ -31,6 +32,7 @@ const StoreLayout = ({ children }: StoreLayoutProps) => {
 
   return (
     <div className="min-h-screen flex flex-col bg-background overflow-x-hidden w-full">
+      <TopAnnouncementBar />
       <StoreHeader categories={categories} />
       <main className="flex-1">
         {children}
