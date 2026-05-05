@@ -92,7 +92,7 @@ const CouponUsages = () => {
   }, [from, to, couponFilter, statusFilter, search, showOnlyDuplicates, pageSize, sortKey, sortDir]);
 
   // Build the base filter chain on coupon_usage
-  const buildFilteredQuery = useCallback(async (selectExpr: string, opts?: { count?: 'exact' }) => {
+  const buildFilteredQuery = useCallback(async (selectExpr: string, opts?: { count?: 'exact' }): Promise<any> => {
     const fromISO = new Date(`${from}T00:00:00`).toISOString();
     const toISO = new Date(`${to}T23:59:59`).toISOString();
 
