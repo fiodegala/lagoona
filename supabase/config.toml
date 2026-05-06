@@ -84,3 +84,6 @@ verify_jwt = false
 
 [functions.api-debug-sign]
 verify_jwt = false
+
+[functions.api-products]
+verify_jwt = false
