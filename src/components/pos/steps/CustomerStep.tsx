@@ -496,6 +496,17 @@ const CustomerStep = ({ selectedCustomer, onSelectCustomer, saleType, onNext, on
                 </Select>
               </div>
 
+              {/* Profissão */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Profissão</Label>
+                <Input
+                  placeholder="Ex: Médico, Professor, Empresário..."
+                  value={formData.profession}
+                  onChange={(e) => updateField('profession', e.target.value)}
+                  maxLength={100}
+                />
+              </div>
+
               {formData.customer_type === 'pf' ? (
                 <div className="space-y-3">
                   <div>
