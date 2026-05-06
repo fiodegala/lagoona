@@ -69,6 +69,7 @@ interface Customer {
   responsavel_telefone: string | null;
   store_id: string | null;
   referral_source: string | null;
+  profession: string | null;
 }
 
 interface Store {
