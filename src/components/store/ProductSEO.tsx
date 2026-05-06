@@ -19,6 +19,7 @@ interface ProductSEOProps {
   images?: string[];
   rating?: { avg: number; count: number };
   category?: string | null;
+  breadcrumbs?: { name: string; url: string }[];
 }
 
 const setMeta = (selector: string, attr: string, value: string) => {
@@ -43,6 +44,7 @@ const setLink = (rel: string, href: string) => {
 };
 
 const SCRIPT_ID = 'product-jsonld';
+const BREADCRUMB_SCRIPT_ID = 'breadcrumb-jsonld';
 
 const ProductSEO = ({
   product,
@@ -55,6 +57,7 @@ const ProductSEO = ({
   images = [],
   rating,
   category,
+  breadcrumbs,
 }: ProductSEOProps) => {
   useEffect(() => {
     const finalPrice = promotionalPrice && promotionalPrice > 0 ? promotionalPrice : price;
@@ -129,11 +132,33 @@ const ProductSEO = ({
     }
     script.text = JSON.stringify(jsonLd);
 
+    // BreadcrumbList JSON-LD
+    if (breadcrumbs && breadcrumbs.length > 0) {
+      const breadcrumbLd = {
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: breadcrumbs.map((b, i) => ({
+          '@type': 'ListItem',
+          position: i + 1,
+          name: b.name,
+          item: b.url,
+        })),
+      };
+      let bScript = document.getElementById(BREADCRUMB_SCRIPT_ID) as HTMLScriptElement | null;
+      if (!bScript) {
+        bScript = document.createElement('script');
+        bScript.type = 'application/ld+json';
+        bScript.id = BREADCRUMB_SCRIPT_ID;
+        document.head.appendChild(bScript);
+      }
+      bScript.text = JSON.stringify(breadcrumbLd);
+    }
+
     return () => {
-      const s = document.getElementById(SCRIPT_ID);
-      if (s) s.remove();
+      document.getElementById(SCRIPT_ID)?.remove();
+      document.getElementById(BREADCRUMB_SCRIPT_ID)?.remove();
     };
-  }, [product, price, promotionalPrice, currency, inStock, stock, url, images, rating, category]);
+  }, [product, price, promotionalPrice, currency, inStock, stock, url, images, rating, category, breadcrumbs]);
 
   return null;
 };

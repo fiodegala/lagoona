@@ -286,6 +286,16 @@ const ProductDetails = () => {
         images={allImages}
         rating={reviewStats.count > 0 ? reviewStats : undefined}
         category={category?.name || null}
+        breadcrumbs={(() => {
+          const origin = typeof window !== 'undefined' ? window.location.origin : 'https://fiodegala.shop';
+          const items = [
+            { name: 'Início', url: `${origin}/` },
+            { name: 'Loja', url: `${origin}/loja` },
+          ];
+          if (category) items.push({ name: category.name, url: `${origin}/loja/categoria/${category.slug}` });
+          items.push({ name: product.name, url: typeof window !== 'undefined' ? window.location.href : `${origin}/produto/${product.id}` });
+          return items;
+        })()}
       />
       <div className="container mx-auto px-4 py-8 overflow-hidden">
         {/* Breadcrumb */}
