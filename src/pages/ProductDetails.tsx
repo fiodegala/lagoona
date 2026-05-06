@@ -324,21 +324,31 @@ const ProductDetails = () => {
           <div className="space-y-3 overflow-hidden">
             {/* Main Product Image with Navigation */}
             {product.image_url && (
-              <div className="rounded-xl overflow-hidden border bg-muted relative group cursor-pointer"
+              <div
+                className="rounded-xl overflow-hidden border bg-muted relative group cursor-zoom-in"
                 onClick={() => {
                   const idx = allImages.indexOf(selectedImage || product.image_url || '');
                   setLightboxIndex(idx >= 0 ? idx : 0);
                   setLightboxOpen(true);
                 }}
+                onMouseMove={(e) => {
+                  const target = e.currentTarget.querySelector<HTMLImageElement>('[data-zoom-img]');
+                  if (!target) return;
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const x = ((e.clientX - rect.left) / rect.width) * 100;
+                  const y = ((e.clientY - rect.top) / rect.height) * 100;
+                  target.style.transformOrigin = `${x}% ${y}%`;
+                }}
               >
                 <img
-                  src={getOptimizedImageUrl(selectedImage || product.image_url, { width: 800, quality: 80 })}
+                  data-zoom-img
+                  src={getOptimizedImageUrl(selectedImage || product.image_url, { width: 1600, quality: 85 })}
                   alt={product.name}
-                  className="w-full aspect-[4/5] object-cover"
+                  className="w-full aspect-[4/5] object-cover transition-transform duration-200 ease-out md:group-hover:scale-[2.2]"
                   loading="eager"
                 />
                 {/* Zoom indicator */}
-                <div className="absolute bottom-3 right-3 bg-background/80 backdrop-blur-sm rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="absolute bottom-3 right-3 bg-background/80 backdrop-blur-sm rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                   <ZoomIn className="h-4 w-4 text-foreground" />
                 </div>
                 {allImages.length > 1 && (
