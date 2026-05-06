@@ -494,15 +494,15 @@ const ProductDetails = () => {
                   {lightboxIndex + 1} / {allImages.length}
                 </div>
 
-                {/* Main Image */}
+                {/* Main Image - pinch & double-tap zoom */}
                 <div
-                  className="relative w-full h-[85vh] flex items-center justify-center px-16"
+                  className="relative w-full h-[85vh] flex items-center justify-center px-4 md:px-16 overflow-hidden touch-none select-none"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <img
-                    src={getOptimizedImageUrl(allImages[lightboxIndex], { width: 1200, quality: 85 })}
+                  <PinchZoomImage
+                    key={lightboxIndex}
+                    src={getOptimizedImageUrl(allImages[lightboxIndex], { width: 1600, quality: 90 })}
                     alt={`${product.name} - ${lightboxIndex + 1}`}
-                    className="max-w-full max-h-full object-contain"
                   />
                 </div>
 
