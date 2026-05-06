@@ -32,6 +32,16 @@ interface ABCItem {
 const ABCCurve = () => {
   const [period, setPeriod] = useState<PeriodFilter>('30d');
   const [search, setSearch] = useState('');
+  const [storeId, setStoreId] = useState<string>('all');
+
+  const { data: stores } = useQuery({
+    queryKey: ['abc-stores'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('stores').select('id, name, type').order('name');
+      if (error) throw error;
+      return data || [];
+    },
+  });
 
   const dateFrom = useMemo(() => {
     const now = new Date();
@@ -45,10 +55,11 @@ const ABCCurve = () => {
   }, [period]);
 
   const { data: posSales, isLoading: loadingPos } = useQuery({
-    queryKey: ['abc-pos-sales', dateFrom],
+    queryKey: ['abc-pos-sales', dateFrom, storeId],
     queryFn: async () => {
-      let query = supabase.from('pos_sales').select('items, total, created_at').neq('status', 'cancelled');
+      let query = supabase.from('pos_sales').select('items, total, created_at, store_id').neq('status', 'cancelled');
       if (dateFrom) query = query.gte('created_at', dateFrom);
+      if (storeId !== 'all') query = query.eq('store_id', storeId);
       const { data, error } = await query;
       if (error) throw error;
       return data || [];
@@ -56,10 +67,11 @@ const ABCCurve = () => {
   });
 
   const { data: orders, isLoading: loadingOrders } = useQuery({
-    queryKey: ['abc-orders', dateFrom],
+    queryKey: ['abc-orders', dateFrom, storeId],
     queryFn: async () => {
-      let query = supabase.from('orders').select('items, total, created_at').neq('status', 'cancelled');
+      let query = supabase.from('orders').select('items, total, created_at, store_id').neq('status', 'cancelled');
       if (dateFrom) query = query.gte('created_at', dateFrom);
+      if (storeId !== 'all') query = query.eq('store_id', storeId);
       const { data, error } = await query;
       if (error) throw error;
       return data || [];
