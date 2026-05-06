@@ -217,6 +217,7 @@ const Customers = () => {
         responsavel_telefone: customer.responsavel_telefone || '',
         store_id: customer.store_id || null,
         referral_source: customer.referral_source || '',
+        profession: customer.profession || '',
       });
     } else {
       setSelectedCustomer(null);
