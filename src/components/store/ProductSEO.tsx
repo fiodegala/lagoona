@@ -44,6 +44,7 @@ const setLink = (rel: string, href: string) => {
 };
 
 const SCRIPT_ID = 'product-jsonld';
+const BREADCRUMB_SCRIPT_ID = 'breadcrumb-jsonld';
 
 const ProductSEO = ({
   product,
@@ -56,6 +57,7 @@ const ProductSEO = ({
   images = [],
   rating,
   category,
+  breadcrumbs,
 }: ProductSEOProps) => {
   useEffect(() => {
     const finalPrice = promotionalPrice && promotionalPrice > 0 ? promotionalPrice : price;
