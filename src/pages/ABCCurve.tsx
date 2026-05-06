@@ -177,17 +177,30 @@ const ABCCurve = () => {
             </h1>
             <p className="text-sm text-muted-foreground mt-1">Análise de Pareto baseada em vendas reais (PDV + Online)</p>
           </div>
-          <div className="flex gap-1 flex-wrap">
-            {periods.map(p => (
-              <Button
-                key={p.key}
-                variant={period === p.key ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setPeriod(p.key)}
-              >
-                {p.label}
-              </Button>
-            ))}
+          <div className="flex flex-col sm:flex-row gap-2 sm:items-center flex-wrap">
+            <Select value={storeId} onValueChange={setStoreId}>
+              <SelectTrigger className="w-full sm:w-[200px]">
+                <SelectValue placeholder="Filtrar por loja" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas as lojas</SelectItem>
+                {stores?.map(s => (
+                  <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <div className="flex gap-1 flex-wrap">
+              {periods.map(p => (
+                <Button
+                  key={p.key}
+                  variant={period === p.key ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setPeriod(p.key)}
+                >
+                  {p.label}
+                </Button>
+              ))}
+            </div>
           </div>
         </div>
 
