@@ -24,6 +24,7 @@ import RelatedProducts from '@/components/store/RelatedProducts';
 import ProductAITryOn from '@/components/store/ProductAITryOn';
 import UpsellSection from '@/components/store/UpsellSection';
 import ProductSEO from '@/components/store/ProductSEO';
+import PinchZoomImage from '@/components/store/PinchZoomImage';
 import { useCart } from '@/contexts/CartContext';
 import { useFavorites } from '@/contexts/FavoritesContext';
 import { toast } from 'sonner';
