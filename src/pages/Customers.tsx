@@ -277,6 +277,7 @@ const Customers = () => {
       responsavel_telefone: formData.responsavel_telefone?.trim() || null,
       store_id: formData.store_id || null,
       referral_source: formData.referral_source?.trim() || null,
+      profession: formData.profession?.trim() || null,
     };
 
     if (selectedCustomer) {
