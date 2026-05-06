@@ -111,6 +111,24 @@ const ProductDetails = () => {
     loadTryOnConfig();
   }, []);
 
+  useEffect(() => {
+    if (!id) return;
+    const loadReviewStats = async () => {
+      const { data } = await supabase
+        .from('product_reviews')
+        .select('rating')
+        .eq('product_id', id)
+        .eq('is_approved', true);
+      if (data && data.length > 0) {
+        const sum = data.reduce((acc, r: any) => acc + (r.rating || 0), 0);
+        setReviewStats({ avg: sum / data.length, count: data.length });
+      } else {
+        setReviewStats({ avg: 0, count: 0 });
+      }
+    };
+    loadReviewStats();
+  }, [id]);
+
   const handleVariationSelect = useCallback((variation: ProductVariation | null) => {
     setSelectedVariation(variation);
     if (variation?.image_url) {
