@@ -254,6 +254,7 @@ const CustomerStep = ({ selectedCustomer, onSelectCustomer, saleType, onNext, on
         notes: formData.notes.trim() || null,
         store_id: formData.store_id || null,
         referral_source: formData.referral_source || null,
+        profession: formData.profession.trim() || null,
       };
 
       const { data, error } = await supabase
