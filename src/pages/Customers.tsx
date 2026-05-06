@@ -708,6 +708,18 @@ const Customers = () => {
                 </Select>
               </div>
 
+              {/* Profissão */}
+              <div className="space-y-2">
+                <Label htmlFor="profession" className="text-sm font-medium">Profissão</Label>
+                <Input
+                  id="profession"
+                  value={formData.profession || ''}
+                  onChange={(e) => setFormData({ ...formData, profession: e.target.value })}
+                  placeholder="Ex: Médico, Professor, Empresário..."
+                  maxLength={100}
+                />
+              </div>
+
               {formData.customer_type === 'pf' ? (
                 <>
                   <div className="grid gap-4 sm:grid-cols-2">
