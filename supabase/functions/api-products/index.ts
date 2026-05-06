@@ -33,6 +33,8 @@ serve(async (req) => {
     const limit = Math.min(parseInt(url.searchParams.get("limit") || "500"), 1000);
     const categoryId = url.searchParams.get("category_id");
     const search = url.searchParams.get("search");
+    const sku = url.searchParams.get("sku");
+    const barcode = url.searchParams.get("barcode");
     const activeParam = url.searchParams.get("active"); // "true" | "false" | "all" (default: all)
 
     let query = supabase
