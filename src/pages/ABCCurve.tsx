@@ -11,6 +11,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/
 import { Bar, Line, XAxis, YAxis, CartesianGrid, ComposedChart } from 'recharts';
 import { TrendingUp, Search, Loader2, BarChart3 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import ABCAnalysisReport from '@/components/abc/ABCAnalysisReport';
 import ProductClassificationTab from '@/components/abc/ProductClassificationTab';
 import { subDays, startOfMonth } from 'date-fns';
@@ -31,6 +32,16 @@ interface ABCItem {
 const ABCCurve = () => {
   const [period, setPeriod] = useState<PeriodFilter>('30d');
   const [search, setSearch] = useState('');
+  const [storeId, setStoreId] = useState<string>('all');
+
+  const { data: stores } = useQuery({
+    queryKey: ['abc-stores'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('stores').select('id, name, type').order('name');
+      if (error) throw error;
+      return data || [];
+    },
+  });
 
   const dateFrom = useMemo(() => {
     const now = new Date();
@@ -44,10 +55,11 @@ const ABCCurve = () => {
   }, [period]);
 
   const { data: posSales, isLoading: loadingPos } = useQuery({
-    queryKey: ['abc-pos-sales', dateFrom],
+    queryKey: ['abc-pos-sales', dateFrom, storeId],
     queryFn: async () => {
-      let query = supabase.from('pos_sales').select('items, total, created_at').neq('status', 'cancelled');
+      let query = supabase.from('pos_sales').select('items, total, created_at, store_id').neq('status', 'cancelled');
       if (dateFrom) query = query.gte('created_at', dateFrom);
+      if (storeId !== 'all') query = query.eq('store_id', storeId);
       const { data, error } = await query;
       if (error) throw error;
       return data || [];
@@ -55,10 +67,11 @@ const ABCCurve = () => {
   });
 
   const { data: orders, isLoading: loadingOrders } = useQuery({
-    queryKey: ['abc-orders', dateFrom],
+    queryKey: ['abc-orders', dateFrom, storeId],
     queryFn: async () => {
-      let query = supabase.from('orders').select('items, total, created_at').neq('status', 'cancelled');
+      let query = supabase.from('orders').select('items, total, created_at, store_id').neq('status', 'cancelled');
       if (dateFrom) query = query.gte('created_at', dateFrom);
+      if (storeId !== 'all') query = query.eq('store_id', storeId);
       const { data, error } = await query;
       if (error) throw error;
       return data || [];
@@ -164,17 +177,30 @@ const ABCCurve = () => {
             </h1>
             <p className="text-sm text-muted-foreground mt-1">Análise de Pareto baseada em vendas reais (PDV + Online)</p>
           </div>
-          <div className="flex gap-1 flex-wrap">
-            {periods.map(p => (
-              <Button
-                key={p.key}
-                variant={period === p.key ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setPeriod(p.key)}
-              >
-                {p.label}
-              </Button>
-            ))}
+          <div className="flex flex-col sm:flex-row gap-2 sm:items-center flex-wrap">
+            <Select value={storeId} onValueChange={setStoreId}>
+              <SelectTrigger className="w-full sm:w-[200px]">
+                <SelectValue placeholder="Filtrar por loja" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas as lojas</SelectItem>
+                {stores?.map(s => (
+                  <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <div className="flex gap-1 flex-wrap">
+              {periods.map(p => (
+                <Button
+                  key={p.key}
+                  variant={period === p.key ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setPeriod(p.key)}
+                >
+                  {p.label}
+                </Button>
+              ))}
+            </div>
           </div>
         </div>
 
