@@ -269,6 +269,24 @@ const ProductDetails = () => {
 
   return (
     <StoreLayout>
+      <ProductSEO
+        product={{
+          id: product.id,
+          name: product.name,
+          description: product.description,
+          image_url: product.image_url,
+          barcode: product.barcode,
+          brand: 'Fio de Gala',
+        }}
+        price={basePrice}
+        promotionalPrice={promotionalPrice}
+        inStock={!isOutOfStock}
+        stock={currentStock}
+        url={typeof window !== 'undefined' ? window.location.href : `https://fiodegala.shop/produto/${product.id}`}
+        images={allImages}
+        rating={reviewStats.count > 0 ? reviewStats : undefined}
+        category={category?.name || null}
+      />
       <div className="container mx-auto px-4 py-8 overflow-hidden">
         {/* Breadcrumb */}
         <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
