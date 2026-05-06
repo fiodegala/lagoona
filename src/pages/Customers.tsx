@@ -104,6 +104,7 @@ const emptyFormData: CustomerFormData = {
   responsavel_telefone: '',
   store_id: null,
   referral_source: '',
+  profession: '',
 };
 
 const Customers = () => {
