@@ -69,6 +69,7 @@ interface Customer {
   responsavel_telefone: string | null;
   store_id: string | null;
   referral_source: string | null;
+  profession: string | null;
 }
 
 interface Store {
@@ -103,6 +104,7 @@ const emptyFormData: CustomerFormData = {
   responsavel_telefone: '',
   store_id: null,
   referral_source: '',
+  profession: '',
 };
 
 const Customers = () => {
@@ -215,6 +217,7 @@ const Customers = () => {
         responsavel_telefone: customer.responsavel_telefone || '',
         store_id: customer.store_id || null,
         referral_source: customer.referral_source || '',
+        profession: customer.profession || '',
       });
     } else {
       setSelectedCustomer(null);
@@ -274,6 +277,7 @@ const Customers = () => {
       responsavel_telefone: formData.responsavel_telefone?.trim() || null,
       store_id: formData.store_id || null,
       referral_source: formData.referral_source?.trim() || null,
+      profession: formData.profession?.trim() || null,
     };
 
     if (selectedCustomer) {
@@ -702,6 +706,18 @@ const Customers = () => {
                     <SelectItem value="Assessor">Assessor</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+
+              {/* Profissão */}
+              <div className="space-y-2">
+                <Label htmlFor="profession" className="text-sm font-medium">Profissão</Label>
+                <Input
+                  id="profession"
+                  value={formData.profession || ''}
+                  onChange={(e) => setFormData({ ...formData, profession: e.target.value })}
+                  placeholder="Ex: Médico, Professor, Empresário..."
+                  maxLength={100}
+                />
               </div>
 
               {formData.customer_type === 'pf' ? (

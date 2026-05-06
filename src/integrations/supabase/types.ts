@@ -967,6 +967,7 @@ export type Database = {
           nome_fantasia: string | null
           notes: string | null
           phone: string | null
+          profession: string | null
           razao_social: string | null
           referral_source: string | null
           responsavel_nome: string | null
@@ -997,6 +998,7 @@ export type Database = {
           nome_fantasia?: string | null
           notes?: string | null
           phone?: string | null
+          profession?: string | null
           razao_social?: string | null
           referral_source?: string | null
           responsavel_nome?: string | null
@@ -1027,6 +1029,7 @@ export type Database = {
           nome_fantasia?: string | null
           notes?: string | null
           phone?: string | null
+          profession?: string | null
           razao_social?: string | null
           referral_source?: string | null
           responsavel_nome?: string | null

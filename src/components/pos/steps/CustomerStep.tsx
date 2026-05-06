@@ -76,6 +76,7 @@ const emptyForm = {
   notes: '',
   store_id: '' as string,
   referral_source: '',
+  profession: '',
 };
 
 const CustomerStep = ({ selectedCustomer, onSelectCustomer, saleType, onNext, onBack }: CustomerStepProps) => {
@@ -253,6 +254,7 @@ const CustomerStep = ({ selectedCustomer, onSelectCustomer, saleType, onNext, on
         notes: formData.notes.trim() || null,
         store_id: formData.store_id || null,
         referral_source: formData.referral_source || null,
+        profession: formData.profession.trim() || null,
       };
 
       const { data, error } = await supabase
@@ -492,6 +494,17 @@ const CustomerStep = ({ selectedCustomer, onSelectCustomer, saleType, onNext, on
                     <SelectItem value="Assessor">Assessor</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+
+              {/* Profissão */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Profissão</Label>
+                <Input
+                  placeholder="Ex: Médico, Professor, Empresário..."
+                  value={formData.profession}
+                  onChange={(e) => updateField('profession', e.target.value)}
+                  maxLength={100}
+                />
               </div>
 
               {formData.customer_type === 'pf' ? (
