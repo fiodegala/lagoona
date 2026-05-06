@@ -24,6 +24,7 @@ import RelatedProducts from '@/components/store/RelatedProducts';
 import ProductAITryOn from '@/components/store/ProductAITryOn';
 import UpsellSection from '@/components/store/UpsellSection';
 import ProductSEO from '@/components/store/ProductSEO';
+import PinchZoomImage from '@/components/store/PinchZoomImage';
 import { useCart } from '@/contexts/CartContext';
 import { useFavorites } from '@/contexts/FavoritesContext';
 import { toast } from 'sonner';
@@ -494,15 +495,15 @@ const ProductDetails = () => {
                   {lightboxIndex + 1} / {allImages.length}
                 </div>
 
-                {/* Main Image */}
+                {/* Main Image - pinch & double-tap zoom */}
                 <div
-                  className="relative w-full h-[85vh] flex items-center justify-center px-16"
+                  className="relative w-full h-[85vh] flex items-center justify-center px-4 md:px-16 overflow-hidden touch-none select-none"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <img
-                    src={getOptimizedImageUrl(allImages[lightboxIndex], { width: 1200, quality: 85 })}
+                  <PinchZoomImage
+                    key={lightboxIndex}
+                    src={getOptimizedImageUrl(allImages[lightboxIndex], { width: 1600, quality: 90 })}
                     alt={`${product.name} - ${lightboxIndex + 1}`}
-                    className="max-w-full max-h-full object-contain"
                   />
                 </div>
 
