@@ -11,6 +11,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/
 import { Bar, Line, XAxis, YAxis, CartesianGrid, ComposedChart } from 'recharts';
 import { TrendingUp, Search, Loader2, BarChart3 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import ABCAnalysisReport from '@/components/abc/ABCAnalysisReport';
 import ProductClassificationTab from '@/components/abc/ProductClassificationTab';
 import { subDays, startOfMonth } from 'date-fns';
