@@ -19,6 +19,7 @@ interface ProductSEOProps {
   images?: string[];
   rating?: { avg: number; count: number };
   category?: string | null;
+  breadcrumbs?: { name: string; url: string }[];
 }
 
 const setMeta = (selector: string, attr: string, value: string) => {
