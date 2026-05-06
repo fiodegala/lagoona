@@ -76,6 +76,7 @@ const emptyForm = {
   notes: '',
   store_id: '' as string,
   referral_source: '',
+  profession: '',
 };
 
 const CustomerStep = ({ selectedCustomer, onSelectCustomer, saleType, onNext, onBack }: CustomerStepProps) => {
