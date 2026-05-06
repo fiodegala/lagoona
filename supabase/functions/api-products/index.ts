@@ -68,7 +68,12 @@ serve(async (req) => {
     // "all" or omitted => no filter (returns ALL products like /api-variations and /api-stock)
 
     if (categoryId) query = query.eq("category_id", categoryId);
-    if (search) query = query.ilike("name", `%${search}%`);
+    if (sku) query = query.ilike("sku", `%${sku}%`);
+    if (barcode) query = query.ilike("barcode", `%${barcode}%`);
+    if (search) {
+      // Search in name, sku, or barcode
+      query = query.or(`name.ilike.%${search}%,sku.ilike.%${search}%,barcode.ilike.%${search}%`);
+    }
 
     const { data, error, count } = await query;
     if (error) {
