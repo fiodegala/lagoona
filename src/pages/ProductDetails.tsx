@@ -50,6 +50,7 @@ const ProductDetails = () => {
   const [tryOnEnabled, setTryOnEnabled] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [reviewStats, setReviewStats] = useState<{ avg: number; count: number }>({ avg: 0, count: 0 });
   const { addItem } = useCart();
 
   useEffect(() => {
@@ -109,6 +110,24 @@ const ProductDetails = () => {
     };
     loadTryOnConfig();
   }, []);
+
+  useEffect(() => {
+    if (!id) return;
+    const loadReviewStats = async () => {
+      const { data } = await supabase
+        .from('product_reviews')
+        .select('rating')
+        .eq('product_id', id)
+        .eq('is_approved', true);
+      if (data && data.length > 0) {
+        const sum = data.reduce((acc, r: any) => acc + (r.rating || 0), 0);
+        setReviewStats({ avg: sum / data.length, count: data.length });
+      } else {
+        setReviewStats({ avg: 0, count: 0 });
+      }
+    };
+    loadReviewStats();
+  }, [id]);
 
   const handleVariationSelect = useCallback((variation: ProductVariation | null) => {
     setSelectedVariation(variation);
@@ -520,21 +539,36 @@ const ProductDetails = () => {
               {product.name}
             </h1>
 
-            {/* Rating Summary */}
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <Star
-                    key={star}
-                    className={cn(
-                      "h-4 w-4",
-                      star <= 4 ? "fill-warning text-warning" : "text-muted-foreground/30"
-                    )}
-                  />
-                ))}
-              </div>
-              <span className="text-sm text-muted-foreground">(0 avaliações)</span>
-            </div>
+            {/* Rating Summary - only when there are real reviews */}
+            {reviewStats.count > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  const tabsTrigger = document.querySelector('[value="reviews"]') as HTMLElement | null;
+                  tabsTrigger?.click();
+                  tabsTrigger?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }}
+                className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+              >
+                <div className="flex items-center gap-1">
+                  {[1, 2, 3, 4, 5].map((star) => {
+                    const filled = star <= Math.round(reviewStats.avg);
+                    return (
+                      <Star
+                        key={star}
+                        className={cn(
+                          "h-4 w-4",
+                          filled ? "fill-warning text-warning" : "text-muted-foreground/30"
+                        )}
+                      />
+                    );
+                  })}
+                </div>
+                <span className="text-sm text-muted-foreground">
+                  {reviewStats.avg.toFixed(1)} ({reviewStats.count} avaliaç{reviewStats.count === 1 ? 'ão' : 'ões'})
+                </span>
+              </button>
+            )}
 
             {/* Pricing */}
             <div className="space-y-1">
