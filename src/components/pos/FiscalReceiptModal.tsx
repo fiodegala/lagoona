@@ -23,7 +23,10 @@ import {
   CheckCircle2,
   User,
   Building2,
+  Printer,
 } from 'lucide-react';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 interface FiscalCustomerData {
   name?: string;
@@ -56,6 +59,7 @@ const FiscalReceiptModal = ({
   const [step, setStep] = useState<'choose' | 'form' | 'success'>('choose');
   const [fiscalType, setFiscalType] = useState<'nfce' | 'nfe'>('nfce');
   const [isSaving, setIsSaving] = useState(false);
+  const [isPrinting, setIsPrinting] = useState(false);
   const [isLoadingCep, setIsLoadingCep] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -188,6 +192,118 @@ const FiscalReceiptModal = ({
     onComplete();
   };
 
+  const handlePrintOrder = async () => {
+    if (!saleId) {
+      toast.error('Venda não encontrada');
+      return;
+    }
+    setIsPrinting(true);
+    try {
+      const { data: sale, error } = await supabase
+        .from('pos_sales')
+        .select('*, stores(name, address, city, state, phone)')
+        .eq('id', saleId)
+        .single();
+      if (error || !sale) throw error || new Error('Venda não encontrada');
+
+      const items = Array.isArray(sale.items) ? sale.items : [];
+      const fmt = (v: number) => Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+      const paymentLabels: Record<string, string> = {
+        cash: 'Dinheiro', card: 'Cartão', pix: 'PIX', boleto: 'Boleto', cheque: 'Cheque', mixed: 'Misto', credit: 'Crediário',
+      };
+      const pd: any = sale.payment_details || {};
+      let paymentDetail = '';
+      if (sale.payment_method === 'card' && pd) {
+        const label = pd.cardType === 'credit' ? 'Crédito' : 'Débito';
+        const inst = pd.installments || 1;
+        paymentDetail = `${label}${inst > 1 ? ` - ${inst}x de ${fmt(sale.total / inst)}` : ' - À vista'}`;
+      } else if (sale.payment_method === 'mixed' && pd) {
+        const parts: string[] = [];
+        if (pd.cash > 0) parts.push(`Dinheiro: ${fmt(pd.cash)}`);
+        if (pd.card > 0) parts.push(`Cartão: ${fmt(pd.card)}`);
+        if (pd.pix > 0) parts.push(`PIX: ${fmt(pd.pix)}`);
+        if (pd.boleto > 0) parts.push(`Boleto: ${fmt(pd.boleto)}`);
+        if (pd.cheque > 0) parts.push(`Cheque: ${fmt(pd.cheque)}`);
+        paymentDetail = parts.join(' | ');
+      }
+
+      const store: any = (sale as any).stores || {};
+      const win = window.open('', '_blank', 'width=400,height=600');
+      if (!win) {
+        toast.error('Permita pop-ups para imprimir');
+        setIsPrinting(false);
+        return;
+      }
+      const dateStr = format(new Date(sale.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
+      win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Pedido #${String(sale.id).slice(0,8).toUpperCase()}</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Segoe UI',Arial,sans-serif;padding:24px;color:#1a1a1a;font-size:13px;max-width:380px;margin:0 auto}
+  .header{text-align:center;margin-bottom:16px;border-bottom:2px solid #1a1a1a;padding-bottom:12px}
+  .header h1{font-size:18px;font-weight:700}
+  .header h2{font-size:14px;font-weight:600;margin-top:4px}
+  .header p{font-size:11px;color:#666;margin-top:4px}
+  .section{margin-bottom:12px}
+  .section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#666;margin-bottom:6px;border-bottom:1px solid #ddd;padding-bottom:3px}
+  .info-row{display:flex;justify-content:space-between;margin-bottom:3px}
+  .info-label{color:#666}
+  .item{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px dotted #ddd}
+  .item-name{flex:1}
+  .item-qty{width:40px;text-align:center;color:#666}
+  .item-price{width:80px;text-align:right;font-weight:600}
+  .totals{margin-top:12px;border-top:2px solid #1a1a1a;padding-top:8px}
+  .total-row{display:flex;justify-content:space-between;margin-bottom:3px}
+  .total-final{font-size:16px;font-weight:700;margin-top:6px;padding-top:6px;border-top:1px solid #ddd}
+  .discount{color:#dc2626}
+  .footer{text-align:center;margin-top:20px;font-size:10px;color:#999;border-top:1px solid #ddd;padding-top:8px}
+  @media print{body{padding:12px}}
+</style></head><body>
+  <div class="header">
+    ${store.name ? `<h1>${store.name}</h1>` : ''}
+    <h2>PEDIDO DE VENDA</h2>
+    <p>#${String(sale.id).slice(0,8).toUpperCase()} &bull; ${dateStr}</p>
+    ${store.address ? `<p>${store.address}${store.city ? ' - ' + store.city : ''}${store.state ? '/' + store.state : ''}</p>` : ''}
+    ${store.phone ? `<p>${store.phone}</p>` : ''}
+  </div>
+  ${sale.customer_name ? `<div class="section">
+    <div class="section-title">Cliente</div>
+    <div class="info-row"><span>${sale.customer_name}</span></div>
+    ${sale.customer_document ? `<div class="info-row"><span class="info-label">${sale.customer_document}</span></div>` : ''}
+  </div>` : ''}
+  <div class="section">
+    <div class="section-title">Itens</div>
+    ${items.map((it: any) => `<div class="item">
+      <div class="item-name">${it.name || 'Produto'}${it.variation_label ? ` <span style="font-size:10px;color:#999">(${it.variation_label})</span>` : ''}${it.sku ? `<br><span style="font-size:10px;color:#999">SKU: ${it.sku}</span>` : ''}</div>
+      <div class="item-qty">${it.quantity || 1}x</div>
+      <div class="item-price">${fmt(it.total ?? (it.unit_price * (it.quantity || 1)))}</div>
+    </div>`).join('')}
+  </div>
+  <div class="totals">
+    <div class="total-row"><span>Subtotal</span><span>${fmt(sale.subtotal)}</span></div>
+    ${sale.discount_amount > 0 ? `<div class="total-row discount"><span>Desconto</span><span>-${fmt(sale.discount_amount)}</span></div>` : ''}
+    <div class="total-row total-final"><span>TOTAL</span><span>${fmt(sale.total)}</span></div>
+  </div>
+  <div class="section" style="margin-top:12px">
+    <div class="section-title">Forma de Pagamento</div>
+    <div class="info-row"><span>${paymentLabels[sale.payment_method] || sale.payment_method}</span></div>
+    ${paymentDetail ? `<div class="info-row"><span class="info-label">${paymentDetail}</span></div>` : ''}
+    ${sale.amount_received ? `<div class="info-row"><span class="info-label">Recebido</span><span>${fmt(sale.amount_received)}</span></div>` : ''}
+    ${sale.change_amount > 0 ? `<div class="info-row"><span class="info-label">Troco</span><span>${fmt(sale.change_amount)}</span></div>` : ''}
+  </div>
+  ${sale.notes ? `<div class="section"><div class="section-title">Observações</div><p>${sale.notes}</p></div>` : ''}
+  <div class="footer">Este documento não tem valor fiscal<br>Obrigado pela preferência!</div>
+</body></html>`);
+      win.document.close();
+      win.focus();
+      setTimeout(() => win.print(), 300);
+    } catch (e) {
+      console.error('Erro ao imprimir pedido:', e);
+      toast.error('Erro ao gerar impressão do pedido');
+    } finally {
+      setIsPrinting(false);
+    }
+  };
+
   const formatCurrency = (value: number) =>
     value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
@@ -248,6 +364,16 @@ const FiscalReceiptModal = ({
             </Button>
 
             <Separator />
+
+            <Button
+              variant="outline"
+              className="w-full gap-2"
+              onClick={handlePrintOrder}
+              disabled={isPrinting || !saleId}
+            >
+              {isPrinting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Printer className="h-4 w-4" />}
+              Imprimir Pedido de Venda
+            </Button>
 
             <Button variant="ghost" className="w-full gap-2 text-muted-foreground" onClick={handleSkip}>
               <SkipForward className="h-4 w-4" /> Pular - Sem documento fiscal
