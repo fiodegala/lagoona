@@ -59,6 +59,7 @@ const FiscalReceiptModal = ({
   const [step, setStep] = useState<'choose' | 'form' | 'success'>('choose');
   const [fiscalType, setFiscalType] = useState<'nfce' | 'nfe'>('nfce');
   const [isSaving, setIsSaving] = useState(false);
+  const [isPrinting, setIsPrinting] = useState(false);
   const [isLoadingCep, setIsLoadingCep] = useState(false);
 
   const [formData, setFormData] = useState({
