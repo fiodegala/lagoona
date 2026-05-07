@@ -23,7 +23,10 @@ import {
   CheckCircle2,
   User,
   Building2,
+  Printer,
 } from 'lucide-react';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 interface FiscalCustomerData {
   name?: string;
