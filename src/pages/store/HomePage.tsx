@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 
 // Lazy load below-fold sections
 const DealsCountdownSection = lazy(() => import('@/components/store/DealsCountdownSection'));
+import HeroCountdown from '@/components/store/HeroCountdown';
 const VideoTestimonialsSection = lazy(() => import('@/components/store/VideoTestimonialsSection'));
 const FeaturedProductSection = lazy(() => import('@/components/store/FeaturedProductSection'));
 const CustomerFeedbackSection = lazy(() => import('@/components/store/CustomerFeedbackSection'));
@@ -406,7 +407,8 @@ const HomePage = () => {
                   <div className="absolute inset-0 bg-store-dark/60" />
                   <div className="relative h-full flex items-center">
                     <div className="container mx-auto px-4">
-                      <div className="max-w-2xl">
+                     <div className="max-w-2xl">
+                        <HeroCountdown />
                         {banner.title && (
                           <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold text-white mb-6 leading-tight italic">
                             {banner.title}
@@ -486,6 +488,7 @@ const HomePage = () => {
             <div className="relative h-full flex items-center">
               <div className="container mx-auto px-4">
                 <div className="max-w-2xl">
+                  <HeroCountdown />
                   <span className="inline-block px-5 py-1.5 text-store-gold text-xs font-semibold tracking-[0.25em] uppercase mb-6 border border-store-gold/40">
                     Nova Coleção 2025
                   </span>
