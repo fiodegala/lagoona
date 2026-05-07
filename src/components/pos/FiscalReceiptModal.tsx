@@ -252,6 +252,16 @@ const FiscalReceiptModal = ({
 
             <Separator />
 
+            <Button
+              variant="outline"
+              className="w-full gap-2"
+              onClick={handlePrintOrder}
+              disabled={isPrinting || !saleId}
+            >
+              {isPrinting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Printer className="h-4 w-4" />}
+              Imprimir Pedido de Venda
+            </Button>
+
             <Button variant="ghost" className="w-full gap-2 text-muted-foreground" onClick={handleSkip}>
               <SkipForward className="h-4 w-4" /> Pular - Sem documento fiscal
             </Button>
