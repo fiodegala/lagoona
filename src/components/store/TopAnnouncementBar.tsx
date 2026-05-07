@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Truck, Sparkles, CreditCard } from 'lucide-react';
+import HeroCountdown from './HeroCountdown';
+import { useDealsCountdown } from '@/hooks/useDealsCountdown';
 
 const messages = [
   {
@@ -33,8 +35,10 @@ const messages = [
 const TopAnnouncementBar = () => {
   const [index, setIndex] = useState(0);
   const [visible, setVisible] = useState(true);
+  const { active } = useDealsCountdown();
 
   useEffect(() => {
+    if (active) return; // pause rotation when countdown takes over
     const interval = setInterval(() => {
       setVisible(false);
       setTimeout(() => {
@@ -43,7 +47,18 @@ const TopAnnouncementBar = () => {
       }, 300);
     }, 4000);
     return () => clearInterval(interval);
-  }, []);
+  }, [active]);
+
+  // When countdown is active, render it inline replacing the rotating message
+  if (active) {
+    return (
+      <div className="bg-black text-white text-xs sm:text-sm overflow-hidden">
+        <div className="container mx-auto px-4 py-3 flex items-center justify-center min-h-[52px]">
+          <HeroCountdown compact />
+        </div>
+      </div>
+    );
+  }
 
   const current = messages[index];
   const Icon = current.icon;
