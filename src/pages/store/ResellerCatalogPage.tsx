@@ -143,8 +143,35 @@ const ResellerCatalogPage = () => {
     if (search.trim()) {
       list = fuzzyFilterProducts(list, search);
     }
-    return list;
-  }, [products, selectedCategory, search]);
+    const CATEGORY_PRIORITY = [
+      'camiseta', 'camisa', 'polo', 'gola', 'blazer',
+      'bermuda', 'short',
+      'calca', 'calça',
+      'cueca', 'meia', 'cinto', 'bone', 'boné', 'sapato',
+      'acess', 'inverno', 'promo',
+    ];
+    const stripAccents = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    const catById = new Map(categories.map((c) => [c.id, c] as const));
+    const getPriority = (catName?: string) => {
+      if (!catName) return 999;
+      const n = stripAccents(catName);
+      const idx = CATEGORY_PRIORITY.findIndex((k) => n.includes(stripAccents(k)));
+      return idx === -1 ? 998 : idx;
+    };
+    return [...list].sort((a, b) => {
+      const ca = a.category_id ? catById.get(a.category_id) : undefined;
+      const cb = b.category_id ? catById.get(b.category_id) : undefined;
+      const pa = getPriority(ca?.name);
+      const pb = getPriority(cb?.name);
+      if (pa !== pb) return pa - pb;
+      const soa = ca?.sort_order ?? 9999;
+      const sob = cb?.sort_order ?? 9999;
+      if (soa !== sob) return soa - sob;
+      const cna = (ca?.name || '').localeCompare(cb?.name || '', 'pt-BR');
+      if (cna !== 0) return cna;
+      return (a.name || '').localeCompare(b.name || '', 'pt-BR');
+    });
+  }, [products, selectedCategory, search, categories]);
 
   useEffect(() => { setVisibleCount(PAGE_SIZE); }, [selectedCategory, search]);
 
