@@ -235,7 +235,11 @@ const FiscalReceiptModal = ({
         return;
       }
       const dateStr = format(new Date(sale.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
-      win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Pedido #${String(sale.id).slice(0,8).toUpperCase()}</title>
+      const fullSaleId = String(sale.id);
+      const shortSaleId = fullSaleId.slice(0, 8).toUpperCase();
+      const trackingUrl = `${window.location.origin}/rastrear-pedido?order=${encodeURIComponent(fullSaleId)}`;
+      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(trackingUrl)}`;
+      win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Pedido #${shortSaleId}</title>
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
   body{font-family:'Segoe UI',Arial,sans-serif;padding:24px;color:#1a1a1a;font-size:13px;max-width:380px;margin:0 auto}
@@ -255,15 +259,26 @@ const FiscalReceiptModal = ({
   .total-row{display:flex;justify-content:space-between;margin-bottom:3px}
   .total-final{font-size:16px;font-weight:700;margin-top:6px;padding-top:6px;border-top:1px solid #ddd}
   .discount{color:#dc2626}
+  .order-id-section{text-align:center;margin:12px 0;padding:10px;border:1px dashed #bbb;border-radius:6px;background:#fafafa}
+  .order-id-section .id-label{font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:#888;margin-bottom:4px}
+  .order-id-section .id-value{font-size:15px;font-weight:700;word-break:break-all}
+  .qr-section{text-align:center;margin:14px 0;padding:12px;border:1px solid #ddd;border-radius:6px}
+  .qr-section img{width:130px;height:130px}
+  .qr-section .qr-label{font-size:10px;color:#888;margin-top:6px;text-transform:uppercase;letter-spacing:.5px}
+  .qr-section .qr-url{font-size:10px;color:#555;word-break:break-all;margin-top:2px}
   .footer{text-align:center;margin-top:20px;font-size:10px;color:#999;border-top:1px solid #ddd;padding-top:8px}
   @media print{body{padding:12px}}
 </style></head><body>
   <div class="header">
     ${store.name ? `<h1>${store.name}</h1>` : ''}
     <h2>PEDIDO DE VENDA</h2>
-    <p>#${String(sale.id).slice(0,8).toUpperCase()} &bull; ${dateStr}</p>
+    <p>#${shortSaleId} &bull; ${dateStr}</p>
     ${store.address ? `<p>${store.address}${store.city ? ' - ' + store.city : ''}${store.state ? '/' + store.state : ''}</p>` : ''}
     ${store.phone ? `<p>${store.phone}</p>` : ''}
+  </div>
+  <div class="order-id-section">
+    <div class="id-label">Código do Pedido</div>
+    <div class="id-value">${fullSaleId.toUpperCase()}</div>
   </div>
   ${sale.customer_name ? `<div class="section">
     <div class="section-title">Cliente</div>
@@ -291,6 +306,11 @@ const FiscalReceiptModal = ({
     ${sale.change_amount > 0 ? `<div class="info-row"><span class="info-label">Troco</span><span>${fmt(sale.change_amount)}</span></div>` : ''}
   </div>
   ${sale.notes ? `<div class="section"><div class="section-title">Observações</div><p>${sale.notes}</p></div>` : ''}
+  <div class="qr-section">
+    <img src="${qrUrl}" alt="QR Code do pedido" />
+    <div class="qr-label">Acompanhe seu pedido</div>
+    <div class="qr-url">${trackingUrl}</div>
+  </div>
   <div class="footer">Este documento não tem valor fiscal<br>Obrigado pela preferência!</div>
 </body></html>`);
       win.document.close();
