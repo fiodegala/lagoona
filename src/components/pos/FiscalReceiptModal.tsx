@@ -201,10 +201,20 @@ const FiscalReceiptModal = ({
     try {
       const { data: sale, error } = await supabase
         .from('pos_sales')
-        .select('*, stores(name, address, city, state, phone)')
+        .select('*')
         .eq('id', saleId)
         .single();
       if (error || !sale) throw error || new Error('Venda não encontrada');
+
+      let store: any = {};
+      if ((sale as any).store_id) {
+        const { data: storeData } = await supabase
+          .from('stores')
+          .select('name, address, city, state, phone')
+          .eq('id', (sale as any).store_id)
+          .maybeSingle();
+        if (storeData) store = storeData;
+      }
 
       const items = Array.isArray(sale.items) ? sale.items : [];
       const fmt = (v: number) => Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
