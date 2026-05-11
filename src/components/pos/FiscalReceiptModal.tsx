@@ -237,7 +237,7 @@ const FiscalReceiptModal = ({
         paymentDetail = parts.join(' | ');
       }
 
-      const store: any = (sale as any).stores || {};
+      
       const win = window.open('', '_blank', 'width=400,height=600');
       if (!win) {
         toast.error('Permita pop-ups para imprimir');
