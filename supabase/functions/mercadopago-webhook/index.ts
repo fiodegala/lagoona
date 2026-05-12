@@ -139,13 +139,13 @@ Deno.serve(async (req) => {
     // Check current order status before updating (avoid double stock deduction)
     const { data: currentOrder } = await supabase
       .from('orders')
-      .select('status')
+      .select('status, metadata')
       .eq('id', orderId)
       .single();
 
     const wasAlreadyConfirmed = currentOrder?.status === 'confirmed';
 
-    // Update the order
+    // Update the order (preserve existing metadata like customer_document, customer_phone, etc.)
     const { error: updateError } = await supabase
       .from('orders')
       .update({
@@ -153,6 +153,7 @@ Deno.serve(async (req) => {
         payment_status: paymentStatus,
         payment_method: paymentData.payment_method_id || null,
         metadata: {
+          ...((currentOrder?.metadata as any) || {}),
           mercadopago_payment_id: paymentData.id,
           payment_status: paymentData.status,
           payment_status_detail: paymentData.status_detail,
