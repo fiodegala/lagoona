@@ -1,0 +1,1 @@
+UPDATE public.orders SET metadata = COALESCE(metadata, '{}'::jsonb) || jsonb_build_object('customer_document', '04887926146', 'customer_phone', '63984208647') WHERE id = '023e306f-8d3d-4ef4-84c1-a6c827b75c1a';
