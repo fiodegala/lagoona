@@ -233,6 +233,13 @@ async function createPayment(body: any, accessToken: string) {
     // For rejected/cancelled: keep order as 'pending' so user can retry with another card
     // The webhook will handle definitive status updates later
 
+    // Preserve existing metadata (customer_document, customer_phone, abandoned_cart_session_id, affiliate_code, etc.)
+    const { data: existingOrder } = await supabase
+      .from('orders')
+      .select('metadata')
+      .eq('id', order_id)
+      .single();
+
     await supabase
       .from('orders')
       .update({
@@ -240,6 +247,7 @@ async function createPayment(body: any, accessToken: string) {
         payment_status: paymentStatus,
         payment_method: data.payment_method_id,
         metadata: {
+          ...(existingOrder?.metadata || {}),
           mercadopago_payment_id: data.id,
           payment_status: data.status,
           payment_status_detail: data.status_detail,
