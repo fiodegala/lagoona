@@ -5,6 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { AlertTriangle, Star, ShieldCheck, DoorOpen, Ban, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { exportClassificationToXLSX } from '@/lib/abcExport';
+import { exportClassificationToPDF } from '@/lib/abcPdfExport';
 
 interface ABCItem {
   productName: string;
