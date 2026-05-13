@@ -59,8 +59,8 @@ ${top20}
 
 Use formatação Markdown com títulos, bullet points e destaques. Seja específico e mencione produtos pelo nome quando relevante.`;
 
-      const { data, error } = await supabase.functions.invoke('store-chat', {
-        body: { messages: [{ role: 'user', content: prompt }] },
+      const { data, error } = await supabase.functions.invoke('abc-ai-report', {
+        body: { prompt },
       });
 
       if (error) throw error;
