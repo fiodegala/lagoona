@@ -358,6 +358,7 @@ const ABCCurve = () => {
                           <Line yAxisId="right" dataKey="accumulated" type="monotone" stroke="hsl(0, 84%, 60%)" strokeWidth={2} dot={{ r: 3 }} />
                         </ComposedChart>
                       </ChartContainer>
+                      </div>
                     </CardContent>
                   </Card>
                 )}
