@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Bar, Line, XAxis, YAxis, CartesianGrid, ComposedChart } from 'recharts';
-import { TrendingUp, Search, Loader2, BarChart3 } from 'lucide-react';
+import { TrendingUp, Search, Loader2, BarChart3, ChevronRight, ChevronDown } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import ABCAnalysisReport from '@/components/abc/ABCAnalysisReport';
@@ -17,6 +17,13 @@ import ProductClassificationTab from '@/components/abc/ProductClassificationTab'
 import { subDays, startOfMonth } from 'date-fns';
 
 type PeriodFilter = '7d' | '30d' | '90d' | 'month' | 'all';
+
+interface VariationBreakdown {
+  key: string;
+  label: string;
+  quantitySold: number;
+  totalRevenue: number;
+}
 
 interface ABCItem {
   productName: string;
@@ -27,12 +34,22 @@ interface ABCItem {
   accumulatedPercent: number;
   classification: 'A' | 'B' | 'C';
   rank: number;
+  variations: VariationBreakdown[];
 }
 
 const ABCCurve = () => {
   const [period, setPeriod] = useState<PeriodFilter>('30d');
   const [search, setSearch] = useState('');
   const [storeId, setStoreId] = useState<string>('all');
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+
+  const toggleExpanded = (id: string) => {
+    setExpanded(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
 
   const { data: stores } = useQuery({
     queryKey: ['abc-stores'],
@@ -81,7 +98,7 @@ const ABCCurve = () => {
   const abcData = useMemo<ABCItem[]>(() => {
     if (!posSales && !orders) return [];
 
-    const productMap = new Map<string, { name: string; qty: number; revenue: number }>();
+    const productMap = new Map<string, { name: string; qty: number; revenue: number; variations: Map<string, VariationBreakdown> }>();
 
     const processItems = (items: any) => {
       if (!Array.isArray(items)) return;
@@ -92,12 +109,37 @@ const ABCCurve = () => {
         const price = Number(item.price || item.unit_price || item.unitPrice || 0);
         const revenue = qty * price;
 
+        // Extract variation info
+        const variationId = item.variation_id || item.variationId || null;
+        const variationName = item.variation_name || item.variationName || item.variation_label || item.variationLabel || null;
+        let variationLabel: string | null = variationName;
+        if (!variationLabel && item.variation_attributes) {
+          const attrs = item.variation_attributes;
+          if (Array.isArray(attrs)) {
+            variationLabel = attrs.map((a: any) => a.value || a.name).filter(Boolean).join(' / ');
+          } else if (typeof attrs === 'object') {
+            variationLabel = Object.values(attrs).filter(Boolean).join(' / ');
+          }
+        }
+        if (!variationLabel && item.sku) variationLabel = `SKU ${item.sku}`;
+        const varKey = variationId || variationLabel || '__base__';
+        const varDisplay = variationLabel || 'Sem variação';
+
         const existing = productMap.get(id);
         if (existing) {
           existing.qty += qty;
           existing.revenue += revenue;
+          const v = existing.variations.get(varKey);
+          if (v) {
+            v.quantitySold += qty;
+            v.totalRevenue += revenue;
+          } else {
+            existing.variations.set(varKey, { key: varKey, label: varDisplay, quantitySold: qty, totalRevenue: revenue });
+          }
         } else {
-          productMap.set(id, { name, qty, revenue });
+          const variations = new Map<string, VariationBreakdown>();
+          variations.set(varKey, { key: varKey, label: varDisplay, quantitySold: qty, totalRevenue: revenue });
+          productMap.set(id, { name, qty, revenue, variations });
         }
       });
     };
@@ -106,7 +148,13 @@ const ABCCurve = () => {
     orders?.forEach(order => processItems(order.items));
 
     const sorted = Array.from(productMap.entries())
-      .map(([id, data]) => ({ productId: id, productName: data.name, quantitySold: data.qty, totalRevenue: data.revenue }))
+      .map(([id, data]) => ({
+        productId: id,
+        productName: data.name,
+        quantitySold: data.qty,
+        totalRevenue: data.revenue,
+        variations: Array.from(data.variations.values()).sort((a, b) => b.totalRevenue - a.totalRevenue),
+      }))
       .sort((a, b) => b.totalRevenue - a.totalRevenue);
 
     const totalRevenue = sorted.reduce((sum, item) => sum + item.totalRevenue, 0);
@@ -303,6 +351,7 @@ const ABCCurve = () => {
                       <Table>
                         <TableHeader>
                           <TableRow>
+                            <TableHead className="w-8"></TableHead>
                             <TableHead className="w-12">#</TableHead>
                             <TableHead>Produto</TableHead>
                             <TableHead className="text-right">Qtd Vendida</TableHead>
@@ -315,28 +364,86 @@ const ABCCurve = () => {
                         <TableBody>
                           {filteredData.length === 0 ? (
                             <TableRow>
-                              <TableCell colSpan={7} className="text-center text-muted-foreground py-10">
+                              <TableCell colSpan={8} className="text-center text-muted-foreground py-10">
                                 Nenhum dado de venda encontrado para o período selecionado.
                               </TableCell>
                             </TableRow>
                           ) : (
-                            filteredData.map(item => (
-                              <TableRow key={item.productId}>
-                                <TableCell className="font-medium text-muted-foreground">{item.rank}</TableCell>
-                                <TableCell className="font-medium">{item.productName}</TableCell>
-                                <TableCell className="text-right">{item.quantitySold}</TableCell>
-                                <TableCell className="text-right font-medium">
-                                  {item.totalRevenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                                </TableCell>
-                                <TableCell className="text-right">{item.individualPercent.toFixed(2)}%</TableCell>
-                                <TableCell className="text-right">{item.accumulatedPercent.toFixed(2)}%</TableCell>
-                                <TableCell className="text-center">
-                                  <Badge variant="outline" className={classColor(item.classification)}>
-                                    {item.classification}
-                                  </Badge>
-                                </TableCell>
-                              </TableRow>
-                            ))
+                            filteredData.flatMap(item => {
+                              const isOpen = expanded.has(item.productId);
+                              const hasVariations = item.variations.length > 1 || (item.variations.length === 1 && item.variations[0].label !== 'Sem variação');
+                              const rows: JSX.Element[] = [
+                                <TableRow
+                                  key={item.productId}
+                                  className={hasVariations ? 'cursor-pointer hover:bg-muted/50' : ''}
+                                  onClick={() => hasVariations && toggleExpanded(item.productId)}
+                                >
+                                  <TableCell>
+                                    {hasVariations ? (
+                                      isOpen ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                                    ) : null}
+                                  </TableCell>
+                                  <TableCell className="font-medium text-muted-foreground">{item.rank}</TableCell>
+                                  <TableCell className="font-medium">
+                                    {item.productName}
+                                    {hasVariations && (
+                                      <span className="ml-2 text-xs text-muted-foreground">({item.variations.length} variações)</span>
+                                    )}
+                                  </TableCell>
+                                  <TableCell className="text-right">{item.quantitySold}</TableCell>
+                                  <TableCell className="text-right font-medium">
+                                    {item.totalRevenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                                  </TableCell>
+                                  <TableCell className="text-right">{item.individualPercent.toFixed(2)}%</TableCell>
+                                  <TableCell className="text-right">{item.accumulatedPercent.toFixed(2)}%</TableCell>
+                                  <TableCell className="text-center">
+                                    <Badge variant="outline" className={classColor(item.classification)}>
+                                      {item.classification}
+                                    </Badge>
+                                  </TableCell>
+                                </TableRow>,
+                              ];
+                              if (isOpen && hasVariations) {
+                                rows.push(
+                                  <TableRow key={`${item.productId}-detail`} className="bg-muted/30 hover:bg-muted/30">
+                                    <TableCell colSpan={8} className="p-0">
+                                      <div className="px-6 py-3">
+                                        <div className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide">
+                                          Variações mais vendidas
+                                        </div>
+                                        <Table>
+                                          <TableHeader>
+                                            <TableRow>
+                                              <TableHead className="w-12">#</TableHead>
+                                              <TableHead>Variação</TableHead>
+                                              <TableHead className="text-right">Qtd Vendida</TableHead>
+                                              <TableHead className="text-right">Faturamento</TableHead>
+                                              <TableHead className="text-right">% do Produto</TableHead>
+                                            </TableRow>
+                                          </TableHeader>
+                                          <TableBody>
+                                            {item.variations.map((v, idx) => (
+                                              <TableRow key={v.key}>
+                                                <TableCell className="text-muted-foreground">{idx + 1}</TableCell>
+                                                <TableCell className="font-medium">{v.label}</TableCell>
+                                                <TableCell className="text-right">{v.quantitySold}</TableCell>
+                                                <TableCell className="text-right">
+                                                  {v.totalRevenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                  {item.totalRevenue > 0 ? ((v.totalRevenue / item.totalRevenue) * 100).toFixed(1) : '0.0'}%
+                                                </TableCell>
+                                              </TableRow>
+                                            ))}
+                                          </TableBody>
+                                        </Table>
+                                      </div>
+                                    </TableCell>
+                                  </TableRow>
+                                );
+                              }
+                              return rows;
+                            })
                           )}
                         </TableBody>
                       </Table>
