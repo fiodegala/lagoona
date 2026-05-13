@@ -1,0 +1,27 @@
+# Fio de Gala
+
+> Loja online de moda masculina premium — camisas, calças, bermudas, acessórios e combos. Frete grátis acima de R$ 299, parcelamento em até 6x sem juros.
+
+A Fio de Gala é uma marca brasileira de moda masculina premium voltada ao homem urbano. Vendemos no varejo pelo site e no atacado para revendedores e lojistas.
+
+## Pages
+
+- [Início](/): Página inicial com lançamentos, banners e categorias em destaque.
+- [Loja](/loja): Catálogo completo de produtos.
+- [Categorias](/categorias): Navegação por todas as categorias.
+- [Combos](/combos): Combos de peças com desconto.
+- [Atacado](/atacado): Condições e cadastro para revendedores.
+- [Catálogo](/catalogo): Catálogo completo para visualizar e compartilhar.
+- [Catálogo Revendedor](/catalogo-revendedor): Catálogo com preços de atacado.
+- [Sobre Nós](/sobre): História e propósito da marca.
+- [Contato](/contato): Canais de atendimento.
+- [FAQ](/faq): Perguntas frequentes sobre pedidos, frete e pagamentos.
+- [Trocas e Devoluções](/trocas-devolucoes): Política de trocas e devoluções.
+- [Rastrear Pedido](/rastrear-pedido): Acompanhamento de entregas.
+- [Trabalhe Conosco](/trabalhe-conosco): Vagas abertas.
+- [Programa de Afiliados](/afiliados): Cadastro no programa de afiliados.
+
+## Optional
+
+- [Política de Privacidade](/privacidade): Como coletamos e protegemos dados.
+- [Termos de Uso](/termos): Termos e condições do site.
