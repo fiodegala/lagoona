@@ -46,12 +46,11 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
   const navigate = useNavigate();
   const { profile, roles, signOut, isAdmin, userStore, allowedMenus, hasExplicitMenuPermissions } = useAuth();
   const { unreadCount } = useChatUnread();
-  const pinnedShortcutKeys = ['service-orders', 'announcements'];
   const pinnedShortcutItems = [
     { icon: ClipboardList, label: 'Ordens de Serviço', path: '/admin/ordens-servico', menuKey: 'service-orders' },
     { icon: Megaphone, label: 'Comunicados', path: '/admin/comunicados', menuKey: 'announcements' },
   ];
-  const primaryNavItems = navItems.filter((item) => !pinnedShortcutKeys.includes(item.menuKey));
+  const primaryNavItems = navItems;
 
   // Filter menu items: admins see everything, others see only allowed menus
   const hasMenuAccess = (key: string) => {
