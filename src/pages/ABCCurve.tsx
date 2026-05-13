@@ -363,11 +363,22 @@ const ABCCurve = () => {
 
                 {/* Table */}
                 <Card>
-                  <CardHeader className="flex flex-row items-center justify-between">
+                  <CardHeader className="flex flex-row items-center justify-between gap-2 flex-wrap">
                     <CardTitle className="text-base">Tabela Detalhada</CardTitle>
-                    <div className="relative w-64">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input placeholder="Buscar produto..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
+                    <div className="flex items-center gap-2">
+                      <div className="relative w-64">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input placeholder="Buscar produto..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => exportABCToXLSX(filteredData.length ? filteredData : abcData, period)}
+                        disabled={!abcData.length}
+                      >
+                        <Download className="h-4 w-4 mr-2" />
+                        Exportar XLSX
+                      </Button>
                     </div>
                   </CardHeader>
                   <CardContent>
