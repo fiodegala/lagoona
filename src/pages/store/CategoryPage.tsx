@@ -9,6 +9,7 @@ import { productsService, Product } from '@/services/products';
 import { categoriesService, Category } from '@/services/categories';
 import { enrichProductsWithStock } from '@/services/stockService';
 import { useProductCardsMeta } from '@/hooks/useProductCardsMeta';
+import { SEO } from '@/components/seo/SEO';
 
 const ITEMS_PER_PAGE = 12;
 
@@ -116,6 +117,11 @@ const CategoryPage = () => {
 
   return (
     <StoreLayout>
+      <SEO
+        title={`${category.name} — Fio de Gala`}
+        description={category.description || `Descubra os produtos da categoria ${category.name} na Fio de Gala. Moda masculina premium com entrega para todo o Brasil.`}
+        canonicalPath={`/loja/categoria/${slug}`}
+      />
       <div className="container mx-auto px-4 py-8">
         {/* Breadcrumb */}
         <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
