@@ -280,7 +280,7 @@ const SpinWheel = () => {
                     {isSpinning ? 'Girando...' : '🎰 Girar Roleta'}
                   </Button>
 
-                  <p className="text-gray-400 text-xs mt-3">
+                  <p className="text-gray-600 text-xs mt-3">
                     Cupom válido para uma única compra. Não cumulativo com outras promoções.
                   </p>
                 </>
@@ -289,7 +289,7 @@ const SpinWheel = () => {
                 <div className="py-4 space-y-4 animate-scale-in">
                   <div className="text-6xl mb-2">🎉</div>
                   <h3 className="text-xl font-bold text-gray-900">Parabéns!</h3>
-                  <p className="text-gray-500 text-sm">Você ganhou um cupom de desconto:</p>
+                  <p className="text-gray-700 text-sm">Você ganhou um cupom de desconto:</p>
 
                   <div className="inline-flex items-center gap-3 px-6 py-3 rounded-lg border-2 border-dashed border-amber-500 bg-amber-50">
                     <span className="font-mono text-2xl font-bold tracking-wider text-amber-700">
@@ -302,12 +302,12 @@ const SpinWheel = () => {
                       {copied ? (
                         <Check className="h-5 w-5 text-green-500" />
                       ) : (
-                        <Copy className="h-5 w-5 text-gray-400" />
+                        <Copy className="h-5 w-5 text-gray-700" />
                       )}
                     </button>
                   </div>
 
-                  <p className="text-gray-400 text-xs">
+                  <p className="text-gray-600 text-xs">
                     {wonCoupon.discount_type === 'percentage'
                       ? `${wonCoupon.discount_value}% de desconto`
                       : `R$ ${wonCoupon.discount_value.toFixed(2)} de desconto`}
