@@ -289,7 +289,7 @@ const SpinWheel = () => {
                 <div className="py-4 space-y-4 animate-scale-in">
                   <div className="text-6xl mb-2">🎉</div>
                   <h3 className="text-xl font-bold text-gray-900">Parabéns!</h3>
-                  <p className="text-gray-500 text-sm">Você ganhou um cupom de desconto:</p>
+                  <p className="text-gray-700 text-sm">Você ganhou um cupom de desconto:</p>
 
                   <div className="inline-flex items-center gap-3 px-6 py-3 rounded-lg border-2 border-dashed border-amber-500 bg-amber-50">
                     <span className="font-mono text-2xl font-bold tracking-wider text-amber-700">
