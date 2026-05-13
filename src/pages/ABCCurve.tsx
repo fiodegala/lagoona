@@ -43,6 +43,7 @@ const ABCCurve = () => {
   const [period, setPeriod] = useState<PeriodFilter>('30d');
   const [search, setSearch] = useState('');
   const [storeId, setStoreId] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<'revenue' | 'quantity'>('revenue');
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
   const toggleExpanded = (id: string) => {
@@ -196,9 +197,14 @@ const ABCCurve = () => {
   }, [posSales, orders]);
 
   const filteredData = useMemo(() => {
-    if (!search) return abcData;
-    return abcData.filter(item => item.productName.toLowerCase().includes(search.toLowerCase()));
-  }, [abcData, search]);
+    const base = search
+      ? abcData.filter(item => item.productName.toLowerCase().includes(search.toLowerCase()))
+      : abcData;
+    const sorted = [...base].sort((a, b) =>
+      sortBy === 'quantity' ? b.quantitySold - a.quantitySold : b.totalRevenue - a.totalRevenue
+    );
+    return sorted;
+  }, [abcData, search, sortBy]);
 
   const stats = useMemo(() => {
     const totalRevenue = abcData.reduce((sum, item) => sum + item.totalRevenue, 0);
@@ -368,7 +374,16 @@ const ABCCurve = () => {
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between gap-2 flex-wrap">
                     <CardTitle className="text-base">Tabela Detalhada</CardTitle>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Select value={sortBy} onValueChange={(v) => setSortBy(v as 'revenue' | 'quantity')}>
+                        <SelectTrigger className="w-[200px]">
+                          <SelectValue placeholder="Ordenar por" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="revenue">Mais vendidos (Faturamento)</SelectItem>
+                          <SelectItem value="quantity">Mais vendidos (Quantidade)</SelectItem>
+                        </SelectContent>
+                      </Select>
                       <div className="relative w-64">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input placeholder="Buscar produto..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
