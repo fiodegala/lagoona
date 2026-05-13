@@ -302,7 +302,7 @@ const SpinWheel = () => {
                       {copied ? (
                         <Check className="h-5 w-5 text-green-500" />
                       ) : (
-                        <Copy className="h-5 w-5 text-gray-400" />
+                        <Copy className="h-5 w-5 text-gray-700" />
                       )}
                     </button>
                   </div>
