@@ -197,9 +197,14 @@ const ABCCurve = () => {
   }, [posSales, orders]);
 
   const filteredData = useMemo(() => {
-    if (!search) return abcData;
-    return abcData.filter(item => item.productName.toLowerCase().includes(search.toLowerCase()));
-  }, [abcData, search]);
+    const base = search
+      ? abcData.filter(item => item.productName.toLowerCase().includes(search.toLowerCase()))
+      : abcData;
+    const sorted = [...base].sort((a, b) =>
+      sortBy === 'quantity' ? b.quantitySold - a.quantitySold : b.totalRevenue - a.totalRevenue
+    );
+    return sorted;
+  }, [abcData, search, sortBy]);
 
   const stats = useMemo(() => {
     const totalRevenue = abcData.reduce((sum, item) => sum + item.totalRevenue, 0);
