@@ -337,6 +337,7 @@ const ABCCurve = () => {
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
+                      <div data-abc-chart>
                       <ChartContainer config={chartConfig} className="h-[350px] w-full">
                         <ComposedChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 60 }}>
                           <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
