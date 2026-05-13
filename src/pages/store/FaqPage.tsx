@@ -137,9 +137,21 @@ const FaqPage = () => {
     },
   ];
 
+  const faqJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faqCategories.flatMap((c) =>
+      c.questions.map((q) => ({
+        "@type": "Question",
+        name: q.question,
+        acceptedAnswer: { "@type": "Answer", text: q.answer },
+      }))
+    ),
+  };
+
   return (
     <StoreLayout>
-            <SEO title="Perguntas Frequentes — Fio de Gala" description="Tire suas dúvidas sobre pedidos, frete, trocas e pagamentos na Fio de Gala." canonicalPath="/faq" />
+            <SEO title="Perguntas Frequentes — Fio de Gala" description="Tire suas dúvidas sobre pedidos, frete, trocas e pagamentos na Fio de Gala." canonicalPath="/faq" jsonLd={faqJsonLd} />
 <div className="min-h-screen">
         {/* Hero Section */}
         <section className="bg-gradient-to-br from-store-secondary to-store-secondary/50 py-16 md:py-20">
