@@ -307,7 +307,7 @@ const SpinWheel = () => {
                     </button>
                   </div>
 
-                  <p className="text-gray-400 text-xs">
+                  <p className="text-gray-600 text-xs">
                     {wonCoupon.discount_type === 'percentage'
                       ? `${wonCoupon.discount_value}% de desconto`
                       : `R$ ${wonCoupon.discount_value.toFixed(2)} de desconto`}
