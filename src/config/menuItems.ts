@@ -44,7 +44,7 @@ export interface MenuItem {
   requireAdmin?: boolean;
 }
 
-export const alwaysVisibleMenuKeys = ['manual', 'service-orders', 'announcements'] as const;
+export const alwaysVisibleMenuKeys = ['manual', 'service-orders', 'announcements', 'abc-curve'] as const;
 
 export type AlwaysVisibleMenuKey = (typeof alwaysVisibleMenuKeys)[number];
 
