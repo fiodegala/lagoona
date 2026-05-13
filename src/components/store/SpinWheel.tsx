@@ -280,7 +280,7 @@ const SpinWheel = () => {
                     {isSpinning ? 'Girando...' : '🎰 Girar Roleta'}
                   </Button>
 
-                  <p className="text-gray-400 text-xs mt-3">
+                  <p className="text-gray-600 text-xs mt-3">
                     Cupom válido para uma única compra. Não cumulativo com outras promoções.
                   </p>
                 </>
