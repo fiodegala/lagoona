@@ -399,6 +399,8 @@ const HomePage = () => {
                     <img
                       src={getOptimizedImageUrl(banner.image_url, { width: 1920, quality: 80 })}
                       alt={banner.title || 'Banner'}
+                      width={1920}
+                      height={1080}
                       className="absolute inset-0 w-full h-full object-cover"
                       loading={index === 0 ? 'eager' : 'lazy'}
                       decoding={index === 0 ? 'sync' : 'async'}
