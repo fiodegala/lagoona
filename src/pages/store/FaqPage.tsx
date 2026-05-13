@@ -1,11 +1,11 @@
 import { HelpCircle, Truck, RefreshCw, CreditCard, Shield, Clock, Package } from 'lucide-react';
 import {
-import { SEO } from "@/components/seo/SEO";
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
+import { SEO } from "@/components/seo/SEO";
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import StoreLayout from '@/components/store/StoreLayout';

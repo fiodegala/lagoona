@@ -7,10 +7,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { toast } from 'sonner';
 import {
-import { SEO } from "@/components/seo/SEO";
   DollarSign, GraduationCap, Headphones, Truck, ShoppingCart, RefreshCw,
   CreditCard, Package, Award, MessageCircle, Send
 } from 'lucide-react';
+import { SEO } from "@/components/seo/SEO";
 import atacadoBg from '@/assets/atacado-fdg.jpg';
 
 const BENEFITS = [
