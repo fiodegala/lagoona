@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Sparkles, BookOpen, ChevronDown, ChevronUp } from 'lucide-react';
+import { Loader2, Sparkles, BookOpen, ChevronDown, ChevronUp, Download } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import ReactMarkdown from 'react-markdown';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 interface ABCItem {
   productName: string;
