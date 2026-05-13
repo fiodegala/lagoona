@@ -43,6 +43,7 @@ const ABCCurve = () => {
   const [period, setPeriod] = useState<PeriodFilter>('30d');
   const [search, setSearch] = useState('');
   const [storeId, setStoreId] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<'revenue' | 'quantity'>('revenue');
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
   const toggleExpanded = (id: string) => {
