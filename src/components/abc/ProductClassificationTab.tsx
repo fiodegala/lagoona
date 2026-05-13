@@ -251,6 +251,17 @@ const ProductClassificationTab = ({ abcData }: Props) => {
 
   return (
     <div className="space-y-6">
+      <div className="flex justify-end">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => exportClassificationToXLSX(classifiedProducts, 'periodo')}
+          disabled={!classifiedProducts.length}
+        >
+          <Download className="h-4 w-4 mr-2" />
+          Exportar XLSX
+        </Button>
+      </div>
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <Card>
