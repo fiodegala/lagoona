@@ -11,6 +11,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/
 import { Bar, Line, XAxis, YAxis, CartesianGrid, ComposedChart } from 'recharts';
 import { TrendingUp, Search, Loader2, BarChart3, ChevronRight, ChevronDown, Download } from 'lucide-react';
 import { exportABCToXLSX } from '@/lib/abcExport';
+import { exportABCToPDF } from '@/lib/abcPdfExport';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import ABCAnalysisReport from '@/components/abc/ABCAnalysisReport';
@@ -337,6 +338,7 @@ const ABCCurve = () => {
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
+                      <div data-abc-chart>
                       <ChartContainer config={chartConfig} className="h-[350px] w-full">
                         <ComposedChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 60 }}>
                           <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
@@ -357,6 +359,7 @@ const ABCCurve = () => {
                           <Line yAxisId="right" dataKey="accumulated" type="monotone" stroke="hsl(0, 84%, 60%)" strokeWidth={2} dot={{ r: 3 }} />
                         </ComposedChart>
                       </ChartContainer>
+                      </div>
                     </CardContent>
                   </Card>
                 )}
@@ -378,6 +381,15 @@ const ABCCurve = () => {
                       >
                         <Download className="h-4 w-4 mr-2" />
                         Exportar XLSX
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => exportABCToPDF(filteredData.length ? filteredData : abcData, period)}
+                        disabled={!abcData.length}
+                      >
+                        <Download className="h-4 w-4 mr-2" />
+                        Exportar PDF
                       </Button>
                     </div>
                   </CardHeader>

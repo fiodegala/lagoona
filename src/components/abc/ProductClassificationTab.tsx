@@ -5,6 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { AlertTriangle, Star, ShieldCheck, DoorOpen, Ban, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { exportClassificationToXLSX } from '@/lib/abcExport';
+import { exportClassificationToPDF } from '@/lib/abcPdfExport';
 
 interface ABCItem {
   productName: string;
@@ -251,7 +252,7 @@ const ProductClassificationTab = ({ abcData }: Props) => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-2">
         <Button
           variant="outline"
           size="sm"
@@ -261,9 +262,18 @@ const ProductClassificationTab = ({ abcData }: Props) => {
           <Download className="h-4 w-4 mr-2" />
           Exportar XLSX
         </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => exportClassificationToPDF(classifiedProducts, 'periodo')}
+          disabled={!classifiedProducts.length}
+        >
+          <Download className="h-4 w-4 mr-2" />
+          Exportar PDF
+        </Button>
       </div>
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+      <div data-classification-summary className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <Card>
           <CardContent className="pt-4 pb-4">
             <div className="text-xs text-muted-foreground">Lucro Total Estimado</div>
