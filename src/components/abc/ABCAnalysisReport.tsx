@@ -180,18 +180,35 @@ Use formatação Markdown com títulos, bullet points e destaques. Seja específ
               <Sparkles className="h-4 w-4 text-primary" />
               Análise Inteligente com IA
             </span>
-            <Button
-              size="sm"
-              onClick={generateAIReport}
-              disabled={loadingAI || abcData.length === 0}
-            >
-              {loadingAI ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin mr-1" />
-                  Analisando...
-                </>
-              ) : aiReport ? 'Gerar Novamente' : 'Gerar Relatório'}
-            </Button>
+            <div className="flex items-center gap-2">
+              {aiReport && !loadingAI && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={exportReportToPDF}
+                  disabled={exportingPdf}
+                >
+                  {exportingPdf ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                  ) : (
+                    <Download className="h-4 w-4 mr-1" />
+                  )}
+                  Exportar PDF
+                </Button>
+              )}
+              <Button
+                size="sm"
+                onClick={generateAIReport}
+                disabled={loadingAI || abcData.length === 0}
+              >
+                {loadingAI ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                    Analisando...
+                  </>
+                ) : aiReport ? 'Gerar Novamente' : 'Gerar Relatório'}
+              </Button>
+            </div>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -206,7 +223,7 @@ Use formatação Markdown com títulos, bullet points e destaques. Seja específ
             </div>
           )}
           {aiReport && !loadingAI && (
-            <div className="prose prose-sm max-w-none dark:prose-invert">
+            <div ref={reportRef} className="prose prose-sm max-w-none dark:prose-invert bg-background p-4">
               <ReactMarkdown>{aiReport}</ReactMarkdown>
             </div>
           )}
