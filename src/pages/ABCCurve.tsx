@@ -382,6 +382,15 @@ const ABCCurve = () => {
                         <Download className="h-4 w-4 mr-2" />
                         Exportar XLSX
                       </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => exportABCToPDF(filteredData.length ? filteredData : abcData, period)}
+                        disabled={!abcData.length}
+                      >
+                        <Download className="h-4 w-4 mr-2" />
+                        Exportar PDF
+                      </Button>
                     </div>
                   </CardHeader>
                   <CardContent>
