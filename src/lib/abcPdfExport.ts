@@ -56,72 +56,70 @@ async function captureElement(selector: string): Promise<string | null> {
   }
 }
 
-function addImageFitted(doc: jsPDF, dataUrl: string, marginX = 14, marginY = 10) {
-  const pageW = doc.internal.pageSize.getWidth();
-  const pageH = doc.internal.pageSize.getHeight();
-  const props = doc.getImageProperties(dataUrl);
-  const maxW = pageW - marginX * 2;
-  const maxH = pageH - marginY - 30;
-  const ratio = Math.min(maxW / props.width, maxH / props.height);
-  const w = props.width * ratio;
-  const h = props.height * ratio;
-  doc.addImage(dataUrl, 'PNG', marginX, marginY, w, h);
-  return marginY + h + 6;
-}
-
 export async function exportABCToPDF(items: ABCItem[], periodLabel: string) {
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
   const today = new Date().toLocaleDateString('pt-BR');
 
-  // Header
-  doc.setFontSize(16);
+  // Compact header
+  doc.setFontSize(13);
   doc.setFont('helvetica', 'bold');
-  doc.text('Curva ABC de Produtos', 14, 14);
-  doc.setFontSize(10);
+  doc.text('Curva ABC de Produtos', 10, 10);
+  doc.setFontSize(8);
   doc.setFont('helvetica', 'normal');
-  doc.text(`Período: ${periodLabel} • Gerado em: ${today}`, 14, 20);
+  doc.text(`Período: ${periodLabel} • Gerado em: ${today}`, 10, 14);
 
-  // Stats
+  // Stats line
   const totalRevenue = items.reduce((s, i) => s + i.totalRevenue, 0);
   const totalQty = items.reduce((s, i) => s + i.quantitySold, 0);
   const countA = items.filter(i => i.classification === 'A').length;
   const countB = items.filter(i => i.classification === 'B').length;
   const countC = items.filter(i => i.classification === 'C').length;
-  doc.setFontSize(9);
+  doc.setFontSize(8);
   doc.text(
-    `Faturamento: ${fmtMoney(totalRevenue)}   |   Itens vendidos: ${totalQty}   |   Classe A: ${countA}   B: ${countB}   C: ${countC}`,
-    14,
-    26,
+    `Faturamento: ${fmtMoney(totalRevenue)}  |  Itens: ${totalQty}  |  A: ${countA}  B: ${countB}  C: ${countC}`,
+    10,
+    18,
   );
 
-  // Chart
+  // Compact chart (smaller, max ~60mm tall)
   const chartImg = await captureElement('[data-abc-chart]');
-  let nextY = 32;
+  let nextY = 22;
   if (chartImg) {
     const props = doc.getImageProperties(chartImg);
-    const maxW = doc.internal.pageSize.getWidth() - 28;
-    const ratio = maxW / props.width;
-    const h = Math.min(props.height * ratio, 110);
-    const w = (h / props.height) * props.width;
-    doc.addImage(chartImg, 'PNG', 14, nextY, w, h);
-    nextY += h + 6;
+    const maxW = doc.internal.pageSize.getWidth() - 20;
+    const maxH = 55;
+    const ratio = Math.min(maxW / props.width, maxH / props.height);
+    const w = props.width * ratio;
+    const h = props.height * ratio;
+    doc.addImage(chartImg, 'PNG', 10, nextY, w, h);
+    nextY += h + 3;
   }
 
-  // Table
+  // Dense table (no variations page)
   autoTable(doc, {
     startY: nextY,
-    head: [['#', 'Produto', 'Qtd', 'Faturamento', '% Indiv.', '% Acum.', 'Classe']],
+    head: [['#', 'Produto', 'Qtd', 'Faturamento', '% Indiv.', '% Acum.', 'Cl.']],
     body: items.map(i => [
       i.rank,
       i.productName,
       i.quantitySold,
       fmtMoney(i.totalRevenue),
-      `${i.individualPercent.toFixed(2)}%`,
-      `${i.accumulatedPercent.toFixed(2)}%`,
+      `${i.individualPercent.toFixed(1)}%`,
+      `${i.accumulatedPercent.toFixed(1)}%`,
       i.classification,
     ]),
-    styles: { fontSize: 8, cellPadding: 2 },
-    headStyles: { fillColor: [30, 41, 59], textColor: 255 },
+    styles: { fontSize: 7, cellPadding: 1, overflow: 'linebreak' },
+    headStyles: { fillColor: [30, 41, 59], textColor: 255, fontSize: 7.5 },
+    margin: { left: 10, right: 10 },
+    columnStyles: {
+      0: { cellWidth: 10 },
+      1: { cellWidth: 'auto' },
+      2: { cellWidth: 16, halign: 'right' },
+      3: { cellWidth: 30, halign: 'right' },
+      4: { cellWidth: 20, halign: 'right' },
+      5: { cellWidth: 20, halign: 'right' },
+      6: { cellWidth: 12, halign: 'center' },
+    },
     didParseCell: (data) => {
       if (data.section === 'body' && data.column.index === 6) {
         const v = data.cell.raw;
@@ -131,36 +129,6 @@ export async function exportABCToPDF(items: ABCItem[], periodLabel: string) {
       }
     },
   });
-
-  // Variations page
-  const variationRows: (string | number)[][] = [];
-  for (const item of items) {
-    for (const v of item.variations) {
-      if (item.variations.length === 1 && v.label === 'Sem variação') continue;
-      variationRows.push([
-        item.productName,
-        v.label,
-        v.quantitySold,
-        fmtMoney(v.totalRevenue),
-        item.totalRevenue > 0
-          ? `${((v.totalRevenue / item.totalRevenue) * 100).toFixed(1)}%`
-          : '0.0%',
-      ]);
-    }
-  }
-  if (variationRows.length) {
-    doc.addPage();
-    doc.setFontSize(14);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Variações Vendidas', 14, 14);
-    autoTable(doc, {
-      startY: 20,
-      head: [['Produto', 'Variação', 'Qtd', 'Faturamento', '% do Produto']],
-      body: variationRows,
-      styles: { fontSize: 8, cellPadding: 2 },
-      headStyles: { fillColor: [30, 41, 59], textColor: 255 },
-    });
-  }
 
   doc.save(`curva-abc_${periodLabel}_${new Date().toISOString().slice(0, 10)}.pdf`);
 }
@@ -172,26 +140,14 @@ export async function exportClassificationToPDF(
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
   const today = new Date().toLocaleDateString('pt-BR');
 
-  doc.setFontSize(16);
+  doc.setFontSize(13);
   doc.setFont('helvetica', 'bold');
-  doc.text('Classificação Estratégica de Produtos', 14, 14);
-  doc.setFontSize(10);
+  doc.text('Classificação Estratégica de Produtos', 10, 10);
+  doc.setFontSize(8);
   doc.setFont('helvetica', 'normal');
-  doc.text(`Período: ${periodLabel} • Gerado em: ${today}`, 14, 20);
+  doc.text(`Período: ${periodLabel} • Gerado em: ${today}`, 10, 14);
 
-  // Capture KPI/summary section
-  const kpiImg = await captureElement('[data-classification-summary]');
-  let nextY = 26;
-  if (kpiImg) {
-    const props = doc.getImageProperties(kpiImg);
-    const maxW = doc.internal.pageSize.getWidth() - 28;
-    const ratio = maxW / props.width;
-    const h = Math.min(props.height * ratio, 50);
-    const w = (h / props.height) * props.width;
-    doc.addImage(kpiImg, 'PNG', 14, nextY, w, h);
-    nextY += h + 6;
-  }
-
+  // Compact summary line per class
   const groups: Record<string, ClassifiedProduct[]> = {
     CORE: [],
     SUPORTE: [],
@@ -201,47 +157,59 @@ export async function exportClassificationToPDF(
   for (const p of products) {
     if (groups[p.classification]) groups[p.classification].push(p);
   }
+  const summary = Object.entries(groups)
+    .map(([cls, list]) => `${cls}: ${list.length}`)
+    .join('  |  ');
+  doc.text(`Total: ${products.length}  |  ${summary}`, 10, 18);
 
-  const groupColors: Record<string, [number, number, number]> = {
+  const classColors: Record<string, [number, number, number]> = {
     CORE: [220, 252, 231],
     SUPORTE: [219, 234, 254],
     ENTRADA: [254, 249, 195],
     CONTROLADO: [254, 226, 226],
   };
 
-  let first = true;
-  for (const [cls, items] of Object.entries(groups)) {
-    if (!items.length) continue;
-    if (!first || nextY > 180) {
-      doc.addPage();
-      nextY = 14;
-    }
-    first = false;
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    doc.text(`${cls} — ${items.length} produtos`, 14, nextY);
-    nextY += 4;
-    autoTable(doc, {
-      startY: nextY,
-      head: [['Produto', 'Preço Médio', 'Custo Total', 'Lucro/Un', 'Margem', 'Qtd', 'Lucro Total', 'Ação']],
-      body: items
-        .sort((a, b) => b.totalProfit - a.totalProfit)
-        .map(p => [
-          p.name,
-          fmtMoney(p.avgPrice),
-          fmtMoney(p.totalCostPerUnit),
-          fmtMoney(p.profitPerUnit),
-          `${p.marginPercent.toFixed(1)}%`,
-          p.qtySold,
-          fmtMoney(p.totalProfit),
-          p.action,
-        ]),
-      styles: { fontSize: 8, cellPadding: 2 },
-      headStyles: { fillColor: groupColors[cls], textColor: 30 },
-    });
-    // @ts-expect-error lastAutoTable injected by autotable
-    nextY = (doc.lastAutoTable?.finalY ?? nextY) + 8;
-  }
+  // Single dense combined table with classification column
+  const sorted = [...products].sort((a, b) => {
+    const order = ['CORE', 'SUPORTE', 'ENTRADA', 'CONTROLADO'];
+    const d = order.indexOf(a.classification) - order.indexOf(b.classification);
+    if (d !== 0) return d;
+    return b.totalProfit - a.totalProfit;
+  });
+
+  autoTable(doc, {
+    startY: 22,
+    head: [['Classe', 'Produto', 'P. Médio', 'Custo', 'Lucro/Un', 'Margem', 'Qtd', 'Lucro Total']],
+    body: sorted.map(p => [
+      p.classification,
+      p.name,
+      fmtMoney(p.avgPrice),
+      fmtMoney(p.totalCostPerUnit),
+      fmtMoney(p.profitPerUnit),
+      `${p.marginPercent.toFixed(1)}%`,
+      p.qtySold,
+      fmtMoney(p.totalProfit),
+    ]),
+    styles: { fontSize: 7, cellPadding: 1, overflow: 'linebreak' },
+    headStyles: { fillColor: [30, 41, 59], textColor: 255, fontSize: 7.5 },
+    margin: { left: 10, right: 10 },
+    columnStyles: {
+      0: { cellWidth: 22, halign: 'center', fontStyle: 'bold' },
+      1: { cellWidth: 'auto' },
+      2: { cellWidth: 24, halign: 'right' },
+      3: { cellWidth: 24, halign: 'right' },
+      4: { cellWidth: 24, halign: 'right' },
+      5: { cellWidth: 18, halign: 'right' },
+      6: { cellWidth: 14, halign: 'right' },
+      7: { cellWidth: 28, halign: 'right' },
+    },
+    didParseCell: (data) => {
+      if (data.section === 'body' && data.column.index === 0) {
+        const color = classColors[String(data.cell.raw)];
+        if (color) data.cell.styles.fillColor = color;
+      }
+    },
+  });
 
   doc.save(`classificacao-estrategica_${periodLabel}_${new Date().toISOString().slice(0, 10)}.pdf`);
 }
