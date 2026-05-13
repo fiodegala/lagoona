@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Sparkles, BookOpen, ChevronDown, ChevronUp } from 'lucide-react';
+import { Loader2, Sparkles, BookOpen, ChevronDown, ChevronUp, Download } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import ReactMarkdown from 'react-markdown';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 interface ABCItem {
   productName: string;
@@ -24,6 +26,52 @@ const ABCAnalysisReport = ({ abcData }: Props) => {
   const [showGuide, setShowGuide] = useState(false);
   const [aiReport, setAiReport] = useState<string | null>(null);
   const [loadingAI, setLoadingAI] = useState(false);
+  const [exportingPdf, setExportingPdf] = useState(false);
+  const reportRef = useRef<HTMLDivElement>(null);
+
+  const exportReportToPDF = async () => {
+    if (!reportRef.current || !aiReport) return;
+    setExportingPdf(true);
+    try {
+      const canvas = await html2canvas(reportRef.current, {
+        scale: 2,
+        backgroundColor: '#ffffff',
+        useCORS: true,
+      });
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 10;
+      const imgWidth = pageWidth - margin * 2;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      pdf.setFontSize(14);
+      pdf.text('Análise Inteligente — Curva ABC', margin, margin + 5);
+      pdf.setFontSize(9);
+      pdf.text(`Gerado em ${new Date().toLocaleString('pt-BR')}`, margin, margin + 11);
+
+      let position = margin + 16;
+      let heightLeft = imgHeight;
+
+      pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight - position - margin;
+
+      while (heightLeft > 0) {
+        pdf.addPage();
+        position = margin - (imgHeight - heightLeft);
+        pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight - margin * 2;
+      }
+
+      const date = new Date().toISOString().split('T')[0];
+      pdf.save(`relatorio-ia-curva-abc_${date}.pdf`);
+    } catch (err) {
+      console.error('Erro ao exportar PDF:', err);
+    } finally {
+      setExportingPdf(false);
+    }
+  };
 
   const generateAIReport = async () => {
     if (abcData.length === 0) return;
@@ -132,18 +180,35 @@ Use formatação Markdown com títulos, bullet points e destaques. Seja específ
               <Sparkles className="h-4 w-4 text-primary" />
               Análise Inteligente com IA
             </span>
-            <Button
-              size="sm"
-              onClick={generateAIReport}
-              disabled={loadingAI || abcData.length === 0}
-            >
-              {loadingAI ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin mr-1" />
-                  Analisando...
-                </>
-              ) : aiReport ? 'Gerar Novamente' : 'Gerar Relatório'}
-            </Button>
+            <div className="flex items-center gap-2">
+              {aiReport && !loadingAI && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={exportReportToPDF}
+                  disabled={exportingPdf}
+                >
+                  {exportingPdf ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                  ) : (
+                    <Download className="h-4 w-4 mr-1" />
+                  )}
+                  Exportar PDF
+                </Button>
+              )}
+              <Button
+                size="sm"
+                onClick={generateAIReport}
+                disabled={loadingAI || abcData.length === 0}
+              >
+                {loadingAI ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                    Analisando...
+                  </>
+                ) : aiReport ? 'Gerar Novamente' : 'Gerar Relatório'}
+              </Button>
+            </div>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -158,7 +223,7 @@ Use formatação Markdown com títulos, bullet points e destaques. Seja específ
             </div>
           )}
           {aiReport && !loadingAI && (
-            <div className="prose prose-sm max-w-none dark:prose-invert">
+            <div ref={reportRef} className="prose prose-sm max-w-none dark:prose-invert bg-background p-4">
               <ReactMarkdown>{aiReport}</ReactMarkdown>
             </div>
           )}
