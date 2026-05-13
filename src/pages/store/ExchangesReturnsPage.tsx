@@ -2,6 +2,7 @@ import { RefreshCw, Package, Clock, Truck, CreditCard, AlertCircle, CheckCircle,
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import StoreLayout from '@/components/store/StoreLayout';
+import { SEO } from "@/components/seo/SEO";
 
 const ExchangesReturnsPage = () => {
   const steps = [
@@ -79,7 +80,8 @@ const ExchangesReturnsPage = () => {
 
   return (
     <StoreLayout>
-      <div className="min-h-screen">
+            <SEO title="Trocas e Devoluções — Fio de Gala" description="Política de trocas e devoluções da Fio de Gala. Prazos, condições e processo simplificado." canonicalPath="/trocas-devolucoes" />
+<div className="min-h-screen">
         {/* Hero Section */}
         <section className="bg-gradient-to-br from-store-secondary to-store-secondary/50 py-16 md:py-20">
           <div className="container mx-auto px-4 text-center">

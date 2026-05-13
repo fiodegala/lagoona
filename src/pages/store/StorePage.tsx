@@ -17,6 +17,7 @@ import DealsCountdownSection from '@/components/store/DealsCountdownSection';
 import { categoriesService, Category } from '@/services/categories';
 import { enrichProductsWithStock } from '@/services/stockService';
 import { useProductCardsMeta } from '@/hooks/useProductCardsMeta';
+import { SEO } from "@/components/seo/SEO";
 
 const ITEMS_PER_PAGE = 12;
 
@@ -272,7 +273,8 @@ const StorePage = () => {
 
   return (
     <StoreLayout>
-      {/* Countdown for offers page */}
+            <SEO title="Loja — Fio de Gala" description="Explore a coleção completa de moda masculina premium da Fio de Gala. Novidades, lançamentos e ofertas." canonicalPath="/loja" />
+{/* Countdown for offers page */}
       {showOnlyOffers && (
         <DealsCountdownSection products={filteredProducts} hideProducts />
       )}

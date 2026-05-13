@@ -1,6 +1,7 @@
 import { FileText, ShoppingBag, CreditCard, Truck, RefreshCw, Scale, AlertTriangle, Mail } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import StoreLayout from '@/components/store/StoreLayout';
+import { SEO } from "@/components/seo/SEO";
 
 const TermsPage = () => {
   const lastUpdated = '24 de Janeiro de 2026';
@@ -152,7 +153,8 @@ const TermsPage = () => {
 
   return (
     <StoreLayout>
-      <div className="min-h-screen">
+            <SEO title="Termos de Uso — Fio de Gala" description="Leia os termos e condições de uso do site e da loja online Fio de Gala." canonicalPath="/termos" />
+<div className="min-h-screen">
         {/* Hero Section */}
         <section className="bg-gradient-to-br from-store-secondary to-store-secondary/50 py-16 md:py-20">
           <div className="container mx-auto px-4 text-center">

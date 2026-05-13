@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { Briefcase, Upload, Send, Users, Heart, TrendingUp, Award } from 'lucide-react';
+import { SEO } from "@/components/seo/SEO";
 
 const POSITIONS = [
   'Vendedor(a) de Loja',
@@ -100,7 +101,8 @@ const WorkWithUsPage = () => {
 
   return (
     <StoreLayout>
-      {/* Hero */}
+            <SEO title="Trabalhe Conosco — Fio de Gala" description="Faça parte do time Fio de Gala. Confira vagas abertas e envie seu currículo." canonicalPath="/trabalhe-conosco" />
+{/* Hero */}
       <section className="bg-[hsl(var(--store-dark))] py-20 md:py-28">
         <div className="container mx-auto px-4 text-center max-w-3xl">
           <div className="inline-flex items-center justify-center h-16 w-16 rounded-full bg-[hsl(var(--store-gold)/0.15)] mb-6">

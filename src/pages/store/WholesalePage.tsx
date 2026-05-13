@@ -10,6 +10,7 @@ import {
   DollarSign, GraduationCap, Headphones, Truck, ShoppingCart, RefreshCw,
   CreditCard, Package, Award, MessageCircle, Send
 } from 'lucide-react';
+import { SEO } from "@/components/seo/SEO";
 import atacadoBg from '@/assets/atacado-fdg.jpg';
 
 const BENEFITS = [
@@ -60,7 +61,8 @@ const WholesalePage = () => {
 
   return (
     <StoreLayout>
-      {/* Hero Section */}
+            <SEO title="Atacado — Fio de Gala" description="Compre no atacado com a Fio de Gala. Condições especiais para revendedores e lojistas." canonicalPath="/atacado" />
+{/* Hero Section */}
       <section className="relative min-h-[420px] flex items-center justify-center overflow-hidden bg-store-dark">
         <div className="relative z-10 text-center px-4 py-20 max-w-3xl mx-auto">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 font-[Clash_Display,sans-serif]">

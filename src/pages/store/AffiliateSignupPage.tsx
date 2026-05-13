@@ -10,6 +10,7 @@ import StoreLayout from '@/components/store/StoreLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { generateReferralCode } from '@/lib/affiliateUtils';
 import { useAuth } from '@/contexts/AuthContext';
+import { SEO } from "@/components/seo/SEO";
 
 const AffiliateSignupPage = () => {
   const { user } = useAuth();
@@ -117,7 +118,8 @@ const AffiliateSignupPage = () => {
   if (submitted) {
     return (
       <StoreLayout>
-        <div className="container mx-auto px-4 py-16 text-center max-w-lg">
+              <SEO title="Programa de Afiliados — Fio de Gala" description="Cadastre-se no programa de afiliados Fio de Gala e ganhe comissões por indicação." canonicalPath="/afiliados" />
+<div className="container mx-auto px-4 py-16 text-center max-w-lg">
           <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
           <h1 className="text-2xl font-bold mb-2">Cadastro Enviado!</h1>
           <p className="text-muted-foreground mb-4">

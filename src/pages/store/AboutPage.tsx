@@ -1,5 +1,6 @@
 import { Heart, Award, Truck, ShieldCheck, Users, Leaf } from 'lucide-react';
 import StoreLayout from '@/components/store/StoreLayout';
+import { SEO } from "@/components/seo/SEO";
 
 const AboutPage = () => {
   const values = [
@@ -37,7 +38,8 @@ const AboutPage = () => {
 
   return (
     <StoreLayout>
-      <div className="min-h-screen">
+            <SEO title="Sobre Nós — Fio de Gala" description="Conheça a história da Fio de Gala, marca de moda masculina premium feita para o homem urbano." canonicalPath="/sobre" />
+<div className="min-h-screen">
         {/* Hero Section */}
         <section className="bg-gradient-to-br from-store-secondary to-store-secondary/50 py-16 md:py-24">
           <div className="container mx-auto px-4 text-center">
