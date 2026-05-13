@@ -11,6 +11,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/
 import { Bar, Line, XAxis, YAxis, CartesianGrid, ComposedChart } from 'recharts';
 import { TrendingUp, Search, Loader2, BarChart3, ChevronRight, ChevronDown, Download } from 'lucide-react';
 import { exportABCToXLSX } from '@/lib/abcExport';
+import { exportABCToPDF } from '@/lib/abcPdfExport';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import ABCAnalysisReport from '@/components/abc/ABCAnalysisReport';
