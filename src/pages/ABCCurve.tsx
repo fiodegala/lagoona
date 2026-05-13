@@ -98,13 +98,31 @@ const ABCCurve = () => {
   const abcData = useMemo<ABCItem[]>(() => {
     if (!posSales && !orders) return [];
 
+    // Strip variation suffixes from product name to obtain the base/main product name.
+    // Examples that get cleaned to "CAMISA MANGA LONGA":
+    //   "CAMISA MANGA LONGA — Cor: CHAMPAGNE / G"
+    //   "CAMISA MANGA LONGA - Cor: CHAMPAGNE / Tamanho: G"
+    //   "CAMISA MANGA LONGA (CHAMPAGNE / G)"
+    const getBaseName = (raw: string): string => {
+      let n = (raw || '').trim();
+      // Cut at em-dash / en-dash / hyphen separator commonly used between product and variation
+      n = n.split(/\s+[—–-]\s+/)[0];
+      // Cut at trailing parenthesis describing variation
+      n = n.replace(/\s*\([^)]*\)\s*$/, '');
+      // Cut at " Cor:" / " Tamanho:" / " Tam:" inline
+      n = n.split(/\s+(?:Cor|Tamanho|Tam|Variação|Variacao)\s*:/i)[0];
+      return n.trim() || raw;
+    };
+
     const productMap = new Map<string, { name: string; qty: number; revenue: number; variations: Map<string, VariationBreakdown> }>();
 
     const processItems = (items: any) => {
       if (!Array.isArray(items)) return;
       items.forEach((item: any) => {
-        const id = item.product_id || item.productId || item.id || 'unknown';
-        const name = item.product_name || item.productName || item.name || 'Produto desconhecido';
+        const rawName = item.product_name || item.productName || item.name || 'Produto desconhecido';
+        const baseName = getBaseName(rawName);
+        // Group by base product name (resilient to product_id pointing at variation)
+        const groupKey = baseName.toLowerCase();
         const qty = Number(item.quantity || item.qty || 1);
         const price = Number(item.price || item.unit_price || item.unitPrice || 0);
         const revenue = qty * price;
@@ -121,11 +139,16 @@ const ABCCurve = () => {
             variationLabel = Object.values(attrs).filter(Boolean).join(' / ');
           }
         }
+        // Fallback: derive variation from the suffix of the product name (e.g. "Cor: CHAMPAGNE / G")
+        if (!variationLabel && rawName !== baseName) {
+          const suffix = rawName.slice(baseName.length).replace(/^[\s—–\-(:]+/, '').replace(/[)\s]+$/, '').trim();
+          if (suffix) variationLabel = suffix;
+        }
         if (!variationLabel && item.sku) variationLabel = `SKU ${item.sku}`;
         const varKey = variationId || variationLabel || '__base__';
         const varDisplay = variationLabel || 'Sem variação';
 
-        const existing = productMap.get(id);
+        const existing = productMap.get(groupKey);
         if (existing) {
           existing.qty += qty;
           existing.revenue += revenue;
@@ -139,7 +162,7 @@ const ABCCurve = () => {
         } else {
           const variations = new Map<string, VariationBreakdown>();
           variations.set(varKey, { key: varKey, label: varDisplay, quantitySold: qty, totalRevenue: revenue });
-          productMap.set(id, { name, qty, revenue, variations });
+          productMap.set(groupKey, { name: baseName, qty, revenue, variations });
         }
       });
     };
@@ -148,8 +171,8 @@ const ABCCurve = () => {
     orders?.forEach(order => processItems(order.items));
 
     const sorted = Array.from(productMap.entries())
-      .map(([id, data]) => ({
-        productId: id,
+      .map(([key, data]) => ({
+        productId: key,
         productName: data.name,
         quantitySold: data.qty,
         totalRevenue: data.revenue,
