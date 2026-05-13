@@ -89,7 +89,7 @@ const ABCCurve = () => {
   const abcData = useMemo<ABCItem[]>(() => {
     if (!posSales && !orders) return [];
 
-    const productMap = new Map<string, { name: string; qty: number; revenue: number }>();
+    const productMap = new Map<string, { name: string; qty: number; revenue: number; variations: Map<string, VariationBreakdown> }>();
 
     const processItems = (items: any) => {
       if (!Array.isArray(items)) return;
@@ -100,12 +100,37 @@ const ABCCurve = () => {
         const price = Number(item.price || item.unit_price || item.unitPrice || 0);
         const revenue = qty * price;
 
+        // Extract variation info
+        const variationId = item.variation_id || item.variationId || null;
+        const variationName = item.variation_name || item.variationName || item.variation_label || item.variationLabel || null;
+        let variationLabel: string | null = variationName;
+        if (!variationLabel && item.variation_attributes) {
+          const attrs = item.variation_attributes;
+          if (Array.isArray(attrs)) {
+            variationLabel = attrs.map((a: any) => a.value || a.name).filter(Boolean).join(' / ');
+          } else if (typeof attrs === 'object') {
+            variationLabel = Object.values(attrs).filter(Boolean).join(' / ');
+          }
+        }
+        if (!variationLabel && item.sku) variationLabel = `SKU ${item.sku}`;
+        const varKey = variationId || variationLabel || '__base__';
+        const varDisplay = variationLabel || 'Sem variação';
+
         const existing = productMap.get(id);
         if (existing) {
           existing.qty += qty;
           existing.revenue += revenue;
+          const v = existing.variations.get(varKey);
+          if (v) {
+            v.quantitySold += qty;
+            v.totalRevenue += revenue;
+          } else {
+            existing.variations.set(varKey, { key: varKey, label: varDisplay, quantitySold: qty, totalRevenue: revenue });
+          }
         } else {
-          productMap.set(id, { name, qty, revenue });
+          const variations = new Map<string, VariationBreakdown>();
+          variations.set(varKey, { key: varKey, label: varDisplay, quantitySold: qty, totalRevenue: revenue });
+          productMap.set(id, { name, qty, revenue, variations });
         }
       });
     };
@@ -114,7 +139,13 @@ const ABCCurve = () => {
     orders?.forEach(order => processItems(order.items));
 
     const sorted = Array.from(productMap.entries())
-      .map(([id, data]) => ({ productId: id, productName: data.name, quantitySold: data.qty, totalRevenue: data.revenue }))
+      .map(([id, data]) => ({
+        productId: id,
+        productName: data.name,
+        quantitySold: data.qty,
+        totalRevenue: data.revenue,
+        variations: Array.from(data.variations.values()).sort((a, b) => b.totalRevenue - a.totalRevenue),
+      }))
       .sort((a, b) => b.totalRevenue - a.totalRevenue);
 
     const totalRevenue = sorted.reduce((sum, item) => sum + item.totalRevenue, 0);
