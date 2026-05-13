@@ -18,6 +18,13 @@ import { subDays, startOfMonth } from 'date-fns';
 
 type PeriodFilter = '7d' | '30d' | '90d' | 'month' | 'all';
 
+interface VariationBreakdown {
+  key: string;
+  label: string;
+  quantitySold: number;
+  totalRevenue: number;
+}
+
 interface ABCItem {
   productName: string;
   productId: string;
@@ -27,6 +34,7 @@ interface ABCItem {
   accumulatedPercent: number;
   classification: 'A' | 'B' | 'C';
   rank: number;
+  variations: VariationBreakdown[];
 }
 
 const ABCCurve = () => {
