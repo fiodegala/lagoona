@@ -5,6 +5,7 @@ interface SEOProps {
   description?: string;
   canonicalPath?: string;
   ogType?: string;
+  jsonLd?: Record<string, any> | Record<string, any>[];
 }
 
 const BASE_URL = "https://fiodegala.shop";
@@ -29,7 +30,7 @@ function setCanonical(href: string) {
   el.setAttribute("href", href);
 }
 
-export function SEO({ title, description, canonicalPath, ogType = "website" }: SEOProps) {
+export function SEO({ title, description, canonicalPath, ogType = "website", jsonLd }: SEOProps) {
   useEffect(() => {
     const finalTitle = title.length > 60 ? title.slice(0, 57) + "..." : title;
     document.title = finalTitle;
@@ -47,7 +48,26 @@ export function SEO({ title, description, canonicalPath, ogType = "website" }: S
     const url = `${BASE_URL}${path}`;
     setMeta("property", "og:url", url);
     setCanonical(url);
-  }, [title, description, canonicalPath, ogType]);
+
+    // Manage JSON-LD scripts injected by this component
+    const existing = document.head.querySelectorAll('script[data-seo-jsonld="true"]');
+    existing.forEach((n) => n.parentNode?.removeChild(n));
+    if (jsonLd) {
+      const items = Array.isArray(jsonLd) ? jsonLd : [jsonLd];
+      items.forEach((item) => {
+        const s = document.createElement("script");
+        s.type = "application/ld+json";
+        s.setAttribute("data-seo-jsonld", "true");
+        s.text = JSON.stringify(item);
+        document.head.appendChild(s);
+      });
+    }
+    return () => {
+      document.head
+        .querySelectorAll('script[data-seo-jsonld="true"]')
+        .forEach((n) => n.parentNode?.removeChild(n));
+    };
+  }, [title, description, canonicalPath, ogType, JSON.stringify(jsonLd ?? null)]);
 
   return null;
 }

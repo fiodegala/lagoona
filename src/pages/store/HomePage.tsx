@@ -104,7 +104,35 @@ const NewsletterSection = () => {
 
   return (
     <section className="py-14 md:py-20 bg-store-accent">
-            <SEO title="Fio de Gala — Moda Masculina Premium" description="Camisas, calças, bermudas e acessórios premium para o homem urbano. Frete grátis acima de R$ 299." canonicalPath="/" />
+            <SEO
+              title="Fio de Gala — Moda Masculina Premium"
+              description="Camisas, calças, bermudas e acessórios premium para o homem urbano. Frete grátis acima de R$ 299."
+              canonicalPath="/"
+              jsonLd={[
+                {
+                  "@context": "https://schema.org",
+                  "@type": "Organization",
+                  name: "Fio de Gala",
+                  url: "https://fiodegala.shop",
+                  logo: "https://fiodegala.shop/og-image.jpg",
+                  sameAs: [
+                    "https://www.instagram.com/fiodegala",
+                    "https://www.facebook.com/fiodegala",
+                  ],
+                },
+                {
+                  "@context": "https://schema.org",
+                  "@type": "WebSite",
+                  name: "Fio de Gala",
+                  url: "https://fiodegala.shop",
+                  potentialAction: {
+                    "@type": "SearchAction",
+                    target: "https://fiodegala.shop/loja?q={search_term_string}",
+                    "query-input": "required name=search_term_string",
+                  },
+                },
+              ]}
+            />
 <div className="container mx-auto px-4 text-center">
         <p className="text-store-gold uppercase tracking-[0.3em] text-xs mb-3 font-medium">
           Oferta exclusiva
