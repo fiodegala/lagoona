@@ -351,6 +351,7 @@ const ABCCurve = () => {
                       <Table>
                         <TableHeader>
                           <TableRow>
+                            <TableHead className="w-8"></TableHead>
                             <TableHead className="w-12">#</TableHead>
                             <TableHead>Produto</TableHead>
                             <TableHead className="text-right">Qtd Vendida</TableHead>
@@ -363,28 +364,86 @@ const ABCCurve = () => {
                         <TableBody>
                           {filteredData.length === 0 ? (
                             <TableRow>
-                              <TableCell colSpan={7} className="text-center text-muted-foreground py-10">
+                              <TableCell colSpan={8} className="text-center text-muted-foreground py-10">
                                 Nenhum dado de venda encontrado para o período selecionado.
                               </TableCell>
                             </TableRow>
                           ) : (
-                            filteredData.map(item => (
-                              <TableRow key={item.productId}>
-                                <TableCell className="font-medium text-muted-foreground">{item.rank}</TableCell>
-                                <TableCell className="font-medium">{item.productName}</TableCell>
-                                <TableCell className="text-right">{item.quantitySold}</TableCell>
-                                <TableCell className="text-right font-medium">
-                                  {item.totalRevenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                                </TableCell>
-                                <TableCell className="text-right">{item.individualPercent.toFixed(2)}%</TableCell>
-                                <TableCell className="text-right">{item.accumulatedPercent.toFixed(2)}%</TableCell>
-                                <TableCell className="text-center">
-                                  <Badge variant="outline" className={classColor(item.classification)}>
-                                    {item.classification}
-                                  </Badge>
-                                </TableCell>
-                              </TableRow>
-                            ))
+                            filteredData.flatMap(item => {
+                              const isOpen = expanded.has(item.productId);
+                              const hasVariations = item.variations.length > 1 || (item.variations.length === 1 && item.variations[0].label !== 'Sem variação');
+                              const rows: JSX.Element[] = [
+                                <TableRow
+                                  key={item.productId}
+                                  className={hasVariations ? 'cursor-pointer hover:bg-muted/50' : ''}
+                                  onClick={() => hasVariations && toggleExpanded(item.productId)}
+                                >
+                                  <TableCell>
+                                    {hasVariations ? (
+                                      isOpen ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                                    ) : null}
+                                  </TableCell>
+                                  <TableCell className="font-medium text-muted-foreground">{item.rank}</TableCell>
+                                  <TableCell className="font-medium">
+                                    {item.productName}
+                                    {hasVariations && (
+                                      <span className="ml-2 text-xs text-muted-foreground">({item.variations.length} variações)</span>
+                                    )}
+                                  </TableCell>
+                                  <TableCell className="text-right">{item.quantitySold}</TableCell>
+                                  <TableCell className="text-right font-medium">
+                                    {item.totalRevenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                                  </TableCell>
+                                  <TableCell className="text-right">{item.individualPercent.toFixed(2)}%</TableCell>
+                                  <TableCell className="text-right">{item.accumulatedPercent.toFixed(2)}%</TableCell>
+                                  <TableCell className="text-center">
+                                    <Badge variant="outline" className={classColor(item.classification)}>
+                                      {item.classification}
+                                    </Badge>
+                                  </TableCell>
+                                </TableRow>,
+                              ];
+                              if (isOpen && hasVariations) {
+                                rows.push(
+                                  <TableRow key={`${item.productId}-detail`} className="bg-muted/30 hover:bg-muted/30">
+                                    <TableCell colSpan={8} className="p-0">
+                                      <div className="px-6 py-3">
+                                        <div className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide">
+                                          Variações mais vendidas
+                                        </div>
+                                        <Table>
+                                          <TableHeader>
+                                            <TableRow>
+                                              <TableHead className="w-12">#</TableHead>
+                                              <TableHead>Variação</TableHead>
+                                              <TableHead className="text-right">Qtd Vendida</TableHead>
+                                              <TableHead className="text-right">Faturamento</TableHead>
+                                              <TableHead className="text-right">% do Produto</TableHead>
+                                            </TableRow>
+                                          </TableHeader>
+                                          <TableBody>
+                                            {item.variations.map((v, idx) => (
+                                              <TableRow key={v.key}>
+                                                <TableCell className="text-muted-foreground">{idx + 1}</TableCell>
+                                                <TableCell className="font-medium">{v.label}</TableCell>
+                                                <TableCell className="text-right">{v.quantitySold}</TableCell>
+                                                <TableCell className="text-right">
+                                                  {v.totalRevenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                  {item.totalRevenue > 0 ? ((v.totalRevenue / item.totalRevenue) * 100).toFixed(1) : '0.0'}%
+                                                </TableCell>
+                                              </TableRow>
+                                            ))}
+                                          </TableBody>
+                                        </Table>
+                                      </div>
+                                    </TableCell>
+                                  </TableRow>
+                                );
+                              }
+                              return rows;
+                            })
                           )}
                         </TableBody>
                       </Table>
