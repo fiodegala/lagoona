@@ -26,6 +26,52 @@ const ABCAnalysisReport = ({ abcData }: Props) => {
   const [showGuide, setShowGuide] = useState(false);
   const [aiReport, setAiReport] = useState<string | null>(null);
   const [loadingAI, setLoadingAI] = useState(false);
+  const [exportingPdf, setExportingPdf] = useState(false);
+  const reportRef = useRef<HTMLDivElement>(null);
+
+  const exportReportToPDF = async () => {
+    if (!reportRef.current || !aiReport) return;
+    setExportingPdf(true);
+    try {
+      const canvas = await html2canvas(reportRef.current, {
+        scale: 2,
+        backgroundColor: '#ffffff',
+        useCORS: true,
+      });
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 10;
+      const imgWidth = pageWidth - margin * 2;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      pdf.setFontSize(14);
+      pdf.text('Análise Inteligente — Curva ABC', margin, margin + 5);
+      pdf.setFontSize(9);
+      pdf.text(`Gerado em ${new Date().toLocaleString('pt-BR')}`, margin, margin + 11);
+
+      let position = margin + 16;
+      let heightLeft = imgHeight;
+
+      pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight - position - margin;
+
+      while (heightLeft > 0) {
+        pdf.addPage();
+        position = margin - (imgHeight - heightLeft);
+        pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight - margin * 2;
+      }
+
+      const date = new Date().toISOString().split('T')[0];
+      pdf.save(`relatorio-ia-curva-abc_${date}.pdf`);
+    } catch (err) {
+      console.error('Erro ao exportar PDF:', err);
+    } finally {
+      setExportingPdf(false);
+    }
+  };
 
   const generateAIReport = async () => {
     if (abcData.length === 0) return;
