@@ -11,6 +11,7 @@ import { Search, Share2, MessageCircle, Loader2, ChevronLeft, ChevronRight, Down
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { getOptimizedImageUrl } from '@/lib/imageUtils';
+import { SEO } from "@/components/seo/SEO";
 
 const WHATSAPP_NUMBER = '556299416578';
 const PAGE_SIZE = 16;
@@ -397,7 +398,8 @@ const CatalogPage = () => {
 
   return (
     <StoreLayout>
-      <div className="min-h-screen bg-background">
+            <SEO title="Catálogo — Fio de Gala" description="Catálogo completo da coleção Fio de Gala para visualizar e compartilhar." canonicalPath="/catalogo" />
+<div className="min-h-screen bg-background">
         {/* Hero */}
         <div className="bg-primary/5 py-8 md:py-12">
           <div className="container mx-auto px-4 text-center">

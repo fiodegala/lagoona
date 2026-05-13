@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { toast } from 'sonner';
 import {
+import { SEO } from "@/components/seo/SEO";
   DollarSign, GraduationCap, Headphones, Truck, ShoppingCart, RefreshCw,
   CreditCard, Package, Award, MessageCircle, Send
 } from 'lucide-react';
@@ -60,7 +61,8 @@ const WholesalePage = () => {
 
   return (
     <StoreLayout>
-      {/* Hero Section */}
+            <SEO title="Atacado — Fio de Gala" description="Compre no atacado com a Fio de Gala. Condições especiais para revendedores e lojistas." canonicalPath="/atacado" />
+{/* Hero Section */}
       <section className="relative min-h-[420px] flex items-center justify-center overflow-hidden bg-store-dark">
         <div className="relative z-10 text-center px-4 py-20 max-w-3xl mx-auto">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 font-[Clash_Display,sans-serif]">

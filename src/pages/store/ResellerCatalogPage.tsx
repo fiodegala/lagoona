@@ -10,6 +10,7 @@ import { Search, Share2, Loader2, ChevronLeft, ChevronRight, Download, X } from 
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { getOptimizedImageUrl } from '@/lib/imageUtils';
+import { SEO } from "@/components/seo/SEO";
 
 const WHATSAPP_NUMBER = '5562994165785';
 const PAGE_SIZE = 16;
@@ -308,7 +309,8 @@ const ResellerCatalogPage = () => {
 
   return (
     <StoreLayout>
-      <div className="min-h-screen bg-background">
+            <SEO title="Catálogo Revendedor — Fio de Gala" description="Catálogo exclusivo para revendedores Fio de Gala com preços de atacado." canonicalPath="/catalogo-revendedor" />
+<div className="min-h-screen bg-background">
         {/* Hero */}
         <div className="bg-primary/5 py-8 md:py-12">
           <div className="container mx-auto px-4 text-center">

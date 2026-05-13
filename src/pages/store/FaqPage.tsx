@@ -1,5 +1,6 @@
 import { HelpCircle, Truck, RefreshCw, CreditCard, Shield, Clock, Package } from 'lucide-react';
 import {
+import { SEO } from "@/components/seo/SEO";
   Accordion,
   AccordionContent,
   AccordionItem,
@@ -138,7 +139,8 @@ const FaqPage = () => {
 
   return (
     <StoreLayout>
-      <div className="min-h-screen">
+            <SEO title="Perguntas Frequentes — Fio de Gala" description="Tire suas dúvidas sobre pedidos, frete, trocas e pagamentos na Fio de Gala." canonicalPath="/faq" />
+<div className="min-h-screen">
         {/* Hero Section */}
         <section className="bg-gradient-to-br from-store-secondary to-store-secondary/50 py-16 md:py-20">
           <div className="container mx-auto px-4 text-center">

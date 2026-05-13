@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import StoreLayout from '@/components/store/StoreLayout';
 import { categoriesService, Category } from '@/services/categories';
+import { SEO } from "@/components/seo/SEO";
 
 const CategoriesPage = () => {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -24,7 +25,8 @@ const CategoriesPage = () => {
 
   return (
     <StoreLayout>
-      <div className="container mx-auto px-4 py-8">
+            <SEO title="Categorias — Fio de Gala" description="Navegue por todas as categorias de moda masculina premium: camisas, calças, bermudas, acessórios e mais." canonicalPath="/categorias" />
+<div className="container mx-auto px-4 py-8">
         <h1 className="text-2xl md:text-3xl font-bold mb-2">Categorias</h1>
         <p className="text-muted-foreground mb-8">Explore nossos produtos por categoria</p>
 

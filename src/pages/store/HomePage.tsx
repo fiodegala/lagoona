@@ -13,6 +13,7 @@ import { enrichProductsWithStock } from '@/services/stockService';
 import { supabase } from '@/integrations/supabase/client';
 import { useProductCardsMeta } from '@/hooks/useProductCardsMeta';
 import { toast } from 'sonner';
+import { SEO } from "@/components/seo/SEO";
 
 // Lazy load below-fold sections
 const DealsCountdownSection = lazy(() => import('@/components/store/DealsCountdownSection'));
@@ -103,7 +104,8 @@ const NewsletterSection = () => {
 
   return (
     <section className="py-14 md:py-20 bg-store-accent">
-      <div className="container mx-auto px-4 text-center">
+            <SEO title="Fio de Gala — Moda Masculina Premium" description="Camisas, calças, bermudas e acessórios premium para o homem urbano. Frete grátis acima de R$ 299." canonicalPath="/" />
+<div className="container mx-auto px-4 text-center">
         <p className="text-store-gold uppercase tracking-[0.3em] text-xs mb-3 font-medium">
           Oferta exclusiva
         </p>

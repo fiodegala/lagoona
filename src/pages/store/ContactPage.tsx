@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import StoreLayout from '@/components/store/StoreLayout';
+import { SEO } from "@/components/seo/SEO";
 
 const ContactPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -63,7 +64,8 @@ const ContactPage = () => {
 
   return (
     <StoreLayout>
-      <div className="min-h-screen">
+            <SEO title="Contato — Fio de Gala" description="Fale com a equipe Fio de Gala. Tire dúvidas, envie sugestões ou peça suporte." canonicalPath="/contato" />
+<div className="min-h-screen">
         {/* Hero Section */}
         <section className="bg-gradient-to-br from-store-secondary to-store-secondary/50 py-16 md:py-20">
           <div className="container mx-auto px-4 text-center">

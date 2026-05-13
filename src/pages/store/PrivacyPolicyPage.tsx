@@ -1,6 +1,7 @@
 import { Shield, Eye, Lock, Database, UserCheck, Mail, Clock } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import StoreLayout from '@/components/store/StoreLayout';
+import { SEO } from "@/components/seo/SEO";
 
 const PrivacyPolicyPage = () => {
   const lastUpdated = '24 de Janeiro de 2026';
@@ -126,7 +127,8 @@ const PrivacyPolicyPage = () => {
 
   return (
     <StoreLayout>
-      <div className="min-h-screen">
+            <SEO title="Política de Privacidade — Fio de Gala" description="Saiba como a Fio de Gala coleta, usa e protege seus dados pessoais." canonicalPath="/privacidade" />
+<div className="min-h-screen">
         {/* Hero Section */}
         <section className="bg-gradient-to-br from-store-secondary to-store-secondary/50 py-16 md:py-20">
           <div className="container mx-auto px-4 text-center">

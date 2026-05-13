@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import StoreLayout from '@/components/store/StoreLayout';
+import { SEO } from "@/components/seo/SEO";
 
 const StoreLoginPage = () => {
   const navigate = useNavigate();
@@ -56,7 +57,8 @@ const StoreLoginPage = () => {
   if (user) {
     return (
       <StoreLayout>
-        <div className="flex items-center justify-center py-20">
+              <SEO title="Entrar na Conta — Fio de Gala" description="Acesse sua conta Fio de Gala para acompanhar pedidos, favoritos e benefícios exclusivos." canonicalPath="/conta/login" />
+<div className="flex items-center justify-center py-20">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       </StoreLayout>

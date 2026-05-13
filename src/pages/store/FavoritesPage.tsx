@@ -8,6 +8,7 @@ import { useFavorites } from '@/contexts/FavoritesContext';
 import { productsService, Product } from '@/services/products';
 import { enrichProductsWithStock } from '@/services/stockService';
 import { useProductCardsMeta } from '@/hooks/useProductCardsMeta';
+import { SEO } from "@/components/seo/SEO";
 
 const FavoritesPage = () => {
   const { favorites, clearFavorites } = useFavorites();
@@ -43,7 +44,8 @@ const FavoritesPage = () => {
 
   return (
     <StoreLayout>
-      <div className="container mx-auto px-4 py-8">
+            <SEO title="Favoritos — Fio de Gala" description="Acesse os produtos que você favoritou na Fio de Gala e finalize sua compra a qualquer momento." canonicalPath="/favoritos" />
+<div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div className="flex items-center gap-3">

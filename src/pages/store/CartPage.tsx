@@ -10,6 +10,7 @@ import StoreLayout from '@/components/store/StoreLayout';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { SEO } from "@/components/seo/SEO";
 
 const CartPage = () => {
   const { user } = useAuth();
@@ -78,7 +79,8 @@ const CartPage = () => {
   if (items.length === 0) {
     return (
       <StoreLayout>
-        <div className="container mx-auto px-4 py-24 text-center">
+              <SEO title="Carrinho — Fio de Gala" description="Revise os itens do seu carrinho e finalize a compra com segurança na Fio de Gala." canonicalPath="/carrinho" />
+<div className="container mx-auto px-4 py-24 text-center">
           <ShoppingBag className="h-20 w-20 mx-auto text-muted-foreground/30 mb-6" />
           <h1 className="text-2xl font-bold mb-2">Seu carrinho está vazio</h1>
           <p className="text-muted-foreground mb-8">

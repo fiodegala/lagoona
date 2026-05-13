@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { SEO } from "@/components/seo/SEO";
 
 const statusConfig: Record<string, { label: string; icon: any; color: string; step: number }> = {
   pending: { label: 'Pendente', icon: Clock, color: 'text-yellow-500', step: 0 },
@@ -68,7 +69,8 @@ const OrderTrackingPage = () => {
 
   return (
     <StoreLayout>
-      <div className="container mx-auto px-4 py-8 max-w-2xl">
+            <SEO title="Rastrear Pedido — Fio de Gala" description="Acompanhe a entrega do seu pedido Fio de Gala em tempo real com o código de rastreio." canonicalPath="/rastrear-pedido" />
+<div className="container mx-auto px-4 py-8 max-w-2xl">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
             <MapPin className="h-8 w-8 text-primary" />

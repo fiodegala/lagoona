@@ -17,6 +17,7 @@ import { couponsService } from '@/services/coupons';
 import { trackAnalyticsEvent } from '@/hooks/useAnalyticsTracker';
 import { getAffiliateCode, clearAffiliateCode } from '@/lib/affiliateUtils';
 import { trackMetaInitiateCheckout, trackMetaPurchase } from '@/lib/metaPixel';
+import { SEO } from "@/components/seo/SEO";
 
 const ABANDONED_CART_SESSION_KEY = 'abandoned-cart-session';
 
@@ -656,7 +657,8 @@ const CheckoutPage = () => {
                   const finalTotal = showPixDiscount ? pixGrandTotal : grandTotal;
                   return (
                     <>
-                      <div className="space-y-2">
+                            <SEO title="Finalizar Compra — Fio de Gala" description="Conclua seu pedido na Fio de Gala com pagamento seguro via PIX, cartão ou boleto." canonicalPath="/checkout" />
+<div className="space-y-2">
                         <div className="flex justify-between text-sm">
                           <span className="text-muted-foreground">Subtotal</span>
                           <span>{formatPrice(total)}</span>

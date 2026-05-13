@@ -10,6 +10,7 @@ import { combosService, Combo } from '@/services/combos';
 import { supabase } from '@/integrations/supabase/client';
 import { useCart } from '@/contexts/CartContext';
 import { toast } from 'sonner';
+import { SEO } from "@/components/seo/SEO";
 
 interface ComboWithProducts extends Combo {
   productDetails?: {
@@ -86,7 +87,8 @@ const CombosPage = () => {
   if (loading) {
     return (
       <StoreLayout>
-        <div className="container mx-auto px-4 py-12">
+              <SEO title="Combos — Fio de Gala" description="Combos exclusivos com peças premium e descontos especiais. Aproveite na Fio de Gala." canonicalPath="/combos" />
+<div className="container mx-auto px-4 py-12">
           <h1 className="text-3xl font-bold mb-8">Combos & Kits</h1>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3].map(i => (

@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import StoreLayout from '@/components/store/StoreLayout';
+import { SEO } from "@/components/seo/SEO";
 
 interface Address {
   id: string;
@@ -311,7 +312,8 @@ const MyAccountPage = () => {
   if (authLoading) {
     return (
       <StoreLayout>
-        <div className="flex items-center justify-center py-20">
+              <SEO title="Minha Conta — Fio de Gala" description="Gerencie seus dados, pedidos, endereços e favoritos na sua conta Fio de Gala." canonicalPath="/minha-conta" />
+<div className="flex items-center justify-center py-20">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
       </StoreLayout>
