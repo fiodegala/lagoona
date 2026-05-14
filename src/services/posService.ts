@@ -507,6 +507,29 @@ export const posService = {
     return this.createSale(saleData);
   },
 
+  // Helper: paginated fetch of all store_stock rows (bypass 1000-row limit)
+  async _fetchAllStoreStock(filter?: { productIds?: string[] }): Promise<any[]> {
+    const PAGE = 1000;
+    const all: any[] = [];
+    let from = 0;
+    while (true) {
+      let q = supabase
+        .from('store_stock')
+        .select('product_id, variation_id, quantity')
+        .range(from, from + PAGE - 1);
+      if (filter?.productIds && filter.productIds.length > 0) {
+        q = q.in('product_id', filter.productIds);
+      }
+      const { data, error } = await q;
+      if (error) { console.error('store_stock fetch error', error); break; }
+      if (!data || data.length === 0) break;
+      all.push(...data);
+      if (data.length < PAGE) break;
+      from += PAGE;
+    }
+    return all;
+  },
+
   // Helper: enrich products with variation attribute labels and store_stock
   async _enrichWithLabels(products: any[]): Promise<any[]> {
     const allVariationIds = products.flatMap((p: any) =>
@@ -515,19 +538,17 @@ export const posService = {
     const allProductIds = products.map((p: any) => p.id);
     if (allVariationIds.length === 0 && allProductIds.length === 0) return products;
 
-    // Fetch labels and store_stock in parallel
-    const [vvRes, stockRes] = await Promise.all([
+    // Fetch labels and store_stock in parallel (stock paginated to bypass 1000-row limit)
+    const [vvRes, stockData] = await Promise.all([
       allVariationIds.length > 0
         ? supabase
             .from('product_variation_values')
             .select('variation_id, attribute_value_id, product_attribute_values(value, product_attributes(name))')
             .in('variation_id', allVariationIds)
         : Promise.resolve({ data: [] }),
-      supabase
-        .from('store_stock')
-        .select('product_id, variation_id, quantity')
-        .in('product_id', allProductIds),
+      this._fetchAllStoreStock({ productIds: allProductIds }),
     ]);
+    const stockRes = { data: stockData } as any;
 
     const labels = new Map<string, string>();
     for (const vv of vvRes.data || []) {
