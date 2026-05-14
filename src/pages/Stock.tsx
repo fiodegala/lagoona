@@ -111,7 +111,8 @@ const Stock = () => {
         while (true) {
           const { data, error } = await supabase
             .from('store_stock')
-            .select('store_id, product_id, variation_id, quantity')
+            .select('id, store_id, product_id, variation_id, quantity')
+            .order('id', { ascending: true })
             .range(from, from + pageSize - 1);
           if (error) throw error;
           if (!data || data.length === 0) break;
@@ -177,7 +178,8 @@ const Stock = () => {
       });
 
       const mappedProducts: StockProduct[] = (productsRes.data || []).map((p: any) => {
-        const hasVariations = productsWithVariations.has(p.id);
+        const hasVariationStockRows = Boolean(variationStockMap[p.id]);
+        const hasVariations = productsWithVariations.has(p.id) || hasVariationStockRows;
         const stockSource = hasVariations ? variationStockMap : simpleStockMap;
         const storeQuantities: Record<string, number> = {};
         let total = 0;
