@@ -764,7 +764,7 @@ export const posService = {
     const stockByProduct = new Map<string, number>();
     const stockByVariation = new Map<string, number>();
 
-    for (const s of stockRes.data || []) {
+    for (const s of stockData || []) {
       if (s.variation_id) {
         stockByVariation.set(s.variation_id, (stockByVariation.get(s.variation_id) || 0) + s.quantity);
       } else {
