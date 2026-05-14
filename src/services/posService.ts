@@ -734,15 +734,13 @@ export const posService = {
   },
 
   async getAllActiveProducts() {
-    const [productsRes, stockRes, variationValuesRes] = await Promise.all([
+    const [productsRes, stockData, variationValuesRes] = await Promise.all([
       supabase
         .from('products')
         .select('*, product_variations(*), categories(name)')
         .eq('visible_in_pos', true)
         .order('name'),
-      supabase
-        .from('store_stock')
-        .select('product_id, variation_id, quantity'),
+      this._fetchAllStoreStock(),
       supabase
         .from('product_variation_values')
         .select('variation_id, attribute_value_id, product_attribute_values(value, product_attributes(name))'),
