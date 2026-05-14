@@ -122,11 +122,31 @@ const Stock = () => {
         return allRows;
       };
 
+      const fetchAllActiveVariations = async () => {
+        const allRows: any[] = [];
+        let from = 0;
+        const pageSize = 1000;
+        while (true) {
+          const { data, error } = await supabase
+            .from('product_variations')
+            .select('id, product_id, barcode, sku')
+            .eq('is_active', true)
+            .order('id', { ascending: true })
+            .range(from, from + pageSize - 1);
+          if (error) throw error;
+          if (!data || data.length === 0) break;
+          allRows.push(...data);
+          if (data.length < pageSize) break;
+          from += pageSize;
+        }
+        return allRows;
+      };
+
       const [storesRes, productsRes, stockData, variationsRes] = await Promise.all([
         supabase.from('stores').select('id, name, slug, type').eq('is_active', true).order('name'),
         supabase.from('products').select('id, name, image_url, price, barcode, stock, min_stock, is_active, categories(name)').order('name'),
         fetchAllStock(),
-        supabase.from('product_variations').select('id, product_id, barcode, sku').eq('is_active', true),
+        fetchAllActiveVariations(),
       ]);
 
       const storesList = storesRes.data || [];
@@ -136,7 +156,7 @@ const Stock = () => {
       // Build set of products that have variations + map of variation barcodes/SKUs per product
       const productsWithVariations = new Set<string>();
       const variationCodesMap: Record<string, { variation_id: string; code: string }[]> = {};
-      (variationsRes.data || []).forEach((v: any) => {
+      (variationsRes || []).forEach((v: any) => {
         productsWithVariations.add(v.product_id);
         if (!variationCodesMap[v.product_id]) variationCodesMap[v.product_id] = [];
         if (v.barcode) variationCodesMap[v.product_id].push({ variation_id: v.id, code: v.barcode.toLowerCase() });
