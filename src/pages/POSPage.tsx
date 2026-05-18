@@ -101,6 +101,7 @@ const POSPage = () => {
   const [openSessionModal, setOpenSessionModal] = useState(false);
   const [closeSessionModal, setCloseSessionModal] = useState(false);
   const [cashMovementModal, setCashMovementModal] = useState(false);
+  const [cashTotals, setCashTotals] = useState({ deposits: 0, withdrawals: 0, sales: 0 });
   const [fiscalModalOpen, setFiscalModalOpen] = useState(false);
   const [completedSaleId, setCompletedSaleId] = useState<string | null>(null);
   const [completedSaleTotal, setCompletedSaleTotal] = useState(0);
@@ -178,6 +179,46 @@ const POSPage = () => {
     };
     loadSession();
   }, []);
+
+  // Real-time cash totals (deposits / withdrawals / sales) for the current session
+  useEffect(() => {
+    if (!session?.id) {
+      setCashTotals({ deposits: 0, withdrawals: 0, sales: 0 });
+      return;
+    }
+    const sessionId = session.id;
+
+    const recompute = async () => {
+      try {
+        const txs = await posService.getTransactionsBySession(sessionId);
+        let deposits = 0, withdrawals = 0, sales = 0;
+        for (const t of txs) {
+          const amt = Number(t.amount) || 0;
+          if (t.type === 'deposit') deposits += amt;
+          else if (t.type === 'withdrawal') withdrawals += amt;
+          else if (t.type === 'sale') sales += amt;
+        }
+        setCashTotals({ deposits, withdrawals, sales });
+      } catch (err) {
+        console.error('Error loading cash totals:', err);
+      }
+    };
+
+    recompute();
+
+    const channel = supabase
+      .channel(`pos_tx_${sessionId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'pos_transactions', filter: `session_id=eq.${sessionId}` },
+        () => recompute()
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [session?.id]);
 
   useEffect(() => {
     if (typeof window === 'undefined' || isLoading || !session || hasRestoredDraftRef.current) return;
@@ -844,6 +885,12 @@ const POSPage = () => {
   const handleCashMovement = async (type: 'withdrawal' | 'deposit', amount: number, description?: string) => {
     if (!session) return;
     await posService.addTransaction(session.id, type, amount, description);
+    // Optimistic update — realtime will reconcile
+    setCashTotals(prev => ({
+      ...prev,
+      deposits: type === 'deposit' ? prev.deposits + amount : prev.deposits,
+      withdrawals: type === 'withdrawal' ? prev.withdrawals + amount : prev.withdrawals,
+    }));
     toast({ title: type === 'withdrawal' ? 'Sangria registrada' : 'Suprimento registrado' });
   };
 
@@ -1023,6 +1070,36 @@ const POSPage = () => {
           )}
         </div>
 
+        {/* Cash totals strip (real-time) */}
+        <div className="px-2 pt-2 grid grid-cols-2 sm:grid-cols-4 gap-2 bg-card">
+          <div className="rounded-md border p-2 text-center">
+            <div className="text-[10px] uppercase text-muted-foreground">Abertura</div>
+            <div className="text-sm font-semibold">
+              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(session.opening_balance)}
+            </div>
+          </div>
+          <div className="rounded-md border p-2 text-center bg-green-500/10">
+            <div className="text-[10px] uppercase text-green-700 dark:text-green-400">Suprimentos</div>
+            <div className="text-sm font-semibold text-green-700 dark:text-green-400">
+              + {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(cashTotals.deposits)}
+            </div>
+          </div>
+          <div className="rounded-md border p-2 text-center bg-destructive/10">
+            <div className="text-[10px] uppercase text-destructive">Sangrias</div>
+            <div className="text-sm font-semibold text-destructive">
+              - {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(cashTotals.withdrawals)}
+            </div>
+          </div>
+          <div className="rounded-md border p-2 text-center bg-primary/10">
+            <div className="text-[10px] uppercase text-primary">Saldo esperado</div>
+            <div className="text-sm font-bold text-primary">
+              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
+                session.opening_balance + cashTotals.deposits - cashTotals.withdrawals + cashTotals.sales
+              )}
+            </div>
+          </div>
+        </div>
+
         {/* Bottom bar */}
         <div className="p-2 border-t flex flex-wrap gap-2 bg-card">
           <Button variant="outline" size="sm" className="flex-1 min-w-[140px]" onClick={() => setCashMovementModal(true)}>
@@ -1036,7 +1113,12 @@ const POSPage = () => {
       </div>
 
       <OpenSessionModal open={openSessionModal} onOpenChange={setOpenSessionModal} onConfirm={handleOpenSession} />
-      <CloseSessionModal open={closeSessionModal} onOpenChange={setCloseSessionModal} expectedBalance={session.opening_balance} onConfirm={handleCloseSession} />
+      <CloseSessionModal
+        open={closeSessionModal}
+        onOpenChange={setCloseSessionModal}
+        expectedBalance={session.opening_balance + cashTotals.deposits - cashTotals.withdrawals + cashTotals.sales}
+        onConfirm={handleCloseSession}
+      />
       <CashMovementModal open={cashMovementModal} onOpenChange={setCashMovementModal} onConfirm={handleCashMovement} />
       <FiscalReceiptModal
         open={fiscalModalOpen}
