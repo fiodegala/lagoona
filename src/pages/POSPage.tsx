@@ -101,6 +101,7 @@ const POSPage = () => {
   const [openSessionModal, setOpenSessionModal] = useState(false);
   const [closeSessionModal, setCloseSessionModal] = useState(false);
   const [cashMovementModal, setCashMovementModal] = useState(false);
+  const [cashTotals, setCashTotals] = useState({ deposits: 0, withdrawals: 0, sales: 0 });
   const [fiscalModalOpen, setFiscalModalOpen] = useState(false);
   const [completedSaleId, setCompletedSaleId] = useState<string | null>(null);
   const [completedSaleTotal, setCompletedSaleTotal] = useState(0);
