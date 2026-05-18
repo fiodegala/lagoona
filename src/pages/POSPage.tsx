@@ -885,6 +885,12 @@ const POSPage = () => {
   const handleCashMovement = async (type: 'withdrawal' | 'deposit', amount: number, description?: string) => {
     if (!session) return;
     await posService.addTransaction(session.id, type, amount, description);
+    // Optimistic update — realtime will reconcile
+    setCashTotals(prev => ({
+      ...prev,
+      deposits: type === 'deposit' ? prev.deposits + amount : prev.deposits,
+      withdrawals: type === 'withdrawal' ? prev.withdrawals + amount : prev.withdrawals,
+    }));
     toast({ title: type === 'withdrawal' ? 'Sangria registrada' : 'Suprimento registrado' });
   };
 
