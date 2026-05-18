@@ -180,6 +180,46 @@ const POSPage = () => {
     loadSession();
   }, []);
 
+  // Real-time cash totals (deposits / withdrawals / sales) for the current session
+  useEffect(() => {
+    if (!session?.id) {
+      setCashTotals({ deposits: 0, withdrawals: 0, sales: 0 });
+      return;
+    }
+    const sessionId = session.id;
+
+    const recompute = async () => {
+      try {
+        const txs = await posService.getTransactionsBySession(sessionId);
+        let deposits = 0, withdrawals = 0, sales = 0;
+        for (const t of txs) {
+          const amt = Number(t.amount) || 0;
+          if (t.type === 'deposit') deposits += amt;
+          else if (t.type === 'withdrawal') withdrawals += amt;
+          else if (t.type === 'sale') sales += amt;
+        }
+        setCashTotals({ deposits, withdrawals, sales });
+      } catch (err) {
+        console.error('Error loading cash totals:', err);
+      }
+    };
+
+    recompute();
+
+    const channel = supabase
+      .channel(`pos_tx_${sessionId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'pos_transactions', filter: `session_id=eq.${sessionId}` },
+        () => recompute()
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [session?.id]);
+
   useEffect(() => {
     if (typeof window === 'undefined' || isLoading || !session || hasRestoredDraftRef.current) return;
 
