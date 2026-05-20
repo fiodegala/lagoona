@@ -196,7 +196,7 @@ const POSPage = () => {
           const amt = Number(t.amount) || 0;
           if (t.type === 'deposit') deposits += amt;
           else if (t.type === 'withdrawal') withdrawals += amt;
-          else if (t.type === 'sale') sales += amt;
+          else if (t.type === 'sale' && t.payment_method === 'cash') sales += amt;
         }
         setCashTotals({ deposits, withdrawals, sales });
       } catch (err) {
