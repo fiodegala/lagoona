@@ -466,7 +466,7 @@ const App = () => (
               <Route
                 path="/admin/curva-abc"
                 element={
-                  <ProtectedRoute requiredRole="admin">
+                  <ProtectedRoute>
                     <ABCCurve />
                   </ProtectedRoute>
                 }
