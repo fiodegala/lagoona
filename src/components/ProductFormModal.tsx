@@ -504,7 +504,7 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
           <Warehouse className="h-4 w-4 text-muted-foreground" />
           <Label className="font-medium">Estoque por Loja</Label>
         </div>
-        {(isAdmin ? stores : stores.filter(s => s.id === userStoreId)).map(store => (
+        {(canSeeAllStores ? stores : stores.filter(s => s.id === userStoreId)).map(store => (
           <div key={store.id} className="flex items-center gap-3">
             <Label className="text-sm text-muted-foreground w-40">{store.name}</Label>
             <Input
@@ -517,7 +517,7 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
             />
           </div>
         ))}
-        {isAdmin && stores.length > 0 && (
+        {canSeeAllStores && stores.length > 0 && (
           <div className="flex items-center gap-3 pt-2 border-t">
             <Label className="text-sm font-bold w-40">Estoque Online (Total)</Label>
             <span className="font-bold text-sm">
