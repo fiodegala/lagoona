@@ -174,7 +174,7 @@ const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModa
   };
 
   const saveStoreStock = async (productId: string) => {
-    const storesToSave = isAdmin ? stores : stores.filter(s => s.id === userStoreId);
+    const storesToSave = canSeeAllStores ? stores : stores.filter(s => s.id === userStoreId);
     for (const store of storesToSave) {
       const qty = parseInt(storeStockQty[store.id] || '0') || 0;
       const { data: existing } = await supabase
