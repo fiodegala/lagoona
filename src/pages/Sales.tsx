@@ -885,12 +885,71 @@ const Sales = () => {
                           <p>{detailCustomer.inscricao_estadual}</p>
                         </div>
                       )}
+                      {detailCustomer.customer_type === 'pj' && detailCustomer.inscricao_municipal && (
+                        <div>
+                          <p className="text-muted-foreground text-xs">Inscrição Municipal</p>
+                          <p>{detailCustomer.inscricao_municipal}</p>
+                        </div>
+                      )}
+                      {detailCustomer.customer_type === 'pj' && detailCustomer.responsavel_nome && (
+                        <div>
+                          <p className="text-muted-foreground text-xs">Responsável</p>
+                          <p>{detailCustomer.responsavel_nome}</p>
+                        </div>
+                      )}
+                      {detailCustomer.customer_type === 'pj' && detailCustomer.responsavel_telefone && (
+                        <div>
+                          <p className="text-muted-foreground text-xs">Tel. Responsável</p>
+                          <p>{detailCustomer.responsavel_telefone}</p>
+                        </div>
+                      )}
+                      {detailCustomer.profession && (
+                        <div>
+                          <p className="text-muted-foreground text-xs">Profissão</p>
+                          <p>{detailCustomer.profession}</p>
+                        </div>
+                      )}
+                      {detailCustomer.referral_source && (
+                        <div>
+                          <p className="text-muted-foreground text-xs">Como nos conheceu</p>
+                          <p>{detailCustomer.referral_source}</p>
+                        </div>
+                      )}
+                      {detailCustomer.external_id && (
+                        <div>
+                          <p className="text-muted-foreground text-xs">ID Externo</p>
+                          <p>{detailCustomer.external_id}</p>
+                        </div>
+                      )}
+                      {Number(detailCustomer.credit_balance || 0) > 0 && (
+                        <div>
+                          <p className="text-muted-foreground text-xs">Saldo de Crédito</p>
+                          <p className="font-medium">R$ {Number(detailCustomer.credit_balance).toFixed(2)}</p>
+                        </div>
+                      )}
+                      <div>
+                        <p className="text-muted-foreground text-xs">Status</p>
+                        <p>{detailCustomer.is_active ? 'Ativo' : 'Inativo'}</p>
+                      </div>
+                      {detailCustomer.created_at && (
+                        <div>
+                          <p className="text-muted-foreground text-xs">Cadastrado em</p>
+                          <p>{format(new Date(detailCustomer.created_at), 'dd/MM/yyyy')}</p>
+                        </div>
+                      )}
                     </div>
-                    {(detailCustomer.address || detailCustomer.city) && (
+                    {(detailCustomer.address || detailCustomer.city || detailCustomer.zip_code) && (
                       <div className="pt-2 border-t">
                         <p className="text-muted-foreground text-xs flex items-center gap-1 mb-1"><MapPin className="h-3 w-3" /> Endereço</p>
                         <p className="text-sm">
-                          {[detailCustomer.address, detailCustomer.city, detailCustomer.state].filter(Boolean).join(', ')}
+                          {[
+                            detailCustomer.address,
+                            detailCustomer.address_number && `nº ${detailCustomer.address_number}`,
+                            detailCustomer.address_complement,
+                            detailCustomer.neighborhood,
+                            detailCustomer.city,
+                            detailCustomer.state,
+                          ].filter(Boolean).join(', ')}
                           {detailCustomer.zip_code && ` - CEP: ${detailCustomer.zip_code}`}
                         </p>
                       </div>
@@ -898,7 +957,7 @@ const Sales = () => {
                     {detailCustomer.notes && (
                       <div className="pt-2 border-t">
                         <p className="text-muted-foreground text-xs">Observações do Cliente</p>
-                        <p className="text-sm">{detailCustomer.notes}</p>
+                        <p className="text-sm whitespace-pre-wrap">{detailCustomer.notes}</p>
                       </div>
                     )}
                   </div>
