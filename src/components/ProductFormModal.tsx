@@ -47,7 +47,7 @@ interface ProductFormModalProps {
 
 const ProductFormModal = ({ open, onClose, onSuccess, product }: ProductFormModalProps) => {
   const { isAdmin, userStoreId, hasRole } = useAuth();
-  const canSeeAllStores = isAdmin || hasRole('manager') || hasRole('vm_stock') || hasRole('vm');
+  const canSeeAllStores = isAdmin || hasRole('manager') || hasRole('vm_stock');
   const [isLoading, setIsLoading] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [activeTab, setActiveTab] = useState('details');
