@@ -39,7 +39,7 @@ interface VariationRowProps {
   storeStock: Record<string, number>;
   onUpdate: (
     variationId: string,
-    field: 'price' | 'wholesale_price' | 'exclusive_price' | 'promotional_price' | 'stock' | 'sku' | 'barcode' | 'is_active' | 'image_url',
+    field: 'price' | 'wholesale_price' | 'exclusive_price' | 'promotional_price' | 'stock' | 'sku' | 'barcode' | 'is_active' | 'image_url' | 'visible_site' | 'visible_pdv' | 'visible_catalog',
     value: string | number | boolean
   ) => Promise<void>;
   onUpdateStoreStock: (variationId: string, storeId: string, quantity: number) => Promise<void>;
@@ -288,6 +288,31 @@ const VariationRow = ({ variation, stores, storeStock, onUpdate, onUpdateStoreSt
             />
           </div>
         ))}
+
+        {/* Channel visibility toggles */}
+        <div className="shrink-0 flex items-center gap-2 px-2 border-l border-border">
+          <label className="flex flex-col items-center gap-0.5 cursor-pointer" title="Visível no Site">
+            <span className="text-[10px] text-muted-foreground leading-none">Site</span>
+            <Switch
+              checked={variation.visible_site ?? true}
+              onCheckedChange={(checked) => onUpdate(variation.id, 'visible_site', checked)}
+            />
+          </label>
+          <label className="flex flex-col items-center gap-0.5 cursor-pointer" title="Visível no PDV">
+            <span className="text-[10px] text-muted-foreground leading-none">PDV</span>
+            <Switch
+              checked={variation.visible_pdv ?? true}
+              onCheckedChange={(checked) => onUpdate(variation.id, 'visible_pdv', checked)}
+            />
+          </label>
+          <label className="flex flex-col items-center gap-0.5 cursor-pointer" title="Visível no Catálogo">
+            <span className="text-[10px] text-muted-foreground leading-none">Catálogo</span>
+            <Switch
+              checked={variation.visible_catalog ?? true}
+              onCheckedChange={(checked) => onUpdate(variation.id, 'visible_catalog', checked)}
+            />
+          </label>
+        </div>
 
         {/* Active switch */}
         <div className="shrink-0 px-2">
