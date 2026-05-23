@@ -1012,7 +1012,32 @@ const POSPage = () => {
             />
           )}
 
-          {currentStep === 'products' && (
+          {currentStep === 'products' && isGiftCardMode && (
+            <GiftCardAmountStep
+              selectedCustomer={selectedCustomer}
+              initialAmount={cartItems[0]?.unit_price || 0}
+              onBack={() => setCurrentStep('customer')}
+              onConfirm={(amount) => {
+                const giftItem: CartItem = {
+                  id: crypto.randomUUID(),
+                  product_id: null as unknown as string,
+                  name: `Cartão Presente${selectedCustomer ? ` — ${selectedCustomer.name}` : ''}`,
+                  image_url: null,
+                  unit_price: amount,
+                  quantity: 1,
+                  discount_amount: 0,
+                  total: amount,
+                  max_stock: 9999,
+                  retail_price: amount,
+                };
+                setCartItems([giftItem]);
+                setGeneralDiscount({ type: 'percentage', value: 0 });
+                setCurrentStep('payment');
+              }}
+            />
+          )}
+
+          {currentStep === 'products' && !isGiftCardMode && (
             <ProductsStep
               cartItems={cartItems}
               onProductSelect={handleProductSelect}
