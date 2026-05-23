@@ -444,6 +444,7 @@ export const posService = {
       } else {
         // Regular physical store deduction
         for (const item of saleData.items) {
+          if (!item.product_id) continue; // virtual items (e.g. cartão presente)
           let query = supabase
             .from('store_stock')
             .select('id, quantity')
