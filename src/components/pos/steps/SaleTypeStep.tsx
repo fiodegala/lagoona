@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { ShoppingBag, Package, Star, RefreshCw, FileText, Gift, Users } from 'lucide-react';
+import { ShoppingBag, Package, Star, RefreshCw, FileText, Gift, Users, CreditCard } from 'lucide-react';
 import { SaleType } from '@/components/pos/ProductSearch';
 
 export type QuotePriceMode = 'varejo' | 'atacado' | 'exclusivo';
@@ -20,6 +20,7 @@ const saleTypes = [
   { value: 'orcamento' as SaleType, label: 'Orçamento', icon: FileText, description: 'Gera orçamento sem registrar venda' },
   { value: 'brinde' as SaleType, label: 'Brinde', icon: Gift, description: 'Saída de produto sem valor (cortesia)' },
   { value: 'colaborador' as SaleType, label: 'Colaborador', icon: Users, description: 'Venda para colaboradores internos' },
+  { value: 'cartao_presente' as SaleType, label: 'Cartão Presente', icon: CreditCard, description: 'Vende um saldo que vira crédito do cliente (não baixa estoque)' },
 ];
 
 const quotePriceModes: { value: QuotePriceMode; label: string; icon: typeof ShoppingBag; description: string }[] = [
