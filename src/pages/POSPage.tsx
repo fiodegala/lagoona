@@ -779,6 +779,21 @@ const POSPage = () => {
       let saleResult: any = null;
       if (isOnline) {
         saleResult = await posService.createSale(saleData);
+
+        // Cartão Presente: credita saldo no cliente
+        if (saleType === 'cartao_presente' && selectedCustomer?.id && total > 0) {
+          const { data: cust } = await supabase
+            .from('customers')
+            .select('credit_balance')
+            .eq('id', selectedCustomer.id)
+            .single();
+          const current = Number(cust?.credit_balance || 0);
+          await supabase
+            .from('customers')
+            .update({ credit_balance: current + total })
+            .eq('id', selectedCustomer.id);
+        }
+
         
         // Restore stock for return items
         if (returnItems.length > 0) {
