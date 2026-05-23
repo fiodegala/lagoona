@@ -113,6 +113,7 @@ const POSPage = () => {
   const hasRestoredDraftRef = useRef(false);
   const isExchangeMode = saleType === 'troca';
   const isQuoteMode = isQuoteType(saleType);
+  const isGiftCardMode = saleType === 'cartao_presente';
 
   // Pre-fill customer from navigation state (e.g. from Customers page)
   const prefillAppliedRef = useRef(false);
