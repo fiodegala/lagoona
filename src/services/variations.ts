@@ -28,6 +28,9 @@ export interface ProductVariation {
   stock: number;
   image_url: string | null;
   is_active: boolean;
+  visible_site: boolean;
+  visible_pdv: boolean;
+  visible_catalog: boolean;
   sort_order: number;
   created_at: string;
   updated_at: string;
