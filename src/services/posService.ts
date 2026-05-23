@@ -106,7 +106,7 @@ export interface CreateSaleData {
   coupon_code?: string;
   notes?: string;
   sale_date?: string; // ISO date string for backdating sales
-  sale_type?: 'varejo' | 'atacado' | 'exclusivo' | 'troca' | 'brinde' | 'colaborador';
+  sale_type?: 'varejo' | 'atacado' | 'exclusivo' | 'troca' | 'brinde' | 'colaborador' | 'cartao_presente';
 }
 
 export const posService = {
@@ -407,6 +407,7 @@ export const posService = {
       if (isOnlineSale) {
         // Deduct from store with HIGHEST quantity for each item
         for (const item of saleData.items) {
+          if (!item.product_id) continue; // virtual items (e.g. cartão presente)
           let remaining = item.quantity;
 
           // Get all stock records for this product/variation sorted by quantity DESC
@@ -443,6 +444,7 @@ export const posService = {
       } else {
         // Regular physical store deduction
         for (const item of saleData.items) {
+          if (!item.product_id) continue; // virtual items (e.g. cartão presente)
           let query = supabase
             .from('store_stock')
             .select('id, quantity')

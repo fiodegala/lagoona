@@ -11,6 +11,7 @@ import SellerStep from '@/components/pos/steps/SellerStep';
 import CustomerStep from '@/components/pos/steps/CustomerStep';
 import ProductsStep from '@/components/pos/steps/ProductsStep';
 import PaymentStep from '@/components/pos/steps/PaymentStep';
+import GiftCardAmountStep from '@/components/pos/steps/GiftCardAmountStep';
 // ExchangePanel no longer used - exchange integrated into main cart
 import FiscalReceiptModal from '@/components/pos/FiscalReceiptModal';
 import { OpenSessionModal, CloseSessionModal, CashMovementModal } from '@/components/pos/CashDrawerModals';
@@ -113,6 +114,7 @@ const POSPage = () => {
   const hasRestoredDraftRef = useRef(false);
   const isExchangeMode = saleType === 'troca';
   const isQuoteMode = isQuoteType(saleType);
+  const isGiftCardMode = saleType === 'cartao_presente';
 
   // Pre-fill customer from navigation state (e.g. from Customers page)
   const prefillAppliedRef = useRef(false);
@@ -770,13 +772,28 @@ const POSPage = () => {
         returnItems.length > 0 ? `TROCA - Devolvidos: ${returnItems.map(i => `${i.quantity}x ${i.name}`).join(', ')}` : '',
       ].filter(Boolean).join(' | ') || undefined,
       sale_date: saleDate,
-      sale_type: saleType as 'varejo' | 'atacado' | 'exclusivo' | 'troca' | 'brinde' | 'colaborador',
+      sale_type: saleType as 'varejo' | 'atacado' | 'exclusivo' | 'troca' | 'brinde' | 'colaborador' | 'cartao_presente',
     };
 
     try {
       let saleResult: any = null;
       if (isOnline) {
         saleResult = await posService.createSale(saleData);
+
+        // Cartão Presente: credita saldo no cliente
+        if (saleType === 'cartao_presente' && selectedCustomer?.id && total > 0) {
+          const { data: cust } = await supabase
+            .from('customers')
+            .select('credit_balance')
+            .eq('id', selectedCustomer.id)
+            .single();
+          const current = Number(cust?.credit_balance || 0);
+          await supabase
+            .from('customers')
+            .update({ credit_balance: current + total })
+            .eq('id', selectedCustomer.id);
+        }
+
         
         // Restore stock for return items
         if (returnItems.length > 0) {
@@ -1010,7 +1027,32 @@ const POSPage = () => {
             />
           )}
 
-          {currentStep === 'products' && (
+          {currentStep === 'products' && isGiftCardMode && (
+            <GiftCardAmountStep
+              selectedCustomer={selectedCustomer}
+              initialAmount={cartItems[0]?.unit_price || 0}
+              onBack={() => setCurrentStep('customer')}
+              onConfirm={(amount) => {
+                const giftItem: CartItem = {
+                  id: crypto.randomUUID(),
+                  product_id: null as unknown as string,
+                  name: `Cartão Presente${selectedCustomer ? ` — ${selectedCustomer.name}` : ''}`,
+                  image_url: null,
+                  unit_price: amount,
+                  quantity: 1,
+                  discount_amount: 0,
+                  total: amount,
+                  max_stock: 9999,
+                  retail_price: amount,
+                };
+                setCartItems([giftItem]);
+                setGeneralDiscount({ type: 'percentage', value: 0 });
+                setCurrentStep('payment');
+              }}
+            />
+          )}
+
+          {currentStep === 'products' && !isGiftCardMode && (
             <ProductsStep
               cartItems={cartItems}
               onProductSelect={handleProductSelect}

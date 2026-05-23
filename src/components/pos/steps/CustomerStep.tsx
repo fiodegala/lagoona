@@ -82,7 +82,8 @@ const emptyForm = {
 const CustomerStep = ({ selectedCustomer, onSelectCustomer, saleType, onNext, onBack }: CustomerStepProps) => {
   const isExchange = saleType === 'troca';
   const isColaborador = saleType === 'colaborador';
-  const selectionRequired = isExchange || isColaborador;
+  const isGiftCard = saleType === 'cartao_presente';
+  const selectionRequired = isExchange || isColaborador || isGiftCard;
 
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [stores, setStores] = useState<{ id: string; name: string; type: string }[]>([]);

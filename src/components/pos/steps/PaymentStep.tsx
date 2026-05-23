@@ -40,6 +40,7 @@ const saleTypeLabels: Record<SaleType, string> = {
   orcamento: 'Orçamento',
   brinde: 'Brinde',
   colaborador: 'Colaborador',
+  cartao_presente: 'Cartão Presente',
 };
 
 const formatCurrency = (value: number) =>
