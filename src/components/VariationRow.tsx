@@ -39,7 +39,7 @@ interface VariationRowProps {
   storeStock: Record<string, number>;
   onUpdate: (
     variationId: string,
-    field: 'price' | 'wholesale_price' | 'exclusive_price' | 'promotional_price' | 'stock' | 'sku' | 'barcode' | 'is_active' | 'image_url',
+    field: 'price' | 'wholesale_price' | 'exclusive_price' | 'promotional_price' | 'stock' | 'sku' | 'barcode' | 'is_active' | 'image_url' | 'visible_site' | 'visible_pdv' | 'visible_catalog',
     value: string | number | boolean
   ) => Promise<void>;
   onUpdateStoreStock: (variationId: string, storeId: string, quantity: number) => Promise<void>;
