@@ -272,6 +272,9 @@ export const variationsService = {
     if (data.stock !== undefined) updateData.stock = data.stock;
     if (data.image_url !== undefined) updateData.image_url = data.image_url;
     if (data.is_active !== undefined) updateData.is_active = data.is_active;
+    if ((data as any).visible_site !== undefined) updateData.visible_site = (data as any).visible_site;
+    if ((data as any).visible_pdv !== undefined) updateData.visible_pdv = (data as any).visible_pdv;
+    if ((data as any).visible_catalog !== undefined) updateData.visible_catalog = (data as any).visible_catalog;
 
     const { data: variation, error } = await supabase
       .from('product_variations')
