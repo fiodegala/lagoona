@@ -772,7 +772,7 @@ const POSPage = () => {
         returnItems.length > 0 ? `TROCA - Devolvidos: ${returnItems.map(i => `${i.quantity}x ${i.name}`).join(', ')}` : '',
       ].filter(Boolean).join(' | ') || undefined,
       sale_date: saleDate,
-      sale_type: saleType as 'varejo' | 'atacado' | 'exclusivo' | 'troca' | 'brinde' | 'colaborador',
+      sale_type: saleType as 'varejo' | 'atacado' | 'exclusivo' | 'troca' | 'brinde' | 'colaborador' | 'cartao_presente',
     };
 
     try {
