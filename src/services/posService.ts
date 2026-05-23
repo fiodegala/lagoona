@@ -407,6 +407,7 @@ export const posService = {
       if (isOnlineSale) {
         // Deduct from store with HIGHEST quantity for each item
         for (const item of saleData.items) {
+          if (!item.product_id) continue; // virtual items (e.g. cartão presente)
           let remaining = item.quantity;
 
           // Get all stock records for this product/variation sorted by quantity DESC
