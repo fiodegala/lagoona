@@ -2192,6 +2192,9 @@ export type Database = {
           sort_order: number
           stock: number
           updated_at: string
+          visible_catalog: boolean
+          visible_pdv: boolean
+          visible_site: boolean
           wholesale_price: number | null
         }
         Insert: {
@@ -2208,6 +2211,9 @@ export type Database = {
           sort_order?: number
           stock?: number
           updated_at?: string
+          visible_catalog?: boolean
+          visible_pdv?: boolean
+          visible_site?: boolean
           wholesale_price?: number | null
         }
         Update: {
@@ -2224,6 +2230,9 @@ export type Database = {
           sort_order?: number
           stock?: number
           updated_at?: string
+          visible_catalog?: boolean
+          visible_pdv?: boolean
+          visible_site?: boolean
           wholesale_price?: number | null
         }
         Relationships: [
