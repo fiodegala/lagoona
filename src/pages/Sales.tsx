@@ -423,7 +423,7 @@ const Sales = () => {
   }, [periodFilter, customStart, customEnd]);
 
    const { data: sales = [], isLoading } = useQuery({
-    queryKey: ['pos-sales', dateRange.start.toISOString(), dateRange.end.toISOString(), isAdmin, userStoreId],
+    queryKey: ['pos-sales', dateRange.start.toISOString(), dateRange.end.toISOString(), isAdmin, isManager, userStoreId, user?.id],
     queryFn: async () => {
       let query = supabase
         .from('pos_sales')
@@ -432,8 +432,10 @@ const Sales = () => {
         .lte('created_at', dateRange.end.toISOString())
         .order('created_at', { ascending: false });
 
-      // Non-admins only see their store's sales
-      if (!isAdmin && userStoreId) {
+      // Admin: vê tudo. Manager: vê a loja inteira. Vendedor: vê apenas as próprias vendas.
+      if (!isAdmin && !isManager && user?.id) {
+        query = query.eq('user_id', user.id);
+      } else if (!isAdmin && userStoreId) {
         query = query.eq('store_id', userStoreId);
       }
 
