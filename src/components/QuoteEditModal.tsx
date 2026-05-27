@@ -98,6 +98,8 @@ const QuoteEditModal = ({ quote, open, onOpenChange, onSaved }: QuoteEditModalPr
   const [paymentMethod, setPaymentMethod] = useState<string>('');
   const [cardType, setCardType] = useState<'credit' | 'debit'>('credit');
   const [installments, setInstallments] = useState('1');
+  const [extraDiscountType, setExtraDiscountType] = useState<'value' | 'percent'>('value');
+  const [extraDiscountInput, setExtraDiscountInput] = useState<string>('');
 
   // Validity (expires_at) — protected by password
   const QUOTE_EDIT_PASSWORD = '2309fdg';
@@ -141,6 +143,10 @@ const QuoteEditModal = ({ quote, open, onOpenChange, onSaved }: QuoteEditModalPr
       setSearchResults([]);
       setShowResults(false);
       setVariationPickerProduct(null);
+      // Restore extra (global) discount
+      const dType = (quote.discount_type === 'percent' ? 'percent' : 'value') as 'value' | 'percent';
+      setExtraDiscountType(dType);
+      setExtraDiscountInput(quote.discount_value != null && quote.discount_value > 0 ? String(quote.discount_value) : '');
       // Restore expires_at
       const exp = quote.expires_at ? new Date(quote.expires_at) : null;
       setExpiresAt(exp);
@@ -394,7 +400,13 @@ const QuoteEditModal = ({ quote, open, onOpenChange, onSaved }: QuoteEditModalPr
 
   const subtotal = items.reduce((sum, item) => sum + item.quantity * item.unit_price, 0);
   const itemDiscounts = items.reduce((sum, item) => sum + (item.discount_amount || 0), 0);
-  const total = subtotal - itemDiscounts;
+  const baseAfterItems = Math.max(0, subtotal - itemDiscounts);
+  const parsedExtra = parseFloat(extraDiscountInput.replace(',', '.')) || 0;
+  const rawExtraDiscount = extraDiscountType === 'percent'
+    ? baseAfterItems * (parsedExtra / 100)
+    : parsedExtra;
+  const extraDiscount = Math.min(Math.max(0, rawExtraDiscount), baseAfterItems);
+  const total = Math.max(0, baseAfterItems - extraDiscount);
 
   const handleSave = async () => {
     if (!quote) return;
@@ -435,7 +447,9 @@ const QuoteEditModal = ({ quote, open, onOpenChange, onSaved }: QuoteEditModalPr
         customer_phone: customerPhone.trim() || null,
         items: updatedItems as unknown as Record<string, unknown>[],
         subtotal,
-        discount_amount: itemDiscounts,
+        discount_amount: itemDiscounts + extraDiscount,
+        discount_type: parsedExtra > 0 ? extraDiscountType : null,
+        discount_value: parsedExtra > 0 ? parsedExtra : null,
         total,
         notes: notes.trim() || null,
         payment_method: paymentMethod || null,
@@ -693,7 +707,7 @@ const QuoteEditModal = ({ quote, open, onOpenChange, onSaved }: QuoteEditModalPr
           <Separator />
 
           {/* Totais */}
-          <div className="space-y-1.5 text-sm">
+          <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Subtotal</span>
               <span>{formatCurrency(subtotal)}</span>
@@ -704,12 +718,51 @@ const QuoteEditModal = ({ quote, open, onOpenChange, onSaved }: QuoteEditModalPr
                 <span>-{formatCurrency(itemDiscounts)}</span>
               </div>
             )}
+
+            {/* Desconto geral no orçamento */}
+            <div className="rounded-lg border bg-muted/30 p-3 space-y-2">
+              <Label className="text-xs font-semibold">Desconto no orçamento</Label>
+              <div className="flex items-center gap-2">
+                <Select value={extraDiscountType} onValueChange={(v) => setExtraDiscountType(v as 'value' | 'percent')}>
+                  <SelectTrigger className="h-9 w-28">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="value">R$</SelectItem>
+                    <SelectItem value="percent">%</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  max={extraDiscountType === 'percent' ? 100 : baseAfterItems}
+                  value={extraDiscountInput}
+                  onChange={(e) => setExtraDiscountInput(e.target.value)}
+                  placeholder={extraDiscountType === 'percent' ? 'Ex: 10' : 'Ex: 50,00'}
+                  className="h-9 flex-1"
+                />
+                {parsedExtra > 0 && (
+                  <Button type="button" variant="ghost" size="sm" onClick={() => setExtraDiscountInput('')}>
+                    Limpar
+                  </Button>
+                )}
+              </div>
+              {extraDiscount > 0 && (
+                <p className="text-xs text-destructive">
+                  Desconto aplicado: -{formatCurrency(extraDiscount)}
+                  {extraDiscountType === 'percent' && ` (${parsedExtra}% sobre ${formatCurrency(baseAfterItems)})`}
+                </p>
+              )}
+            </div>
+
             <Separator />
             <div className="flex justify-between text-lg font-bold">
               <span>Total</span>
               <span className="text-primary">{formatCurrency(total)}</span>
             </div>
           </div>
+
 
           <Separator />
 
