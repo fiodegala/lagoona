@@ -707,7 +707,7 @@ const QuoteEditModal = ({ quote, open, onOpenChange, onSaved }: QuoteEditModalPr
           <Separator />
 
           {/* Totais */}
-          <div className="space-y-1.5 text-sm">
+          <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Subtotal</span>
               <span>{formatCurrency(subtotal)}</span>
@@ -718,12 +718,51 @@ const QuoteEditModal = ({ quote, open, onOpenChange, onSaved }: QuoteEditModalPr
                 <span>-{formatCurrency(itemDiscounts)}</span>
               </div>
             )}
+
+            {/* Desconto geral no orçamento */}
+            <div className="rounded-lg border bg-muted/30 p-3 space-y-2">
+              <Label className="text-xs font-semibold">Desconto no orçamento</Label>
+              <div className="flex items-center gap-2">
+                <Select value={extraDiscountType} onValueChange={(v) => setExtraDiscountType(v as 'value' | 'percent')}>
+                  <SelectTrigger className="h-9 w-28">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="value">R$</SelectItem>
+                    <SelectItem value="percent">%</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  max={extraDiscountType === 'percent' ? 100 : baseAfterItems}
+                  value={extraDiscountInput}
+                  onChange={(e) => setExtraDiscountInput(e.target.value)}
+                  placeholder={extraDiscountType === 'percent' ? 'Ex: 10' : 'Ex: 50,00'}
+                  className="h-9 flex-1"
+                />
+                {parsedExtra > 0 && (
+                  <Button type="button" variant="ghost" size="sm" onClick={() => setExtraDiscountInput('')}>
+                    Limpar
+                  </Button>
+                )}
+              </div>
+              {extraDiscount > 0 && (
+                <p className="text-xs text-destructive">
+                  Desconto aplicado: -{formatCurrency(extraDiscount)}
+                  {extraDiscountType === 'percent' && ` (${parsedExtra}% sobre ${formatCurrency(baseAfterItems)})`}
+                </p>
+              )}
+            </div>
+
             <Separator />
             <div className="flex justify-between text-lg font-bold">
               <span>Total</span>
               <span className="text-primary">{formatCurrency(total)}</span>
             </div>
           </div>
+
 
           <Separator />
 
