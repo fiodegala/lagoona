@@ -143,6 +143,10 @@ const QuoteEditModal = ({ quote, open, onOpenChange, onSaved }: QuoteEditModalPr
       setSearchResults([]);
       setShowResults(false);
       setVariationPickerProduct(null);
+      // Restore extra (global) discount
+      const dType = (quote.discount_type === 'percent' ? 'percent' : 'value') as 'value' | 'percent';
+      setExtraDiscountType(dType);
+      setExtraDiscountInput(quote.discount_value != null && quote.discount_value > 0 ? String(quote.discount_value) : '');
       // Restore expires_at
       const exp = quote.expires_at ? new Date(quote.expires_at) : null;
       setExpiresAt(exp);
