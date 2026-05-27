@@ -400,7 +400,13 @@ const QuoteEditModal = ({ quote, open, onOpenChange, onSaved }: QuoteEditModalPr
 
   const subtotal = items.reduce((sum, item) => sum + item.quantity * item.unit_price, 0);
   const itemDiscounts = items.reduce((sum, item) => sum + (item.discount_amount || 0), 0);
-  const total = subtotal - itemDiscounts;
+  const baseAfterItems = Math.max(0, subtotal - itemDiscounts);
+  const parsedExtra = parseFloat(extraDiscountInput.replace(',', '.')) || 0;
+  const rawExtraDiscount = extraDiscountType === 'percent'
+    ? baseAfterItems * (parsedExtra / 100)
+    : parsedExtra;
+  const extraDiscount = Math.min(Math.max(0, rawExtraDiscount), baseAfterItems);
+  const total = Math.max(0, baseAfterItems - extraDiscount);
 
   const handleSave = async () => {
     if (!quote) return;
