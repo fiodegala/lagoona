@@ -98,6 +98,8 @@ const QuoteEditModal = ({ quote, open, onOpenChange, onSaved }: QuoteEditModalPr
   const [paymentMethod, setPaymentMethod] = useState<string>('');
   const [cardType, setCardType] = useState<'credit' | 'debit'>('credit');
   const [installments, setInstallments] = useState('1');
+  const [extraDiscountType, setExtraDiscountType] = useState<'value' | 'percent'>('value');
+  const [extraDiscountInput, setExtraDiscountInput] = useState<string>('');
 
   // Validity (expires_at) — protected by password
   const QUOTE_EDIT_PASSWORD = '2309fdg';
