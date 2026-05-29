@@ -583,8 +583,16 @@ const UsersPage = () => {
               )}
               
               {selectedUser && (
-                <div className="p-4 bg-muted rounded-lg">
-                  <div className="font-medium">{selectedUser.profile?.full_name}</div>
+                <div className="p-4 bg-muted rounded-lg space-y-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="editFullName">Nome Completo</Label>
+                    <Input
+                      id="editFullName"
+                      value={formData.fullName}
+                      onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                      placeholder="Nome do usuário"
+                    />
+                  </div>
                   <div className="text-sm text-muted-foreground">
                     {selectedUser.email && <span className="block">{selectedUser.email}</span>}
                     Usuário desde {new Date(selectedUser.created_at).toLocaleDateString('pt-BR')}
