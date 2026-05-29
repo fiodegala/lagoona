@@ -240,8 +240,17 @@ const UsersPage = () => {
   });
 
   const updateRoleMutation = useMutation({
-    mutationFn: async ({ userId, role, store_id, allowed_menus }: { userId: string; role: AppRole; store_id: string | null; allowed_menus: string[] }) => {
+    mutationFn: async ({ userId, role, store_id, allowed_menus, fullName }: { userId: string; role: AppRole; store_id: string | null; allowed_menus: string[]; fullName?: string }) => {
       const normalizedAllowedMenus = stripAlwaysVisibleMenuKeys(allowed_menus);
+
+      // Update full name if provided
+      if (fullName !== undefined) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update({ full_name: fullName } as never)
+          .eq('user_id', userId);
+        if (profileError) throw profileError;
+      }
 
       // Delete all existing roles for this user, then insert the new one
       const { error: deleteError } = await supabase
@@ -276,12 +285,12 @@ const UsersPage = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users-with-roles'] });
-      toast({ title: 'Permissão atualizada!' });
+      toast({ title: 'Usuário atualizado!' });
       handleCloseForm();
     },
     onError: (error: Error) => {
       console.error('updateRoleMutation error:', error);
-      toast({ title: 'Erro ao atualizar permissão', description: error.message, variant: 'destructive' });
+      toast({ title: 'Erro ao atualizar usuário', description: error.message, variant: 'destructive' });
     },
   });
 
@@ -358,7 +367,7 @@ const UsersPage = () => {
     e.preventDefault();
     
     if (selectedUser) {
-      updateRoleMutation.mutate({ userId: selectedUser.user_id, role: formData.role, store_id: formData.store_id || null, allowed_menus: formData.allowed_menus });
+      updateRoleMutation.mutate({ userId: selectedUser.user_id, role: formData.role, store_id: formData.store_id || null, allowed_menus: formData.allowed_menus, fullName: formData.fullName });
     } else {
       if (!formData.email || !formData.password || !formData.fullName) {
         toast({ title: 'Preencha todos os campos', variant: 'destructive' });
@@ -574,8 +583,16 @@ const UsersPage = () => {
               )}
               
               {selectedUser && (
-                <div className="p-4 bg-muted rounded-lg">
-                  <div className="font-medium">{selectedUser.profile?.full_name}</div>
+                <div className="p-4 bg-muted rounded-lg space-y-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="editFullName">Nome Completo</Label>
+                    <Input
+                      id="editFullName"
+                      value={formData.fullName}
+                      onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                      placeholder="Nome do usuário"
+                    />
+                  </div>
                   <div className="text-sm text-muted-foreground">
                     {selectedUser.email && <span className="block">{selectedUser.email}</span>}
                     Usuário desde {new Date(selectedUser.created_at).toLocaleDateString('pt-BR')}
