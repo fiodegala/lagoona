@@ -240,8 +240,17 @@ const UsersPage = () => {
   });
 
   const updateRoleMutation = useMutation({
-    mutationFn: async ({ userId, role, store_id, allowed_menus }: { userId: string; role: AppRole; store_id: string | null; allowed_menus: string[] }) => {
+    mutationFn: async ({ userId, role, store_id, allowed_menus, fullName }: { userId: string; role: AppRole; store_id: string | null; allowed_menus: string[]; fullName?: string }) => {
       const normalizedAllowedMenus = stripAlwaysVisibleMenuKeys(allowed_menus);
+
+      // Update full name if provided
+      if (fullName !== undefined) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update({ full_name: fullName } as never)
+          .eq('user_id', userId);
+        if (profileError) throw profileError;
+      }
 
       // Delete all existing roles for this user, then insert the new one
       const { error: deleteError } = await supabase
@@ -276,12 +285,12 @@ const UsersPage = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users-with-roles'] });
-      toast({ title: 'Permissão atualizada!' });
+      toast({ title: 'Usuário atualizado!' });
       handleCloseForm();
     },
     onError: (error: Error) => {
       console.error('updateRoleMutation error:', error);
-      toast({ title: 'Erro ao atualizar permissão', description: error.message, variant: 'destructive' });
+      toast({ title: 'Erro ao atualizar usuário', description: error.message, variant: 'destructive' });
     },
   });
 
