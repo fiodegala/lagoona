@@ -220,7 +220,7 @@ const Quotes = () => {
         items: quote.items as any,
         subtotal: quote.subtotal,
         discount_amount: quote.discount_amount || 0,
-        discount_type: (quote as any).discount_type || null,
+        discount_type: ((quote as any).discount_type === 'percent' ? 'percentage' : (quote as any).discount_type === 'value' ? 'fixed' : (quote as any).discount_type) || null,
         discount_value: (quote as any).discount_value || 0,
         total: quote.total,
         payment_method: quote.payment_method || 'cash',
