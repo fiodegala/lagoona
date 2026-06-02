@@ -53,7 +53,7 @@ const ProductDetails = () => {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [reviewStats, setReviewStats] = useState<{ avg: number; count: number }>({ avg: 0, count: 0 });
-  const { addItem } = useCart();
+  const { addItem, valentinesPromoActive, valentinesPromoPercent, maxCartUnitPrice } = useCart();
 
   useEffect(() => {
     const loadProduct = async () => {
@@ -611,22 +611,52 @@ const ProductDetails = () => {
             )}
 
             {/* Pricing */}
-            <div className="space-y-1">
-              {hasRealDiscount && (
-                <p className="text-sm text-muted-foreground line-through">
-                  {formatPrice(basePrice)}
-                </p>
-              )}
-              <p className="text-2xl md:text-3xl font-bold text-store-accent">
-                {formatPrice(currentPrice)}
-              </p>
-              <p className="text-sm text-muted-foreground">
-                em até <span className="font-semibold text-foreground">6x de {formatPrice(currentPrice / 6)}</span> sem juros
-              </p>
-              <p className="text-sm text-success font-medium">
-                {formatPrice(currentPrice * 0.95)} à vista no Pix (5% off)
-              </p>
-            </div>
+            {(() => {
+              const valentinesEligible =
+                valentinesPromoActive && maxCartUnitPrice > 0 && currentPrice <= maxCartUnitPrice;
+              const valentinesFactor = Math.max(0, Math.min(100, valentinesPromoPercent || 0)) / 100;
+              const valentinesPrice = Math.round(currentPrice * (1 - valentinesFactor) * 100) / 100;
+              const installments = valentinesPromoActive ? 2 : 6;
+              return (
+                <div className="space-y-1">
+                  {valentinesEligible ? (
+                    <>
+                      <p className="text-sm text-muted-foreground line-through">
+                        {formatPrice(currentPrice)}
+                      </p>
+                      <p className="text-2xl md:text-3xl font-bold text-rose-600 dark:text-rose-400">
+                        {formatPrice(valentinesPrice)}
+                      </p>
+                      <p className="text-sm font-semibold text-rose-600 dark:text-rose-400">
+                        ♡ Dia dos Namorados: 2ª peça com {Math.round(valentinesPromoPercent)}% OFF aplicada automaticamente
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        em até <span className="font-semibold text-foreground">{installments}x de {formatPrice(currentPrice / installments)}</span> sem juros
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      {hasRealDiscount && (
+                        <p className="text-sm text-muted-foreground line-through">
+                          {formatPrice(basePrice)}
+                        </p>
+                      )}
+                      <p className="text-2xl md:text-3xl font-bold text-store-accent">
+                        {formatPrice(currentPrice)}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        em até <span className="font-semibold text-foreground">{installments}x de {formatPrice(currentPrice / installments)}</span> sem juros
+                      </p>
+                      {!valentinesPromoActive && (
+                        <p className="text-sm text-success font-medium">
+                          {formatPrice(currentPrice * 0.95)} à vista no Pix (5% off)
+                        </p>
+                      )}
+                    </>
+                  )}
+                </div>
+              );
+            })()}
 
             <Separator />
 
