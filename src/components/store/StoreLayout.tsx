@@ -32,7 +32,8 @@ const StoreLayout = ({ children }: StoreLayoutProps) => {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col bg-background overflow-x-hidden w-full">
+    <div className="min-h-screen flex flex-col bg-background overflow-x-hidden w-full relative">
+      <ValentinesTheme />
       <TopAnnouncementBar />
       <StoreHeader categories={categories} />
       <main className="flex-1">
