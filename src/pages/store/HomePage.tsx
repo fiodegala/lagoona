@@ -412,31 +412,53 @@ const HomePage = () => {
         ) : heroBanners.length > 0 ? (
           <>
             {heroBanners.map((banner, index) => {
+              const desktopImage = getOptimizedImageUrl(banner.image_url, { width: 1920, quality: 80 });
+              const mobileImage = banner.image_url_mobile
+                ? getOptimizedImageUrl(banner.image_url_mobile, { width: 900, quality: 80 })
+                : desktopImage;
+              const desktopVideo = banner.video_url || '';
+              const mobileVideo = banner.video_url_mobile || desktopVideo;
               const bannerContent = (
                 <>
                   {banner.media_type === 'video' && banner.video_url ? (
-                    <video
-                      src={banner.video_url}
-                      autoPlay
-                      muted
-                      loop
-                      playsInline
-                      className="absolute inset-0 w-full h-full object-contain"
-                    />
+                    <>
+                      <video
+                        src={desktopVideo}
+                        autoPlay
+                        muted
+                        loop
+                        playsInline
+                        className="absolute inset-0 w-full h-full object-contain hidden sm:block"
+                      />
+                      <video
+                        src={mobileVideo}
+                        autoPlay
+                        muted
+                        loop
+                        playsInline
+                        className="absolute inset-0 w-full h-full object-contain sm:hidden"
+                      />
+                    </>
                   ) : (
-                    <img
-                      src={getOptimizedImageUrl(banner.image_url, { width: 1920, quality: 80 })}
-                      alt={banner.title || 'Banner'}
-                      width={1920}
-                      height={1080}
-                      className="absolute inset-0 w-full h-full object-contain"
-                      loading={index === 0 ? 'eager' : 'lazy'}
-                      decoding={index === 0 ? 'sync' : 'async'}
-                      // @ts-ignore - fetchpriority is a valid HTML attribute
-                      fetchpriority={index === 0 ? 'high' : 'low'}
-                    />
+                    <picture>
+                      <source media="(max-width: 639px)" srcSet={mobileImage} />
+                      <source media="(min-width: 640px)" srcSet={desktopImage} />
+                      <img
+                        src={desktopImage}
+                        alt={banner.title || 'Banner'}
+                        width={1920}
+                        height={1080}
+                        className="absolute inset-0 w-full h-full object-contain"
+                        loading={index === 0 ? 'eager' : 'lazy'}
+                        decoding={index === 0 ? 'sync' : 'async'}
+                        // @ts-ignore - fetchpriority is a valid HTML attribute
+                        fetchpriority={index === 0 ? 'high' : 'low'}
+                      />
+                    </picture>
                   )}
-                  <div className="absolute inset-0 bg-store-dark/60" />
+                  {(banner.overlay_enabled ?? true) && (
+                    <div className="absolute inset-0 bg-store-dark/60" />
+                  )}
                   <div className="relative h-full flex items-center">
                     <div className="container mx-auto px-4">
                      <div className="max-w-2xl">

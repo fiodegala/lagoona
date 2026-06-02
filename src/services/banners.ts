@@ -6,11 +6,14 @@ export interface Banner {
   title: string | null;
   subtitle: string | null;
   image_url: string;
+  image_url_mobile: string | null;
   video_url: string | null;
+  video_url_mobile: string | null;
   media_type: string;
   link_url: string | null;
   sort_order: number;
   is_active: boolean;
+  overlay_enabled: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -20,11 +23,14 @@ export interface CreateBannerData {
   title?: string;
   subtitle?: string;
   image_url: string;
+  image_url_mobile?: string;
   video_url?: string;
+  video_url_mobile?: string;
   media_type?: string;
   link_url?: string;
   sort_order?: number;
   is_active?: boolean;
+  overlay_enabled?: boolean;
 }
 
 export const bannersService = {

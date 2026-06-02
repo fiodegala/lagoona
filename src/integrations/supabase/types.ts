@@ -454,43 +454,52 @@ export type Database = {
           created_at: string
           id: string
           image_url: string
+          image_url_mobile: string | null
           is_active: boolean
           link_url: string | null
           media_type: string
+          overlay_enabled: boolean
           sort_order: number
           subtitle: string | null
           title: string | null
           type: string
           updated_at: string
           video_url: string | null
+          video_url_mobile: string | null
         }
         Insert: {
           created_at?: string
           id?: string
           image_url: string
+          image_url_mobile?: string | null
           is_active?: boolean
           link_url?: string | null
           media_type?: string
+          overlay_enabled?: boolean
           sort_order?: number
           subtitle?: string | null
           title?: string | null
           type?: string
           updated_at?: string
           video_url?: string | null
+          video_url_mobile?: string | null
         }
         Update: {
           created_at?: string
           id?: string
           image_url?: string
+          image_url_mobile?: string | null
           is_active?: boolean
           link_url?: string | null
           media_type?: string
+          overlay_enabled?: boolean
           sort_order?: number
           subtitle?: string | null
           title?: string | null
           type?: string
           updated_at?: string
           video_url?: string | null
+          video_url_mobile?: string | null
         }
         Relationships: []
       }
