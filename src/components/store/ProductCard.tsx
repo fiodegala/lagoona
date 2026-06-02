@@ -21,7 +21,7 @@ interface ProductCardProps {
 }
 
 const ProductCard = memo(forwardRef<HTMLAnchorElement, ProductCardProps>(({ product, showDiscount = true, meta }, ref) => {
-  const { addItem } = useCart();
+  const { addItem, valentinesPromoActive, valentinesPromoPercent, maxCartUnitPrice } = useCart();
   const { isFavorite, toggleFavorite } = useFavorites();
   const navigate = useNavigate();
   const [isHovered, setIsHovered] = useState(false);
@@ -80,6 +80,15 @@ const ProductCard = memo(forwardRef<HTMLAnchorElement, ProductCardProps>(({ prod
     ? Math.round(((product.price - promoPrice) / product.price) * 100)
     : 0;
   const displayPrice = hasRealDiscount ? promoPrice : product.price;
+
+  // Dia dos Namorados: se já houver item no carrinho com valor >= ao deste produto,
+  // este produto entra como "2ª peça" com desconto.
+  const valentinesEligible =
+    valentinesPromoActive && maxCartUnitPrice > 0 && displayPrice <= maxCartUnitPrice;
+  const valentinesFactor = Math.max(0, Math.min(100, valentinesPromoPercent || 0)) / 100;
+  const valentinesPrice = valentinesEligible
+    ? Math.round(displayPrice * (1 - valentinesFactor) * 100) / 100
+    : displayPrice;
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -157,7 +166,13 @@ const ProductCard = memo(forwardRef<HTMLAnchorElement, ProductCardProps>(({ prod
           
           {/* Badges */}
           <div className="absolute top-2 left-2 flex flex-col gap-1">
-            {showDiscount && hasRealDiscount && (
+            {valentinesEligible && (
+              <Badge className="bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-600 hover:to-pink-600 text-white font-bold px-2 py-1 shadow-md animate-pulse">
+                <Heart className="h-3 w-3 mr-1 fill-white" />
+                -{Math.round(valentinesPromoPercent)}% 2ª peça
+              </Badge>
+            )}
+            {showDiscount && hasRealDiscount && !valentinesEligible && (
               <Badge className="bg-store-deal hover:bg-store-deal text-white font-bold px-2 py-1">
                 -{discountPercent}%
               </Badge>
@@ -280,24 +295,43 @@ const ProductCard = memo(forwardRef<HTMLAnchorElement, ProductCardProps>(({ prod
           
           {/* Pricing */}
           <div className="mt-3 space-y-1">
-            {showDiscount && hasRealDiscount && (
-              <p className="text-xs text-muted-foreground line-through">
-                {formatPrice(product.price)}
-              </p>
+            {valentinesEligible ? (
+              <>
+                <p className="text-xs text-muted-foreground line-through">
+                  {formatPrice(displayPrice)}
+                </p>
+                <p className="text-xl font-bold text-rose-600 dark:text-rose-400 flex items-center gap-1">
+                  <Heart className="h-4 w-4 fill-rose-500 text-rose-500" />
+                  {formatPrice(valentinesPrice)}
+                </p>
+                <p className="text-[11px] font-semibold text-rose-600 dark:text-rose-400">
+                  Dia dos Namorados: leve por {formatPrice(valentinesPrice)} (-{Math.round(valentinesPromoPercent)}% na 2ª peça)
+                </p>
+              </>
+            ) : (
+              <>
+                {showDiscount && hasRealDiscount && (
+                  <p className="text-xs text-muted-foreground line-through">
+                    {formatPrice(product.price)}
+                  </p>
+                )}
+                <p className="text-xl font-bold text-store-accent">
+                  {formatPrice(displayPrice)}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  em até <span className="font-semibold text-foreground">{valentinesPromoActive ? '2x' : '6x'} de {formatPrice(displayPrice / (valentinesPromoActive ? 2 : 6))}</span>
+                </p>
+              </>
             )}
-            <p className="text-xl font-bold text-store-accent">
-              {formatPrice(displayPrice)}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              em até <span className="font-semibold text-foreground">6x de {formatPrice(displayPrice / 6)}</span>
-            </p>
           </div>
 
           {/* Badges de benefícios */}
           <div className="mt-2 flex flex-wrap items-center gap-1.5">
-            <Badge variant="outline" className="text-emerald-600 border-emerald-600/40 text-xs font-semibold">
-              Pix -5%
-            </Badge>
+            {!valentinesPromoActive && (
+              <Badge variant="outline" className="text-emerald-600 border-emerald-600/40 text-xs font-semibold">
+                Pix -5%
+              </Badge>
+            )}
             {product.price >= 299 && (
               <Badge variant="outline" className="text-store-gold border-store-gold/40 text-xs">
                 Frete Grátis
