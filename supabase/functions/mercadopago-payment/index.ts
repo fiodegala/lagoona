@@ -160,6 +160,35 @@ async function createPayment(body: any, accessToken: string) {
     );
   }
 
+  // Server-side enforcement of Valentine's promo rules:
+  // - credit card installments capped at 2x
+  // - no PIX 5% discount during promo (handled by amount tolerance already)
+  try {
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    );
+    const { data: cfgRow } = await supabaseAdmin
+      .from('store_config')
+      .select('value')
+      .eq('key', 'valentines_promo')
+      .maybeSingle();
+    const cfg: any = cfgRow?.value || {};
+    const now = new Date();
+    const active = !!cfg.enabled
+      && (!cfg.starts_at || now >= new Date(cfg.starts_at))
+      && (!cfg.ends_at || now <= new Date(cfg.ends_at));
+
+    if (active && token && Number(installments || 1) > 2) {
+      return new Response(
+        JSON.stringify({ error: 'Durante a promoção do Dia dos Namorados, o parcelamento máximo é 2x sem juros.' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+  } catch (e) {
+    console.error('Valentines promo check failed:', e);
+  }
+
   // Build notification URL for MercadoPago webhooks
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
   const notificationUrl = `${supabaseUrl}/functions/v1/mercadopago-webhook`;
