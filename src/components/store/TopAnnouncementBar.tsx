@@ -78,7 +78,7 @@ const TopAnnouncementBar = () => {
 
   const messages = useMemo(
     () => (valentinesActive ? [valentinesMessage, ...valentinesBaseMessages] : baseMessages),
-    [valentinesActive, valentinesMessage]
+    [valentinesActive, valentinesMessage, valentinesBaseMessages]
   );
 
   useEffect(() => {
