@@ -265,10 +265,11 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   // Promoção Dia dos Namorados: aplica automaticamente se não houver cupom nem combo.
   const { active: valentinesPromoActive, label: valentinesPromoLabel, discountPercent: valentinesPromoPercent } = useValentinesPromo();
+  const valentinesEligibleItems = items.filter((i) => !i.isPromotional);
   const valentinesDiscount =
     valentinesPromoActive && !appliedCoupon && appliedCombos.length === 0
       ? calculateValentinesDiscount(
-          items.map((i) => ({ price: i.price, quantity: i.quantity })),
+          valentinesEligibleItems.map((i) => ({ price: i.price, quantity: i.quantity })),
           valentinesPromoPercent
         )
       : 0;
@@ -311,7 +312,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         valentinesPromoActive,
         valentinesPromoLabel,
         valentinesPromoPercent,
-        maxCartUnitPrice: items.reduce((max, i) => Math.max(max, Number(i.price) || 0), 0),
+        maxCartUnitPrice: valentinesEligibleItems.reduce((max, i) => Math.max(max, Number(i.price) || 0), 0),
       }}
     >
       {children}

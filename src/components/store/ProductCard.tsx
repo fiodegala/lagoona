@@ -84,7 +84,7 @@ const ProductCard = memo(forwardRef<HTMLAnchorElement, ProductCardProps>(({ prod
   // Dia dos Namorados: se já houver item no carrinho com valor >= ao deste produto,
   // este produto entra como "2ª peça" com desconto.
   const valentinesEligible =
-    valentinesPromoActive && maxCartUnitPrice > 0 && displayPrice <= maxCartUnitPrice;
+    valentinesPromoActive && !hasRealDiscount && maxCartUnitPrice > 0 && displayPrice <= maxCartUnitPrice;
   const valentinesFactor = Math.max(0, Math.min(100, valentinesPromoPercent || 0)) / 100;
   const valentinesPrice = valentinesEligible
     ? Math.round(displayPrice * (1 - valentinesFactor) * 100) / 100
