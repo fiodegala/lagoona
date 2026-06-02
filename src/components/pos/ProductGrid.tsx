@@ -47,6 +47,7 @@ const ProductGrid = ({
   onCategoryChange,
   onProductSelect,
   isOnline,
+  allowOutOfStock = false,
 }: ProductGridProps) => {
   const [products, setProducts] = useState<CachedProduct[]>([]);
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
