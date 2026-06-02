@@ -637,6 +637,8 @@ const Sales = () => {
                         <TableCell>
                           {isCancelled ? (
                             <Badge variant="destructive" className="text-xs">Cancelada</Badge>
+                          ) : (sale as any).sale_type === 'troca' ? (
+                            <Badge variant="secondary" className="text-xs bg-amber-500/20 text-amber-700 border-amber-500/30">Troca</Badge>
                           ) : (sale as any).sale_type === 'brinde' ? (
                             <Badge variant="secondary" className="text-xs bg-purple-500/20 text-purple-700 border-purple-500/30">Brinde</Badge>
                           ) : (sale as any).sale_type === 'colaborador' ? (
