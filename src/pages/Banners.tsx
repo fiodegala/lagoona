@@ -35,11 +35,14 @@ const Banners = () => {
     title: '',
     subtitle: '',
     image_url: '',
+    image_url_mobile: '',
     video_url: '',
+    video_url_mobile: '',
     media_type: 'image',
     link_url: '',
     sort_order: 0,
     is_active: true,
+    overlay_enabled: true,
   });
   const [isSaving, setIsSaving] = useState(false);
 
