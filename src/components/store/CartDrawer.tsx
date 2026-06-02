@@ -6,12 +6,13 @@ import { Separator } from '@/components/ui/separator';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from '@/components/ui/sheet';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useCart } from '@/contexts/CartContext';
+import { getValentinesDiscountedUnits } from '@/lib/valentinesPromo';
 
 const CartDrawer = () => {
   const {
     items, removeItem, updateQuantity, getItemCount, getSubtotal, getTotal,
     appliedCoupon, comboDiscount,
-    valentinesDiscount, valentinesPromoActive, valentinesPromoLabel,
+    valentinesDiscount, valentinesPromoActive, valentinesPromoLabel, valentinesPromoPercent,
   } = useCart();
   const itemCount = getItemCount();
   const subtotal = getSubtotal();
@@ -21,6 +22,10 @@ const CartDrawer = () => {
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(price);
 
   const totalDiscount = (appliedCoupon?.discount || 0) + comboDiscount + valentinesDiscount;
+  const valentinesFactor = Math.max(0, Math.min(100, valentinesPromoPercent || 0)) / 100;
+  const discountedUnits = valentinesPromoActive && valentinesDiscount > 0
+    ? getValentinesDiscountedUnits(items.map(i => ({ id: i.id, price: Number(i.price) || 0, quantity: i.quantity })))
+    : {};
 
   return (
     <Sheet>
@@ -85,7 +90,13 @@ const CartDrawer = () => {
           <>
             <ScrollArea className="flex-1">
               <div className="divide-y">
-                {items.map((item) => (
+                {items.map((item) => {
+                  const discQty = discountedUnits[item.id] || 0;
+                  const fullQty = item.quantity - discQty;
+                  const unitDiscounted = item.price * (1 - valentinesFactor);
+                  const lineTotal = fullQty * item.price + discQty * unitDiscounted;
+                  const hasDiscount = discQty > 0;
+                  return (
                   <div key={item.id} className="p-4 flex gap-3">
                     {/* Image */}
                     <div className="shrink-0 w-16 h-16 rounded-lg overflow-hidden border bg-muted">
@@ -99,7 +110,22 @@ const CartDrawer = () => {
                     {/* Info */}
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium line-clamp-2 leading-tight">{item.name}</p>
-                      <p className="text-sm font-bold text-store-accent mt-1">{formatPrice(item.price)}</p>
+                      {hasDiscount ? (
+                        <div className="mt-1">
+                          <p className="text-xs text-muted-foreground line-through leading-none">{formatPrice(item.price)}</p>
+                          <p className="text-sm font-bold text-rose-600 leading-tight">
+                            {formatPrice(unitDiscounted)}
+                            <span className="ml-1 text-[10px] font-semibold uppercase tracking-wide">-{Math.round(valentinesFactor * 100)}%</span>
+                          </p>
+                          {discQty < item.quantity && (
+                            <p className="text-[10px] text-rose-600/80 mt-0.5">
+                              {discQty} de {item.quantity} un. com desconto
+                            </p>
+                          )}
+                        </div>
+                      ) : (
+                        <p className="text-sm font-bold text-store-accent mt-1">{formatPrice(item.price)}</p>
+                      )}
 
                       {/* Quantity controls */}
                       <div className="flex items-center gap-2 mt-2">
@@ -130,10 +156,18 @@ const CartDrawer = () => {
 
                     {/* Line total */}
                     <div className="shrink-0 text-right">
-                      <p className="text-sm font-bold">{formatPrice(item.price * item.quantity)}</p>
+                      {hasDiscount ? (
+                        <>
+                          <p className="text-xs text-muted-foreground line-through leading-none">{formatPrice(item.price * item.quantity)}</p>
+                          <p className="text-sm font-bold text-rose-600">{formatPrice(lineTotal)}</p>
+                        </>
+                      ) : (
+                        <p className="text-sm font-bold">{formatPrice(item.price * item.quantity)}</p>
+                      )}
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </ScrollArea>
 
