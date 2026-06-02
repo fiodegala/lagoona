@@ -91,6 +91,7 @@ const ImageCropModal = ({ open, imageSrc, aspect, onClose, onCropComplete }: Ima
     { label: '16:9', value: 16 / 9 },
     { label: '21:9', value: 21 / 9 },
     { label: '3:4', value: 3 / 4 },
+    { label: '4:5', value: 4 / 5 },
   ];
 
   const [selectedAspect, setSelectedAspect] = useState<number | undefined>(aspect);
