@@ -24,7 +24,11 @@ const CartDrawer = () => {
   const totalDiscount = (appliedCoupon?.discount || 0) + comboDiscount + valentinesDiscount;
   const valentinesFactor = Math.max(0, Math.min(100, valentinesPromoPercent || 0)) / 100;
   const discountedUnits = valentinesPromoActive && valentinesDiscount > 0
-    ? getValentinesDiscountedUnits(items.map(i => ({ id: i.id, price: Number(i.price) || 0, quantity: i.quantity })))
+    ? getValentinesDiscountedUnits(
+        items
+          .filter(i => !i.isPromotional)
+          .map(i => ({ id: i.id, price: Number(i.price) || 0, quantity: i.quantity }))
+      )
     : {};
 
   return (

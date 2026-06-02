@@ -613,7 +613,7 @@ const ProductDetails = () => {
             {/* Pricing */}
             {(() => {
               const valentinesEligible =
-                valentinesPromoActive && maxCartUnitPrice > 0 && currentPrice <= maxCartUnitPrice;
+                valentinesPromoActive && !hasRealDiscount && maxCartUnitPrice > 0 && currentPrice <= maxCartUnitPrice;
               const valentinesFactor = Math.max(0, Math.min(100, valentinesPromoPercent || 0)) / 100;
               const valentinesPrice = Math.round(currentPrice * (1 - valentinesFactor) * 100) / 100;
               const installments = valentinesPromoActive ? 2 : 6;
