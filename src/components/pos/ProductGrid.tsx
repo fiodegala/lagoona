@@ -10,6 +10,7 @@ interface ProductGridProps {
   onCategoryChange: (categoryId: string | null) => void;
   onProductSelect: (product: CachedProduct) => void;
   isOnline: boolean;
+  allowOutOfStock?: boolean;
 }
 
 interface CachedProduct {
