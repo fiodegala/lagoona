@@ -20,6 +20,8 @@ interface PaymentFormProps {
   onPaymentSuccess: (paymentData: any) => void;
   onPaymentError: (error: string) => void;
   onMethodChange?: (method: string) => void;
+  maxInstallments?: number;
+  disablePixDiscount?: boolean;
 }
 
 const formatPrice = (price: number) =>
