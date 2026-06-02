@@ -334,6 +334,63 @@ body {
   color: #e11d48 !important;
 }
 
+/* ===== Cards de produto no tema Dia dos Namorados ===== */
+.valentines-theme .product-card {
+  border-color: rgba(225, 29, 72, 0.25) !important;
+  background: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(350 80% 97%) 100%) !important;
+  box-shadow: 0 2px 8px rgba(225, 29, 72, 0.06) !important;
+}
+
+.valentines-theme .product-card:hover {
+  border-color: rgba(225, 29, 72, 0.55) !important;
+  box-shadow: 0 8px 24px rgba(225, 29, 72, 0.14) !important;
+}
+
+/* Preço em vermelho/rosa */
+.valentines-theme .product-card .text-store-accent {
+  color: #be123c !important;
+}
+
+/* Botão de adicionar ao carrinho vermelho */
+.valentines-theme .product-card button[class*="bg-store-gold"] {
+  background-image: linear-gradient(135deg, #e11d48, #db2777, #ec4899) !important;
+  color: #fff !important;
+  border-color: transparent !important;
+}
+
+/* Título do produto em hover vermelho */
+.valentines-theme .product-card h3.group-hover\:text-store-gold {
+  color: #be123c !important;
+}
+
+/* Badges de benefícios em tom vermelho */
+.valentines-theme .product-card .text-emerald-600 {
+  color: #be123c !important;
+}
+.valentines-theme .product-card .border-emerald-600\/40 {
+  border-color: rgba(190, 18, 60, 0.4) !important;
+}
+
+/* Badge de frete grátis */
+.valentines-theme .product-card .text-store-gold {
+  color: #e11d48 !important;
+}
+.valentines-theme .product-card .border-store-gold\/40 {
+  border-color: rgba(225, 29, 72, 0.4) !important;
+}
+
+/* Estrelas de avaliação em vermelho */
+.valentines-theme .product-card .fill-warning,
+.valentines-theme .product-card .text-warning {
+  color: #e11d48 !important;
+}
+
+/* Coração de favoritos já é vermelho/dourado — mantém destaque */
+.valentines-theme .product-card button[class*="bg-store-gold"] {
+  background-image: none !important;
+  background-color: #be123c !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .valentines-heart { animation: none; opacity: 0 !important; }
   .valentines-theme .store-primary-cta { animation: none; }
