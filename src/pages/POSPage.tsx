@@ -331,9 +331,11 @@ const POSPage = () => {
             return variation.wholesale_price ?? variation.price ?? product.wholesale_price ?? product.price;
           case 'exclusivo':
             return variation.exclusive_price ?? variation.price ?? product.exclusive_price ?? product.price;
-          case 'troca':
           case 'brinde':
             return 0;
+          case 'troca':
+            // Troca integrada: produto novo com preço de varejo
+            return variation.price ?? product.price;
           default:
             // Varejo: use regular retail price
             return variation.price ?? product.price;
