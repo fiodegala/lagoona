@@ -41,9 +41,10 @@ export interface ProductResult {
 interface ProductSearchProps {
   onProductSelect: (product: ProductResult, variationId?: string) => void;
   isOnline: boolean;
+  allowOutOfStock?: boolean;
 }
 
-const ProductSearch = ({ onProductSelect, isOnline }: ProductSearchProps) => {
+const ProductSearch = ({ onProductSelect, isOnline, allowOutOfStock = false }: ProductSearchProps) => {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<ProductResult[]>([]);
   const [matchedVariationMap, setMatchedVariationMap] = useState<Record<string, string>>({});
