@@ -71,11 +71,14 @@ const Banners = () => {
         title: banner.title || '',
         subtitle: banner.subtitle || '',
         image_url: banner.image_url,
+        image_url_mobile: banner.image_url_mobile || '',
         video_url: banner.video_url || '',
+        video_url_mobile: banner.video_url_mobile || '',
         media_type: banner.media_type || 'image',
         link_url: banner.link_url || '',
         sort_order: banner.sort_order,
         is_active: banner.is_active,
+        overlay_enabled: banner.overlay_enabled ?? true,
       });
     } else {
       setEditingBanner(null);
@@ -85,11 +88,14 @@ const Banners = () => {
         title: '',
         subtitle: '',
         image_url: '',
+        image_url_mobile: '',
         video_url: '',
+        video_url_mobile: '',
         media_type: 'image',
         link_url: '',
         sort_order: filteredBanners.length,
         is_active: true,
+        overlay_enabled: true,
       });
     }
     setModalOpen(true);
