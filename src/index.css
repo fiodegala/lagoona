@@ -507,6 +507,85 @@ body {
   color: #e11d48 !important;
 }
 
+/* ===== Botões de variação no tema Dia dos Namorados ===== */
+/* Botão de variação selecionado — fundo vermelho/rosa */
+.valentines-theme button[class*="bg-store-primary"]:not([class*="bg-store-primary/10"]):not([class*="bg-store-primary/5"]) {
+  background-image: linear-gradient(135deg, #e11d48, #db2777, #ec4899) !important;
+  background-color: transparent !important;
+  color: #fff !important;
+  border-color: transparent !important;
+}
+
+/* Botão de variação outline (não selecionado) */
+.valentines-theme button[class*="border-store-gold"],
+.valentines-theme button[class*="border-store-primary"] {
+  border-color: #e11d48 !important;
+  color: #be123c !important;
+}
+.valentines-theme button[class*="border-store-gold"]:hover,
+.valentines-theme button[class*="border-store-primary"]:hover {
+  background-image: linear-gradient(135deg, #e11d48, #db2777, #ec4899) !important;
+  color: #fff !important;
+  border-color: transparent !important;
+}
+
+/* Botão favorito ativo (bg-store-primary/10) */
+.valentines-theme button[class*="bg-store-primary/10"] {
+  background-color: rgba(225, 29, 72, 0.1) !important;
+  border-color: #e11d48 !important;
+  color: #e11d48 !important;
+}
+
+/* ===== Página de produto — ações no tema Dia dos Namorados ===== */
+/* Quantidade +/- */
+.valentines-theme button[class*="bg-store-primary"] [class*="text-store-accent"],
+.valentines-theme button[class*="bg-store-gold"] [class*="text-store-accent"] {
+  color: #fff !important;
+}
+
+/* Sticky mobile buy bar */
+.valentines-theme .fixed.bottom-0 button[class*="bg-store-primary"],
+.valentines-theme .fixed.bottom-0 button[class*="bg-store-gold"] {
+  background-image: linear-gradient(135deg, #e11d48, #db2777, #ec4899) !important;
+  color: #fff !important;
+  border-color: transparent !important;
+}
+
+/* Trust badges ícones */
+.valentines-theme .text-store-primary {
+  color: #e11d48 !important;
+}
+
+/* Tabs ativas na página de produto */
+.valentines-theme [data-state="active"][class*="border-store-primary"] {
+  border-color: #e11d48 !important;
+  color: #e11d48 !important;
+}
+
+/* Botão "Salve para depois" */
+.valentines-theme button[class*="border-store-primary/40"],
+.valentines-theme .border-dashed[class*="border-store-primary"] {
+  border-color: rgba(225, 29, 72, 0.4) !important;
+}
+.valentines-theme button[class*="bg-store-primary/5"] {
+  background-color: rgba(225, 29, 72, 0.05) !important;
+}
+.valentines-theme button[class*="bg-store-primary/5"]:hover {
+  background-color: rgba(225, 29, 72, 0.1) !important;
+}
+
+/* Provador com IA — outline com store-gold */
+.valentines-theme button[class*="border-store-gold/30"],
+.valentines-theme button[class*="border-store-gold/50"] {
+  border-color: rgba(225, 29, 72, 0.35) !important;
+  color: #be123c !important;
+}
+.valentines-theme button[class*="border-store-gold/30"]:hover,
+.valentines-theme button[class*="border-store-gold/50"]:hover {
+  background-color: rgba(225, 29, 72, 0.06) !important;
+  border-color: rgba(225, 29, 72, 0.6) !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .valentines-heart { animation: none; opacity: 0 !important; }
   .valentines-theme .store-primary-cta { animation: none; }
