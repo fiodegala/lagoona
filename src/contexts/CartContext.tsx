@@ -264,10 +264,17 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   const getSubtotal = () => items.reduce((total, item) => total + item.price * item.quantity, 0);
 
+  // Promoção Dia dos Namorados: aplica automaticamente se não houver cupom nem combo.
+  const valentinesPromoActive = isValentinesPromoActive();
+  const valentinesDiscount =
+    valentinesPromoActive && !appliedCoupon && appliedCombos.length === 0
+      ? calculateValentinesDiscount(items.map((i) => ({ price: i.price, quantity: i.quantity })))
+      : 0;
+
   const getTotal = () => {
     const subtotal = getSubtotal();
     const couponDiscountVal = appliedCoupon?.discount || 0;
-    return Math.max(0, subtotal - couponDiscountVal - comboDiscount);
+    return Math.max(0, subtotal - couponDiscountVal - comboDiscount - valentinesDiscount);
   };
 
   const applyCoupon = async (code: string, customerEmail?: string): Promise<CouponValidationResult> => {
@@ -298,6 +305,9 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         getItemCount, getSubtotal, getTotal,
         appliedCoupon, applyCoupon, removeCoupon, couponLoading,
         appliedCombos, comboDiscount, comboFreeShipping,
+        valentinesDiscount,
+        valentinesPromoActive,
+        valentinesPromoLabel: VALENTINES_PROMO.label,
       }}
     >
       {children}
