@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ShoppingCart, Minus, Plus, Trash2, ShoppingBag, Truck, PartyPopper } from 'lucide-react';
+import { ShoppingCart, Minus, Plus, Trash2, ShoppingBag, Truck, PartyPopper, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -8,7 +8,11 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useCart } from '@/contexts/CartContext';
 
 const CartDrawer = () => {
-  const { items, removeItem, updateQuantity, getItemCount, getSubtotal, getTotal, appliedCoupon, comboDiscount } = useCart();
+  const {
+    items, removeItem, updateQuantity, getItemCount, getSubtotal, getTotal,
+    appliedCoupon, comboDiscount,
+    valentinesDiscount, valentinesPromoActive, valentinesPromoLabel,
+  } = useCart();
   const itemCount = getItemCount();
   const subtotal = getSubtotal();
   const total = getTotal();
@@ -16,7 +20,7 @@ const CartDrawer = () => {
   const formatPrice = (price: number) =>
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(price);
 
-  const totalDiscount = (appliedCoupon?.discount || 0) + comboDiscount;
+  const totalDiscount = (appliedCoupon?.discount || 0) + comboDiscount + valentinesDiscount;
 
   return (
     <Sheet>
