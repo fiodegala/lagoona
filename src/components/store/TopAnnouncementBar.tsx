@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
-import { Truck, Sparkles, CreditCard } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { Truck, Sparkles, CreditCard, Heart } from 'lucide-react';
 import HeroCountdown from './HeroCountdown';
 import { useDealsCountdown } from '@/hooks/useDealsCountdown';
+import { isValentinesPromoActive, VALENTINES_PROMO } from '@/lib/valentinesPromo';
 
-const messages = [
+const baseMessages = [
   {
     icon: Truck,
     text: (
@@ -32,10 +33,25 @@ const messages = [
   },
 ];
 
+const valentinesMessage = {
+  icon: Heart,
+  text: (
+    <>
+      <strong className="font-semibold">{VALENTINES_PROMO.label.toUpperCase()}</strong>: compre 1 peça e leve a{' '}
+      <strong className="font-semibold">2ª com 50% OFF</strong> (peça de menor valor)
+    </>
+  ),
+};
+
 const TopAnnouncementBar = () => {
   const [index, setIndex] = useState(0);
   const [visible, setVisible] = useState(true);
   const { active } = useDealsCountdown();
+
+  const messages = useMemo(
+    () => (isValentinesPromoActive() ? [valentinesMessage, ...baseMessages] : baseMessages),
+    []
+  );
 
   useEffect(() => {
     if (active) return; // pause rotation when countdown takes over
@@ -47,7 +63,7 @@ const TopAnnouncementBar = () => {
       }, 300);
     }, 4000);
     return () => clearInterval(interval);
-  }, [active]);
+  }, [active, messages.length]);
 
   // When countdown is active, render it inline replacing the rotating message
   if (active) {
@@ -62,9 +78,10 @@ const TopAnnouncementBar = () => {
 
   const current = messages[index];
   const Icon = current.icon;
+  const isPromo = current === valentinesMessage;
 
   return (
-    <div className="bg-black text-white text-xs sm:text-sm overflow-hidden">
+    <div className={`text-xs sm:text-sm overflow-hidden ${isPromo ? 'bg-gradient-to-r from-rose-600 via-rose-500 to-pink-600 text-white' : 'bg-black text-white'}`}>
       <div className="container mx-auto px-4 py-3.5 flex items-center justify-center min-h-[52px]">
         <div
           className={`flex items-center gap-2 transition-all duration-300 ${
