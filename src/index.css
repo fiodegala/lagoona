@@ -423,6 +423,90 @@ body {
   outline-color: #e11d48 !important;
 }
 
+/* ===== Navegação no tema Dia dos Namorados ===== */
+
+/* Links do header desktop */
+.valentines-theme header nav a[href] {
+  color: inherit !important;
+}
+.valentines-theme header nav a[href]:hover,
+.valentines-theme header nav .group:hover > a[href] {
+  color: #e11d48 !important;
+}
+
+/* Dropdown de categorias — itens */
+.valentines-theme header nav .group\/item:hover span,
+.valentines-theme header nav [class*="group-hover\/item"][class*="text-store-gold"] {
+  color: #e11d48 !important;
+}
+
+/* Link "Ver todas as categorias" no dropdown */
+.valentines-theme header a[class*="text-store-primary"] {
+  color: #be123c !important;
+}
+
+/* Links do menu mobile */
+.valentines-theme [data-state="open"] nav a[href],
+.valentines-theme [role="dialog"] nav a[href],
+.valentines-theme .sheet nav a[href] {
+  color: inherit !important;
+}
+.valentines-theme [data-state="open"] nav a[href]:hover,
+.valentines-theme [role="dialog"] nav a[href]:hover,
+.valentines-theme .sheet nav a[href]:hover {
+  color: #e11d48 !important;
+}
+
+/* Botões de ação do header (ícones) */
+.valentines-theme header button[class*="text-foreground"]:hover {
+  color: #e11d48 !important;
+}
+
+/* Badge do carrinho/favoritos */
+.valentines-theme header .bg-store-gold {
+  background-image: linear-gradient(135deg, #e11d48, #db2777, #ec4899) !important;
+  color: #fff !important;
+}
+
+/* ===== Footer no tema Dia dos Namorados ===== */
+.valentines-theme footer a[href]:hover,
+.valentines-theme footer a[href]:hover [class] {
+  color: #e11d48 !important;
+}
+
+/* Títulos do footer */
+.valentines-theme footer [class*="text-store-gold"] {
+  color: #e11d48 !important;
+}
+
+/* Ícones de redes sociais no footer */
+.valentines-theme footer a[class*="hover:bg-store-gold"]:hover {
+  background-image: linear-gradient(135deg, #e11d48, #db2777, #ec4899) !important;
+  border-color: transparent !important;
+}
+
+/* ===== Breadcrumbs e links de texto no tema Dia dos Namorados ===== */
+.valentines-theme a[class*="text-store-primary"],
+.valentines-theme a[class*="text-store-gold"] {
+  color: #be123c !important;
+}
+.valentines-theme a[class*="text-store-primary"]:hover,
+.valentines-theme a[class*="text-store-gold"]:hover {
+  color: #e11d48 !important;
+}
+
+/* Botão/outline links */
+.valentines-theme a[class*="border-store-gold"]:hover {
+  background-image: linear-gradient(135deg, #be123c, #db2777) !important;
+  color: #fff !important;
+  border-color: transparent !important;
+}
+
+/* Links em geral com hover */
+.valentines-theme [class*="hover:text-store-gold"]:hover {
+  color: #e11d48 !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .valentines-heart { animation: none; opacity: 0 !important; }
   .valentines-theme .store-primary-cta { animation: none; }
