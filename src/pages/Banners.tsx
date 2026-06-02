@@ -24,6 +24,108 @@ const bannerTypes = [
   { value: 'launches', label: 'Lançamentos' },
 ];
 
+interface BannerPreviewProps {
+  data: CreateBannerData;
+}
+
+const BannerPreview = ({ data }: BannerPreviewProps) => {
+  const [device, setDevice] = useState<'desktop' | 'mobile'>('desktop');
+  const hasDesktop = data.media_type === 'video' ? !!data.video_url : !!data.image_url;
+  const desktopImg = data.image_url || '';
+  const mobileImg = data.image_url_mobile || data.image_url || '';
+  const desktopVid = data.video_url || '';
+  const mobileVid = data.video_url_mobile || data.video_url || '';
+  const overlay = data.overlay_enabled ?? true;
+
+  const isDesktop = device === 'desktop';
+  const aspect = isDesktop ? 'aspect-[21/9]' : 'aspect-[4/5]';
+  const containerClass = isDesktop ? 'w-full' : 'w-[280px] mx-auto';
+
+  return (
+    <div className="space-y-2 border-t pt-4">
+      <div className="flex items-center justify-between">
+        <Label className="text-sm font-semibold">Prévia ao vivo</Label>
+        <div className="inline-flex rounded-md border bg-muted p-0.5">
+          <button
+            type="button"
+            onClick={() => setDevice('desktop')}
+            className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs rounded-sm transition ${isDesktop ? 'bg-background shadow-sm' : 'text-muted-foreground'}`}
+          >
+            <Monitor className="h-3.5 w-3.5" /> Desktop
+          </button>
+          <button
+            type="button"
+            onClick={() => setDevice('mobile')}
+            className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs rounded-sm transition ${!isDesktop ? 'bg-background shadow-sm' : 'text-muted-foreground'}`}
+          >
+            <Smartphone className="h-3.5 w-3.5" /> Mobile
+          </button>
+        </div>
+      </div>
+
+      <div className={containerClass}>
+        <div className={`relative ${aspect} w-full bg-store-dark overflow-hidden rounded-md border`}>
+          {!hasDesktop ? (
+            <div className="absolute inset-0 flex items-center justify-center text-xs text-muted-foreground">
+              <ImageIcon className="h-6 w-6 mr-2 opacity-50" />
+              Envie uma mídia para visualizar
+            </div>
+          ) : data.media_type === 'video' ? (
+            <video
+              key={isDesktop ? desktopVid : mobileVid}
+              src={isDesktop ? desktopVid : mobileVid}
+              autoPlay
+              muted
+              loop
+              playsInline
+              className="absolute inset-0 w-full h-full object-contain"
+            />
+          ) : (
+            <img
+              src={isDesktop ? desktopImg : mobileImg}
+              alt="Prévia"
+              className="absolute inset-0 w-full h-full object-contain"
+            />
+          )}
+
+          {hasDesktop && overlay && <div className="absolute inset-0 bg-store-dark/60" />}
+
+          {hasDesktop && (
+            <div className="relative h-full flex items-center">
+              <div className="w-full px-6">
+                <div className="max-w-2xl">
+                  {data.title && (
+                    <h2 className={`font-display font-bold text-white leading-tight italic mb-3 ${isDesktop ? 'text-3xl md:text-4xl' : 'text-xl'}`}>
+                      {data.title}
+                    </h2>
+                  )}
+                  {data.subtitle && (
+                    <p className={`text-white/70 font-light tracking-wide mb-4 ${isDesktop ? 'text-base' : 'text-xs'}`}>
+                      {data.subtitle}
+                    </p>
+                  )}
+                  {data.link_url && (
+                    <span className={`inline-flex items-center gap-2 bg-store-gold text-store-dark font-semibold rounded-md tracking-wide ${isDesktop ? 'px-6 py-2 text-sm' : 'px-4 py-1.5 text-xs'}`}>
+                      Comprar agora
+                      <ArrowRight className={isDesktop ? 'h-4 w-4' : 'h-3 w-3'} />
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+        {!isDesktop && !data.image_url_mobile && !data.video_url_mobile && hasDesktop && (
+          <p className="text-xs text-muted-foreground text-center mt-2">
+            Sem mídia mobile: usando a versão desktop.
+          </p>
+        )}
+      </div>
+    </div>
+  );
+};
+
+
 const Banners = () => {
   const [banners, setBanners] = useState<Banner[]>([]);
   const [isLoading, setIsLoading] = useState(true);
