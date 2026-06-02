@@ -285,28 +285,64 @@ const Banners = () => {
               </div>
 
               {formData.media_type === 'video' ? (
-                <div className="space-y-2">
-                  <Label>Vídeo *</Label>
-                  <VideoUpload
-                    value={formData.video_url || undefined}
-                    onChange={(url) => setFormData(prev => ({ ...prev, video_url: url || '' }))}
-                    bucket="product-images"
-                    folder="banners"
-                    maxSizeMB={50}
-                  />
-                </div>
+                <>
+                  <div className="space-y-2">
+                    <Label>Vídeo (Desktop) *</Label>
+                    <VideoUpload
+                      value={formData.video_url || undefined}
+                      onChange={(url) => setFormData(prev => ({ ...prev, video_url: url || '' }))}
+                      bucket="product-images"
+                      folder="banners"
+                      maxSizeMB={50}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Vídeo (Mobile)</Label>
+                    <VideoUpload
+                      value={formData.video_url_mobile || undefined}
+                      onChange={(url) => setFormData(prev => ({ ...prev, video_url_mobile: url || '' }))}
+                      bucket="product-images"
+                      folder="banners"
+                      maxSizeMB={50}
+                    />
+                    <p className="text-xs text-muted-foreground">Opcional. Se vazio, usa o vídeo desktop em mobile.</p>
+                  </div>
+                </>
               ) : (
-                <div className="space-y-2">
-                  <Label>Imagem *</Label>
-                  <ImageUpload
-                    value={formData.image_url}
-                    onChange={(url) => setFormData(prev => ({ ...prev, image_url: url || '' }))}
-                    bucket="product-images"
-                    folder="banners"
-                  />
-                  <p className="text-xs text-muted-foreground">Recomendado: 1920x600px para banners hero</p>
-                </div>
+                <>
+                  <div className="space-y-2">
+                    <Label>Imagem (Desktop) *</Label>
+                    <ImageUpload
+                      value={formData.image_url}
+                      onChange={(url) => setFormData(prev => ({ ...prev, image_url: url || '' }))}
+                      bucket="product-images"
+                      folder="banners"
+                    />
+                    <p className="text-xs text-muted-foreground">Recomendado: 1920x600px (formato horizontal)</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Imagem (Mobile)</Label>
+                    <ImageUpload
+                      value={formData.image_url_mobile || ''}
+                      onChange={(url) => setFormData(prev => ({ ...prev, image_url_mobile: url || '' }))}
+                      bucket="product-images"
+                      folder="banners"
+                    />
+                    <p className="text-xs text-muted-foreground">Opcional. Recomendado: 1080x1350px (4:5). Se vazio, usa a desktop.</p>
+                  </div>
+                </>
               )}
+
+              <div className="flex items-center justify-between rounded-md border p-3">
+                <div className="space-y-0.5">
+                  <Label>Sobreposição escura</Label>
+                  <p className="text-xs text-muted-foreground">Camada escura sobre o banner para melhorar contraste do texto</p>
+                </div>
+                <Switch
+                  checked={formData.overlay_enabled ?? true}
+                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, overlay_enabled: checked }))}
+                />
+              </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
