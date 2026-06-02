@@ -211,6 +211,7 @@ const HomePage = () => {
   const [bestSellerIds, setBestSellerIds] = useState<string[]>([]);
   const [wholesaleVideoUrl, setWholesaleVideoUrl] = useState('/assets/atacado-fdg.mp4');
   const [wholesaleAutoplay, setWholesaleAutoplay] = useState(true);
+  const { active: valentinesActive } = useValentinesPromo();
 
   useEffect(() => {
     const loadData = async () => {
