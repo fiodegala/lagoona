@@ -661,7 +661,7 @@ const CheckoutPage = () => {
                 <Separator />
 
                 {(() => {
-                  const showPixDiscount = step !== 'payment' || selectedPaymentMethod === 'pix';
+                  const showPixDiscount = !valentinesActive && (step !== 'payment' || selectedPaymentMethod === 'pix');
                   const finalTotal = showPixDiscount ? pixGrandTotal : grandTotal;
                   return (
                     <>
