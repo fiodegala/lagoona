@@ -619,6 +619,8 @@ const CheckoutPage = () => {
                   onPaymentSuccess={handlePaymentSuccess}
                   onPaymentError={handlePaymentError}
                   onMethodChange={setSelectedPaymentMethod}
+                  maxInstallments={valentinesActive ? 2 : 6}
+                  disablePixDiscount={valentinesActive}
                 />
               )
             )}
