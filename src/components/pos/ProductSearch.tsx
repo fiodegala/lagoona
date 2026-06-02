@@ -41,9 +41,10 @@ export interface ProductResult {
 interface ProductSearchProps {
   onProductSelect: (product: ProductResult, variationId?: string) => void;
   isOnline: boolean;
+  allowOutOfStock?: boolean;
 }
 
-const ProductSearch = ({ onProductSelect, isOnline }: ProductSearchProps) => {
+const ProductSearch = ({ onProductSelect, isOnline, allowOutOfStock = false }: ProductSearchProps) => {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<ProductResult[]>([]);
   const [matchedVariationMap, setMatchedVariationMap] = useState<Record<string, string>>({});
@@ -286,10 +287,10 @@ const ProductSearch = ({ onProductSelect, isOnline }: ProductSearchProps) => {
                   key={product.id}
                   className={cn(
                     'w-full px-4 py-3 flex items-center gap-4 hover:bg-accent text-left',
-                    display.stock <= 0 && 'opacity-50'
+                    display.stock <= 0 && !allowOutOfStock && 'opacity-50'
                   )}
                   onClick={() => handleProductClick(product)}
-                  disabled={display.stock <= 0}
+                  disabled={display.stock <= 0 && !allowOutOfStock}
                 >
                   {display.image ? (
                     <img

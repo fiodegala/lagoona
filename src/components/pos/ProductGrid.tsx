@@ -10,6 +10,7 @@ interface ProductGridProps {
   onCategoryChange: (categoryId: string | null) => void;
   onProductSelect: (product: CachedProduct) => void;
   isOnline: boolean;
+  allowOutOfStock?: boolean;
 }
 
 interface CachedProduct {
@@ -46,6 +47,7 @@ const ProductGrid = ({
   onCategoryChange,
   onProductSelect,
   isOnline,
+  allowOutOfStock = false,
 }: ProductGridProps) => {
   const [products, setProducts] = useState<CachedProduct[]>([]);
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
@@ -152,10 +154,10 @@ const ProductGrid = ({
                     'flex flex-col rounded-lg border bg-card overflow-hidden transition-all',
                     'hover:shadow-md hover:border-primary/50',
                     'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
-                    !hasStock && 'opacity-50 cursor-not-allowed'
+                    !hasStock && !allowOutOfStock && 'opacity-50 cursor-not-allowed'
                   )}
-                  onClick={() => hasStock && onProductSelect(product)}
-                  disabled={!hasStock}
+                  onClick={() => (hasStock || allowOutOfStock) && onProductSelect(product)}
+                  disabled={!hasStock && !allowOutOfStock}
                 >
                   <div className="aspect-square relative bg-muted">
                     {product.image_url ? (
