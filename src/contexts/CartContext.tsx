@@ -3,11 +3,8 @@ import { couponsService, Coupon, CouponValidationResult } from '@/services/coupo
 import { combosService, Combo } from '@/services/combos';
 import { trackAnalyticsEvent, trackCartRemoveEvent } from '@/hooks/useAnalyticsTracker';
 import { trackMetaAddToCart } from '@/lib/metaPixel';
-import {
-  calculateValentinesDiscount,
-  isValentinesPromoActive,
-  VALENTINES_PROMO,
-} from '@/lib/valentinesPromo';
+import { calculateValentinesDiscount } from '@/lib/valentinesPromo';
+import { useValentinesPromo } from '@/hooks/useValentinesPromo';
 
 export interface CartItem {
   id: string;
@@ -265,10 +262,13 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const getSubtotal = () => items.reduce((total, item) => total + item.price * item.quantity, 0);
 
   // Promoção Dia dos Namorados: aplica automaticamente se não houver cupom nem combo.
-  const valentinesPromoActive = isValentinesPromoActive();
+  const { active: valentinesPromoActive, label: valentinesPromoLabel, discountPercent: valentinesPromoPercent } = useValentinesPromo();
   const valentinesDiscount =
     valentinesPromoActive && !appliedCoupon && appliedCombos.length === 0
-      ? calculateValentinesDiscount(items.map((i) => ({ price: i.price, quantity: i.quantity })))
+      ? calculateValentinesDiscount(
+          items.map((i) => ({ price: i.price, quantity: i.quantity })),
+          valentinesPromoPercent
+        )
       : 0;
 
   const getTotal = () => {
@@ -307,7 +307,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         appliedCombos, comboDiscount, comboFreeShipping,
         valentinesDiscount,
         valentinesPromoActive,
-        valentinesPromoLabel: VALENTINES_PROMO.label,
+        valentinesPromoLabel,
       }}
     >
       {children}
