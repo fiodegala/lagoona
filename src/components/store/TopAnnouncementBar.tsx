@@ -83,7 +83,7 @@ const TopAnnouncementBar = () => {
 
   const current = messages[index];
   const Icon = current.icon;
-  const isPromo = current === valentinesMessage;
+  const isPromo = (current as { isPromo?: boolean }).isPromo === true;
 
   return (
     <div className={`text-xs sm:text-sm overflow-hidden ${isPromo ? 'bg-gradient-to-r from-rose-600 via-rose-500 to-pink-600 text-white' : 'bg-black text-white'}`}>
