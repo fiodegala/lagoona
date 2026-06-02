@@ -54,7 +54,7 @@ const TopAnnouncementBar = () => {
   );
 
   const messages = useMemo(
-    () => (valentinesActive ? [valentinesMessage, ...baseMessages] : baseMessages),
+    () => (valentinesActive ? [valentinesMessage] : baseMessages),
     [valentinesActive, valentinesMessage]
   );
 
