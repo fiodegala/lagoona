@@ -3,6 +3,7 @@ import StoreHeader from './StoreHeader';
 import TopAnnouncementBar from './TopAnnouncementBar';
 import StoreFooter from './StoreFooter';
 import WhatsAppButton from './WhatsAppButton';
+import ValentinesTheme from './ValentinesTheme';
 import { categoriesService, Category } from '@/services/categories';
 import { useAnalyticsTracker } from '@/hooks/useAnalyticsTracker';
 
@@ -31,7 +32,8 @@ const StoreLayout = ({ children }: StoreLayoutProps) => {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col bg-background overflow-x-hidden w-full">
+    <div className="min-h-screen flex flex-col bg-background overflow-x-hidden w-full relative">
+      <ValentinesTheme />
       <TopAnnouncementBar />
       <StoreHeader categories={categories} />
       <main className="flex-1">
