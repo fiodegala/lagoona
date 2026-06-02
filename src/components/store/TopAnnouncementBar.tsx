@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Truck, Sparkles, CreditCard, Heart } from 'lucide-react';
 import HeroCountdown from './HeroCountdown';
 import { useDealsCountdown } from '@/hooks/useDealsCountdown';
-import { isValentinesPromoActive, VALENTINES_PROMO } from '@/lib/valentinesPromo';
+import { useValentinesPromo } from '@/hooks/useValentinesPromo';
 
 const baseMessages = [
   {
@@ -33,24 +33,29 @@ const baseMessages = [
   },
 ];
 
-const valentinesMessage = {
-  icon: Heart,
-  text: (
-    <>
-      <strong className="font-semibold">{VALENTINES_PROMO.label.toUpperCase()}</strong>: compre 1 peça e leve a{' '}
-      <strong className="font-semibold">2ª com 50% OFF</strong> (peça de menor valor)
-    </>
-  ),
-};
-
 const TopAnnouncementBar = () => {
   const [index, setIndex] = useState(0);
   const [visible, setVisible] = useState(true);
   const { active } = useDealsCountdown();
+  const { active: valentinesActive, label: valentinesLabel, discountPercent: valentinesPct } = useValentinesPromo();
+
+  const valentinesMessage = useMemo(
+    () => ({
+      icon: Heart,
+      isPromo: true as const,
+      text: (
+        <>
+          <strong className="font-semibold">{valentinesLabel.toUpperCase()}</strong>: compre 1 peça e leve a{' '}
+          <strong className="font-semibold">2ª com {valentinesPct}% OFF</strong> (peça de menor valor)
+        </>
+      ),
+    }),
+    [valentinesLabel, valentinesPct]
+  );
 
   const messages = useMemo(
-    () => (isValentinesPromoActive() ? [valentinesMessage, ...baseMessages] : baseMessages),
-    []
+    () => (valentinesActive ? [valentinesMessage, ...baseMessages] : baseMessages),
+    [valentinesActive, valentinesMessage]
   );
 
   useEffect(() => {
