@@ -219,6 +219,7 @@ const Settings = () => {
 
         {isAdmin && (
           <>
+            <ValentinesPromoSettings />
             <DealsCountdownSettings />
             <FeaturedProductSettings />
             <LookbookSettings />
