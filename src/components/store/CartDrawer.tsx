@@ -6,12 +6,13 @@ import { Separator } from '@/components/ui/separator';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from '@/components/ui/sheet';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useCart } from '@/contexts/CartContext';
+import { getValentinesDiscountedUnits } from '@/lib/valentinesPromo';
 
 const CartDrawer = () => {
   const {
     items, removeItem, updateQuantity, getItemCount, getSubtotal, getTotal,
     appliedCoupon, comboDiscount,
-    valentinesDiscount, valentinesPromoActive, valentinesPromoLabel,
+    valentinesDiscount, valentinesPromoActive, valentinesPromoLabel, valentinesPromoPercent,
   } = useCart();
   const itemCount = getItemCount();
   const subtotal = getSubtotal();
@@ -21,6 +22,10 @@ const CartDrawer = () => {
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(price);
 
   const totalDiscount = (appliedCoupon?.discount || 0) + comboDiscount + valentinesDiscount;
+  const valentinesFactor = Math.max(0, Math.min(100, valentinesPromoPercent || 0)) / 100;
+  const discountedUnits = valentinesPromoActive && valentinesDiscount > 0
+    ? getValentinesDiscountedUnits(items.map(i => ({ id: i.id, price: Number(i.price) || 0, quantity: i.quantity })))
+    : {};
 
   return (
     <Sheet>
