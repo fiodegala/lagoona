@@ -89,6 +89,7 @@ export function useValentinesPromo() {
 
   useEffect(() => {
     let mounted = true;
+    ensureRealtime();
     fetchValentinesConfig().then((c) => {
       if (mounted) setConfig(c);
     });
