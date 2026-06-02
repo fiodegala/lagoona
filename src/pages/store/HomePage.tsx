@@ -14,6 +14,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useProductCardsMeta } from '@/hooks/useProductCardsMeta';
 import { toast } from 'sonner';
 import { SEO } from "@/components/seo/SEO";
+import { useValentinesPromo } from '@/hooks/useValentinesPromo';
 
 // Lazy load below-fold sections
 const DealsCountdownSection = lazy(() => import('@/components/store/DealsCountdownSection'));
