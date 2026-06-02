@@ -141,7 +141,7 @@ const CartDrawer = () => {
             <div className="border-t p-4 space-y-3 bg-background">
               {/* Free shipping progress */}
               {(() => {
-                const FREE_SHIPPING_THRESHOLD = 299;
+                const FREE_SHIPPING_THRESHOLD = 499;
                 const remaining = Math.max(0, FREE_SHIPPING_THRESHOLD - total);
                 const progress = Math.min(100, (total / FREE_SHIPPING_THRESHOLD) * 100);
                 const reached = remaining === 0;
