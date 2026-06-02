@@ -53,8 +53,31 @@ const TopAnnouncementBar = () => {
     [valentinesLabel, valentinesPct]
   );
 
+  const valentinesBaseMessages = useMemo(
+    () => [
+      {
+        icon: Truck,
+        text: (
+          <>
+            <strong className="font-semibold">FRETE GRÁTIS</strong> em compras acima de{' '}
+            <strong className="font-semibold">R$ 299,00</strong>
+          </>
+        ),
+      },
+      {
+        icon: CreditCard,
+        text: (
+          <>
+            Oferta dia dos namorados em até <strong className="font-semibold">2x sem juros</strong> no cartão
+          </>
+        ),
+      },
+    ],
+    []
+  );
+
   const messages = useMemo(
-    () => (valentinesActive ? [valentinesMessage] : baseMessages),
+    () => (valentinesActive ? [valentinesMessage, ...valentinesBaseMessages] : baseMessages),
     [valentinesActive, valentinesMessage]
   );
 
