@@ -177,14 +177,14 @@ const MercadoPagoPayment = ({
               }
               cardFormMountedRef.current = true;
 
-              // Limit installments to 6x max
+              // Limit installments to maxInstallments
               const installmentsSelect = document.getElementById('mp-installments') as HTMLSelectElement | null;
               if (installmentsSelect) {
                 const filterInstallments = () => {
                   const options = installmentsSelect.querySelectorAll('option');
                   options.forEach((opt) => {
                     const val = parseInt(opt.value, 10);
-                    if (!isNaN(val) && val > 6) {
+                    if (!isNaN(val) && val > maxInstallments) {
                       opt.remove();
                     }
                   });
