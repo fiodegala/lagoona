@@ -33,6 +33,29 @@ export interface CreateBannerData {
   overlay_enabled?: boolean;
 }
 
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+const BANNERS_FN_URL = `${SUPABASE_URL}/functions/v1/store-banners`;
+
+// Cache em memória do lado cliente (mesma sessão / mesma aba)
+const clientCache = new Map<string, { data: Banner[]; expiresAt: number }>();
+const CLIENT_TTL_MS = 60_000;
+
+async function invalidateServerCache() {
+  try {
+    await fetch(`${BANNERS_FN_URL}/invalidate`, {
+      method: 'POST',
+      headers: {
+        apikey: SUPABASE_ANON,
+        Authorization: `Bearer ${SUPABASE_ANON}`,
+      },
+    });
+  } catch {
+    // best effort
+  }
+  clientCache.clear();
+}
+
 export const bannersService = {
   async getAll(): Promise<Banner[]> {
     const { data, error } = await supabase
@@ -44,14 +67,20 @@ export const bannersService = {
   },
 
   async getByType(type: string): Promise<Banner[]> {
-    const { data, error } = await supabase
-      .from('banners')
-      .select('*')
-      .eq('type', type)
-      .eq('is_active', true)
-      .order('sort_order', { ascending: true });
-    if (error) throw error;
-    return data as Banner[];
+    const now = Date.now();
+    const cached = clientCache.get(type);
+    if (cached && cached.expiresAt > now) return cached.data;
+
+    const res = await fetch(`${BANNERS_FN_URL}?type=${encodeURIComponent(type)}`, {
+      headers: {
+        apikey: SUPABASE_ANON,
+        Authorization: `Bearer ${SUPABASE_ANON}`,
+      },
+    });
+    if (!res.ok) throw new Error(`Failed to load banners (${res.status})`);
+    const data = (await res.json()) as Banner[];
+    clientCache.set(type, { data, expiresAt: now + CLIENT_TTL_MS });
+    return data;
   },
 
   async create(banner: CreateBannerData): Promise<Banner> {
@@ -61,6 +90,7 @@ export const bannersService = {
       .select()
       .single();
     if (error) throw error;
+    await invalidateServerCache();
     return data as Banner;
   },
 
@@ -72,12 +102,14 @@ export const bannersService = {
       .select()
       .single();
     if (error) throw error;
+    await invalidateServerCache();
     return data as Banner;
   },
 
   async delete(id: string): Promise<void> {
     const { error } = await supabase.from('banners').delete().eq('id', id);
     if (error) throw error;
+    await invalidateServerCache();
   },
 
   async reorder(ids: string[]): Promise<void> {
@@ -85,5 +117,7 @@ export const bannersService = {
       supabase.from('banners').update({ sort_order: index }).eq('id', id)
     );
     await Promise.all(updates);
+    await invalidateServerCache();
   },
 };
+
