@@ -31,7 +31,7 @@ const getOrCreateSessionId = () => {
 };
 
 const CheckoutPage = () => {
-  const { items, getTotal, getSubtotal, clearCart, getItemCount, comboFreeShipping, appliedCoupon } = useCart();
+  const { items, getTotal, getSubtotal, clearCart, getItemCount, comboFreeShipping, appliedCoupon, valentinesDiscount, valentinesPromoLabel } = useCart();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderComplete, setOrderComplete] = useState(false);
   const [orderId, setOrderId] = useState<string | null>(null);
@@ -351,6 +351,10 @@ const CheckoutPage = () => {
               coupon_id: appliedCoupon.coupon.id,
               coupon_code: appliedCoupon.coupon.code,
               coupon_discount: appliedCoupon.discount,
+            } : {}),
+            ...(valentinesDiscount > 0 ? {
+              valentines_promo: valentinesPromoLabel,
+              valentines_discount: valentinesDiscount,
             } : {}),
           },
         });

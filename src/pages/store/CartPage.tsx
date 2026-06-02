@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Trash2, Plus, Minus, ShoppingBag, ArrowRight, Package, Tag, X, Loader2, CheckCircle, Sparkles, Truck } from 'lucide-react';
+import { Trash2, Plus, Minus, ShoppingBag, ArrowRight, Package, Tag, X, Loader2, CheckCircle, Sparkles, Truck, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -28,6 +28,9 @@ const CartPage = () => {
     appliedCombos,
     comboDiscount,
     comboFreeShipping,
+    valentinesDiscount,
+    valentinesPromoActive,
+    valentinesPromoLabel,
   } = useCart();
   
   const [couponCode, setCouponCode] = useState('');
@@ -289,6 +292,25 @@ const CartPage = () => {
                   <div className="flex justify-between text-sm text-green-600">
                     <span>Desconto ({appliedCoupon.coupon.code})</span>
                     <span>-{formatPrice(appliedCoupon.discount)}</span>
+                  </div>
+                )}
+
+                {valentinesDiscount > 0 && (
+                  <div className="flex justify-between text-sm text-rose-600 dark:text-rose-400">
+                    <span className="flex items-center gap-1">
+                      <Heart className="h-3 w-3" />
+                      {valentinesPromoLabel} (2ª peça 50% OFF)
+                    </span>
+                    <span>-{formatPrice(valentinesDiscount)}</span>
+                  </div>
+                )}
+
+                {valentinesPromoActive && items.length >= 2 && valentinesDiscount === 0 && (
+                  <div className="flex items-start gap-2 rounded-md bg-rose-500/10 border border-rose-500/30 p-2 text-xs text-rose-700 dark:text-rose-400">
+                    <Heart className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                    <span>
+                      A promoção <strong>{valentinesPromoLabel}</strong> (2ª peça com 50% OFF) não pode ser combinada com cupom ou combo ativo.
+                    </span>
                   </div>
                 )}
 
