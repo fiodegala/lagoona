@@ -118,7 +118,9 @@ const CheckoutPage = () => {
   const grandTotal = total + shippingPrice;
 
   // PIX discount constants (must match MercadoPagoPayment)
-  const PIX_DISCOUNT_PERCENT = 5;
+  // Valentines promo: no PIX discount and máx 2x no cartão
+  const valentinesActive = valentinesDiscount > 0;
+  const PIX_DISCOUNT_PERCENT = valentinesActive ? 0 : 5;
   const pixDiscountAmount = Math.round(grandTotal * PIX_DISCOUNT_PERCENT) / 100;
   const pixGrandTotal = Math.round((grandTotal - pixDiscountAmount) * 100) / 100;
 
@@ -617,6 +619,8 @@ const CheckoutPage = () => {
                   onPaymentSuccess={handlePaymentSuccess}
                   onPaymentError={handlePaymentError}
                   onMethodChange={setSelectedPaymentMethod}
+                  maxInstallments={valentinesActive ? 2 : 6}
+                  disablePixDiscount={valentinesActive}
                 />
               )
             )}
@@ -657,7 +661,7 @@ const CheckoutPage = () => {
                 <Separator />
 
                 {(() => {
-                  const showPixDiscount = step !== 'payment' || selectedPaymentMethod === 'pix';
+                  const showPixDiscount = !valentinesActive && (step !== 'payment' || selectedPaymentMethod === 'pix');
                   const finalTotal = showPixDiscount ? pixGrandTotal : grandTotal;
                   return (
                     <>
