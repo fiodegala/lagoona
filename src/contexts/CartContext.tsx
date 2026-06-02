@@ -50,6 +50,8 @@ interface CartContextType {
   valentinesDiscount: number;
   valentinesPromoActive: boolean;
   valentinesPromoLabel: string;
+  valentinesPromoPercent: number;
+  maxCartUnitPrice: number;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -308,6 +310,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         valentinesDiscount,
         valentinesPromoActive,
         valentinesPromoLabel,
+        valentinesPromoPercent,
+        maxCartUnitPrice: items.reduce((max, i) => Math.max(max, Number(i.price) || 0), 0),
       }}
     >
       {children}
