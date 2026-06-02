@@ -215,13 +215,18 @@ const ProductsStep = ({
         )}
 
         <div className="px-3 sm:px-4 pt-3">
-          <ProductSearch onProductSelect={handleProductClick} isOnline={isOnline} />
+          <ProductSearch
+            onProductSelect={handleProductClick}
+            isOnline={isOnline}
+            allowOutOfStock={isExchange && addMode === 'return'}
+          />
         </div>
         <ProductGrid
           selectedCategoryId={selectedCategoryId}
           onCategoryChange={setSelectedCategoryId}
           onProductSelect={handleProductClick}
           isOnline={isOnline}
+          allowOutOfStock={isExchange && addMode === 'return'}
         />
 
         {isExchange && !canProceed && !isMobile && (
@@ -244,6 +249,7 @@ const ProductsStep = ({
         onOpenChange={(open) => !open && setVariationPickerProduct(null)}
         product={variationPickerProduct}
         onSelectVariation={handleVariationSelect}
+        allowOutOfStock={variationPickerIsReturn}
       />
     </div>
   );
