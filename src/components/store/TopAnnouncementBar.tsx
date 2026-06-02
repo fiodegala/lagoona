@@ -109,7 +109,7 @@ const TopAnnouncementBar = () => {
   const isPromo = (current as { isPromo?: boolean }).isPromo === true;
 
   return (
-    <div className={`text-xs sm:text-sm overflow-hidden ${isPromo ? 'bg-gradient-to-r from-rose-600 via-rose-500 to-pink-600 text-white' : 'bg-black text-white'}`}>
+    <div className={`text-xs sm:text-sm overflow-hidden ${valentinesActive || isPromo ? 'bg-gradient-to-r from-rose-600 via-rose-500 to-pink-600 text-white' : 'bg-black text-white'}`}>
       <div className="container mx-auto px-4 py-3.5 flex items-center justify-center min-h-[52px]">
         <div
           className={`flex items-center gap-2 transition-all duration-300 ${
