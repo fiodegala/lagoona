@@ -404,7 +404,7 @@ const HomePage = () => {
   return (
     <StoreLayout>
       {/* Hero Section */}
-      <section className="relative h-[500px] md:h-[600px] lg:h-[700px] overflow-hidden" {...heroSwipe}>
+      <section className="relative w-full aspect-[4/5] sm:aspect-[16/10] md:aspect-[16/9] lg:aspect-[21/9] bg-store-dark overflow-hidden" {...heroSwipe}>
         {isLoading ? (
           <div className="absolute inset-0 bg-store-dark flex items-center justify-center">
             <Loader2 className="h-10 w-10 animate-spin text-store-gold" />
@@ -421,7 +421,7 @@ const HomePage = () => {
                       muted
                       loop
                       playsInline
-                      className="absolute inset-0 w-full h-full object-cover"
+                      className="absolute inset-0 w-full h-full object-contain"
                     />
                   ) : (
                     <img
@@ -429,7 +429,7 @@ const HomePage = () => {
                       alt={banner.title || 'Banner'}
                       width={1920}
                       height={1080}
-                      className="absolute inset-0 w-full h-full object-cover"
+                      className="absolute inset-0 w-full h-full object-contain"
                       loading={index === 0 ? 'eager' : 'lazy'}
                       decoding={index === 0 ? 'sync' : 'async'}
                       // @ts-ignore - fetchpriority is a valid HTML attribute
