@@ -391,6 +391,38 @@ body {
   background-color: #be123c !important;
 }
 
+/* ===== Botões globais no tema Dia dos Namorados ===== */
+.valentines-theme button[class*="bg-store-gold"],
+.valentines-theme a[class*="bg-store-gold"],
+.valentines-theme button[class*="bg-primary"]:not([class*="bg-primary-foreground"]),
+.valentines-theme a[class*="bg-primary"]:not([class*="bg-primary-foreground"]) {
+  background-image: linear-gradient(135deg, #e11d48, #db2777, #ec4899) !important;
+  background-color: transparent !important;
+  color: #fff !important;
+  border-color: transparent !important;
+}
+
+.valentines-theme button[class*="border-store-gold"],
+.valentines-theme a[class*="border-store-gold"] {
+  border-color: #e11d48 !important;
+  color: #be123c !important;
+}
+.valentines-theme button[class*="text-store-gold"],
+.valentines-theme a[class*="text-store-gold"] {
+  color: #be123c !important;
+}
+
+.valentines-theme button[class*="hover:bg-store-gold"]:hover,
+.valentines-theme a[class*="hover:bg-store-gold"]:hover {
+  background-image: linear-gradient(135deg, #be123c, #db2777) !important;
+  color: #fff !important;
+}
+
+.valentines-theme button:focus-visible,
+.valentines-theme a:focus-visible {
+  outline-color: #e11d48 !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .valentines-heart { animation: none; opacity: 0 !important; }
   .valentines-theme .store-primary-cta { animation: none; }
