@@ -3,6 +3,11 @@ import { couponsService, Coupon, CouponValidationResult } from '@/services/coupo
 import { combosService, Combo } from '@/services/combos';
 import { trackAnalyticsEvent, trackCartRemoveEvent } from '@/hooks/useAnalyticsTracker';
 import { trackMetaAddToCart } from '@/lib/metaPixel';
+import {
+  calculateValentinesDiscount,
+  isValentinesPromoActive,
+  VALENTINES_PROMO,
+} from '@/lib/valentinesPromo';
 
 export interface CartItem {
   id: string;
@@ -45,6 +50,9 @@ interface CartContextType {
   appliedCombos: AppliedCombo[];
   comboDiscount: number;
   comboFreeShipping: boolean;
+  valentinesDiscount: number;
+  valentinesPromoActive: boolean;
+  valentinesPromoLabel: string;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
