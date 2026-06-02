@@ -439,7 +439,7 @@ const HomePage = () => {
     <StoreLayout>
       {/* Hero Section */}
       <section className="relative w-full aspect-[4/5] sm:aspect-[16/10] md:aspect-[16/9] lg:aspect-[21/9] bg-store-dark overflow-hidden" {...heroSwipe}>
-        {isLoading ? (
+        {bannersLoading ? (
           <div className="absolute inset-0 bg-store-dark flex items-center justify-center">
             <Loader2 className="h-10 w-10 animate-spin text-store-gold" />
           </div>
