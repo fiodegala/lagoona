@@ -174,15 +174,15 @@ async function createPayment(body: any, accessToken: string) {
       .select('value')
       .eq('key', 'valentines_promo')
       .maybeSingle();
-    const cfg: any = cfgRow?.value || {};
-    const now = new Date();
-    const active = !!cfg.enabled
-      && (!cfg.starts_at || now >= new Date(cfg.starts_at))
-      && (!cfg.ends_at || now <= new Date(cfg.ends_at));
-
-    if (active && token && Number(installments || 1) > 2) {
+    const cfg = (cfgRow?.value as any) || {};
+    const promoError = validateInstallmentsForPromo({
+      cfg,
+      isCard: !!token,
+      installments: Number(installments || 1),
+    });
+    if (promoError) {
       return new Response(
-        JSON.stringify({ error: 'Durante a promoção do Dia dos Namorados, o parcelamento máximo é 2x sem juros.' }),
+        JSON.stringify({ error: promoError }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
