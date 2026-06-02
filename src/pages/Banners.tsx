@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Pencil, Trash2, GripVertical, Eye, EyeOff, Loader2, Image as ImageIcon } from 'lucide-react';
+import { Plus, Pencil, Trash2, GripVertical, Eye, EyeOff, Loader2, Image as ImageIcon, Monitor, Smartphone, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
