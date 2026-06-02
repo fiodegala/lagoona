@@ -385,8 +385,8 @@ body {
   color: #e11d48 !important;
 }
 
-/* Coração de favoritos já é vermelho/dourado — mantém destaque */
-.valentines-theme .product-card button[class*="bg-store-gold"] {
+/* Coração de favoritos em vermelho quando ativo */
+.valentines-theme .product-card button[class*="bg-store-gold"]:not(.w-full) {
   background-image: none !important;
   background-color: #be123c !important;
 }
