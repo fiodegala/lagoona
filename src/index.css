@@ -278,3 +278,63 @@ body {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* ===== Tema Dia dos Namorados ===== */
+@keyframes valentinesFloat {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(-8deg) scale(0.9);
+    opacity: 0;
+  }
+  10% {
+    opacity: var(--heart-opacity, 0.6);
+  }
+  50% {
+    transform: translate3d(var(--drift, 40px), -55vh, 0) rotate(8deg) scale(1);
+  }
+  90% {
+    opacity: var(--heart-opacity, 0.6);
+  }
+  100% {
+    transform: translate3d(calc(var(--drift, 40px) * -1), -110vh, 0) rotate(-8deg) scale(0.85);
+    opacity: 0;
+  }
+}
+
+.valentines-heart {
+  animation-name: valentinesFloat;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  filter: drop-shadow(0 2px 6px rgba(244, 63, 94, 0.35));
+  will-change: transform, opacity;
+}
+
+@keyframes valentinesPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.45); }
+  50% { box-shadow: 0 0 0 14px rgba(244, 63, 94, 0); }
+}
+
+/* Realça botões primários da loja durante a promo */
+.valentines-theme .store-primary-cta,
+.valentines-theme [data-valentines-cta='true'] {
+  background-image: linear-gradient(135deg, #e11d48, #db2777, #ec4899) !important;
+  color: #fff !important;
+  border-color: transparent !important;
+  animation: valentinesPulse 2.4s ease-in-out infinite;
+}
+
+/* Faixa sutil rosé no topo do main */
+.valentines-theme main {
+  background-image:
+    radial-gradient(circle at 12% 8%, rgba(244, 63, 94, 0.06), transparent 40%),
+    radial-gradient(circle at 88% 0%, rgba(236, 72, 153, 0.05), transparent 45%);
+}
+
+/* Acentos em links e badges */
+.valentines-theme .valentines-accent {
+  color: #e11d48 !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .valentines-heart { animation: none; opacity: 0 !important; }
+  .valentines-theme .store-primary-cta { animation: none; }
+}
