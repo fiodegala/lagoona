@@ -81,7 +81,7 @@ const TopAnnouncementBar = () => {
     );
   }
 
-  const current = messages[index];
+  const current = messages[index % messages.length] ?? messages[0];
   const Icon = current.icon;
   const isPromo = (current as { isPromo?: boolean }).isPromo === true;
 
