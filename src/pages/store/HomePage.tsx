@@ -575,7 +575,7 @@ const HomePage = () => {
         aria-label="Benefícios da loja"
       >
         <div className="container mx-auto px-4 py-5">
-          <ul className={`grid ${valentinesActive ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-2 md:grid-cols-4'} gap-4 sm:gap-6`}>
+          <ul className={`grid ${valentinesActive ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-2 md:grid-cols-4'} gap-4 sm:gap-6 justify-items-center`}>
             {(valentinesActive
               ? [
                   { icon: Truck, title: 'Frete Grátis', desc: 'Acima de R$ 299,00' },
