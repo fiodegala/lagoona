@@ -51,6 +51,8 @@ const MercadoPagoPayment = ({
   onPaymentSuccess,
   onPaymentError,
   onMethodChange,
+  maxInstallments = 6,
+  disablePixDiscount = false,
 }: PaymentFormProps) => {
   const [activeTab, setActiveTab] = useState('pix');
   const [isProcessing, setIsProcessing] = useState(false);
