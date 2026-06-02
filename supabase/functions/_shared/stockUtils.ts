@@ -1,8 +1,11 @@
 /**
  * Shared stock utilities for edge functions.
- * Deducts from the store with the HIGHEST quantity first (dynamic, not hardcoded).
+ * Online/Site sales ALWAYS deduct from "Bernardo Sayão" store first; fallback
+ * to other physical stores sorted by quantity DESC if needed.
  * Restores to the store with the highest quantity that has a record.
  */
+
+const BERNARDO_SAYAO_STORE_ID = 'ad756bb1-e8ff-43a7-ac5c-c600ba7bd0e3';
 
 /**
  * Get physical stores sorted by stock quantity DESC for a given product/variation.
@@ -44,6 +47,13 @@ async function getStoresSortedByStock(
       physicalRows.push(row);
     }
   }
+
+  // Prioritize Bernardo Sayão: always try to deduct from it first for online/site orders.
+  physicalRows.sort((a, b) => {
+    if (a.store_id === BERNARDO_SAYAO_STORE_ID && b.store_id !== BERNARDO_SAYAO_STORE_ID) return -1;
+    if (b.store_id === BERNARDO_SAYAO_STORE_ID && a.store_id !== BERNARDO_SAYAO_STORE_ID) return 1;
+    return b.quantity - a.quantity;
+  });
 
   return physicalRows;
 }
