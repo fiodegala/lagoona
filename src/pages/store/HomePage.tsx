@@ -207,107 +207,139 @@ const HomePage = () => {
   const [currentHeroBanner, setCurrentHeroBanner] = useState(0);
   const [currentMidBanner, setCurrentMidBanner] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [bannersLoading, setBannersLoading] = useState(true);
   const [featuredProduct, setFeaturedProduct] = useState<Product | null>(null);
   const [bestSellerIds, setBestSellerIds] = useState<string[]>([]);
   const [wholesaleVideoUrl, setWholesaleVideoUrl] = useState('/assets/atacado-fdg.mp4');
   const [wholesaleAutoplay, setWholesaleAutoplay] = useState(true);
   const { active: valentinesActive } = useValentinesPromo();
 
+  // 1) Banners primeiro — independentes, renderizam imediatamente
   useEffect(() => {
-    const loadData = async () => {
+    let cancelled = false;
+    (async () => {
       try {
-        const [productsData, categoriesData, bannersData, promoData, midData, featuredConfig, wholesaleConfig] = await Promise.all([
-          productsService.getAll(),
-          categoriesService.getAll(),
+        const [heroData, promoData, midData] = await Promise.all([
           bannersService.getByType('hero').catch(() => []),
           bannersService.getByType('promo').catch(() => []),
           bannersService.getByType('mid').catch(() => []),
+        ]);
+        if (cancelled) return;
+        setHeroBanners(heroData.slice(0, 3));
+        setPromoBanners(promoData);
+        setMidBanners(midData);
+      } finally {
+        if (!cancelled) setBannersLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  // 2) Produtos + categorias + configs (caminho crítico mais leve)
+  useEffect(() => {
+    let cancelled = false;
+    const loadData = async () => {
+      try {
+        const [productsData, categoriesData, featuredConfig, wholesaleConfig] = await Promise.all([
+          productsService.getAll(),
+          categoriesService.getAll(),
           supabase.from('store_config').select('value').eq('key', 'featured_product').maybeSingle(),
           supabase.from('store_config').select('value').eq('key', 'wholesale_video').maybeSingle(),
         ]);
+        if (cancelled) return;
         const activeProducts = productsData.filter(p => p.is_active);
         const enrichedProducts = await enrichProductsWithStock(activeProducts);
-
-        // Sort by most viewed (analytics page_view/product_view events)
-        try {
-          const { data: viewCounts } = await supabase
-            .from('site_analytics_events')
-            .select('product_id')
-            .in('event_type', ['page_view', 'product_view'])
-            .not('product_id', 'is', null);
-
-          if (viewCounts && viewCounts.length > 0) {
-            const countMap = new Map<string, number>();
-            viewCounts.forEach((ev) => {
-              if (ev.product_id) {
-                countMap.set(ev.product_id, (countMap.get(ev.product_id) || 0) + 1);
-              }
-            });
-            enrichedProducts.sort((a, b) => (countMap.get(b.id) || 0) - (countMap.get(a.id) || 0));
-          }
-        } catch (e) {
-          console.error('Error loading product view counts:', e);
-        }
+        if (cancelled) return;
 
         setProducts(enrichedProducts);
         setCategories(categoriesData.filter(c => c.is_active));
-        setHeroBanners(bannersData.slice(0, 3));
-        setPromoBanners(promoData);
-        setMidBanners(midData);
 
-        // Best sellers: aggregate quantity from real orders (paid/shipped/delivered) + POS sales (last 90d)
-        try {
-          const since = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
-          const [{ data: ordersData }, { data: posData }] = await Promise.all([
-            supabase
-              .from('orders')
-              .select('items')
-              .gte('created_at', since)
-              .in('status', ['paid', 'processing', 'shipped', 'delivered', 'completed', 'concluido', 'enviado', 'pago']),
-            supabase
-              .from('pos_sales')
-              .select('items')
-              .gte('created_at', since)
-              .neq('status', 'cancelled'),
-          ]);
-          const qtyMap = new Map<string, number>();
-          const accumulate = (rows: { items: unknown }[] | null) => {
-            (rows || []).forEach((row) => {
-              const items = Array.isArray(row.items) ? (row.items as Array<{ product_id?: string; quantity?: number; is_gift?: boolean }>) : [];
-              items.forEach((it) => {
-                if (!it?.product_id || it.is_gift) return;
-                qtyMap.set(it.product_id, (qtyMap.get(it.product_id) || 0) + (Number(it.quantity) || 0));
-              });
-            });
-          };
-          accumulate(ordersData as never);
-          accumulate(posData as never);
-          const ranked = Array.from(qtyMap.entries())
-            .sort((a, b) => b[1] - a[1])
-            .map(([id]) => id);
-          setBestSellerIds(ranked);
-        } catch (e) {
-          console.error('Error computing best sellers:', e);
-        }
-
-        // Set featured product from config
         const featuredId = (featuredConfig.data?.value as { product_id?: string })?.product_id;
         if (featuredId && featuredId !== 'none') {
           const fp = enrichedProducts.find(p => p.id === featuredId);
           setFeaturedProduct(fp || null);
         }
-
-        // Set wholesale video from config
         const wvConfig = wholesaleConfig.data?.value as { url?: string; autoplay?: boolean } | undefined;
         if (wvConfig?.url) setWholesaleVideoUrl(wvConfig.url);
         if (typeof wvConfig?.autoplay === 'boolean') setWholesaleAutoplay(wvConfig.autoplay);
       } catch (error) {
         console.error('Error loading data:', error);
       } finally {
-        setIsLoading(false);
+        if (!cancelled) setIsLoading(false);
       }
     };
     loadData();
+    return () => { cancelled = true; };
+  }, []);
+
+  // 3) Background: reordenar por mais vistos (últimos 30d, limitado) — não bloqueia render
+  useEffect(() => {
+    if (products.length === 0) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+        const { data: viewCounts } = await supabase
+          .from('site_analytics_events')
+          .select('product_id')
+          .in('event_type', ['page_view', 'product_view'])
+          .not('product_id', 'is', null)
+          .gte('created_at', since)
+          .limit(1000);
+
+        if (cancelled || !viewCounts || viewCounts.length === 0) return;
+        const countMap = new Map<string, number>();
+        viewCounts.forEach((ev) => {
+          if (ev.product_id) countMap.set(ev.product_id, (countMap.get(ev.product_id) || 0) + 1);
+        });
+        setProducts(prev => [...prev].sort((a, b) => (countMap.get(b.id) || 0) - (countMap.get(a.id) || 0)));
+      } catch (e) {
+        console.error('Error loading product view counts:', e);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [products.length]);
+
+  // 4) Background: bestsellers — não bloqueia render
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const since = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
+        const [{ data: ordersData }, { data: posData }] = await Promise.all([
+          supabase
+            .from('orders')
+            .select('items')
+            .gte('created_at', since)
+            .in('status', ['paid', 'processing', 'shipped', 'delivered', 'completed', 'concluido', 'enviado', 'pago']),
+          supabase
+            .from('pos_sales')
+            .select('items')
+            .gte('created_at', since)
+            .neq('status', 'cancelled'),
+        ]);
+        if (cancelled) return;
+        const qtyMap = new Map<string, number>();
+        const accumulate = (rows: { items: unknown }[] | null) => {
+          (rows || []).forEach((row) => {
+            const items = Array.isArray(row.items) ? (row.items as Array<{ product_id?: string; quantity?: number; is_gift?: boolean }>) : [];
+            items.forEach((it) => {
+              if (!it?.product_id || it.is_gift) return;
+              qtyMap.set(it.product_id, (qtyMap.get(it.product_id) || 0) + (Number(it.quantity) || 0));
+            });
+          });
+        };
+        accumulate(ordersData as never);
+        accumulate(posData as never);
+        const ranked = Array.from(qtyMap.entries())
+          .sort((a, b) => b[1] - a[1])
+          .map(([id]) => id);
+        setBestSellerIds(ranked);
+      } catch (e) {
+        console.error('Error computing best sellers:', e);
+      }
+    })();
+    return () => { cancelled = true; };
   }, []);
 
   // Preload first hero image to improve LCP
