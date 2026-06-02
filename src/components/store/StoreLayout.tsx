@@ -3,6 +3,7 @@ import StoreHeader from './StoreHeader';
 import TopAnnouncementBar from './TopAnnouncementBar';
 import StoreFooter from './StoreFooter';
 import WhatsAppButton from './WhatsAppButton';
+import ValentinesTheme from './ValentinesTheme';
 import { categoriesService, Category } from '@/services/categories';
 import { useAnalyticsTracker } from '@/hooks/useAnalyticsTracker';
 
