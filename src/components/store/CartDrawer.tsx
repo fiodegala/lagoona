@@ -25,10 +25,28 @@ const CartDrawer = () => {
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative text-foreground/70 hover:text-foreground">
-          <ShoppingCart className="h-5 w-5" />
+        <Button
+          variant="ghost"
+          size="icon"
+          className={
+            valentinesPromoActive
+              ? 'relative text-rose-600 hover:text-rose-700 hover:bg-rose-500/10'
+              : 'relative text-foreground/70 hover:text-foreground'
+          }
+        >
+          {valentinesPromoActive ? (
+            <Heart className="h-5 w-5 fill-rose-500 text-rose-500" />
+          ) : (
+            <ShoppingCart className="h-5 w-5" />
+          )}
           {itemCount > 0 && (
-            <Badge className="absolute -top-1 -right-1 h-5 min-w-5 flex items-center justify-center p-0 text-xs bg-store-gold text-store-dark">
+            <Badge
+              className={
+                valentinesPromoActive
+                  ? 'absolute -top-1 -right-1 h-5 min-w-5 flex items-center justify-center p-0 text-xs bg-rose-600 text-white'
+                  : 'absolute -top-1 -right-1 h-5 min-w-5 flex items-center justify-center p-0 text-xs bg-store-gold text-store-dark'
+              }
+            >
               {itemCount > 99 ? '99+' : itemCount}
             </Badge>
           )}
@@ -184,8 +202,8 @@ const CartDrawer = () => {
                   <span>Total</span>
                   <span className="text-store-accent">{formatPrice(total)}</span>
                 </div>
-                {/* PIX 5% discount preview */}
-                {(() => {
+                {/* PIX 5% discount preview — não aplica durante Dia dos Namorados */}
+                {!valentinesPromoActive && (() => {
                   const pixDiscount = Math.round(total * 5) / 100;
                   const pixTotal = Math.round((total - pixDiscount) * 100) / 100;
                   return (
@@ -203,8 +221,18 @@ const CartDrawer = () => {
 
               <div className="grid gap-2">
                 <SheetClose asChild>
-                  <Button asChild className="w-full bg-store-primary text-store-accent hover:bg-store-primary/90 font-semibold">
-                    <Link to="/checkout">Finalizar Compra</Link>
+                  <Button
+                    asChild
+                    className={
+                      valentinesPromoActive
+                        ? 'w-full bg-gradient-to-r from-rose-600 via-rose-500 to-pink-600 text-white hover:opacity-90 font-semibold'
+                        : 'w-full bg-store-primary text-store-accent hover:bg-store-primary/90 font-semibold'
+                    }
+                  >
+                    <Link to="/checkout">
+                      {valentinesPromoActive && <Heart className="h-4 w-4 mr-1 fill-white" />}
+                      Finalizar Compra
+                    </Link>
                   </Button>
                 </SheetClose>
                 <SheetClose asChild>

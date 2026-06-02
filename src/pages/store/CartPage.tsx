@@ -347,7 +347,7 @@ const CartPage = () => {
                 </div>
 
                 {/* PIX 5% discount preview (não aplica durante Dia dos Namorados) */}
-                {valentinesDiscount === 0 && (() => {
+                {!valentinesPromoActive && (() => {
                   const pixDiscount = Math.round(total * 5) / 100;
                   const pixTotal = Math.round((total - pixDiscount) * 100) / 100;
                   return (
