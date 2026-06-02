@@ -332,7 +332,7 @@ const ProductCard = memo(forwardRef<HTMLAnchorElement, ProductCardProps>(({ prod
                 Pix -5%
               </Badge>
             )}
-            {product.price >= 299 && (
+            {product.price >= 499 && (
               <Badge variant="outline" className="text-store-gold border-store-gold/40 text-xs">
                 Frete Grátis
               </Badge>

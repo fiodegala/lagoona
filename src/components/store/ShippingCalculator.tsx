@@ -19,7 +19,7 @@ interface ShippingCalculatorProps {
   onShippingCalculated?: (result: ShippingResult | null) => void;
 }
 
-const FREE_SHIPPING_MIN = 299;
+const FREE_SHIPPING_MIN = 499;
 
 const ShippingCalculator = ({
   productWeight = 0.3,

@@ -107,7 +107,7 @@ const NewsletterSection = () => {
     <section className="py-14 md:py-20 bg-store-accent">
             <SEO
               title="Fio de Gala — Moda Masculina Premium"
-              description="Camisas, calças, bermudas e acessórios premium para o homem urbano. Frete grátis acima de R$ 299."
+              description="Camisas, calças, bermudas e acessórios premium para o homem urbano. Frete grátis acima de R$ 499."
               canonicalPath="/"
               jsonLd={[
                 {
@@ -578,12 +578,12 @@ const HomePage = () => {
           <ul className={`grid ${valentinesActive ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-2 md:grid-cols-4'} gap-4 sm:gap-6 justify-items-center`}>
             {(valentinesActive
               ? [
-                  { icon: Truck, title: 'Frete Grátis', desc: 'Acima de R$ 299,00' },
+                  { icon: Truck, title: 'Frete Grátis', desc: 'Acima de R$ 499,00' },
                   { icon: CreditCard, title: 'Oferta dia dos namorados', desc: 'Em até 2x sem juros' },
                   { icon: RefreshCw, title: 'Troca Grátis', desc: 'Em até 7 dias' },
                 ]
               : [
-                  { icon: Truck, title: 'Frete Grátis', desc: 'Acima de R$ 299,00' },
+                  { icon: Truck, title: 'Frete Grátis', desc: 'Acima de R$ 499,00' },
                   { icon: Sparkles, title: 'PIX -5%', desc: 'Desconto à vista' },
                   { icon: CreditCard, title: 'Até 6x sem juros', desc: 'No cartão de crédito' },
                   { icon: RefreshCw, title: 'Troca Grátis', desc: 'Em até 7 dias' },

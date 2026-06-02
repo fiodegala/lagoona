@@ -100,7 +100,7 @@ const CartPage = () => {
     );
   }
 
-  const FREE_SHIPPING_THRESHOLD = 299;
+  const FREE_SHIPPING_THRESHOLD = 499;
   const remainingForFreeShipping = FREE_SHIPPING_THRESHOLD - subtotal;
   const freeShippingProgress = Math.min(100, (subtotal / FREE_SHIPPING_THRESHOLD) * 100);
 

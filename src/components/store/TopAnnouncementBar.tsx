@@ -10,7 +10,7 @@ const baseMessages = [
     text: (
       <>
         <strong className="font-semibold">FRETE GRÁTIS</strong> em compras acima de{' '}
-        <strong className="font-semibold">R$ 299,00</strong>
+        <strong className="font-semibold">R$ 499,00</strong>
       </>
     ),
   },
@@ -59,8 +59,8 @@ const TopAnnouncementBar = () => {
         icon: Truck,
         text: (
           <>
-            <strong className="font-semibold">FRETE GRÁTIS</strong> em compras acima de{' '}
-            <strong className="font-semibold">R$ 299,00</strong>
+        <strong className="font-semibold">FRETE GRÁTIS</strong> em compras acima de{' '}
+        <strong className="font-semibold">R$ 499,00</strong>
           </>
         ),
       },
