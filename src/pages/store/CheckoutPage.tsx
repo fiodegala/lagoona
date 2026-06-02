@@ -118,7 +118,9 @@ const CheckoutPage = () => {
   const grandTotal = total + shippingPrice;
 
   // PIX discount constants (must match MercadoPagoPayment)
-  const PIX_DISCOUNT_PERCENT = 5;
+  // Valentines promo: no PIX discount and máx 2x no cartão
+  const valentinesActive = valentinesDiscount > 0;
+  const PIX_DISCOUNT_PERCENT = valentinesActive ? 0 : 5;
   const pixDiscountAmount = Math.round(grandTotal * PIX_DISCOUNT_PERCENT) / 100;
   const pixGrandTotal = Math.round((grandTotal - pixDiscountAmount) * 100) / 100;
 
