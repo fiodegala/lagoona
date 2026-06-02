@@ -57,3 +57,28 @@ export function calculateValentinesDiscount(
   }
   return Math.round(discount * 100) / 100;
 }
+
+export interface ValentinesCartLineWithId extends ValentinesCartLine {
+  id: string;
+}
+
+/**
+ * Retorna um mapa { itemId: quantidadeComDesconto } indicando quantas
+ * unidades de cada item recebem o desconto da promoção.
+ */
+export function getValentinesDiscountedUnits(
+  items: ValentinesCartLineWithId[]
+): Record<string, number> {
+  const units: { id: string; price: number }[] = [];
+  for (const item of items) {
+    const qty = Math.max(0, Math.floor(item.quantity || 0));
+    for (let i = 0; i < qty; i++) units.push({ id: item.id, price: Number(item.price) || 0 });
+  }
+  const result: Record<string, number> = {};
+  if (units.length < 2) return result;
+  units.sort((a, b) => b.price - a.price);
+  for (let i = 1; i < units.length; i += 2) {
+    result[units[i].id] = (result[units[i].id] || 0) + 1;
+  }
+  return result;
+}
