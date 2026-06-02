@@ -409,6 +409,8 @@ const Banners = () => {
                   onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_active: checked }))}
                 />
               </div>
+
+              <BannerPreview data={formData} />
             </div>
 
             <DialogFooter>
