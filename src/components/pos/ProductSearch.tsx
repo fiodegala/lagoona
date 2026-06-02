@@ -287,10 +287,10 @@ const ProductSearch = ({ onProductSelect, isOnline, allowOutOfStock = false }: P
                   key={product.id}
                   className={cn(
                     'w-full px-4 py-3 flex items-center gap-4 hover:bg-accent text-left',
-                    display.stock <= 0 && 'opacity-50'
+                    display.stock <= 0 && !allowOutOfStock && 'opacity-50'
                   )}
                   onClick={() => handleProductClick(product)}
-                  disabled={display.stock <= 0}
+                  disabled={display.stock <= 0 && !allowOutOfStock}
                 >
                   {display.image ? (
                     <img
