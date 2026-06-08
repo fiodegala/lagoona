@@ -99,6 +99,7 @@ interface RawPOSSale {
   customer_name: string | null;
   customer_id: string | null;
   user_id: string;
+  seller_id: string;
   total: number;
   payment_method: string;
   payment_details: Record<string, unknown> | null;
