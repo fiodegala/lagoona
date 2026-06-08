@@ -290,6 +290,7 @@ const Dashboard = () => {
         customer_name: sale.customer_name,
         customer_id: sale.customer_id,
         user_id: sale.user_id,
+        seller_id: (sale as any).seller_id || sale.user_id,
         total: Number(sale.total),
         payment_method: sale.payment_method,
         payment_details: sale.payment_details as Record<string, unknown> | null,
