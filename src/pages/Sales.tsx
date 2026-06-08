@@ -646,17 +646,28 @@ const Sales = () => {
                           </div>
                         </TableCell>
                         <TableCell>
-                          {isCancelled ? (
-                            <Badge variant="destructive" className="text-xs">Cancelada</Badge>
-                          ) : (sale as any).sale_type === 'troca' ? (
-                            <Badge variant="secondary" className="text-xs bg-amber-500/20 text-amber-700 border-amber-500/30">Troca</Badge>
-                          ) : (sale as any).sale_type === 'brinde' ? (
-                            <Badge variant="secondary" className="text-xs bg-purple-500/20 text-purple-700 border-purple-500/30">Brinde</Badge>
-                          ) : (sale as any).sale_type === 'colaborador' ? (
-                            <Badge variant="secondary" className="text-xs bg-blue-500/20 text-blue-700 border-blue-500/30">Colaborador</Badge>
-                          ) : (
-                            <Badge variant="default" className="text-xs bg-green-600">Concluída</Badge>
-                          )}
+                          <div className="flex flex-col gap-1">
+                            {isCancelled ? (
+                              <Badge variant="destructive" className="text-xs">Cancelada</Badge>
+                            ) : (sale as any).sale_type === 'troca' ? (
+                              <Badge variant="secondary" className="text-xs bg-amber-500/20 text-amber-700 border-amber-500/30">Troca</Badge>
+                            ) : (sale as any).sale_type === 'brinde' ? (
+                              <Badge variant="secondary" className="text-xs bg-purple-500/20 text-purple-700 border-purple-500/30">Brinde</Badge>
+                            ) : (sale as any).sale_type === 'colaborador' ? (
+                              <Badge variant="secondary" className="text-xs bg-blue-500/20 text-blue-700 border-blue-500/30">Colaborador</Badge>
+                            ) : (
+                              <Badge variant="default" className="text-xs bg-green-600">Concluída</Badge>
+                            )}
+                            {isOnlineSale(sale) ? (
+                              <Badge variant="outline" className="text-[10px] gap-1 border-sky-500/40 text-sky-700 bg-sky-500/10">
+                                <Globe className="h-2.5 w-2.5" /> Online
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="text-[10px] border-emerald-500/40 text-emerald-700 bg-emerald-500/10">
+                                Presencial
+                              </Badge>
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell>
                           <Badge variant="secondary" className="text-xs">
