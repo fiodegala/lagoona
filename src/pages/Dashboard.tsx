@@ -396,7 +396,7 @@ const Dashboard = () => {
   const filteredPOSSales = useMemo(() => {
     let activeSales = rawPOSSales.filter(s => s.status !== 'cancelled' && s.sale_type !== 'brinde');
     if (selectedSellerId !== 'all') {
-      activeSales = activeSales.filter(s => s.user_id === selectedSellerId);
+      activeSales = activeSales.filter(s => s.seller_id === selectedSellerId || s.user_id === selectedSellerId);
     }
     if (periodStartDate) {
       activeSales = activeSales.filter(s => {
