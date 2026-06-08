@@ -89,6 +89,7 @@ export interface CreateSaleData {
   local_id: string;
   session_id?: string;
   store_id?: string;
+  seller_id?: string;
   customer_id?: string;
   customer_name?: string;
   customer_document?: string;
@@ -339,6 +340,7 @@ export const posService = {
       session_id: saleData.session_id || null,
       store_id: saleData.store_id || null,
       user_id: user.id,
+      seller_id: saleData.seller_id || user.id,
       customer_id: saleData.customer_id || null,
       customer_name: saleData.customer_name || null,
       customer_document: saleData.customer_document || null,
