@@ -443,9 +443,9 @@ const Sales = () => {
         .lte('created_at', dateRange.end.toISOString())
         .order('created_at', { ascending: false });
 
-      // Admin: vê tudo. Manager: vê a loja inteira. Vendedor: vê apenas as próprias vendas.
+      // Admin: vê tudo. Manager: vê a loja inteira. Vendedor: vê vendas registradas por ele OU atribuídas a ele.
       if (!isAdmin && !isManager && user?.id) {
-        query = query.eq('user_id', user.id);
+        query = query.or(`user_id.eq.${user.id},seller_id.eq.${user.id}`);
       } else if (!isAdmin && userStoreId) {
         query = query.eq('store_id', userStoreId);
       }
@@ -462,7 +462,7 @@ const Sales = () => {
       s.customer_document?.toLowerCase().includes(search.toLowerCase()) ||
       s.id.toLowerCase().includes(search.toLowerCase());
 
-    const matchesSeller = sellerFilter === 'all' || s.user_id === sellerFilter;
+    const matchesSeller = sellerFilter === 'all' || s.user_id === sellerFilter || (s as any).seller_id === sellerFilter;
     if (!matchesSearch || !matchesSeller) return acc;
 
     // Lagoona store: filter by item flag, recompute total
