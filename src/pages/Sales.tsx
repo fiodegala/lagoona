@@ -101,13 +101,24 @@ const Sales = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('stores')
-        .select('id, name')
+        .select('id, name, type')
         .order('name');
       if (error) throw error;
       return data;
     },
     enabled: isAdmin,
   });
+
+  const storeTypeById = useMemo(() => {
+    const m: Record<string, string> = {};
+    (stores || []).forEach((s: any) => { m[s.id] = s.type; });
+    return m;
+  }, [stores]);
+
+  const isOnlineSale = (sale: any) => {
+    const t = storeTypeById[sale.store_id];
+    return t === 'online' || t === 'website';
+  };
 
   // Fetch sellers (profiles + roles) for admin filter
   const { data: sellers = [] } = useQuery({
