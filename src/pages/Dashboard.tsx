@@ -846,7 +846,7 @@ const Dashboard = () => {
   // (para "Todas as lojas" soma tudo; para "Online" soma PDV Online + orders Site/TikTok)
   const individualStats = useMemo(() => {
     if (!user) return { mySales: 0, myRevenue: 0, myTicket: 0, storeSales: 0, storeRevenue: 0, storeTicket: 0 };
-    const mySales = filteredPOSSales.filter(s => s.user_id === user.id);
+    const mySales = filteredPOSSales.filter(s => s.seller_id === user.id || s.user_id === user.id);
     const myRevenue = mySales.reduce((sum, s) => sum + s.total, 0);
 
     const completedOrders = filteredOrders.filter(o => ['confirmed', 'completed', 'delivered', 'processing', 'shipped'].includes(o.status));
