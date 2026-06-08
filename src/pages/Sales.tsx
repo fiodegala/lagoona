@@ -101,13 +101,24 @@ const Sales = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('stores')
-        .select('id, name')
+        .select('id, name, type')
         .order('name');
       if (error) throw error;
       return data;
     },
     enabled: isAdmin,
   });
+
+  const storeTypeById = useMemo(() => {
+    const m: Record<string, string> = {};
+    (stores || []).forEach((s: any) => { m[s.id] = s.type; });
+    return m;
+  }, [stores]);
+
+  const isOnlineSale = (sale: any) => {
+    const t = storeTypeById[sale.store_id];
+    return t === 'online' || t === 'website';
+  };
 
   // Fetch sellers (profiles + roles) for admin filter
   const { data: sellers = [] } = useQuery({
@@ -432,9 +443,9 @@ const Sales = () => {
         .lte('created_at', dateRange.end.toISOString())
         .order('created_at', { ascending: false });
 
-      // Admin: vê tudo. Manager: vê a loja inteira. Vendedor: vê apenas as próprias vendas.
+      // Admin: vê tudo. Manager: vê a loja inteira. Vendedor: vê vendas registradas por ele OU atribuídas a ele.
       if (!isAdmin && !isManager && user?.id) {
-        query = query.eq('user_id', user.id);
+        query = query.or(`user_id.eq.${user.id},seller_id.eq.${user.id}`);
       } else if (!isAdmin && userStoreId) {
         query = query.eq('store_id', userStoreId);
       }
@@ -451,7 +462,7 @@ const Sales = () => {
       s.customer_document?.toLowerCase().includes(search.toLowerCase()) ||
       s.id.toLowerCase().includes(search.toLowerCase());
 
-    const matchesSeller = sellerFilter === 'all' || s.user_id === sellerFilter;
+    const matchesSeller = sellerFilter === 'all' || s.user_id === sellerFilter || (s as any).seller_id === sellerFilter;
     if (!matchesSearch || !matchesSeller) return acc;
 
     // Lagoona store: filter by item flag, recompute total
@@ -635,17 +646,28 @@ const Sales = () => {
                           </div>
                         </TableCell>
                         <TableCell>
-                          {isCancelled ? (
-                            <Badge variant="destructive" className="text-xs">Cancelada</Badge>
-                          ) : (sale as any).sale_type === 'troca' ? (
-                            <Badge variant="secondary" className="text-xs bg-amber-500/20 text-amber-700 border-amber-500/30">Troca</Badge>
-                          ) : (sale as any).sale_type === 'brinde' ? (
-                            <Badge variant="secondary" className="text-xs bg-purple-500/20 text-purple-700 border-purple-500/30">Brinde</Badge>
-                          ) : (sale as any).sale_type === 'colaborador' ? (
-                            <Badge variant="secondary" className="text-xs bg-blue-500/20 text-blue-700 border-blue-500/30">Colaborador</Badge>
-                          ) : (
-                            <Badge variant="default" className="text-xs bg-green-600">Concluída</Badge>
-                          )}
+                          <div className="flex flex-col gap-1">
+                            {isCancelled ? (
+                              <Badge variant="destructive" className="text-xs">Cancelada</Badge>
+                            ) : (sale as any).sale_type === 'troca' ? (
+                              <Badge variant="secondary" className="text-xs bg-amber-500/20 text-amber-700 border-amber-500/30">Troca</Badge>
+                            ) : (sale as any).sale_type === 'brinde' ? (
+                              <Badge variant="secondary" className="text-xs bg-purple-500/20 text-purple-700 border-purple-500/30">Brinde</Badge>
+                            ) : (sale as any).sale_type === 'colaborador' ? (
+                              <Badge variant="secondary" className="text-xs bg-blue-500/20 text-blue-700 border-blue-500/30">Colaborador</Badge>
+                            ) : (
+                              <Badge variant="default" className="text-xs bg-green-600">Concluída</Badge>
+                            )}
+                            {isOnlineSale(sale) ? (
+                              <Badge variant="outline" className="text-[10px] gap-1 border-sky-500/40 text-sky-700 bg-sky-500/10">
+                                <Globe className="h-2.5 w-2.5" /> Online
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="text-[10px] border-emerald-500/40 text-emerald-700 bg-emerald-500/10">
+                                Presencial
+                              </Badge>
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell>
                           <Badge variant="secondary" className="text-xs">

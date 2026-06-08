@@ -729,6 +729,7 @@ const POSPage = () => {
       local_id: offlineService.generateLocalId(),
       session_id: session?.id,
       store_id: resolvedStoreId,
+      seller_id: selectedSeller?.user_id,
       customer_id: isColaboradorSale ? undefined : selectedCustomer?.id,
       customer_name: selectedCustomer?.name,
       customer_document: selectedCustomer?.document || undefined,

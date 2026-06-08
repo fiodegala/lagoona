@@ -1708,6 +1708,7 @@ export type Database = {
           payment_details: Json | null
           payment_method: string
           sale_type: string | null
+          seller_id: string | null
           session_id: string | null
           status: string
           store_id: string | null
@@ -1740,6 +1741,7 @@ export type Database = {
           payment_details?: Json | null
           payment_method: string
           sale_type?: string | null
+          seller_id?: string | null
           session_id?: string | null
           status?: string
           store_id?: string | null
@@ -1772,6 +1774,7 @@ export type Database = {
           payment_details?: Json | null
           payment_method?: string
           sale_type?: string | null
+          seller_id?: string | null
           session_id?: string | null
           status?: string
           store_id?: string | null

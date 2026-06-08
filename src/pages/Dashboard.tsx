@@ -99,6 +99,7 @@ interface RawPOSSale {
   customer_name: string | null;
   customer_id: string | null;
   user_id: string;
+  seller_id: string;
   total: number;
   payment_method: string;
   payment_details: Record<string, unknown> | null;
@@ -290,6 +291,7 @@ const Dashboard = () => {
         customer_name: sale.customer_name,
         customer_id: sale.customer_id,
         user_id: sale.user_id,
+        seller_id: (sale as any).seller_id || sale.user_id,
         total: Number(sale.total),
         payment_method: sale.payment_method,
         payment_details: sale.payment_details as Record<string, unknown> | null,
@@ -394,7 +396,7 @@ const Dashboard = () => {
   const filteredPOSSales = useMemo(() => {
     let activeSales = rawPOSSales.filter(s => s.status !== 'cancelled' && s.sale_type !== 'brinde');
     if (selectedSellerId !== 'all') {
-      activeSales = activeSales.filter(s => s.user_id === selectedSellerId);
+      activeSales = activeSales.filter(s => s.seller_id === selectedSellerId || s.user_id === selectedSellerId);
     }
     if (periodStartDate) {
       activeSales = activeSales.filter(s => {
@@ -844,7 +846,7 @@ const Dashboard = () => {
   // (para "Todas as lojas" soma tudo; para "Online" soma PDV Online + orders Site/TikTok)
   const individualStats = useMemo(() => {
     if (!user) return { mySales: 0, myRevenue: 0, myTicket: 0, storeSales: 0, storeRevenue: 0, storeTicket: 0 };
-    const mySales = filteredPOSSales.filter(s => s.user_id === user.id);
+    const mySales = filteredPOSSales.filter(s => s.seller_id === user.id || s.user_id === user.id);
     const myRevenue = mySales.reduce((sum, s) => sum + s.total, 0);
 
     const completedOrders = filteredOrders.filter(o => ['confirmed', 'completed', 'delivered', 'processing', 'shipped'].includes(o.status));
