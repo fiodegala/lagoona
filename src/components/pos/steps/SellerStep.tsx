@@ -19,7 +19,7 @@ interface SellerStepProps {
 }
 
 const SellerStep = ({ selectedSeller, onSelect, onNext, onBack }: SellerStepProps) => {
-  const { userStoreId } = useAuth();
+  const { userStoreId, isAdmin } = useAuth();
   const [sellers, setSellers] = useState<Seller[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -31,10 +31,10 @@ const SellerStep = ({ selectedSeller, onSelect, onNext, onBack }: SellerStepProp
           .from('user_roles')
           .select('user_id, role, store_id');
 
-        // Mostra todos os vendedores/operadores, independente da loja,
-        // para que admins/managers possam atribuir vendas a qualquer pessoa
-        // (ex.: vendedora da loja Online sendo atendida por operador de loja física).
-        const rolesData = allRolesData || [];
+        const rolesData = (allRolesData || []).filter((role) => {
+          if (isAdmin) return true;
+          return !!userStoreId && role.store_id === userStoreId;
+        });
 
 
         if (rolesData && rolesData.length > 0) {
@@ -65,7 +65,7 @@ const SellerStep = ({ selectedSeller, onSelect, onNext, onBack }: SellerStepProp
     };
 
     fetchSellers();
-  }, [userStoreId]);
+  }, [userStoreId, isAdmin]);
 
   const getRoleLabel = (role: string) => {
     const labels: Record<string, string> = {
