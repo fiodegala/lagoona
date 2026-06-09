@@ -377,18 +377,21 @@ const CheckoutPage = () => {
   const handlePaymentSuccess = async (paymentData: any) => {
     console.log('Payment success:', paymentData.status, paymentData.id);
 
-    // Mark abandoned cart as recovered only after payment is confirmed
-    const sessionId = getSessionId();
-    if (sessionId) {
-      try {
-        await supabase.functions.invoke('abandoned-cart', {
-          body: { action: 'recover', session_id: sessionId },
-        });
-      } catch (recoverErr) {
-        console.error('Error recovering abandoned cart:', recoverErr);
+    // Mark abandoned cart as recovered ONLY when payment is actually approved
+    // (PIX/boleto initially return 'pending' and may never be paid)
+    if (paymentData?.status === 'approved') {
+      const sessionId = getSessionId();
+      if (sessionId) {
+        try {
+          await supabase.functions.invoke('abandoned-cart', {
+            body: { action: 'recover', session_id: sessionId },
+          });
+        } catch (recoverErr) {
+          console.error('Error recovering abandoned cart:', recoverErr);
+        }
       }
+      localStorage.removeItem(ABANDONED_CART_SESSION_KEY);
     }
-    localStorage.removeItem(ABANDONED_CART_SESSION_KEY);
 
     // Coupon usage is now recorded server-side by the payment webhook
     // when the payment is confirmed (idempotent via metadata.coupon_id)
