@@ -31,12 +31,11 @@ const SellerStep = ({ selectedSeller, onSelect, onNext, onBack }: SellerStepProp
           .from('user_roles')
           .select('user_id, role, store_id');
 
-        const rolesData = (allRolesData || []).filter(r => {
-          if (r.role === 'admin') return true;
-          if (userStoreId && r.store_id === userStoreId) return true;
-          if (!userStoreId) return true;
-          return false;
-        });
+        // Mostra todos os vendedores/operadores, independente da loja,
+        // para que admins/managers possam atribuir vendas a qualquer pessoa
+        // (ex.: vendedora da loja Online sendo atendida por operador de loja física).
+        const rolesData = allRolesData || [];
+
 
         if (rolesData && rolesData.length > 0) {
           const userIds = rolesData.map(r => r.user_id);
