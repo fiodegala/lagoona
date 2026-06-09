@@ -249,7 +249,9 @@ const Dashboard = () => {
       } else if (isLagoonaStoreSelected) {
         // Fetch all POS sales - will filter client-side by is_lagoona items
       } else if (storeFilter) {
-        posSalesQuery = posSalesQuery.eq('store_id', storeFilter);
+        posSalesQuery = !isAdmin && user?.id
+          ? posSalesQuery.or(`store_id.eq.${storeFilter},seller_id.eq.${user.id},user_id.eq.${user.id}`)
+          : posSalesQuery.eq('store_id', storeFilter);
       }
 
       const [
