@@ -109,16 +109,7 @@ const Sales = () => {
     enabled: isAdmin,
   });
 
-  const storeTypeById = useMemo(() => {
-    const m: Record<string, string> = {};
-    (stores || []).forEach((s: any) => { m[s.id] = s.type; });
-    return m;
-  }, [stores]);
-
-  const isOnlineSale = (sale: any) => {
-    const t = storeTypeById[sale.store_id];
-    return t === 'online' || t === 'website';
-  };
+  const getSaleOrigin = (sale: any) => sale?.payment_details?.sale_origin as 'online' | 'presencial' | undefined;
 
   // Fetch sellers (profiles + roles) for admin filter
   const { data: sellers = [] } = useQuery({
@@ -658,15 +649,15 @@ const Sales = () => {
                             ) : (
                               <Badge variant="default" className="text-xs bg-green-600">Concluída</Badge>
                             )}
-                            {isOnlineSale(sale) ? (
+                            {getSaleOrigin(sale) === 'online' ? (
                               <Badge variant="outline" className="text-[10px] gap-1 border-sky-500/40 text-sky-700 bg-sky-500/10">
                                 <Globe className="h-2.5 w-2.5" /> Online
                               </Badge>
-                            ) : (
+                            ) : getSaleOrigin(sale) === 'presencial' ? (
                               <Badge variant="outline" className="text-[10px] border-emerald-500/40 text-emerald-700 bg-emerald-500/10">
                                 Presencial
                               </Badge>
-                            )}
+                            ) : null}
                           </div>
                         </TableCell>
                         <TableCell>
