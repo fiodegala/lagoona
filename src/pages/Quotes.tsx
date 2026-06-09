@@ -210,10 +210,16 @@ const Quotes = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Não autenticado');
 
+      const sellerName = quote.notes?.match(/Vendedor:\s*([^|]+)/i)?.[1]?.trim();
+      const { data: sellerProfile } = sellerName
+        ? await supabase.from('profiles').select('user_id').ilike('full_name', sellerName).maybeSingle()
+        : { data: null } as { data: null };
+
       // Create POS sale from quote data
       const { data: sale, error: saleError } = await supabase.from('pos_sales').insert({
         local_id: quote.local_id || crypto.randomUUID(),
         user_id: user.id,
+        seller_id: sellerProfile?.user_id || user.id,
         customer_name: quote.customer_name,
         customer_document: quote.customer_document,
         customer_id: (quote as any).customer_id || null,

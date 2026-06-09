@@ -32,6 +32,7 @@ import {
 import { cn } from '@/lib/utils';
 
 export type SaleChannel = 'site' | 'instagram' | 'indicacao' | 'grupo_vip' | 'whatsapp' | 'loja_bs' | 'loja_hm44' | 'tiktok';
+type SaleOrigin = 'online' | 'presencial';
 
 const allChannelOptions: { value: SaleChannel; label: string; icon: React.ReactNode; adminOnly?: boolean }[] = [
   { value: 'site', label: 'Site', icon: <Globe className="h-4 w-4" /> },
@@ -93,6 +94,7 @@ const PaymentPanel = ({
 }: PaymentPanelProps) => {
   const channelOptions = allChannelOptions.filter(ch => !ch.adminOnly || isAdmin);
   const [selectedChannel, setSelectedChannel] = useState<SaleChannel | null>(null);
+  const [saleOrigin, setSaleOrigin] = useState<SaleOrigin | null>(null);
   const [selectedMethod, setSelectedMethod] = useState<'cash' | 'card' | 'pix' | 'mixed' | 'boleto' | 'cheque' | null>(null);
   const [cashReceived, setCashReceived] = useState('');
   const [cardType, setCardType] = useState<'credit' | 'debit'>('credit');
@@ -159,9 +161,9 @@ const PaymentPanel = ({
   };
 
   const handlePayment = () => {
-    if (!selectedMethod || !selectedChannel) return;
+    if (!selectedMethod || !selectedChannel || !saleOrigin) return;
 
-    const channelInfo = { channel: selectedChannel };
+    const channelInfo = { channel: selectedChannel, sale_origin: saleOrigin };
 
     if (selectedMethod === 'cash') {
       onPayment('cash', parseCurrency(cashReceived), channelInfo);
@@ -227,7 +229,7 @@ const PaymentPanel = ({
   };
 
   const canPay = () => {
-    if (disabled || isProcessing || !selectedMethod || !selectedChannel) return false;
+    if (disabled || isProcessing || !selectedMethod || !selectedChannel || !saleOrigin) return false;
     
     if (selectedMethod === 'cash') {
       return parseCurrency(cashReceived) >= total;
@@ -274,6 +276,32 @@ const PaymentPanel = ({
               {ch.label}
             </Button>
           ))}
+        </div>
+      </div>
+
+      <Separator />
+
+      <div>
+        <h3 className="font-semibold mb-3">Etiqueta da Venda</h3>
+        <div className="grid grid-cols-2 gap-2">
+          <Button
+            variant={saleOrigin === 'presencial' ? 'default' : 'outline'}
+            className="h-12 gap-2"
+            onClick={() => setSaleOrigin('presencial')}
+            disabled={disabled}
+          >
+            <Store className="h-4 w-4" />
+            Presencial
+          </Button>
+          <Button
+            variant={saleOrigin === 'online' ? 'default' : 'outline'}
+            className="h-12 gap-2"
+            onClick={() => setSaleOrigin('online')}
+            disabled={disabled}
+          >
+            <Globe className="h-4 w-4" />
+            Online
+          </Button>
         </div>
       </div>
 
