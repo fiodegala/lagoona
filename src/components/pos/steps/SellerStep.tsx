@@ -69,7 +69,7 @@ const SellerStep = ({ selectedSeller, onSelect, onNext, onBack, posStoreId }: Se
     };
 
     fetchSellers();
-  }, [userStoreId, isAdmin]);
+  }, [effectiveStoreId]);
 
   const getRoleLabel = (role: string) => {
     const labels: Record<string, string> = {
