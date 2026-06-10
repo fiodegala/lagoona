@@ -16,12 +16,15 @@ interface SellerStepProps {
   onSelect: (seller: Seller) => void;
   onNext: () => void;
   onBack: () => void;
+  posStoreId?: string | null;
 }
 
-const SellerStep = ({ selectedSeller, onSelect, onNext, onBack }: SellerStepProps) => {
+const SellerStep = ({ selectedSeller, onSelect, onNext, onBack, posStoreId }: SellerStepProps) => {
   const { userStoreId, isAdmin } = useAuth();
   const [sellers, setSellers] = useState<Seller[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  const effectiveStoreId = posStoreId ?? userStoreId;
 
   useEffect(() => {
     const fetchSellers = async () => {
@@ -32,9 +35,10 @@ const SellerStep = ({ selectedSeller, onSelect, onNext, onBack }: SellerStepProp
           .select('user_id, role, store_id');
 
         const rolesData = (allRolesData || []).filter((role) => {
-          if (isAdmin) return true;
-          return !!userStoreId && role.store_id === userStoreId;
+          return !!effectiveStoreId && role.store_id === effectiveStoreId;
         });
+
+
 
 
         if (rolesData && rolesData.length > 0) {
@@ -65,7 +69,7 @@ const SellerStep = ({ selectedSeller, onSelect, onNext, onBack }: SellerStepProp
     };
 
     fetchSellers();
-  }, [userStoreId, isAdmin]);
+  }, [effectiveStoreId]);
 
   const getRoleLabel = (role: string) => {
     const labels: Record<string, string> = {

@@ -1019,6 +1019,7 @@ const POSPage = () => {
               onSelect={setSelectedSeller}
               onNext={() => setCurrentStep('customer')}
               onBack={() => setCurrentStep('sale-type')}
+              posStoreId={effectiveStoreId}
             />
           )}
 
