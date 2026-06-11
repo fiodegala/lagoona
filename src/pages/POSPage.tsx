@@ -298,8 +298,11 @@ const POSPage = () => {
   // Descontos reais (apenas item + geral) — devoluções são contabilizadas à parte
   const discountsOnly = itemDiscounts + generalDiscountAmount;
   const totalDiscount = discountsOnly + returnSubtotal;
-  // TRAVA: total nunca pode ser negativo (devolução > novos vira crédito tratado fora daqui)
-  const total = Math.max(0, subtotal - totalDiscount);
+  // Saldo bruto: pode ser negativo quando devolução > novos (vira crédito ao cliente)
+  const rawBalance = subtotal - totalDiscount;
+  const total = Math.max(0, rawBalance);
+  // Diferença a devolver ao cliente (positiva quando devolução excede compras)
+  const customerCredit = Math.max(0, -rawBalance);
 
   // For quotes, use the selected quotePriceMode to determine pricing
   const effectivePriceType = saleType === 'orcamento' ? quotePriceMode : saleType;
@@ -1073,6 +1076,7 @@ const POSPage = () => {
               onApplyGeneralDiscount={(type, value) => setGeneralDiscount({ type, value })}
               subtotal={subtotal}
               discountAmount={discountsOnly}
+              customerCredit={customerCredit}
               total={total}
               isOnline={isOnline}
               onNext={() => setCurrentStep('payment')}
@@ -1090,6 +1094,7 @@ const POSPage = () => {
               cartItems={cartItems}
               subtotal={subtotal}
               discountAmount={discountsOnly}
+              customerCredit={customerCredit}
               total={total}
               saleType={saleType}
               selectedSeller={selectedSeller}
@@ -1107,6 +1112,7 @@ const POSPage = () => {
               cartItems={cartItems}
               subtotal={subtotal}
               discountAmount={discountsOnly}
+              customerCredit={customerCredit}
               total={total}
               saleType={saleType}
               selectedSeller={selectedSeller}

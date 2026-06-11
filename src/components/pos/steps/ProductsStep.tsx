@@ -23,6 +23,7 @@ interface ProductsStepProps {
   onApplyGeneralDiscount: (type: 'percentage' | 'fixed', value: number) => void;
   subtotal: number;
   discountAmount: number;
+  customerCredit?: number;
   total: number;
   isOnline: boolean;
   onNext: () => void;
@@ -46,6 +47,7 @@ const ProductsStep = ({
   onApplyGeneralDiscount,
   subtotal,
   discountAmount,
+  customerCredit = 0,
   total,
   isOnline,
   onNext,
@@ -124,6 +126,7 @@ const ProductsStep = ({
       onApplyGeneralDiscount={onApplyGeneralDiscount}
       subtotal={subtotal}
       discountAmount={discountAmount}
+      customerCredit={customerCredit}
       total={total}
       pricingMode={pricingMode}
       onChangePricingMode={onChangePricingMode}

@@ -81,6 +81,7 @@ interface POSCartProps {
   onApplyGeneralDiscount: (type: 'percentage' | 'fixed', value: number) => void;
   subtotal: number;
   discountAmount: number;
+  customerCredit?: number;
   total: number;
   pricingMode?: PricingMode;
   onChangePricingMode?: (mode: PricingMode) => void;
@@ -98,6 +99,7 @@ const POSCart = ({
   onApplyGeneralDiscount,
   subtotal,
   discountAmount,
+  customerCredit = 0,
   total,
   pricingMode,
   onChangePricingMode,
@@ -541,6 +543,16 @@ const POSCart = ({
           <span>Total</span>
           <span className="text-primary">{formatCurrency(total)}</span>
         </div>
+        {customerCredit > 0 && (
+          <div className="mt-2 rounded-md border border-blue-500/40 bg-blue-500/10 p-2 flex justify-between items-center">
+            <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
+              Crédito ao cliente / Diferença a devolver
+            </span>
+            <span className="text-base font-bold text-blue-700 dark:text-blue-300">
+              {formatCurrency(customerCredit)}
+            </span>
+          </div>
+        )}
       </div>
       {/* Item Detail Modal */}
       <Dialog open={!!detailItem} onOpenChange={(open) => !open && setDetailItem(null)}>
