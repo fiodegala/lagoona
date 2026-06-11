@@ -81,6 +81,7 @@ interface POSCartProps {
   onApplyGeneralDiscount: (type: 'percentage' | 'fixed', value: number) => void;
   subtotal: number;
   discountAmount: number;
+  customerCredit?: number;
   total: number;
   pricingMode?: PricingMode;
   onChangePricingMode?: (mode: PricingMode) => void;
