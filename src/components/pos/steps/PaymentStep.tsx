@@ -51,6 +51,7 @@ const PaymentStep = ({
   cartItems,
   subtotal,
   discountAmount,
+  customerCredit = 0,
   total,
   saleType,
   selectedSeller,
