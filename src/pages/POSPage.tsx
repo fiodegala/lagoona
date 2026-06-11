@@ -1076,6 +1076,7 @@ const POSPage = () => {
               onApplyGeneralDiscount={(type, value) => setGeneralDiscount({ type, value })}
               subtotal={subtotal}
               discountAmount={discountsOnly}
+              customerCredit={customerCredit}
               total={total}
               isOnline={isOnline}
               onNext={() => setCurrentStep('payment')}
@@ -1093,6 +1094,7 @@ const POSPage = () => {
               cartItems={cartItems}
               subtotal={subtotal}
               discountAmount={discountsOnly}
+              customerCredit={customerCredit}
               total={total}
               saleType={saleType}
               selectedSeller={selectedSeller}
@@ -1110,6 +1112,7 @@ const POSPage = () => {
               cartItems={cartItems}
               subtotal={subtotal}
               discountAmount={discountsOnly}
+              customerCredit={customerCredit}
               total={total}
               saleType={saleType}
               selectedSeller={selectedSeller}
