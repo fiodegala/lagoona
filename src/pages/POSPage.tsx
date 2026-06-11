@@ -295,8 +295,10 @@ const POSPage = () => {
     : generalDiscount.value;
   // TRAVA: desconto geral nunca pode exceder o subtotal menos descontos por item
   const generalDiscountAmount = Math.min(rawGeneralDiscount, baseForGeneralDiscount);
-  const totalDiscount = itemDiscounts + generalDiscountAmount + returnSubtotal;
-  // TRAVA: total nunca pode ser negativo
+  // Descontos reais (apenas item + geral) — devoluções são contabilizadas à parte
+  const discountsOnly = itemDiscounts + generalDiscountAmount;
+  const totalDiscount = discountsOnly + returnSubtotal;
+  // TRAVA: total nunca pode ser negativo (devolução > novos vira crédito tratado fora daqui)
   const total = Math.max(0, subtotal - totalDiscount);
 
   // For quotes, use the selected quotePriceMode to determine pricing
@@ -1070,7 +1072,7 @@ const POSPage = () => {
               generalDiscount={generalDiscount}
               onApplyGeneralDiscount={(type, value) => setGeneralDiscount({ type, value })}
               subtotal={subtotal}
-              discountAmount={totalDiscount}
+              discountAmount={discountsOnly}
               total={total}
               isOnline={isOnline}
               onNext={() => setCurrentStep('payment')}
@@ -1087,7 +1089,7 @@ const POSPage = () => {
             <PaymentStep
               cartItems={cartItems}
               subtotal={subtotal}
-              discountAmount={totalDiscount}
+              discountAmount={discountsOnly}
               total={total}
               saleType={saleType}
               selectedSeller={selectedSeller}
@@ -1104,7 +1106,7 @@ const POSPage = () => {
             <PaymentStep
               cartItems={cartItems}
               subtotal={subtotal}
-              discountAmount={totalDiscount}
+              discountAmount={discountsOnly}
               total={total}
               saleType={saleType}
               selectedSeller={selectedSeller}
