@@ -126,6 +126,7 @@ const ProductsStep = ({
       onApplyGeneralDiscount={onApplyGeneralDiscount}
       subtotal={subtotal}
       discountAmount={discountAmount}
+      customerCredit={customerCredit}
       total={total}
       pricingMode={pricingMode}
       onChangePricingMode={onChangePricingMode}
