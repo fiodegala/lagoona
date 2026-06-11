@@ -293,6 +293,16 @@ const PaymentStep = ({
             <span>Total</span>
             <span className="text-primary">{formatCurrency(total)}</span>
           </div>
+          {customerCredit > 0 && (
+            <div className="mt-2 rounded-md border border-blue-500/40 bg-blue-500/10 p-2 flex justify-between items-center">
+              <span className="text-xs font-medium text-blue-700 dark:text-blue-300">
+                Crédito ao cliente
+              </span>
+              <span className="text-sm font-bold text-blue-700 dark:text-blue-300">
+                {formatCurrency(customerCredit)}
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
