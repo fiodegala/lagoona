@@ -298,8 +298,11 @@ const POSPage = () => {
   // Descontos reais (apenas item + geral) — devoluções são contabilizadas à parte
   const discountsOnly = itemDiscounts + generalDiscountAmount;
   const totalDiscount = discountsOnly + returnSubtotal;
-  // TRAVA: total nunca pode ser negativo (devolução > novos vira crédito tratado fora daqui)
-  const total = Math.max(0, subtotal - totalDiscount);
+  // Saldo bruto: pode ser negativo quando devolução > novos (vira crédito ao cliente)
+  const rawBalance = subtotal - totalDiscount;
+  const total = Math.max(0, rawBalance);
+  // Diferença a devolver ao cliente (positiva quando devolução excede compras)
+  const customerCredit = Math.max(0, -rawBalance);
 
   // For quotes, use the selected quotePriceMode to determine pricing
   const effectivePriceType = saleType === 'orcamento' ? quotePriceMode : saleType;
