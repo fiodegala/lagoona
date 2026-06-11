@@ -23,6 +23,7 @@ interface ProductsStepProps {
   onApplyGeneralDiscount: (type: 'percentage' | 'fixed', value: number) => void;
   subtotal: number;
   discountAmount: number;
+  customerCredit?: number;
   total: number;
   isOnline: boolean;
   onNext: () => void;
