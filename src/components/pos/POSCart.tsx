@@ -99,6 +99,7 @@ const POSCart = ({
   onApplyGeneralDiscount,
   subtotal,
   discountAmount,
+  customerCredit = 0,
   total,
   pricingMode,
   onChangePricingMode,
