@@ -8,8 +8,8 @@ class ResizeObserverMock {
   unobserve() {}
   disconnect() {}
 }
-// @ts-expect-error attach to global
-global.ResizeObserver = ResizeObserverMock;
+(global as unknown as { ResizeObserver: typeof ResizeObserverMock }).ResizeObserver =
+  ResizeObserverMock;
 
 const noop = () => {};
 
