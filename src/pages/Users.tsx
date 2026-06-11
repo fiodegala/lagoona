@@ -699,13 +699,16 @@ const UsersPage = () => {
               <div className="space-y-2">
                 <Label htmlFor="store">Loja *</Label>
                 <Select
-                  value={formData.store_id}
-                  onValueChange={(value: string) => setFormData({ ...formData, store_id: value })}
+                  value={formData.store_id || (formData.role === 'admin' ? '__global__' : '')}
+                  onValueChange={(value: string) => setFormData({ ...formData, store_id: value === '__global__' ? '' : value })}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione uma loja" />
                   </SelectTrigger>
                   <SelectContent>
+                    {formData.role === 'admin' && (
+                      <SelectItem value="__global__">🌐 Admin Global (todas as lojas)</SelectItem>
+                    )}
                     {stores.map((store) => (
                       <SelectItem key={store.id} value={store.id}>
                         {store.name}
@@ -713,6 +716,11 @@ const UsersPage = () => {
                     ))}
                   </SelectContent>
                 </Select>
+                {formData.role === 'admin' && !formData.store_id && (
+                  <p className="text-xs text-muted-foreground">
+                    Admin Global aparecerá no PDV de todas as lojas sem precisar de vínculo manual.
+                  </p>
+                )}
               </div>
 
               {/* Menu Permissions */}
