@@ -21,6 +21,7 @@ interface PaymentStepProps {
   cartItems: CartItem[];
   subtotal: number;
   discountAmount: number;
+  customerCredit?: number;
   total: number;
   saleType: SaleType;
   selectedSeller: Seller | null;
