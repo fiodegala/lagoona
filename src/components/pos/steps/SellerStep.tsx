@@ -34,9 +34,22 @@ const SellerStep = ({ selectedSeller, onSelect, onNext, onBack, posStoreId }: Se
           .from('user_roles')
           .select('user_id, role, store_id');
 
-        const rolesData = (allRolesData || []).filter((role) => {
-          return !!effectiveStoreId && role.store_id === effectiveStoreId;
+        // Include sellers/admins linked to this store + global admins (admin + store_id null)
+        const filteredRoles = (allRolesData || []).filter((role) => {
+          if (!!effectiveStoreId && role.store_id === effectiveStoreId) return true;
+          if (role.role === 'admin' && role.store_id === null) return true;
+          return false;
         });
+
+        // Dedupe by user_id (prefer the store-specific row over global)
+        const rolesMap = new Map<string, typeof filteredRoles[number]>();
+        filteredRoles.forEach((r) => {
+          const existing = rolesMap.get(r.user_id);
+          if (!existing || (existing.store_id === null && r.store_id !== null)) {
+            rolesMap.set(r.user_id, r);
+          }
+        });
+        const rolesData = Array.from(rolesMap.values());
 
 
 
