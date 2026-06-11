@@ -47,6 +47,7 @@ const ProductsStep = ({
   onApplyGeneralDiscount,
   subtotal,
   discountAmount,
+  customerCredit = 0,
   total,
   isOnline,
   onNext,
