@@ -17,6 +17,7 @@ import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { reviewsService, ProductReview } from '@/services/reviews';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ProductReviewsProps {
   productId: string;
@@ -59,8 +60,15 @@ const ProductReviews = ({ productId }: ProductReviewsProps) => {
 
   const handleSubmitReview = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || !formData.email || !formData.rating) {
+    if (!formData.name || !formData.rating) {
       toast.error('Preencha todos os campos obrigatórios');
+      return;
+    }
+
+    // Require authentication; use the logged-in user's email (RLS enforces match)
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user?.email) {
+      toast.error('Faça login para enviar uma avaliação.');
       return;
     }
 
@@ -69,7 +77,7 @@ const ProductReviews = ({ productId }: ProductReviewsProps) => {
       await reviewsService.create({
         product_id: productId,
         customer_name: formData.name,
-        customer_email: formData.email,
+        customer_email: user.email,
         rating: formData.rating,
         title: formData.title || undefined,
         comment: formData.comment || undefined,
@@ -190,26 +198,17 @@ const ProductReviews = ({ productId }: ProductReviewsProps) => {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Nome *</Label>
-                    <Input
-                      id="name"
-                      value={formData.name}
-                      onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email">E-mail *</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                      required
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="name">Nome *</Label>
+                  <Input
+                    id="name"
+                    value={formData.name}
+                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                    required
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    O e-mail da sua conta será usado automaticamente. Faça login para enviar.
+                  </p>
                 </div>
 
                 <div className="space-y-2">
