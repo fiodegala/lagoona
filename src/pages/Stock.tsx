@@ -74,7 +74,8 @@ interface ColorGroup {
 }
 
 const Stock = () => {
-  const { isAdmin, userStoreId, isOnlineStore } = useAuth();
+  const { isAdmin, userStoreId, isOnlineStore, hasRole } = useAuth();
+  const canEditStock = isAdmin || hasRole('manager') || hasRole('vm_stock');
   const { toast } = useToast();
   const [stores, setStores] = useState<Store[]>([]);
   const [products, setProducts] = useState<StockProduct[]>([]);
