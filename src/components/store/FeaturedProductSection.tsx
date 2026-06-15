@@ -164,7 +164,10 @@ const FeaturedProductSection = ({ product }: FeaturedProductSectionProps) => {
               <Button
                 onClick={handleAddToCart}
                 disabled={isOutOfStock || (hasVariations && !selectedVariation)}
-                className="flex-1 gap-2 bg-store-gold text-store-dark hover:bg-store-gold/90 font-semibold h-11"
+                className="flex-1 gap-2 font-semibold h-11"
+                style={{ backgroundColor: '#009C3B', color: '#FFDF00' }}
+                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#007A2F')}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#009C3B')}
               >
                 <ShoppingCart className="h-4 w-4" />
                 {isOutOfStock ? 'Esgotado' : (hasVariations && !selectedVariation) ? 'Selecione as Opções' : 'Compra Rápida'}
