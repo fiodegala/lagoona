@@ -9,9 +9,9 @@ import { useFavorites } from '@/contexts/FavoritesContext';
 import { Category } from '@/services/categories';
 import { supabase } from '@/integrations/supabase/client';
 import CartDrawer from '@/components/store/CartDrawer';
-import logoCopaAsset from '@/assets/fio-de-gala-copa-logo.png.asset.json';
-const logoLagoona = logoCopaAsset.url;
-const logoLagoonaDark = logoCopaAsset.url;
+import logoUrbanManAsset from '@/assets/fio-de-gala-urban-man-logo.png.asset.json';
+const logoLagoona = logoUrbanManAsset.url;
+const logoLagoonaDark = logoUrbanManAsset.url;
 import { trackSearchEvent } from '@/hooks/useAnalyticsTracker';
 import { trackMetaSearch } from '@/lib/metaPixel';
 

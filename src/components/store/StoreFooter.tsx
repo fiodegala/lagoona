@@ -1,8 +1,8 @@
 import { Link } from 'react-router-dom';
 import { Mail, Phone, MapPin, Instagram, CreditCard } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
-import logoCopaAsset from '@/assets/fio-de-gala-copa-logo.png.asset.json';
-const logoLagoona = logoCopaAsset.url;
+import logoUrbanManAsset from '@/assets/fio-de-gala-urban-man-logo.png.asset.json';
+const logoLagoona = logoUrbanManAsset.url;
 
 const StoreFooter = () => {
   const currentYear = new Date().getFullYear();
