@@ -753,7 +753,10 @@ const ProductDetails = () => {
             <div className="flex gap-2 sm:gap-3 flex-wrap">
               <Button
                 size="lg"
-                className="flex-1 gap-2 bg-store-primary text-store-accent hover:bg-store-primary/90 font-semibold"
+                className="flex-1 gap-2 font-semibold"
+                style={{ backgroundColor: '#009C3B', color: '#FFDF00' }}
+                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#007A2F')}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#009C3B')}
                 onClick={upsellHasSelection && upsellBuyTogether ? upsellBuyTogether : handleAddToCart}
                 disabled={isOutOfStock || (productHasVariations && !selectedVariation)}
               >
