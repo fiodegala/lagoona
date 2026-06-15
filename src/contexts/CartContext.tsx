@@ -3,8 +3,6 @@ import { couponsService, Coupon, CouponValidationResult } from '@/services/coupo
 import { combosService, Combo } from '@/services/combos';
 import { trackAnalyticsEvent, trackCartRemoveEvent } from '@/hooks/useAnalyticsTracker';
 import { trackMetaAddToCart } from '@/lib/metaPixel';
-import { calculateValentinesDiscount } from '@/lib/valentinesPromo';
-import { useValentinesPromo } from '@/hooks/useValentinesPromo';
 
 export interface CartItem {
   id: string;
@@ -263,21 +261,10 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   const getSubtotal = () => items.reduce((total, item) => total + item.price * item.quantity, 0);
 
-  // Promoção Dia dos Namorados: aplica automaticamente se não houver cupom nem combo.
-  const { active: valentinesPromoActive, label: valentinesPromoLabel, discountPercent: valentinesPromoPercent } = useValentinesPromo();
-  const valentinesEligibleItems = items.filter((i) => !i.isPromotional);
-  const valentinesDiscount =
-    valentinesPromoActive && !appliedCoupon && appliedCombos.length === 0
-      ? calculateValentinesDiscount(
-          valentinesEligibleItems.map((i) => ({ price: i.price, quantity: i.quantity })),
-          valentinesPromoPercent
-        )
-      : 0;
-
   const getTotal = () => {
     const subtotal = getSubtotal();
     const couponDiscountVal = appliedCoupon?.discount || 0;
-    return Math.max(0, subtotal - couponDiscountVal - comboDiscount - valentinesDiscount);
+    return Math.max(0, subtotal - couponDiscountVal - comboDiscount);
   };
 
   const applyCoupon = async (code: string, customerEmail?: string): Promise<CouponValidationResult> => {
@@ -308,11 +295,11 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         getItemCount, getSubtotal, getTotal,
         appliedCoupon, applyCoupon, removeCoupon, couponLoading,
         appliedCombos, comboDiscount, comboFreeShipping,
-        valentinesDiscount,
-        valentinesPromoActive,
-        valentinesPromoLabel,
-        valentinesPromoPercent,
-        maxCartUnitPrice: valentinesEligibleItems.reduce((max, i) => Math.max(max, Number(i.price) || 0), 0),
+        valentinesDiscount: 0,
+        valentinesPromoActive: false,
+        valentinesPromoLabel: '',
+        valentinesPromoPercent: 0,
+        maxCartUnitPrice: 0,
       }}
     >
       {children}
