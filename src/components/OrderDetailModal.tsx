@@ -265,25 +265,35 @@ const OrderDetailModal = ({ open, onOpenChange, order }: OrderDetailModalProps) 
               </h4>
               {items.length > 0 ? (
                 (() => {
-                  const itemsSubtotalLocal = items.reduce(
-                    (sum: number, it: any) => sum + Number(it.price || 0) * Number(it.quantity || 1),
-                    0
+                  // Valentines/sazonal: desconto aplica apenas nas unidades de MENOR valor
+                  // (a cada par, a unidade mais barata recebe o % de desconto).
+                  const valentinesDiscount = Number(meta.valentines_discount || 0);
+                  const discountPercent = Number(
+                    meta.valentines_discount_percent ?? DEFAULT_VALENTINES_CONFIG.discount_percent
                   );
-                  const totalItemDiscount =
-                    Number(meta.coupon_discount || 0) +
-                    Number(meta.valentines_discount || 0) +
-                    Number(meta.combo_discount || 0);
-                  const discountRatio =
-                    itemsSubtotalLocal > 0 && totalItemDiscount > 0
-                      ? totalItemDiscount / itemsSubtotalLocal
-                      : 0;
+                  const factor = valentinesDiscount > 0 ? Math.max(0, Math.min(100, discountPercent)) / 100 : 0;
+                  const discountedUnitsMap =
+                    factor > 0
+                      ? getValentinesDiscountedUnits(
+                          items.map((it: any, idx: number) => ({
+                            id: String(idx),
+                            price: Number(it.price || 0),
+                            quantity: Number(it.quantity || 1),
+                          }))
+                        )
+                      : {};
+
                   return (
                     <div className="space-y-2">
                       {items.map((item: any, idx: number) => {
                         const unitPrice = Number(item.price || 0);
                         const qty = Number(item.quantity || 1);
-                        const unitDiscounted = unitPrice * (1 - discountRatio);
-                        const hasDiscount = discountRatio > 0 && unitDiscounted < unitPrice - 0.005;
+                        const discountedQty = discountedUnitsMap[String(idx)] || 0;
+                        const fullQty = qty - discountedQty;
+                        const unitDiscounted = unitPrice * (1 - factor);
+                        const lineTotal = unitPrice * fullQty + unitDiscounted * discountedQty;
+                        const hasDiscount = discountedQty > 0;
+
                         return (
                           <div key={idx} className="flex items-center justify-between rounded-md border p-2.5 text-sm">
                             <div className="flex items-center gap-3 min-w-0">
@@ -304,27 +314,24 @@ const OrderDetailModal = ({ open, onOpenChange, order }: OrderDetailModalProps) 
                               </div>
                             </div>
                             <div className="text-right shrink-0 ml-2">
-                              {hasDiscount ? (
+                              <p className="font-medium">R$ {unitPrice.toFixed(2).replace('.', ',')}</p>
+                              <p className="text-xs text-muted-foreground">Qtd: {qty}</p>
+                              {hasDiscount && (
                                 <>
-                                  <p className="text-xs text-muted-foreground line-through">
-                                    R$ {unitPrice.toFixed(2).replace('.', ',')}
+                                  <p className="text-[11px] text-green-600 dark:text-green-400 mt-1">
+                                    {discountedQty}× com {Math.round(discountPercent)}% OFF
+                                    <span className="ml-1">
+                                      (R$ {unitDiscounted.toFixed(2).replace('.', ',')} cada)
+                                    </span>
                                   </p>
-                                  <p className="font-medium text-green-600 dark:text-green-400">
-                                    R$ {unitDiscounted.toFixed(2).replace('.', ',')}
-                                  </p>
-                                  <p className="text-[10px] text-muted-foreground">
-                                    com desconto · Qtd: {qty}
-                                  </p>
-                                  {qty > 1 && (
+                                  {fullQty > 0 && (
                                     <p className="text-[10px] text-muted-foreground">
-                                      Total: R$ {(unitDiscounted * qty).toFixed(2).replace('.', ',')}
+                                      {fullQty}× valor cheio
                                     </p>
                                   )}
-                                </>
-                              ) : (
-                                <>
-                                  <p className="font-medium">R$ {unitPrice.toFixed(2).replace('.', ',')}</p>
-                                  <p className="text-xs text-muted-foreground">Qtd: {qty}</p>
+                                  <p className="text-[10px] text-muted-foreground">
+                                    Subtotal: R$ {lineTotal.toFixed(2).replace('.', ',')}
+                                  </p>
                                 </>
                               )}
                             </div>
