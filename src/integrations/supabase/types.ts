@@ -2648,6 +2648,36 @@ export type Database = {
           },
         ]
       }
+      score_predictions: {
+        Row: {
+          created_at: string
+          full_name: string
+          id: string
+          notes: string | null
+          score_brasil: number
+          score_haiti: number
+          whatsapp: string
+        }
+        Insert: {
+          created_at?: string
+          full_name: string
+          id?: string
+          notes?: string | null
+          score_brasil: number
+          score_haiti: number
+          whatsapp: string
+        }
+        Update: {
+          created_at?: string
+          full_name?: string
+          id?: string
+          notes?: string | null
+          score_brasil?: number
+          score_haiti?: number
+          whatsapp?: string
+        }
+        Relationships: []
+      }
       service_order_comments: {
         Row: {
           comment: string
