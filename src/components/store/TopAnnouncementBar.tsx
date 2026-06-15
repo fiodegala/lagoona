@@ -1,8 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Truck, Sparkles, CreditCard, Heart } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Truck, Sparkles, CreditCard } from 'lucide-react';
 import HeroCountdown from './HeroCountdown';
 import { useDealsCountdown } from '@/hooks/useDealsCountdown';
-import { useValentinesPromo } from '@/hooks/useValentinesPromo';
 
 const WorldCupBanner = () => (
   <span className="inline-flex items-center gap-1 font-semibold">
@@ -14,7 +13,7 @@ const WorldCupBanner = () => (
   </span>
 );
 
-const baseMessages = [
+const messages = [
   {
     icon: () => <span className="text-base leading-none">⚽</span>,
     isWorldCup: true as const,
@@ -52,49 +51,6 @@ const TopAnnouncementBar = () => {
   const [index, setIndex] = useState(0);
   const [visible, setVisible] = useState(true);
   const { active } = useDealsCountdown();
-  const { active: valentinesActive, label: valentinesLabel, discountPercent: valentinesPct } = useValentinesPromo();
-
-  const valentinesMessage = useMemo(
-    () => ({
-      icon: Heart,
-      isPromo: true as const,
-      text: (
-        <>
-          <strong className="font-semibold">{valentinesLabel.toUpperCase()}</strong>: compre 1 peça e leve a{' '}
-          <strong className="font-semibold">2ª com {valentinesPct}% OFF</strong> (peça de menor valor)
-        </>
-      ),
-    }),
-    [valentinesLabel, valentinesPct]
-  );
-
-  const valentinesBaseMessages = useMemo(
-    () => [
-      {
-        icon: Truck,
-        text: (
-          <>
-        <strong className="font-semibold">FRETE GRÁTIS</strong> em compras acima de{' '}
-        <strong className="font-semibold">R$ 499,00</strong>
-          </>
-        ),
-      },
-      {
-        icon: CreditCard,
-        text: (
-          <>
-            Oferta dia dos namorados em até <strong className="font-semibold">2x sem juros</strong> no cartão
-          </>
-        ),
-      },
-    ],
-    []
-  );
-
-  const messages = useMemo(
-    () => (valentinesActive ? [valentinesMessage, ...valentinesBaseMessages] : baseMessages),
-    [valentinesActive, valentinesMessage, valentinesBaseMessages]
-  );
 
   useEffect(() => {
     if (active) return; // pause rotation when countdown takes over
@@ -106,7 +62,7 @@ const TopAnnouncementBar = () => {
       }, 300);
     }, 4000);
     return () => clearInterval(interval);
-  }, [active, messages.length]);
+  }, [active]);
 
   // When countdown is active, render it inline replacing the rotating message
   if (active) {
@@ -121,14 +77,11 @@ const TopAnnouncementBar = () => {
 
   const current = messages[index % messages.length] ?? messages[0];
   const Icon = current.icon;
-  const isPromo = (current as { isPromo?: boolean }).isPromo === true;
   const isWorldCup = (current as { isWorldCup?: boolean }).isWorldCup === true;
 
   const bg = isWorldCup
     ? 'bg-gradient-to-r from-green-700 via-yellow-500 to-blue-700 text-white'
-    : valentinesActive || isPromo
-      ? 'bg-gradient-to-r from-rose-600 via-rose-500 to-pink-600 text-white'
-      : 'bg-black text-white';
+    : 'bg-black text-white';
 
   return (
     <div className={`text-xs sm:text-sm overflow-hidden ${bg}`}>
