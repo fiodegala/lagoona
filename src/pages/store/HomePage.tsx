@@ -575,18 +575,16 @@ const HomePage = () => {
         aria-label="Benefícios da loja"
       >
         <div className="container mx-auto px-4 py-5">
-          <ul className={`grid ${valentinesActive ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-2 md:grid-cols-4'} gap-4 sm:gap-6 justify-items-center`}>
+          <ul className={`grid ${valentinesActive ? 'grid-cols-2 sm:grid-cols-2' : 'grid-cols-3 md:grid-cols-3'} gap-4 sm:gap-6 justify-items-center`}>
             {(valentinesActive
               ? [
                   { icon: Truck, title: 'Frete Grátis', desc: 'Acima de R$ 499,00' },
                   { icon: CreditCard, title: 'Oferta dia dos namorados', desc: 'Em até 2x sem juros' },
-                  { icon: RefreshCw, title: 'Troca Grátis', desc: 'Em até 7 dias' },
                 ]
               : [
                   { icon: Truck, title: 'Frete Grátis', desc: 'Acima de R$ 499,00' },
                   { icon: Sparkles, title: 'PIX -5%', desc: 'Desconto à vista' },
                   { icon: CreditCard, title: 'Até 6x sem juros', desc: 'No cartão de crédito' },
-                  { icon: RefreshCw, title: 'Troca Grátis', desc: 'Em até 7 dias' },
                 ]
             ).map(({ icon: Icon, title, desc }) => (
               <li key={title} className="flex items-center gap-2.5 sm:gap-3">
