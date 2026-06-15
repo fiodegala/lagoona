@@ -1,0 +1,1 @@
+CREATE POLICY "VM stock can view stores" ON public.stores FOR SELECT USING (public.has_vm_stock_role(auth.uid()));
