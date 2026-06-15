@@ -226,7 +226,10 @@ const ProductCard = memo(forwardRef<HTMLAnchorElement, ProductCardProps>(({ prod
             <Button
               onClick={handleAddToCart}
               disabled={isOutOfStock}
-              className="w-full gap-2 bg-store-gold hover:bg-store-gold/90 text-store-dark font-semibold h-12 md:h-10 text-base md:text-sm"
+              className="w-full gap-2 font-semibold h-12 md:h-10 text-base md:text-sm"
+              style={{ backgroundColor: '#009C3B', color: '#FFDF00' }}
+              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#007A2F')}
+              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#009C3B')}
             >
               <ShoppingCart className="h-5 w-5 md:h-4 md:w-4" />
               Adicionar
