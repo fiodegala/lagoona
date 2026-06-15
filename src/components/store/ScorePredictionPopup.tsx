@@ -77,7 +77,7 @@ const ScorePredictionPopup = () => {
 
   return (
     <Dialog open={open} onOpenChange={(v) => (v ? setOpen(true) : handleClose())}>
-      <DialogContent className="p-0 max-w-3xl bg-[#0a1933] border-store-gold/40 overflow-hidden">
+      <DialogContent className="p-0 max-w-[95vw] md:max-w-3xl bg-[#0a1933] border-store-gold/40 overflow-hidden max-h-[90dvh] flex flex-col">
         <button
           type="button"
           onClick={handleClose}
@@ -86,12 +86,12 @@ const ScorePredictionPopup = () => {
         >
           <X className="h-4 w-4" />
         </button>
-        <div className="grid md:grid-cols-2">
+        <div className="grid md:grid-cols-2 overflow-y-auto">
           <div className="bg-[#0a1933]">
             <img
               src={promoImage.url}
               alt="Brasil x Haiti - Acerte o placar e ganhe"
-              className="w-full h-full object-cover max-h-[60vh] md:max-h-none"
+              className="w-full h-full object-cover max-h-[30vh] md:max-h-none"
             />
           </div>
           <form onSubmit={handleSubmit} className="p-6 flex flex-col gap-4 bg-[#0a1933] text-white">
