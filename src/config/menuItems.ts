@@ -34,6 +34,7 @@ import {
   FileCode2,
   MessageSquare,
   Calendar,
+  Trophy,
 } from 'lucide-react';
 
 export interface MenuItem {
@@ -94,6 +95,7 @@ export const navItems: MenuItem[] = [
   { icon: Eye, label: 'Visual de Loja', path: '/admin/vm', menuKey: 'visual-merchandising' },
   { icon: MessageSquare, label: 'Chat Interno', path: '/admin/chat', menuKey: 'internal-chat' },
   { icon: Calendar, label: 'Agenda', path: '/admin/agenda', menuKey: 'calendar' },
+  { icon: Trophy, label: 'Palpites Brasil x Haiti', path: '/admin/palpites', menuKey: 'score-predictions', requireAdmin: true },
   { icon: BookOpen, label: 'Manual', path: '/admin/manual', menuKey: 'manual' },
 ];
 

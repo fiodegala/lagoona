@@ -56,6 +56,7 @@ const CashRegisterReport = lazy(() => import("./pages/CashRegisterReport"));
 const VisualMerchandising = lazy(() => import("./pages/VisualMerchandising"));
 const InternalChat = lazy(() => import("./pages/InternalChat"));
 const CalendarPage = lazy(() => import("./pages/Calendar"));
+const ScorePredictions = lazy(() => import("./pages/ScorePredictions"));
 
 // Lazy-loaded Store Pages
 const HomePage = lazy(() => import("./pages/store/HomePage"));
@@ -435,6 +436,15 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <CalendarPage />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/admin/palpites"
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <ScorePredictions />
                   </ProtectedRoute>
                 }
               />
