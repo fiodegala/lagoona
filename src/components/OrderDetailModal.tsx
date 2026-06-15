@@ -9,6 +9,7 @@ import { Package, Mail, MapPin, CreditCard, Clock, Truck, User, Phone, FileText 
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import AdminShippingQuote from '@/components/AdminShippingQuote';
+import { getValentinesDiscountedUnits, DEFAULT_VALENTINES_CONFIG } from '@/lib/valentinesPromo';
 
 const statusMap: Record<string, { label: string; variant: 'outline'; className: string }> = {
   pending: { label: 'Pendente', variant: 'outline', className: 'border-yellow-500 bg-yellow-50 text-yellow-700 dark:bg-yellow-950 dark:text-yellow-400' },
