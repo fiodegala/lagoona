@@ -4,6 +4,7 @@ import TopAnnouncementBar from './TopAnnouncementBar';
 import StoreFooter from './StoreFooter';
 import WhatsAppButton from './WhatsAppButton';
 import ValentinesTheme from './ValentinesTheme';
+import WorldCupTheme from './WorldCupTheme';
 import { categoriesService, Category } from '@/services/categories';
 import { useAnalyticsTracker } from '@/hooks/useAnalyticsTracker';
 
@@ -34,6 +35,7 @@ const StoreLayout = ({ children }: StoreLayoutProps) => {
   return (
     <div className="min-h-screen flex flex-col bg-background overflow-x-hidden w-full relative">
       <ValentinesTheme />
+      <WorldCupTheme />
       <TopAnnouncementBar />
       <StoreHeader categories={categories} />
       <main className="flex-1">
