@@ -100,34 +100,42 @@ const CartPage = () => {
     );
   }
 
-  const FREE_SHIPPING_THRESHOLD = 499;
-  const remainingForFreeShipping = FREE_SHIPPING_THRESHOLD - subtotal;
-  const freeShippingProgress = Math.min(100, (subtotal / FREE_SHIPPING_THRESHOLD) * 100);
+  const REWARD_THRESHOLD = 500;
+  const remainingForReward = REWARD_THRESHOLD - subtotal;
+  const rewardProgress = Math.min(100, (subtotal / REWARD_THRESHOLD) * 100);
+  const rewardUnlocked = remainingForReward <= 0;
 
   return (
     <StoreLayout>
       <div className="container mx-auto px-4 py-8">
-        {/* Free Shipping Progress Bar */}
-        {!comboFreeShipping && (
-          <div className="mb-6 p-4 rounded-lg bg-muted/50 border">
-            {remainingForFreeShipping > 0 ? (
-              <>
-                <p className="text-sm mb-2">
-                  <Truck className="h-4 w-4 inline mr-1.5 text-store-primary" />
-                  Falta <strong>{formatPrice(remainingForFreeShipping)}</strong> para <strong>frete grátis!</strong>
+        {/* Reward Progress Bar — Boné + Frete Grátis */}
+        <div className={`mb-6 p-4 rounded-lg border ${rewardUnlocked ? 'bg-green-500/10 border-green-500/30' : 'bg-muted/50'}`}>
+          {!rewardUnlocked ? (
+            <>
+              <div className="flex items-start gap-2 mb-2 flex-wrap">
+                <Gift className="h-5 w-5 text-store-primary shrink-0 mt-0.5" />
+                <p className="text-sm">
+                  Falta <strong>{formatPrice(remainingForReward)}</strong> para completar <strong>R$ 500,00</strong> e ganhar um <strong>boné grátis</strong> + <strong>frete grátis</strong>!
                 </p>
-                <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
-                  <div className="h-full bg-store-primary rounded-full transition-all duration-500" style={{ width: `${freeShippingProgress}%` }} />
-                </div>
-              </>
-            ) : (
-              <p className="text-sm text-green-600 font-medium">
-                <Truck className="h-4 w-4 inline mr-1.5" />
-                Parabéns! Você ganhou <strong>frete grátis!</strong> 🎉
+              </div>
+              <div className="w-full h-2.5 bg-muted rounded-full overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{ width: `${rewardProgress}%`, backgroundColor: '#009C3B' }}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground mt-2 text-right">
+                {formatPrice(subtotal)} / {formatPrice(REWARD_THRESHOLD)}
               </p>
-            )}
-          </div>
-        )}
+            </>
+          ) : (
+            <p className="text-sm text-green-700 dark:text-green-400 font-medium flex items-center gap-2 flex-wrap">
+              <Gift className="h-5 w-5 shrink-0" />
+              Parabéns! Você ganhou um <strong>boné grátis</strong> + <strong>frete grátis</strong>! 🎉
+            </p>
+          )}
+        </div>
+
 
         <h1 className="text-3xl font-bold mb-8">Carrinho de Compras</h1>
 
