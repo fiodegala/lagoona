@@ -22,7 +22,9 @@ const ScorePredictionPopup = () => {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    const t = setTimeout(() => setOpen(true), 500);
+    const already = localStorage.getItem(STORAGE_KEY);
+    if (already) return;
+    const t = setTimeout(() => setOpen(true), 2500);
     return () => clearTimeout(t);
   }, []);
 
