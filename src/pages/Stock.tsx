@@ -74,7 +74,8 @@ interface ColorGroup {
 }
 
 const Stock = () => {
-  const { isAdmin, userStoreId, isOnlineStore } = useAuth();
+  const { isAdmin, userStoreId, isOnlineStore, hasRole } = useAuth();
+  const canEditStock = isAdmin || hasRole('manager') || hasRole('vm_stock');
   const { toast } = useToast();
   const [stores, setStores] = useState<Store[]>([]);
   const [products, setProducts] = useState<StockProduct[]>([]);
@@ -332,6 +333,59 @@ const Stock = () => {
     }
   };
 
+  const handleSaveVariationStock = async (
+    variationId: string,
+    productId: string,
+    storeId: string,
+    quantity: number
+  ) => {
+    try {
+      const { data: existing } = await supabase
+        .from('store_stock')
+        .select('id')
+        .eq('store_id', storeId)
+        .eq('product_id', productId)
+        .eq('variation_id', variationId)
+        .maybeSingle();
+
+      if (existing) {
+        const { error } = await supabase
+          .from('store_stock')
+          .update({ quantity, updated_at: new Date().toISOString() } as never)
+          .eq('id', existing.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('store_stock')
+          .insert({ store_id: storeId, product_id: productId, variation_id: variationId, quantity } as never);
+        if (error) throw error;
+      }
+
+      // Update local expanded data
+      setExpandedData(prev => prev.map(group => ({
+        ...group,
+        variations: group.variations.map(vd => {
+          if (vd.variation.id !== variationId) return vd;
+          const newStoreQ = { ...vd.storeQuantities, [storeId]: quantity };
+          const newTotal = Object.values(newStoreQ).reduce((a, b) => a + b, 0);
+          return { ...vd, storeQuantities: newStoreQ, total: newTotal };
+        }),
+        total: group.variations.reduce((sum, vd) => {
+          if (vd.variation.id === variationId) {
+            const newStoreQ = { ...vd.storeQuantities, [storeId]: quantity };
+            return sum + Object.values(newStoreQ).reduce((a, b) => a + b, 0);
+          }
+          return sum + vd.total;
+        }, 0),
+      })));
+
+      toast({ title: 'Estoque atualizado' });
+    } catch (error: any) {
+      console.error('Error updating variation stock:', error);
+      toast({ title: 'Erro ao salvar', description: error.message, variant: 'destructive' });
+    }
+  };
+
   const handleSaveStock = async () => {
     if (!editingProduct) return;
     setIsSaving(true);
@@ -550,7 +604,7 @@ const Stock = () => {
                         </TableHead>
                       ))}
                       <TableHead className="text-center font-bold">Estoque Online (Geral)</TableHead>
-                      {isAdmin && <TableHead className="text-right">Ações</TableHead>}
+                      {canEditStock && <TableHead className="text-right">Ações</TableHead>}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -627,7 +681,7 @@ const Stock = () => {
                               {product.total}
                             </Badge>
                           </TableCell>
-                          {isAdmin && (
+                          {canEditStock && (
                             <TableCell className="text-right">
                               {product.has_variations ? (
                                 <Badge variant="outline" className="text-xs">Variável</Badge>
@@ -642,7 +696,7 @@ const Stock = () => {
                         {/* Expanded variation details */}
                         {expandedProductId === product.id && (
                           <TableRow key={`${product.id}-expanded`}>
-                            <TableCell colSpan={4 + physicalStores.length + (isAdmin ? 1 : 0)} className="bg-muted/20 p-0 border-l-4 border-l-primary">
+                            <TableCell colSpan={4 + physicalStores.length + (canEditStock ? 1 : 0)} className="bg-muted/20 p-0 border-l-4 border-l-primary">
                               {isLoadingExpanded ? (
                                 <div className="p-4 space-y-2">
                                   <Skeleton className="h-6 w-full" />
@@ -734,16 +788,41 @@ const Stock = () => {
                                                   </TableCell>
                                                   <TableCell className="py-1.5 text-sm font-medium">{label}</TableCell>
                                                   <TableCell className="py-1.5 text-xs text-muted-foreground font-mono">{vd.variation.sku || '—'}</TableCell>
-                                                  {physicalStores.map(store => (
-                                                    <TableCell key={store.id} className="py-1.5 text-center">
-                                                      <Badge
-                                                        variant={(vd.storeQuantities[store.id] || 0) === 0 ? 'destructive' : 'secondary'}
-                                                        className="min-w-[32px] justify-center text-xs"
-                                                      >
-                                                        {vd.storeQuantities[store.id] || 0}
-                                                      </Badge>
-                                                    </TableCell>
-                                                  ))}
+                                                  {physicalStores.map(store => {
+                                                    const currentQty = vd.storeQuantities[store.id] || 0;
+                                                    if (canEditStock) {
+                                                      return (
+                                                        <TableCell key={store.id} className="py-1.5 text-center">
+                                                          <Input
+                                                            type="number"
+                                                            min={0}
+                                                            defaultValue={currentQty}
+                                                            key={`${vd.variation.id}-${store.id}-${currentQty}`}
+                                                            onBlur={(e) => {
+                                                              const newQty = Math.max(0, parseInt(e.target.value) || 0);
+                                                              if (newQty !== currentQty) {
+                                                                handleSaveVariationStock(vd.variation.id, product.id, store.id, newQty);
+                                                              }
+                                                            }}
+                                                            onKeyDown={(e) => {
+                                                              if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+                                                            }}
+                                                            className="h-7 w-16 text-center text-xs mx-auto"
+                                                          />
+                                                        </TableCell>
+                                                      );
+                                                    }
+                                                    return (
+                                                      <TableCell key={store.id} className="py-1.5 text-center">
+                                                        <Badge
+                                                          variant={currentQty === 0 ? 'destructive' : 'secondary'}
+                                                          className="min-w-[32px] justify-center text-xs"
+                                                        >
+                                                          {currentQty}
+                                                        </Badge>
+                                                      </TableCell>
+                                                    );
+                                                  })}
                                                   <TableCell className="py-1.5 text-center">
                                                     <span className={cn(
                                                       "font-bold text-sm",
