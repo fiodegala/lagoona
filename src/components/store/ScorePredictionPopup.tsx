@@ -91,7 +91,7 @@ const ScorePredictionPopup = () => {
             <img
               src={promoImage.url}
               alt="Brasil x Haiti - Acerte o placar e ganhe"
-              className="w-full h-full object-cover max-h-[22vh] md:max-h-none"
+              className="w-full h-auto object-contain md:object-cover md:h-full md:max-h-none"
             />
           </div>
           <form onSubmit={handleSubmit} className="p-4 md:p-6 flex flex-col gap-3 md:gap-4 bg-[#0a1933] text-white">
