@@ -295,11 +295,11 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         getItemCount, getSubtotal, getTotal,
         appliedCoupon, applyCoupon, removeCoupon, couponLoading,
         appliedCombos, comboDiscount, comboFreeShipping,
-        valentinesDiscount,
-        valentinesPromoActive,
-        valentinesPromoLabel,
-        valentinesPromoPercent,
-        maxCartUnitPrice: valentinesEligibleItems.reduce((max, i) => Math.max(max, Number(i.price) || 0), 0),
+        valentinesDiscount: 0,
+        valentinesPromoActive: false,
+        valentinesPromoLabel: '',
+        valentinesPromoPercent: 0,
+        maxCartUnitPrice: 0,
       }}
     >
       {children}
