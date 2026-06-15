@@ -551,7 +551,7 @@ const Stock = () => {
                         </TableHead>
                       ))}
                       <TableHead className="text-center font-bold">Estoque Online (Geral)</TableHead>
-                      {isAdmin && <TableHead className="text-right">Ações</TableHead>}
+                      {canEditStock && <TableHead className="text-right">Ações</TableHead>}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -628,7 +628,7 @@ const Stock = () => {
                               {product.total}
                             </Badge>
                           </TableCell>
-                          {isAdmin && (
+                          {canEditStock && (
                             <TableCell className="text-right">
                               {product.has_variations ? (
                                 <Badge variant="outline" className="text-xs">Variável</Badge>
@@ -643,7 +643,7 @@ const Stock = () => {
                         {/* Expanded variation details */}
                         {expandedProductId === product.id && (
                           <TableRow key={`${product.id}-expanded`}>
-                            <TableCell colSpan={4 + physicalStores.length + (isAdmin ? 1 : 0)} className="bg-muted/20 p-0 border-l-4 border-l-primary">
+                            <TableCell colSpan={4 + physicalStores.length + (canEditStock ? 1 : 0)} className="bg-muted/20 p-0 border-l-4 border-l-primary">
                               {isLoadingExpanded ? (
                                 <div className="p-4 space-y-2">
                                   <Skeleton className="h-6 w-full" />
