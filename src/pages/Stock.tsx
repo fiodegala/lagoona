@@ -788,16 +788,41 @@ const Stock = () => {
                                                   </TableCell>
                                                   <TableCell className="py-1.5 text-sm font-medium">{label}</TableCell>
                                                   <TableCell className="py-1.5 text-xs text-muted-foreground font-mono">{vd.variation.sku || '—'}</TableCell>
-                                                  {physicalStores.map(store => (
-                                                    <TableCell key={store.id} className="py-1.5 text-center">
-                                                      <Badge
-                                                        variant={(vd.storeQuantities[store.id] || 0) === 0 ? 'destructive' : 'secondary'}
-                                                        className="min-w-[32px] justify-center text-xs"
-                                                      >
-                                                        {vd.storeQuantities[store.id] || 0}
-                                                      </Badge>
-                                                    </TableCell>
-                                                  ))}
+                                                  {physicalStores.map(store => {
+                                                    const currentQty = vd.storeQuantities[store.id] || 0;
+                                                    if (canEditStock) {
+                                                      return (
+                                                        <TableCell key={store.id} className="py-1.5 text-center">
+                                                          <Input
+                                                            type="number"
+                                                            min={0}
+                                                            defaultValue={currentQty}
+                                                            key={`${vd.variation.id}-${store.id}-${currentQty}`}
+                                                            onBlur={(e) => {
+                                                              const newQty = Math.max(0, parseInt(e.target.value) || 0);
+                                                              if (newQty !== currentQty) {
+                                                                handleSaveVariationStock(vd.variation.id, product.id, store.id, newQty);
+                                                              }
+                                                            }}
+                                                            onKeyDown={(e) => {
+                                                              if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+                                                            }}
+                                                            className="h-7 w-16 text-center text-xs mx-auto"
+                                                          />
+                                                        </TableCell>
+                                                      );
+                                                    }
+                                                    return (
+                                                      <TableCell key={store.id} className="py-1.5 text-center">
+                                                        <Badge
+                                                          variant={currentQty === 0 ? 'destructive' : 'secondary'}
+                                                          className="min-w-[32px] justify-center text-xs"
+                                                        >
+                                                          {currentQty}
+                                                        </Badge>
+                                                      </TableCell>
+                                                    );
+                                                  })}
                                                   <TableCell className="py-1.5 text-center">
                                                     <span className={cn(
                                                       "font-bold text-sm",
