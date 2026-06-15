@@ -297,11 +297,81 @@ const OrderDetailModal = ({ open, onOpenChange, order }: OrderDetailModalProps) 
 
             <Separator />
 
-            {/* Total */}
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-semibold">Total do Pedido</span>
-              <span className="text-lg font-bold">R$ {Number(order.total).toFixed(2)}</span>
-            </div>
+            {/* Resumo Financeiro */}
+            {(() => {
+              const fmt = (n: number) => `R$ ${n.toFixed(2).replace('.', ',')}`;
+              const itemsSubtotal = items.reduce(
+                (sum: number, it: any) => sum + Number(it.price || 0) * Number(it.quantity || 1),
+                0
+              );
+              const couponDiscount = Number(meta.coupon_discount || 0);
+              const couponCode = meta.coupon_code as string | undefined;
+              const valentinesDiscount = Number(meta.valentines_discount || 0);
+              const valentinesLabel = meta.valentines_promo as string | undefined;
+              const comboDiscount = Number(meta.combo_discount || 0);
+              const orderTotal = Number(order.total || 0);
+              // shipping is whatever is left after items - discounts vs total
+              const computedShipping =
+                orderTotal - (itemsSubtotal - couponDiscount - valentinesDiscount - comboDiscount);
+              const shipping = Math.max(0, Math.round(computedShipping * 100) / 100);
+
+              const paymentTypeId = meta.payment_type_id;
+              const txAmount = meta.transaction_amount != null ? Number(meta.transaction_amount) : null;
+              const isPix = paymentTypeId === 'bank_transfer' || order.payment_method === 'pix';
+              const pixDiscount =
+                isPix && txAmount != null && txAmount > 0 && orderTotal - txAmount > 0.01
+                  ? Math.round((orderTotal - txAmount) * 100) / 100
+                  : 0;
+
+              return (
+                <div className="space-y-1.5 text-sm">
+                  <h4 className="text-sm font-semibold mb-2">Resumo Financeiro</h4>
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Subtotal dos produtos</span>
+                    <span>{fmt(itemsSubtotal)}</span>
+                  </div>
+                  {couponDiscount > 0 && (
+                    <div className="flex items-center justify-between text-green-600 dark:text-green-400">
+                      <span>Cupom {couponCode ? `(${couponCode})` : ''}</span>
+                      <span>-{fmt(couponDiscount)}</span>
+                    </div>
+                  )}
+                  {valentinesDiscount > 0 && (
+                    <div className="flex items-center justify-between text-green-600 dark:text-green-400">
+                      <span>{valentinesLabel || 'Promoção'}</span>
+                      <span>-{fmt(valentinesDiscount)}</span>
+                    </div>
+                  )}
+                  {comboDiscount > 0 && (
+                    <div className="flex items-center justify-between text-green-600 dark:text-green-400">
+                      <span>Desconto de combo</span>
+                      <span>-{fmt(comboDiscount)}</span>
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Frete</span>
+                    <span>{shipping > 0 ? fmt(shipping) : 'Grátis'}</span>
+                  </div>
+                  <Separator className="my-2" />
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold">Total do Pedido</span>
+                    <span className="text-lg font-bold">{fmt(orderTotal)}</span>
+                  </div>
+                  {pixDiscount > 0 && txAmount != null && (
+                    <>
+                      <div className="flex items-center justify-between text-green-600 dark:text-green-400">
+                        <span>Desconto PIX (5%)</span>
+                        <span>-{fmt(pixDiscount)}</span>
+                      </div>
+                      <div className="flex items-center justify-between font-semibold">
+                        <span>Valor pago</span>
+                        <span>{fmt(txAmount)}</span>
+                      </div>
+                    </>
+                  )}
+                </div>
+              );
+            })()}
 
             {/* Notas */}
             {order.notes && (
