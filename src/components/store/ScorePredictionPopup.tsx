@@ -77,7 +77,7 @@ const ScorePredictionPopup = () => {
 
   return (
     <Dialog open={open} onOpenChange={(v) => (v ? setOpen(true) : handleClose())}>
-      <DialogContent className="p-0 max-w-3xl bg-[#0a1933] border-store-gold/40 overflow-hidden">
+      <DialogContent className="p-0 max-w-[95vw] md:max-w-3xl bg-[#0a1933] border-store-gold/40 overflow-hidden h-auto max-h-[85dvh] md:max-h-[90dvh] flex flex-col !top-4 md:!top-[50%] !translate-y-0 md:!translate-y-[-50%]">
         <button
           type="button"
           onClick={handleClose}
@@ -86,20 +86,20 @@ const ScorePredictionPopup = () => {
         >
           <X className="h-4 w-4" />
         </button>
-        <div className="grid md:grid-cols-2">
-          <div className="bg-[#0a1933]">
+        <div className="grid md:grid-cols-2 overflow-y-auto">
+          <div className="bg-[#0a1933] md:h-auto">
             <img
               src={promoImage.url}
               alt="Brasil x Haiti - Acerte o placar e ganhe"
-              className="w-full h-full object-cover max-h-[60vh] md:max-h-none"
+              className="w-full h-full object-cover max-h-[22vh] md:max-h-none"
             />
           </div>
-          <form onSubmit={handleSubmit} className="p-6 flex flex-col gap-4 bg-[#0a1933] text-white">
+          <form onSubmit={handleSubmit} className="p-4 md:p-6 flex flex-col gap-3 md:gap-4 bg-[#0a1933] text-white">
             <div>
-              <h2 className="text-2xl font-bold text-store-gold leading-tight">
+              <h2 className="text-xl md:text-2xl font-bold text-store-gold leading-tight">
                 ACERTE O PLACAR E GANHE!
               </h2>
-              <p className="text-sm text-white/80 mt-1">
+              <p className="text-xs md:text-sm text-white/80 mt-1">
                 Deixe seus dados e o placar do jogo Brasil x Haiti. Quem acertar ganha um super presente da Fio de Gala direto no WhatsApp!
               </p>
             </div>
