@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Trash2, Plus, Minus, ShoppingBag, ArrowRight, Package, Tag, X, Loader2, CheckCircle, Sparkles, Truck, Heart } from 'lucide-react';
+import { Trash2, Plus, Minus, ShoppingBag, ArrowRight, Package, Tag, X, Loader2, CheckCircle, Sparkles, Truck, Heart, Gift } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
