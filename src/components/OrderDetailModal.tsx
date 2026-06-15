@@ -263,33 +263,76 @@ const OrderDetailModal = ({ open, onOpenChange, order }: OrderDetailModalProps) 
                 Itens do Pedido
               </h4>
               {items.length > 0 ? (
-                <div className="space-y-2">
-                  {items.map((item: any, idx: number) => (
-                    <div key={idx} className="flex items-center justify-between rounded-md border p-2.5 text-sm">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <img
-                          src={item.image_url || item.imageUrl || '/placeholder.svg'}
-                          alt={item.name || 'Produto'}
-                          className="h-12 w-12 rounded-md object-cover shrink-0 border bg-muted cursor-pointer hover:opacity-80 transition-opacity"
-                          onClick={() => setLightboxImage(item.image_url || item.imageUrl || '/placeholder.svg')}
-                        />
-                        <div className="min-w-0">
-                          <p className="font-medium truncate">{item.name || item.product_name || 'Produto'}</p>
-                          {(item.variation_label || item.variation) && (
-                            <p className="text-xs text-primary font-medium">
-                              {item.variation_label || item.variation}
-                            </p>
-                          )}
-                          {item.sku && <p className="text-xs text-muted-foreground">SKU: {item.sku}</p>}
-                        </div>
-                      </div>
-                      <div className="text-right shrink-0 ml-2">
-                        <p className="font-medium">R$ {Number(item.price || 0).toFixed(2)}</p>
-                        <p className="text-xs text-muted-foreground">Qtd: {item.quantity || 1}</p>
-                      </div>
+                (() => {
+                  const itemsSubtotalLocal = items.reduce(
+                    (sum: number, it: any) => sum + Number(it.price || 0) * Number(it.quantity || 1),
+                    0
+                  );
+                  const totalItemDiscount =
+                    Number(meta.coupon_discount || 0) +
+                    Number(meta.valentines_discount || 0) +
+                    Number(meta.combo_discount || 0);
+                  const discountRatio =
+                    itemsSubtotalLocal > 0 && totalItemDiscount > 0
+                      ? totalItemDiscount / itemsSubtotalLocal
+                      : 0;
+                  return (
+                    <div className="space-y-2">
+                      {items.map((item: any, idx: number) => {
+                        const unitPrice = Number(item.price || 0);
+                        const qty = Number(item.quantity || 1);
+                        const unitDiscounted = unitPrice * (1 - discountRatio);
+                        const hasDiscount = discountRatio > 0 && unitDiscounted < unitPrice - 0.005;
+                        return (
+                          <div key={idx} className="flex items-center justify-between rounded-md border p-2.5 text-sm">
+                            <div className="flex items-center gap-3 min-w-0">
+                              <img
+                                src={item.image_url || item.imageUrl || '/placeholder.svg'}
+                                alt={item.name || 'Produto'}
+                                className="h-12 w-12 rounded-md object-cover shrink-0 border bg-muted cursor-pointer hover:opacity-80 transition-opacity"
+                                onClick={() => setLightboxImage(item.image_url || item.imageUrl || '/placeholder.svg')}
+                              />
+                              <div className="min-w-0">
+                                <p className="font-medium truncate">{item.name || item.product_name || 'Produto'}</p>
+                                {(item.variation_label || item.variation) && (
+                                  <p className="text-xs text-primary font-medium">
+                                    {item.variation_label || item.variation}
+                                  </p>
+                                )}
+                                {item.sku && <p className="text-xs text-muted-foreground">SKU: {item.sku}</p>}
+                              </div>
+                            </div>
+                            <div className="text-right shrink-0 ml-2">
+                              {hasDiscount ? (
+                                <>
+                                  <p className="text-xs text-muted-foreground line-through">
+                                    R$ {unitPrice.toFixed(2).replace('.', ',')}
+                                  </p>
+                                  <p className="font-medium text-green-600 dark:text-green-400">
+                                    R$ {unitDiscounted.toFixed(2).replace('.', ',')}
+                                  </p>
+                                  <p className="text-[10px] text-muted-foreground">
+                                    com desconto · Qtd: {qty}
+                                  </p>
+                                  {qty > 1 && (
+                                    <p className="text-[10px] text-muted-foreground">
+                                      Total: R$ {(unitDiscounted * qty).toFixed(2).replace('.', ',')}
+                                    </p>
+                                  )}
+                                </>
+                              ) : (
+                                <>
+                                  <p className="font-medium">R$ {unitPrice.toFixed(2).replace('.', ',')}</p>
+                                  <p className="text-xs text-muted-foreground">Qtd: {qty}</p>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
-                  ))}
-                </div>
+                  );
+                })()
               ) : (
                 <p className="text-sm text-muted-foreground">Nenhum item detalhado</p>
               )}
