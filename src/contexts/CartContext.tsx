@@ -3,8 +3,6 @@ import { couponsService, Coupon, CouponValidationResult } from '@/services/coupo
 import { combosService, Combo } from '@/services/combos';
 import { trackAnalyticsEvent, trackCartRemoveEvent } from '@/hooks/useAnalyticsTracker';
 import { trackMetaAddToCart } from '@/lib/metaPixel';
-import { calculateValentinesDiscount } from '@/lib/valentinesPromo';
-import { useValentinesPromo } from '@/hooks/useValentinesPromo';
 
 export interface CartItem {
   id: string;

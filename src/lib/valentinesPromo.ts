@@ -24,10 +24,8 @@ export function isValentinesPromoActive(
   config: ValentinesPromoConfig | null | undefined,
   now: Date = new Date()
 ): boolean {
-  if (!config || !config.enabled) return false;
-  if (config.starts_at && now < new Date(config.starts_at)) return false;
-  if (config.ends_at && now > new Date(config.ends_at)) return false;
-  return true;
+  // Promoção desativada permanentemente
+  return false;
 }
 
 export interface ValentinesCartLine {
