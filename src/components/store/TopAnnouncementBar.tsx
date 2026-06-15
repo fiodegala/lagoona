@@ -4,7 +4,22 @@ import HeroCountdown from './HeroCountdown';
 import { useDealsCountdown } from '@/hooks/useDealsCountdown';
 import { useValentinesPromo } from '@/hooks/useValentinesPromo';
 
+const WorldCupBanner = () => (
+  <span className="inline-flex items-center gap-1 font-semibold">
+    <span className="text-base">⚽</span>
+    <strong className="font-bold tracking-wider">COPA DO MUNDO</strong>
+    <span>— vista a camisa do estilo</span>
+    <span className="hidden sm:inline">com até</span>
+    <strong className="hidden sm:inline font-bold">30% OFF</strong>
+  </span>
+);
+
 const baseMessages = [
+  {
+    icon: () => <span className="text-base leading-none">⚽</span>,
+    isWorldCup: true as const,
+    text: <WorldCupBanner />,
+  },
   {
     icon: Truck,
     text: (
@@ -107,9 +122,16 @@ const TopAnnouncementBar = () => {
   const current = messages[index % messages.length] ?? messages[0];
   const Icon = current.icon;
   const isPromo = (current as { isPromo?: boolean }).isPromo === true;
+  const isWorldCup = (current as { isWorldCup?: boolean }).isWorldCup === true;
+
+  const bg = isWorldCup
+    ? 'bg-gradient-to-r from-green-700 via-yellow-500 to-blue-700 text-white'
+    : valentinesActive || isPromo
+      ? 'bg-gradient-to-r from-rose-600 via-rose-500 to-pink-600 text-white'
+      : 'bg-black text-white';
 
   return (
-    <div className={`text-xs sm:text-sm overflow-hidden ${valentinesActive || isPromo ? 'bg-gradient-to-r from-rose-600 via-rose-500 to-pink-600 text-white' : 'bg-black text-white'}`}>
+    <div className={`text-xs sm:text-sm overflow-hidden ${bg}`}>
       <div className="container mx-auto px-4 py-3.5 flex items-center justify-center min-h-[52px]">
         <div
           className={`flex items-center gap-2 transition-all duration-300 ${
