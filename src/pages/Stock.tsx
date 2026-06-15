@@ -333,6 +333,59 @@ const Stock = () => {
     }
   };
 
+  const handleSaveVariationStock = async (
+    variationId: string,
+    productId: string,
+    storeId: string,
+    quantity: number
+  ) => {
+    try {
+      const { data: existing } = await supabase
+        .from('store_stock')
+        .select('id')
+        .eq('store_id', storeId)
+        .eq('product_id', productId)
+        .eq('variation_id', variationId)
+        .maybeSingle();
+
+      if (existing) {
+        const { error } = await supabase
+          .from('store_stock')
+          .update({ quantity, updated_at: new Date().toISOString() } as never)
+          .eq('id', existing.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('store_stock')
+          .insert({ store_id: storeId, product_id: productId, variation_id: variationId, quantity } as never);
+        if (error) throw error;
+      }
+
+      // Update local expanded data
+      setExpandedData(prev => prev.map(group => ({
+        ...group,
+        variations: group.variations.map(vd => {
+          if (vd.variation.id !== variationId) return vd;
+          const newStoreQ = { ...vd.storeQuantities, [storeId]: quantity };
+          const newTotal = Object.values(newStoreQ).reduce((a, b) => a + b, 0);
+          return { ...vd, storeQuantities: newStoreQ, total: newTotal };
+        }),
+        total: group.variations.reduce((sum, vd) => {
+          if (vd.variation.id === variationId) {
+            const newStoreQ = { ...vd.storeQuantities, [storeId]: quantity };
+            return sum + Object.values(newStoreQ).reduce((a, b) => a + b, 0);
+          }
+          return sum + vd.total;
+        }, 0),
+      })));
+
+      toast({ title: 'Estoque atualizado' });
+    } catch (error: any) {
+      console.error('Error updating variation stock:', error);
+      toast({ title: 'Erro ao salvar', description: error.message, variant: 'destructive' });
+    }
+  };
+
   const handleSaveStock = async () => {
     if (!editingProduct) return;
     setIsSaving(true);
