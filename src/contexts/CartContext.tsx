@@ -261,21 +261,10 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   const getSubtotal = () => items.reduce((total, item) => total + item.price * item.quantity, 0);
 
-  // Promoção Dia dos Namorados: aplica automaticamente se não houver cupom nem combo.
-  const { active: valentinesPromoActive, label: valentinesPromoLabel, discountPercent: valentinesPromoPercent } = useValentinesPromo();
-  const valentinesEligibleItems = items.filter((i) => !i.isPromotional);
-  const valentinesDiscount =
-    valentinesPromoActive && !appliedCoupon && appliedCombos.length === 0
-      ? calculateValentinesDiscount(
-          valentinesEligibleItems.map((i) => ({ price: i.price, quantity: i.quantity })),
-          valentinesPromoPercent
-        )
-      : 0;
-
   const getTotal = () => {
     const subtotal = getSubtotal();
     const couponDiscountVal = appliedCoupon?.discount || 0;
-    return Math.max(0, subtotal - couponDiscountVal - comboDiscount - valentinesDiscount);
+    return Math.max(0, subtotal - couponDiscountVal - comboDiscount);
   };
 
   const applyCoupon = async (code: string, customerEmail?: string): Promise<CouponValidationResult> => {
