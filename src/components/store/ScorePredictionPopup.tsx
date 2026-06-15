@@ -94,12 +94,12 @@ const ScorePredictionPopup = () => {
               className="w-full h-full object-cover max-h-[22vh] md:max-h-none"
             />
           </div>
-          <form onSubmit={handleSubmit} className="p-6 flex flex-col gap-4 bg-[#0a1933] text-white">
+          <form onSubmit={handleSubmit} className="p-4 md:p-6 flex flex-col gap-3 md:gap-4 bg-[#0a1933] text-white">
             <div>
-              <h2 className="text-2xl font-bold text-store-gold leading-tight">
+              <h2 className="text-xl md:text-2xl font-bold text-store-gold leading-tight">
                 ACERTE O PLACAR E GANHE!
               </h2>
-              <p className="text-sm text-white/80 mt-1">
+              <p className="text-xs md:text-sm text-white/80 mt-1">
                 Deixe seus dados e o placar do jogo Brasil x Haiti. Quem acertar ganha um super presente da Fio de Gala direto no WhatsApp!
               </p>
             </div>
