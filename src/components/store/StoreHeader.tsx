@@ -215,14 +215,9 @@ const StoreHeader = ({ categories }: StoreHeaderProps) => {
           {/* Logo */}
           <Link to="/" className="flex items-center shrink-0">
             <img
-              src={logoLagoonaDark}
+              src={logoBranca}
               alt="Fio de Gala"
-              className="h-8 sm:h-10 dark:hidden"
-            />
-            <img
-              src={logoLagoona}
-              alt="Fio de Gala"
-              className="h-8 sm:h-10 hidden dark:block"
+              className="h-8 sm:h-10"
             />
           </Link>
 
