@@ -343,7 +343,7 @@ const StoreHeader = ({ categories }: StoreHeaderProps) => {
               <SheetContent side="left" className="w-80 p-0">
                 <div className="flex flex-col h-full">
                   <div className="p-4 border-b flex items-center justify-center">
-                    <img src={logoLagoonaDark} alt="Fio de Gala" className="h-8" />
+                    <img src={logoBranca} alt="Fio de Gala" className="h-8" />
                   </div>
 
                   <div className="p-4 border-b">
