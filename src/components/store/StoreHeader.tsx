@@ -235,7 +235,7 @@ const StoreHeader = ({ categories }: StoreHeaderProps) => {
                   <div key={link.label} className="relative group">
                     <Link
                       to={link.to}
-                      className="px-3 xl:px-4 py-2 text-xs font-medium tracking-[0.1em] uppercase text-foreground/70 hover:text-store-gold transition-colors whitespace-nowrap inline-flex items-center gap-1"
+                      className="px-3 xl:px-4 py-2 text-xs font-bold tracking-[0.1em] uppercase text-white hover:text-[#FFDF00] transition-colors whitespace-nowrap inline-flex items-center gap-1 drop-shadow-[0_1px_1px_rgba(0,39,118,0.6)]"
                     >
                       {link.label}
                       {activeCategories.length > 0 && (
