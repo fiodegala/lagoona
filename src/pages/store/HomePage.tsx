@@ -652,14 +652,19 @@ const HomePage = () => {
       )}
 
       {/* Lançamentos - Grade */}
-      <section className="py-16 md:py-20">
+      <section
+        className="py-16 md:py-20 border-y-4 border-[#FFDF00]"
+        style={{ background: 'linear-gradient(135deg, #009C3B 0%, #00A845 50%, #009C3B 100%)' }}
+      >
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between mb-10">
             <div>
-              <h2 className="text-2xl md:text-3xl font-display font-bold italic">Lançamentos</h2>
-              <div className="w-12 h-0.5 bg-store-gold mt-2" />
+              <h2 className="text-2xl md:text-3xl font-display font-bold italic text-white drop-shadow-[0_1px_2px_rgba(0,39,118,0.5)]">
+                Lançamentos
+              </h2>
+              <div className="w-12 h-0.5 bg-[#FFDF00] mt-2" />
             </div>
-            <Button variant="outline" asChild className="gap-2 hidden sm:flex">
+            <Button variant="outline" asChild className="gap-2 hidden sm:flex border-[#FFDF00] text-[#FFDF00] hover:bg-[#FFDF00]/10 hover:text-white bg-transparent">
               <Link to="/loja?ordenar=recentes">
                 Ver todos
                 <ArrowRight className="h-4 w-4" />
@@ -669,7 +674,7 @@ const HomePage = () => {
 
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              <Loader2 className="h-8 w-8 animate-spin text-white/70" />
             </div>
           ) : newProducts.length > 0 ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
@@ -678,14 +683,14 @@ const HomePage = () => {
               ))}
             </div>
           ) : (
-            <div className="text-center py-12 text-muted-foreground">
+            <div className="text-center py-12 text-white/80">
               <ShoppingBag className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p>Nenhum produto disponível no momento.</p>
             </div>
           )}
 
           <div className="mt-6 text-center sm:hidden">
-            <Button variant="outline" asChild className="gap-2">
+            <Button variant="outline" asChild className="gap-2 border-[#FFDF00] text-[#FFDF00] hover:bg-[#FFDF00]/10 hover:text-white bg-transparent">
               <Link to="/loja?ordenar=recentes">
                 Ver todos os lançamentos
                 <ArrowRight className="h-4 w-4" />
