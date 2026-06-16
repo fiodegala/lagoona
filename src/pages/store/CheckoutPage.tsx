@@ -728,9 +728,12 @@ const CheckoutPage = () => {
                   <Button
                     type="submit"
                     form="checkout-form"
-                    className="w-full hidden lg:flex"
+                    className="w-full hidden lg:flex font-semibold"
                     size="lg"
                     disabled={isSubmitting}
+                    style={{ backgroundColor: '#009C3B', color: '#FFDF00' }}
+                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#007A2F')}
+                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#009C3B')}
                   >
                     {isSubmitting ? (
                       <>
