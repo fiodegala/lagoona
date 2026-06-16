@@ -376,7 +376,14 @@ const CartPage = () => {
                 })()}
               </CardContent>
               <CardFooter className="flex-col gap-3">
-                <Button asChild className="w-full gap-2" size="lg">
+                <Button
+                  asChild
+                  className="w-full gap-2 font-semibold"
+                  size="lg"
+                  style={{ backgroundColor: '#009C3B', color: '#FFDF00' }}
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#007A2F')}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#009C3B')}
+                >
                   <Link to="/checkout">
                     Finalizar Compra
                     <ArrowRight className="h-4 w-4" />

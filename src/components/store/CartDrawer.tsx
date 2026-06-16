@@ -270,8 +270,19 @@ const CartDrawer = () => {
                     className={
                       valentinesPromoActive
                         ? 'w-full bg-gradient-to-r from-rose-600 via-rose-500 to-pink-600 text-white hover:opacity-90 font-semibold'
-                        : 'w-full bg-store-primary text-store-accent hover:bg-store-primary/90 font-semibold'
+                        : 'w-full font-semibold'
                     }
+                    style={
+                      valentinesPromoActive
+                        ? undefined
+                        : { backgroundColor: '#009C3B', color: '#FFDF00' }
+                    }
+                    onMouseEnter={(e) => {
+                      if (!valentinesPromoActive) e.currentTarget.style.backgroundColor = '#007A2F';
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!valentinesPromoActive) e.currentTarget.style.backgroundColor = '#009C3B';
+                    }}
                   >
                     <Link to="/checkout">
                       {valentinesPromoActive && <Heart className="h-4 w-4 mr-1 fill-white" />}
