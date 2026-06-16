@@ -599,7 +599,15 @@ const CheckoutPage = () => {
                 <ShippingCalculator orderTotal={total} forceFreeShipping={comboFreeShipping} onShippingCalculated={setShippingResult} />
 
                 <div className="mt-6 lg:hidden">
-                  <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
+                  <Button
+                    type="submit"
+                    className="w-full font-semibold"
+                    size="lg"
+                    disabled={isSubmitting}
+                    style={{ backgroundColor: '#009C3B', color: '#FFDF00' }}
+                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#007A2F')}
+                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#009C3B')}
+                  >
                     {isSubmitting ? (
                       <>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
