@@ -118,9 +118,9 @@ const CartPage = () => {
                   Falta <strong>{formatPrice(remainingForReward)}</strong> para completar <strong>R$ 500,00</strong> e ganhar um <strong>boné grátis</strong> + <strong>frete grátis</strong>!
                 </p>
               </div>
-              <div className="w-full h-2.5 bg-muted rounded-full overflow-hidden">
+              <div className="w-full h-3 bg-muted rounded-full overflow-hidden shadow-inner">
                 <div
-                  className="h-full rounded-full transition-all duration-500"
+                  className="h-full rounded-full transition-[width] duration-700 ease-[cubic-bezier(0.4,0,0.2,1)] progress-bar-glow relative overflow-hidden"
                   style={{ width: `${rewardProgress}%`, backgroundColor: '#009C3B' }}
                 />
               </div>
