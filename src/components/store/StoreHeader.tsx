@@ -301,7 +301,7 @@ const StoreHeader = ({ categories }: StoreHeaderProps) => {
             <Button
               variant="ghost"
               size="icon"
-              className="text-foreground/70 hover:text-foreground"
+              className="text-white hover:text-[#FFDF00]"
               onClick={() => setSearchOpen(!searchOpen)}
             >
               <Search className="h-5 w-5" />
@@ -311,14 +311,14 @@ const StoreHeader = ({ categories }: StoreHeaderProps) => {
             <Button
               variant="ghost"
               size="icon"
-              className="text-foreground/70 hover:text-foreground"
+              className="text-white hover:text-[#FFDF00]"
               onClick={toggleTheme}
             >
               {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
             </Button>
 
             {/* Favorites */}
-            <Button variant="ghost" size="icon" asChild className="relative text-foreground/70 hover:text-foreground hidden sm:flex">
+            <Button variant="ghost" size="icon" asChild className="relative text-white hover:text-[#FFDF00] hidden sm:flex">
               <Link to="/favoritos">
                 <Heart className="h-5 w-5" />
                 {favoritesCount > 0 && (
@@ -330,7 +330,7 @@ const StoreHeader = ({ categories }: StoreHeaderProps) => {
             </Button>
 
             {/* Account */}
-            <Button variant="ghost" size="icon" asChild className="hidden sm:flex text-foreground/70 hover:text-foreground">
+            <Button variant="ghost" size="icon" asChild className="hidden sm:flex text-white hover:text-[#FFDF00]">
               <Link to="/minha-conta">
                 <User className="h-5 w-5" />
               </Link>
@@ -342,7 +342,7 @@ const StoreHeader = ({ categories }: StoreHeaderProps) => {
             {/* Mobile menu */}
             <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
               <SheetTrigger asChild className="lg:hidden">
-                <Button variant="ghost" size="icon" className="text-foreground/70">
+                <Button variant="ghost" size="icon" className="text-white hover:text-[#FFDF00]">
                   <Menu className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
