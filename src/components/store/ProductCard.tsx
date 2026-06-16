@@ -144,7 +144,7 @@ const ProductCard = memo(forwardRef<HTMLAnchorElement, ProductCardProps>(({ prod
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-        <div className="product-card relative bg-card rounded-none border overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-store-gold/30">
+        <div className="product-card relative bg-card rounded-[10px] border border-[#FFDF00] overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-[#FFDF00]">
         {/* Image Container */}
         <div className="relative aspect-[4/5] overflow-hidden bg-store-secondary/30">
           {product.image_url ? (

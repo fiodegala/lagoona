@@ -161,7 +161,7 @@ const RelatedProducts = ({
               to={`/produto/${product.id}`}
               className="shrink-0 w-[200px] md:w-[240px] snap-start"
             >
-              <Card className="group h-full overflow-hidden border hover:border-store-primary/30 transition-all hover:shadow-lg">
+              <Card className="group h-full overflow-hidden border border-[#FFDF00] rounded-[10px] hover:border-[#FFDF00] transition-all hover:shadow-lg">
                 <div className="relative aspect-square overflow-hidden bg-muted">
                   {product.image_url ? (
                     <img
