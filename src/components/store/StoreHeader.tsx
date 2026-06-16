@@ -9,9 +9,8 @@ import { useFavorites } from '@/contexts/FavoritesContext';
 import { Category } from '@/services/categories';
 import { supabase } from '@/integrations/supabase/client';
 import CartDrawer from '@/components/store/CartDrawer';
-import logoUrbanManAsset from '@/assets/fio-de-gala-urban-man-logo.png.asset.json';
-const logoLagoona = logoUrbanManAsset.url;
-const logoLagoonaDark = logoUrbanManAsset.url;
+import logoBrancaAsset from '@/assets/fio-de-gala-logo-branca.png.asset.json';
+const logoBranca = logoBrancaAsset.url;
 import { trackSearchEvent } from '@/hooks/useAnalyticsTracker';
 import { trackMetaSearch } from '@/lib/metaPixel';
 
@@ -216,14 +215,9 @@ const StoreHeader = ({ categories }: StoreHeaderProps) => {
           {/* Logo */}
           <Link to="/" className="flex items-center shrink-0">
             <img
-              src={logoLagoonaDark}
+              src={logoBranca}
               alt="Fio de Gala"
-              className="h-8 sm:h-10 dark:hidden"
-            />
-            <img
-              src={logoLagoona}
-              alt="Fio de Gala"
-              className="h-8 sm:h-10 hidden dark:block"
+              className="h-8 sm:h-10"
             />
           </Link>
 
@@ -349,7 +343,7 @@ const StoreHeader = ({ categories }: StoreHeaderProps) => {
               <SheetContent side="left" className="w-80 p-0">
                 <div className="flex flex-col h-full">
                   <div className="p-4 border-b flex items-center justify-center">
-                    <img src={logoLagoonaDark} alt="Fio de Gala" className="h-8" />
+                    <img src={logoBranca} alt="Fio de Gala" className="h-8" />
                   </div>
 
                   <div className="p-4 border-b">
