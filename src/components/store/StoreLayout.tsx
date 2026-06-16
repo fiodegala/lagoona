@@ -38,6 +38,7 @@ const StoreLayout = ({ children }: StoreLayoutProps) => {
       <WorldCupTheme />
       <TopAnnouncementBar />
       <StoreHeader categories={categories} />
+      <TrustBar />
       <main className="flex-1">
         {children}
       </main>
