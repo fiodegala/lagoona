@@ -569,35 +569,20 @@ const HomePage = () => {
         )}
       </section>
 
-      {/* Benefits Bar */}
+      {/* Copa Connection Bar */}
       <section
-        className={`border-b ${valentinesActive ? 'border-white/10 bg-gradient-to-r from-rose-600 via-rose-500 to-pink-600' : 'border-store-gold/10 bg-store-dark'}`}
-        aria-label="Benefícios da loja"
+        className="border-b-4 border-[#FFDF00]"
+        style={{ background: 'linear-gradient(90deg, #009C3B 0%, #00A845 50%, #009C3B 100%)' }}
+        aria-label="Mensagem da Seleção Brasileira"
       >
-        <div className="container mx-auto px-4 py-5">
-          <ul className={`grid ${valentinesActive ? 'grid-cols-2 sm:grid-cols-2' : 'grid-cols-3 md:grid-cols-3'} gap-4 sm:gap-6 justify-items-center`}>
-            {(valentinesActive
-              ? [
-                  { icon: Truck, title: 'Frete Grátis', desc: 'Acima de R$ 499,00' },
-                  { icon: CreditCard, title: 'Oferta dia dos namorados', desc: 'Em até 2x sem juros' },
-                ]
-              : [
-                  { icon: Truck, title: 'Frete Grátis', desc: 'Acima de R$ 499,00' },
-                  { icon: Sparkles, title: 'PIX -5%', desc: 'Desconto à vista' },
-                  { icon: CreditCard, title: 'Até 6x sem juros', desc: 'No cartão de crédito' },
-                ]
-            ).map(({ icon: Icon, title, desc }) => (
-              <li key={title} className="flex items-center gap-2.5 sm:gap-3">
-                <div className="p-1.5 sm:p-2.5 flex-shrink-0">
-                  <Icon className={`h-5 w-5 ${valentinesActive ? 'text-white' : 'text-store-gold'}`} aria-hidden="true" />
-                </div>
-                <div className="min-w-0">
-                  <h4 className="font-semibold text-sm sm:text-sm text-white leading-tight">{title}</h4>
-                  <p className="text-xs text-white/75 leading-tight mt-0.5">{desc}</p>
-                </div>
-              </li>
-            ))}
-          </ul>
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-center gap-3 text-center">
+            <span className="text-2xl">🇧🇷</span>
+            <p className="text-white font-bold text-sm sm:text-base md:text-lg tracking-wide drop-shadow-[0_1px_1px_rgba(0,39,118,0.6)]">
+              Vista o verde e amarelo com estilo. A torcida começa aqui, na Fio de Gala!
+            </p>
+            <span className="text-2xl">⚽</span>
+          </div>
         </div>
       </section>
 
