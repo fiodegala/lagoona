@@ -1,6 +1,7 @@
 import { ReactNode, useEffect, useState, lazy, Suspense } from 'react';
 import StoreHeader from './StoreHeader';
 import TopAnnouncementBar from './TopAnnouncementBar';
+import TrustBar from './TrustBar';
 import StoreFooter from './StoreFooter';
 import WhatsAppButton from './WhatsAppButton';
 import WorldCupTheme from './WorldCupTheme';
@@ -37,6 +38,7 @@ const StoreLayout = ({ children }: StoreLayoutProps) => {
       <WorldCupTheme />
       <TopAnnouncementBar />
       <StoreHeader categories={categories} />
+      <TrustBar />
       <main className="flex-1">
         {children}
       </main>
