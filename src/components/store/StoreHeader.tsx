@@ -9,9 +9,8 @@ import { useFavorites } from '@/contexts/FavoritesContext';
 import { Category } from '@/services/categories';
 import { supabase } from '@/integrations/supabase/client';
 import CartDrawer from '@/components/store/CartDrawer';
-import logoUrbanManAsset from '@/assets/fio-de-gala-urban-man-logo.png.asset.json';
-const logoLagoona = logoUrbanManAsset.url;
-const logoLagoonaDark = logoUrbanManAsset.url;
+import logoBrancaAsset from '@/assets/fio-de-gala-logo-branca.png.asset.json';
+const logoBranca = logoBrancaAsset.url;
 import { trackSearchEvent } from '@/hooks/useAnalyticsTracker';
 import { trackMetaSearch } from '@/lib/metaPixel';
 
