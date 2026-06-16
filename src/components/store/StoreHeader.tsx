@@ -198,7 +198,19 @@ const StoreHeader = ({ categories }: StoreHeaderProps) => {
   ];
 
   return (
-    <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-md border-b border-border/50">
+    <header
+      className="sticky top-0 z-50 backdrop-blur-md border-b-4"
+      style={{
+        background: 'linear-gradient(90deg, #009C3B 0%, #00A845 50%, #009C3B 100%)',
+        borderBottomColor: '#FFDF00',
+        boxShadow: '0 4px 14px rgba(0,39,118,0.25)',
+      }}
+    >
+      {/* Faixa Copa - amarela com azul */}
+      <div
+        className="h-1 w-full"
+        style={{ background: 'linear-gradient(90deg, #FFDF00 0%, #002776 50%, #FFDF00 100%)' }}
+      />
       <div className="container mx-auto px-2 sm:px-4 max-w-full">
         <div className="flex items-center justify-between h-16 min-w-0">
           {/* Logo */}
