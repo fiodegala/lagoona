@@ -35,6 +35,7 @@ import {
   MessageSquare,
   Calendar,
   Trophy,
+  Wrench,
 } from 'lucide-react';
 
 export interface MenuItem {
