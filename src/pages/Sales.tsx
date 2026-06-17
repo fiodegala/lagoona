@@ -21,6 +21,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { format, startOfDay, endOfDay, startOfWeek, startOfMonth, subDays } from 'date-fns';
+import { computeDateRange, type PeriodFilter } from '@/lib/dateRange';
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { auditService } from '@/services/auditService';
