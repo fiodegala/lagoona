@@ -368,7 +368,7 @@ export default function SellerReconciliation() {
                           </TableCell>
                         </TableRow>
                       )}
-                    </>
+                    </Fragment>
                   );
                 })}
               </TableBody>
