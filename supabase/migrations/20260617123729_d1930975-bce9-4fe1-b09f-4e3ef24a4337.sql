@@ -1,0 +1,1 @@
+UPDATE public.pos_sales SET seller_id = '7636d516-c860-4fe3-b288-a5b41efee1ad' WHERE id = '4066fa0f-ce67-4d91-88a6-90fb8309fca3';
