@@ -21,6 +21,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { format, startOfDay, endOfDay, startOfWeek, startOfMonth, subDays } from 'date-fns';
+import { computeDateRange, type PeriodFilter } from '@/lib/dateRange';
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { auditService } from '@/services/auditService';
@@ -401,28 +402,10 @@ const Sales = () => {
     }
   };
 
-  const dateRange = useMemo(() => {
-    const now = new Date();
-    switch (periodFilter) {
-      case 'today':
-        return { start: startOfDay(now), end: endOfDay(now) };
-      case 'yesterday':
-        return { start: startOfDay(subDays(now, 1)), end: endOfDay(subDays(now, 1)) };
-      case 'week':
-        return { start: startOfWeek(now, { weekStartsOn: 1 }), end: endOfDay(now) };
-      case 'month':
-        return { start: startOfMonth(now), end: endOfDay(now) };
-      case '30days':
-        return { start: startOfDay(subDays(now, 30)), end: endOfDay(now) };
-      case 'custom':
-        return {
-          start: customStart ? startOfDay(new Date(`${customStart}T00:00:00`)) : startOfDay(subDays(now, 30)),
-          end: customEnd ? endOfDay(new Date(`${customEnd}T00:00:00`)) : endOfDay(now),
-        };
-      default:
-        return { start: startOfDay(now), end: endOfDay(now) };
-    }
-  }, [periodFilter, customStart, customEnd]);
+  const dateRange = useMemo(
+    () => computeDateRange(periodFilter as PeriodFilter, customStart, customEnd),
+    [periodFilter, customStart, customEnd],
+  );
 
    const { data: sales = [], isLoading } = useQuery({
     queryKey: ['pos-sales', dateRange.start.toISOString(), dateRange.end.toISOString(), isAdmin, isManager, userStoreId, user?.id],
