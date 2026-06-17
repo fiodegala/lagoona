@@ -72,6 +72,7 @@ export const navItems: MenuItem[] = [
   { icon: UserPlus, label: 'Clientes', path: '/admin/customers', menuKey: 'customers' },
   { icon: ShoppingCart, label: 'Pedidos', path: '/admin/orders', menuKey: 'orders' },
   { icon: Receipt, label: 'Vendas', path: '/admin/sales', menuKey: 'sales' },
+  { icon: Wrench, label: 'Reconciliação Vendedores', path: '/admin/reconciliacao-vendedores', menuKey: 'seller-reconciliation', requireAdmin: true },
   { icon: ShoppingBasket, label: 'Carrinhos Abandonados', path: '/admin/abandoned-carts', menuKey: 'abandoned-carts' },
   { icon: FileText, label: 'Orçamentos', path: '/admin/orcamentos', menuKey: 'quotes' },
   { icon: Star, label: 'Avaliações', path: '/admin/reviews', menuKey: 'reviews', requireAdmin: true },
