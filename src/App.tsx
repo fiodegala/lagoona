@@ -57,6 +57,7 @@ const VisualMerchandising = lazy(() => import("./pages/VisualMerchandising"));
 const InternalChat = lazy(() => import("./pages/InternalChat"));
 const CalendarPage = lazy(() => import("./pages/Calendar"));
 const ScorePredictions = lazy(() => import("./pages/ScorePredictions"));
+const SellerReconciliation = lazy(() => import("./pages/SellerReconciliation"));
 
 // Lazy-loaded Store Pages
 const HomePage = lazy(() => import("./pages/store/HomePage"));
