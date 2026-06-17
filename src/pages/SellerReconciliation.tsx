@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import AdminLayout from '@/components/AdminLayout';
 import { supabase } from '@/integrations/supabase/client';
@@ -303,8 +303,8 @@ export default function SellerReconciliation() {
                   const diff = stat.expectedTotal - stat.attributedTotal;
                   const ok = stat.orphans.length === 0;
                   return (
-                    <>
-                      <TableRow key={stat.profile.user_id}>
+                    <Fragment key={stat.profile.user_id}>
+                      <TableRow>
                         <TableCell>
                           <div className="flex items-center gap-2">
                             {ok ? <CheckCircle2 className="h-4 w-4 text-emerald-600" /> : <AlertTriangle className="h-4 w-4 text-amber-600" />}
@@ -368,7 +368,7 @@ export default function SellerReconciliation() {
                           </TableCell>
                         </TableRow>
                       )}
-                    </>
+                    </Fragment>
                   );
                 })}
               </TableBody>
