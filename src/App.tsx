@@ -237,6 +237,14 @@ const App = () => (
                 }
               />
               <Route
+                path="/admin/relatorio-pdv-site"
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <PdvSiteReport />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
                 path="/admin/reviews"
                 element={
                   <ProtectedRoute requiredRole="admin">
