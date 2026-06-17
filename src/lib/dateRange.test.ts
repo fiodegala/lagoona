@@ -49,14 +49,25 @@ describe('computeDateRange - custom period', () => {
     expect(end.getMinutes()).toBe(59);
   });
 
-  it('includes a sale made at 15:55 UTC on the selected day (Brasília case)', () => {
-    // Regression: Myrelle's sale on 2026-06-05 15:55Z must fall inside the
-    // 05/06/2026 → 05/06/2026 filter when the host runs in America/Sao_Paulo.
+  it('includes a sale that occurred during the selected local day (Myrelle regression)', () => {
+    // Regression: Myrelle's sale on 05/06/2026 was excluded because the
+    // custom filter parsed the input as UTC, shifting the day in UTC-3.
+    // Build the sale instant from LOCAL components so the assertion is
+    // valid in any host timezone — it proves the range covers the picked
+    // calendar day, which is what the user expects.
     const { start, end } = computeDateRange('custom', '2026-06-05', '2026-06-05');
-    const saleAt = new Date('2026-06-05T15:55:39Z');
+    const saleAtLocalNoon = new Date(2026, 5, 5, 12, 55, 0);
 
-    expect(saleAt.getTime()).toBeGreaterThanOrEqual(start.getTime());
-    expect(saleAt.getTime()).toBeLessThanOrEqual(end.getTime());
+    expect(saleAtLocalNoon.getTime()).toBeGreaterThanOrEqual(start.getTime());
+    expect(saleAtLocalNoon.getTime()).toBeLessThanOrEqual(end.getTime());
+  });
+
+  it('rejects the buggy UTC-midnight parse that caused the Brasília bug', () => {
+    // If parsing reverted to `new Date("2026-06-05")` (UTC midnight), in
+    // any timezone west of UTC the start would land on 2026-06-04 local.
+    const { start } = computeDateRange('custom', '2026-06-05', '2026-06-05');
+    expect(start.getDate()).toBe(5);
+    expect(start.getMonth()).toBe(5);
   });
 
   it('handles multi-day ranges correctly', () => {
