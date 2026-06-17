@@ -58,6 +58,7 @@ const InternalChat = lazy(() => import("./pages/InternalChat"));
 const CalendarPage = lazy(() => import("./pages/Calendar"));
 const ScorePredictions = lazy(() => import("./pages/ScorePredictions"));
 const SellerReconciliation = lazy(() => import("./pages/SellerReconciliation"));
+const PdvSiteReport = lazy(() => import("./pages/PdvSiteReport"));
 
 // Lazy-loaded Store Pages
 const HomePage = lazy(() => import("./pages/store/HomePage"));
@@ -232,6 +233,14 @@ const App = () => (
                 element={
                   <ProtectedRoute requiredRole="admin">
                     <SellerReconciliation />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/relatorio-pdv-site"
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <PdvSiteReport />
                   </ProtectedRoute>
                 }
               />
