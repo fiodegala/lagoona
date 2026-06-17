@@ -416,8 +416,8 @@ const Sales = () => {
         return { start: startOfDay(subDays(now, 30)), end: endOfDay(now) };
       case 'custom':
         return {
-          start: customStart ? startOfDay(new Date(customStart)) : startOfDay(subDays(now, 30)),
-          end: customEnd ? endOfDay(new Date(customEnd)) : endOfDay(now),
+          start: customStart ? startOfDay(new Date(`${customStart}T00:00:00`)) : startOfDay(subDays(now, 30)),
+          end: customEnd ? endOfDay(new Date(`${customEnd}T00:00:00`)) : endOfDay(now),
         };
       default:
         return { start: startOfDay(now), end: endOfDay(now) };
