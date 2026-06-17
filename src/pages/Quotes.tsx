@@ -211,9 +211,25 @@ const Quotes = () => {
       if (!user) throw new Error('Não autenticado');
 
       const sellerName = quote.notes?.match(/Vendedor:\s*([^|]+)/i)?.[1]?.trim();
-      const { data: sellerProfile } = sellerName
-        ? await supabase.from('profiles').select('user_id').ilike('full_name', sellerName).maybeSingle()
-        : { data: null } as { data: null };
+      let sellerProfile: { user_id: string } | null = null;
+      if (sellerName) {
+        // 1) tenta match exato (case-insensitive)
+        const exact = await supabase.from('profiles').select('user_id').ilike('full_name', sellerName).maybeSingle();
+        sellerProfile = exact.data ?? null;
+        // 2) fallback: match parcial (contém o nome completo informado)
+        if (!sellerProfile) {
+          const partial = await supabase.from('profiles').select('user_id').ilike('full_name', `%${sellerName}%`).limit(1).maybeSingle();
+          sellerProfile = partial.data ?? null;
+        }
+        // 3) fallback: tenta pelo primeiro nome
+        if (!sellerProfile) {
+          const firstName = sellerName.split(/[\s\-]/)[0];
+          if (firstName && firstName.length >= 3) {
+            const byFirst = await supabase.from('profiles').select('user_id').ilike('full_name', `${firstName}%`).limit(1).maybeSingle();
+            sellerProfile = byFirst.data ?? null;
+          }
+        }
+      }
 
       // Create POS sale from quote data
       const { data: sale, error: saleError } = await supabase.from('pos_sales').insert({
