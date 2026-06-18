@@ -66,6 +66,7 @@ export const navItems: MenuItem[] = [
   { icon: Megaphone, label: 'Comunicados', path: '/admin/comunicados', menuKey: 'announcements' },
   { icon: Package, label: 'Produtos', path: '/admin/products', menuKey: 'products', requireAdmin: true },
   { icon: DollarSign, label: 'Valores de Produtos', path: '/admin/valores-produtos', menuKey: 'product-pricing' },
+  { icon: DollarSign, label: 'Custos de Produtos', path: '/admin/custos-produtos', menuKey: 'product-costs', requireAdmin: true },
   { icon: FolderTree, label: 'Categorias', path: '/admin/categories', menuKey: 'categories', requireAdmin: true },
   { icon: Warehouse, label: 'Estoque', path: '/admin/stock', menuKey: 'stock' },
   { icon: BarChart3, label: 'Distribuição Estoque', path: '/admin/distribuicao-estoque', menuKey: 'stock-distribution' },
