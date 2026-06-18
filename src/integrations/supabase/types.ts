@@ -2261,6 +2261,7 @@ export type Database = {
         Row: {
           barcode: string | null
           category_id: string | null
+          cost_price: number | null
           created_at: string
           depth_cm: number | null
           description: string | null
@@ -2287,6 +2288,7 @@ export type Database = {
         Insert: {
           barcode?: string | null
           category_id?: string | null
+          cost_price?: number | null
           created_at?: string
           depth_cm?: number | null
           description?: string | null
@@ -2313,6 +2315,7 @@ export type Database = {
         Update: {
           barcode?: string | null
           category_id?: string | null
+          cost_price?: number | null
           created_at?: string
           depth_cm?: number | null
           description?: string | null

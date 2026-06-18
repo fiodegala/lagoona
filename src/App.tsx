@@ -59,6 +59,7 @@ const CalendarPage = lazy(() => import("./pages/Calendar"));
 const ScorePredictions = lazy(() => import("./pages/ScorePredictions"));
 const SellerReconciliation = lazy(() => import("./pages/SellerReconciliation"));
 const PdvSiteReport = lazy(() => import("./pages/PdvSiteReport"));
+const ProductCosts = lazy(() => import("./pages/ProductCosts"));
 
 // Lazy-loaded Store Pages
 const HomePage = lazy(() => import("./pages/store/HomePage"));
@@ -177,6 +178,14 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <ProductPricing />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/custos-produtos"
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <ProductCosts />
                   </ProtectedRoute>
                 }
               />
