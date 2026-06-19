@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -6,6 +6,7 @@ import { AlertTriangle, Star, ShieldCheck, DoorOpen, Ban, Download } from 'lucid
 import { Button } from '@/components/ui/button';
 import { exportClassificationToXLSX } from '@/lib/abcExport';
 import { exportClassificationToPDF } from '@/lib/abcPdfExport';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ABCItem {
   productName: string;
