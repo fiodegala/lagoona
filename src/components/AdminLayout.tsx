@@ -11,6 +11,7 @@ import {
   Settings,
   ClipboardList,
   Megaphone,
+  TrendingUp,
 } from 'lucide-react';
 import AdminNotificationBell from '@/components/AdminNotificationBell';
 import { isAlwaysVisibleMenu, navItems, settingsItems } from '@/config/menuItems';
@@ -49,6 +50,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
   const pinnedShortcutItems = [
     { icon: ClipboardList, label: 'Ordens de Serviço', path: '/admin/ordens-servico', menuKey: 'service-orders' },
     { icon: Megaphone, label: 'Comunicados', path: '/admin/comunicados', menuKey: 'announcements' },
+    { icon: TrendingUp, label: 'Curva ABC', path: '/admin/curva-abc', menuKey: 'abc-curve' },
   ];
   const primaryNavItems = navItems;
 
