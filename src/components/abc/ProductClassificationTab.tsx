@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -6,6 +6,7 @@ import { AlertTriangle, Star, ShieldCheck, DoorOpen, Ban, Download } from 'lucid
 import { Button } from '@/components/ui/button';
 import { exportClassificationToXLSX } from '@/lib/abcExport';
 import { exportClassificationToPDF } from '@/lib/abcPdfExport';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ABCItem {
   productName: string;
@@ -183,12 +184,45 @@ const classConfig: Record<Classification, { color: string; icon: typeof Star; la
 };
 
 const ProductClassificationTab = ({ abcData }: Props) => {
+  const [costById, setCostById] = useState<Record<string, number>>({});
+  const [costByName, setCostByName] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from('products')
+        .select('id, name, cost_price')
+        .not('cost_price', 'is', null);
+      if (cancelled || !data) return;
+      const byId: Record<string, number> = {};
+      const byName: Record<string, number> = {};
+      for (const p of data as Array<{ id: string; name: string; cost_price: number | null }>) {
+        if (p.cost_price != null && Number(p.cost_price) > 0) {
+          byId[p.id] = Number(p.cost_price);
+          byName[p.name.toLowerCase().trim()] = Number(p.cost_price);
+        }
+      }
+      setCostById(byId);
+      setCostByName(byName);
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
   const classifiedProducts = useMemo<ClassifiedProduct[]>(() => {
     if (!abcData.length) return [];
 
     const products: ClassifiedProduct[] = [];
     for (const item of abcData) {
-      const cost = findCost(item.productName);
+      // Priority: cost_price from "Custos de Produtos" page (by id, then by name), fallback COST_MAP
+      let cost: number | null = null;
+      if (item.productId && costById[item.productId] != null) {
+        cost = costById[item.productId];
+      } else {
+        const nameKey = item.productName.toLowerCase().trim();
+        if (costByName[nameKey] != null) cost = costByName[nameKey];
+        else cost = findCost(item.productName);
+      }
       if (cost === null) continue;
 
       const avgPrice = item.totalRevenue / item.quantitySold;
@@ -225,7 +259,7 @@ const ProductClassificationTab = ({ abcData }: Props) => {
     }
 
     return products.sort((a, b) => b.totalProfit - a.totalProfit);
-  }, [abcData]);
+  }, [abcData, costById, costByName]);
 
   const stats = useMemo(() => {
     const grouped: Record<Classification, ClassifiedProduct[]> = { CORE: [], SUPORTE: [], ENTRADA: [], CONTROLADO: [] };
