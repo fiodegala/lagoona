@@ -287,17 +287,32 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         if (appliedCombos.length > 0 && !result.coupon.applicable_to_combos) {
           return { valid: false, error: 'Este cupom não pode ser usado junto com combos' };
         }
-        // Block coupon if cart has promotional items and coupon is not applicable to them
+        let finalDiscount = result.discount;
+        // If coupon does not apply to promotional items, recalculate using only eligible items
         if (result.coupon.applicable_to_promotional === false && items.some(i => i.isPromotional)) {
-          return { valid: false, error: 'Este cupom não pode ser usado em produtos promocionais' };
+          const eligibleItems = items.filter(i => !i.isPromotional);
+          if (eligibleItems.length === 0) {
+            return { valid: false, error: 'Este cupom não pode ser usado em produtos promocionais' };
+          }
+          const eligibleSubtotal = eligibleItems.reduce((t, i) => t + i.price * i.quantity, 0);
+          if (result.coupon.discount_type === 'percentage') {
+            finalDiscount = (eligibleSubtotal * result.coupon.discount_value) / 100;
+            if (result.coupon.maximum_discount && finalDiscount > result.coupon.maximum_discount) {
+              finalDiscount = result.coupon.maximum_discount;
+            }
+          } else if (result.coupon.discount_type === 'fixed') {
+            finalDiscount = Math.min(result.coupon.discount_value, eligibleSubtotal);
+          }
         }
-        setAppliedCoupon({ coupon: result.coupon, discount: result.discount });
+        setAppliedCoupon({ coupon: result.coupon, discount: finalDiscount });
+        return { ...result, discount: finalDiscount };
       }
       return result;
     } finally {
       setCouponLoading(false);
     }
   };
+
 
   const removeCoupon = () => setAppliedCoupon(null);
 
