@@ -165,6 +165,7 @@ const Coupons = () => {
         is_active: coupon.is_active,
         show_in_wheel: coupon.show_in_wheel ?? false,
         applicable_to_combos: coupon.applicable_to_combos ?? false,
+        applicable_to_promotional: coupon.applicable_to_promotional ?? true,
         progressive_tiers: coupon.progressive_tiers || null,
         applicable_shipping_zones: coupon.applicable_shipping_zones || [],
       });
