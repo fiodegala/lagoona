@@ -31,6 +31,7 @@ export interface Coupon {
   applicable_products: string[];
   applicable_shipping_zones: string[];
   applicable_to_combos: boolean;
+  applicable_to_promotional: boolean;
   show_in_wheel: boolean;
   progressive_tiers: ProgressiveConfig | null;
   created_at: string;
