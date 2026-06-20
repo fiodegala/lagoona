@@ -94,6 +94,7 @@ const Coupons = () => {
     is_active: true,
     show_in_wheel: false,
     applicable_to_combos: false,
+    applicable_to_promotional: true,
     progressive_tiers: null,
     applicable_shipping_zones: [],
   });
