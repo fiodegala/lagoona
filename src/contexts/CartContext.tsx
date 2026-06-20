@@ -175,11 +175,19 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   // Revalidate coupon when cart changes
   useEffect(() => {
     if (appliedCoupon && items.length > 0) {
-      const subtotal = items.reduce((total, item) => total + item.price * item.quantity, 0);
-      
+      const fullSubtotal = items.reduce((total, item) => total + item.price * item.quantity, 0);
+      const excludePromotional = appliedCoupon.coupon.applicable_to_promotional === false;
+      const eligibleItems = excludePromotional ? items.filter(i => !i.isPromotional) : items;
+      const eligibleSubtotal = eligibleItems.reduce((total, item) => total + item.price * item.quantity, 0);
+
+      if (excludePromotional && eligibleSubtotal === 0) {
+        setAppliedCoupon(null);
+        return;
+      }
+
       let discount = 0;
       if (appliedCoupon.coupon.discount_type === 'percentage') {
-        discount = (subtotal * appliedCoupon.coupon.discount_value) / 100;
+        discount = (eligibleSubtotal * appliedCoupon.coupon.discount_value) / 100;
         if (appliedCoupon.coupon.maximum_discount && discount > appliedCoupon.coupon.maximum_discount) {
           discount = appliedCoupon.coupon.maximum_discount;
         }
@@ -187,9 +195,9 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         discount = appliedCoupon.coupon.discount_value;
       }
 
-      if (discount > subtotal) discount = subtotal;
+      if (discount > eligibleSubtotal) discount = eligibleSubtotal;
 
-      if (appliedCoupon.coupon.minimum_order_value && subtotal < appliedCoupon.coupon.minimum_order_value) {
+      if (appliedCoupon.coupon.minimum_order_value && fullSubtotal < appliedCoupon.coupon.minimum_order_value) {
         setAppliedCoupon(null);
       } else if (discount !== appliedCoupon.discount) {
         setAppliedCoupon({ ...appliedCoupon, discount });
@@ -198,6 +206,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       setAppliedCoupon(null);
     }
   }, [items]);
+
 
   const addItem = (newItem: Omit<CartItem, 'quantity'> & { quantity?: number }) => {
     setItems(current => {
@@ -278,17 +287,32 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         if (appliedCombos.length > 0 && !result.coupon.applicable_to_combos) {
           return { valid: false, error: 'Este cupom não pode ser usado junto com combos' };
         }
-        // Block coupon if cart has promotional items and coupon is not applicable to them
+        let finalDiscount = result.discount;
+        // If coupon does not apply to promotional items, recalculate using only eligible items
         if (result.coupon.applicable_to_promotional === false && items.some(i => i.isPromotional)) {
-          return { valid: false, error: 'Este cupom não pode ser usado em produtos promocionais' };
+          const eligibleItems = items.filter(i => !i.isPromotional);
+          if (eligibleItems.length === 0) {
+            return { valid: false, error: 'Este cupom não pode ser usado em produtos promocionais' };
+          }
+          const eligibleSubtotal = eligibleItems.reduce((t, i) => t + i.price * i.quantity, 0);
+          if (result.coupon.discount_type === 'percentage') {
+            finalDiscount = (eligibleSubtotal * result.coupon.discount_value) / 100;
+            if (result.coupon.maximum_discount && finalDiscount > result.coupon.maximum_discount) {
+              finalDiscount = result.coupon.maximum_discount;
+            }
+          } else if (result.coupon.discount_type === 'fixed') {
+            finalDiscount = Math.min(result.coupon.discount_value, eligibleSubtotal);
+          }
         }
-        setAppliedCoupon({ coupon: result.coupon, discount: result.discount });
+        setAppliedCoupon({ coupon: result.coupon, discount: finalDiscount });
+        return { ...result, discount: finalDiscount };
       }
       return result;
     } finally {
       setCouponLoading(false);
     }
   };
+
 
   const removeCoupon = () => setAppliedCoupon(null);
 
