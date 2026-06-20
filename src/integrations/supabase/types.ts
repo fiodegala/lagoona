@@ -804,6 +804,7 @@ export type Database = {
           applicable_products: string[] | null
           applicable_shipping_zones: string[] | null
           applicable_to_combos: boolean
+          applicable_to_promotional: boolean
           code: string
           created_at: string
           description: string | null
@@ -827,6 +828,7 @@ export type Database = {
           applicable_products?: string[] | null
           applicable_shipping_zones?: string[] | null
           applicable_to_combos?: boolean
+          applicable_to_promotional?: boolean
           code: string
           created_at?: string
           description?: string | null
@@ -850,6 +852,7 @@ export type Database = {
           applicable_products?: string[] | null
           applicable_shipping_zones?: string[] | null
           applicable_to_combos?: boolean
+          applicable_to_promotional?: boolean
           code?: string
           created_at?: string
           description?: string | null

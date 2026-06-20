@@ -278,6 +278,10 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         if (appliedCombos.length > 0 && !result.coupon.applicable_to_combos) {
           return { valid: false, error: 'Este cupom não pode ser usado junto com combos' };
         }
+        // Block coupon if cart has promotional items and coupon is not applicable to them
+        if (result.coupon.applicable_to_promotional === false && items.some(i => i.isPromotional)) {
+          return { valid: false, error: 'Este cupom não pode ser usado em produtos promocionais' };
+        }
         setAppliedCoupon({ coupon: result.coupon, discount: result.discount });
       }
       return result;

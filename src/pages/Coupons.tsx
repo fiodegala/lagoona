@@ -94,6 +94,7 @@ const Coupons = () => {
     is_active: true,
     show_in_wheel: false,
     applicable_to_combos: false,
+    applicable_to_promotional: true,
     progressive_tiers: null,
     applicable_shipping_zones: [],
   });
@@ -140,6 +141,7 @@ const Coupons = () => {
       is_active: true,
       show_in_wheel: false,
       applicable_to_combos: false,
+      applicable_to_promotional: true,
       progressive_tiers: null,
       applicable_shipping_zones: [],
     });
@@ -163,6 +165,7 @@ const Coupons = () => {
         is_active: coupon.is_active,
         show_in_wheel: coupon.show_in_wheel ?? false,
         applicable_to_combos: coupon.applicable_to_combos ?? false,
+        applicable_to_promotional: coupon.applicable_to_promotional ?? true,
         progressive_tiers: coupon.progressive_tiers || null,
         applicable_shipping_zones: coupon.applicable_shipping_zones || [],
       });
@@ -991,6 +994,20 @@ const Coupons = () => {
                 id="applicable_to_combos"
                 checked={formData.applicable_to_combos ?? false}
                 onCheckedChange={(checked) => setFormData(prev => ({ ...prev, applicable_to_combos: checked }))}
+              />
+            </div>
+
+            <div className="flex items-center justify-between rounded-lg border p-3">
+              <div>
+                <Label htmlFor="applicable_to_promotional" className="font-medium">Aplicável em Produtos Promocionais</Label>
+                <p className="text-sm text-muted-foreground">
+                  Permitir que este cupom seja usado em produtos que já estão com desconto/promoção
+                </p>
+              </div>
+              <Switch
+                id="applicable_to_promotional"
+                checked={formData.applicable_to_promotional ?? true}
+                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, applicable_to_promotional: checked }))}
               />
             </div>
 
