@@ -125,7 +125,7 @@ const CartPage = () => {
                 />
               </div>
               <p className="text-xs text-muted-foreground mt-2 text-right">
-                {formatPrice(subtotal)} / {formatPrice(REWARD_THRESHOLD)}
+                {formatPrice(total)} / {formatPrice(REWARD_THRESHOLD)}
               </p>
             </>
           ) : (
