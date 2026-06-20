@@ -175,11 +175,19 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   // Revalidate coupon when cart changes
   useEffect(() => {
     if (appliedCoupon && items.length > 0) {
-      const subtotal = items.reduce((total, item) => total + item.price * item.quantity, 0);
-      
+      const fullSubtotal = items.reduce((total, item) => total + item.price * item.quantity, 0);
+      const excludePromotional = appliedCoupon.coupon.applicable_to_promotional === false;
+      const eligibleItems = excludePromotional ? items.filter(i => !i.isPromotional) : items;
+      const eligibleSubtotal = eligibleItems.reduce((total, item) => total + item.price * item.quantity, 0);
+
+      if (excludePromotional && eligibleSubtotal === 0) {
+        setAppliedCoupon(null);
+        return;
+      }
+
       let discount = 0;
       if (appliedCoupon.coupon.discount_type === 'percentage') {
-        discount = (subtotal * appliedCoupon.coupon.discount_value) / 100;
+        discount = (eligibleSubtotal * appliedCoupon.coupon.discount_value) / 100;
         if (appliedCoupon.coupon.maximum_discount && discount > appliedCoupon.coupon.maximum_discount) {
           discount = appliedCoupon.coupon.maximum_discount;
         }
@@ -187,9 +195,9 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         discount = appliedCoupon.coupon.discount_value;
       }
 
-      if (discount > subtotal) discount = subtotal;
+      if (discount > eligibleSubtotal) discount = eligibleSubtotal;
 
-      if (appliedCoupon.coupon.minimum_order_value && subtotal < appliedCoupon.coupon.minimum_order_value) {
+      if (appliedCoupon.coupon.minimum_order_value && fullSubtotal < appliedCoupon.coupon.minimum_order_value) {
         setAppliedCoupon(null);
       } else if (discount !== appliedCoupon.discount) {
         setAppliedCoupon({ ...appliedCoupon, discount });
@@ -198,6 +206,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       setAppliedCoupon(null);
     }
   }, [items]);
+
 
   const addItem = (newItem: Omit<CartItem, 'quantity'> & { quantity?: number }) => {
     setItems(current => {
