@@ -101,8 +101,8 @@ const CartPage = () => {
   }
 
   const REWARD_THRESHOLD = 500;
-  const remainingForReward = REWARD_THRESHOLD - subtotal;
-  const rewardProgress = Math.min(100, (subtotal / REWARD_THRESHOLD) * 100);
+  const remainingForReward = Math.max(0, REWARD_THRESHOLD - total);
+  const rewardProgress = Math.min(100, (total / REWARD_THRESHOLD) * 100);
   const rewardUnlocked = remainingForReward <= 0;
 
   return (
