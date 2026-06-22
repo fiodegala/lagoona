@@ -427,7 +427,7 @@ const ProductClassificationTab = ({ abcData }: Props) => {
           <CardTitle className="text-base">📐 Fórmula Utilizada</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 text-sm text-muted-foreground">
-          <p><strong className="text-foreground">Lucro = Preço de venda − (Preço × 11%) − Custo do produto − R$ 27,56</strong></p>
+          <p><strong className="text-foreground">Lucro = Preço de venda − Custo do produto</strong></p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
             <div className="space-y-2">
               <p className="font-medium text-foreground">Classificações:</p>
@@ -437,10 +437,8 @@ const ProductClassificationTab = ({ abcData }: Props) => {
               <div className="flex items-center gap-2"><Badge variant="outline" className={classConfig.CONTROLADO.color}>CONTROLADO</Badge> Margem muito baixa ou prejuízo</div>
             </div>
             <div className="space-y-2">
-              <p className="font-medium text-foreground">Custos considerados:</p>
-              <p>• Custos variáveis: 11% do preço de venda</p>
-              <p>• Custo fixo por peça: R$ 27,56</p>
-              <p>• Custo de aquisição: conforme tabela informada</p>
+              <p className="font-medium text-foreground">Custo considerado:</p>
+              <p>• Custo de aquisição cadastrado em "Custos de Produtos"</p>
             </div>
           </div>
         </CardContent>
