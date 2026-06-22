@@ -185,30 +185,52 @@ const classConfig: Record<Classification, { color: string; icon: typeof Star; la
 };
 
 const ProductClassificationTab = ({ abcData }: Props) => {
-  const [costById, setCostById] = useState<Record<string, number>>({});
-  const [costByName, setCostByName] = useState<Record<string, number>>({});
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const { data } = await supabase
+  const { data: costsData } = useQuery({
+    queryKey: ['products-cost-map'],
+    queryFn: async () => {
+      const { data, error } = await supabase
         .from('products')
         .select('id, name, cost_price')
         .not('cost_price', 'is', null);
-      if (cancelled || !data) return;
+      if (error) throw error;
       const byId: Record<string, number> = {};
       const byName: Record<string, number> = {};
-      for (const p of data as Array<{ id: string; name: string; cost_price: number | null }>) {
+      for (const p of (data || []) as Array<{ id: string; name: string; cost_price: number | null }>) {
         if (p.cost_price != null && Number(p.cost_price) > 0) {
           byId[p.id] = Number(p.cost_price);
           byName[p.name.toLowerCase().trim()] = Number(p.cost_price);
         }
       }
-      setCostById(byId);
-      setCostByName(byName);
-    })();
-    return () => { cancelled = true; };
-  }, []);
+      return { byId, byName };
+    },
+    staleTime: 30_000,
+    refetchOnWindowFocus: true,
+  });
+
+  const costById = costsData?.byId ?? {};
+  const costByName = costsData?.byName ?? {};
+
+  // Realtime: re-fetch automatically whenever any product's cost_price changes
+  useEffect(() => {
+    const channel = supabase
+      .channel('products-cost-changes')
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'products' },
+        (payload) => {
+          const oldCost = (payload.old as any)?.cost_price;
+          const newCost = (payload.new as any)?.cost_price;
+          if (oldCost !== newCost) {
+            queryClient.invalidateQueries({ queryKey: ['products-cost-map'] });
+          }
+        },
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [queryClient]);
+
 
   const classifiedProducts = useMemo<ClassifiedProduct[]>(() => {
     if (!abcData.length) return [];
