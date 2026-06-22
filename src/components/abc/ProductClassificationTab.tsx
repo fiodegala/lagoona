@@ -214,22 +214,20 @@ const ProductClassificationTab = ({ abcData }: Props) => {
 
     const products: ClassifiedProduct[] = [];
     for (const item of abcData) {
-      // Priority: cost_price from "Custos de Produtos" page (by id, then by name), fallback COST_MAP
+      // Use cost_price from "Custos de Produtos" page only (by id, then by name)
       let cost: number | null = null;
       if (item.productId && costById[item.productId] != null) {
         cost = costById[item.productId];
       } else {
         const nameKey = item.productName.toLowerCase().trim();
         if (costByName[nameKey] != null) cost = costByName[nameKey];
-        else cost = findCost(item.productName);
       }
       if (cost === null) continue;
 
       const avgPrice = item.totalRevenue / item.quantitySold;
-      const variableCost = avgPrice * VARIABLE_COST_PERCENT;
-      const totalCostPerUnit = cost + variableCost + FIXED_COST_PER_UNIT;
+      const totalCostPerUnit = cost;
       const profitPerUnit = avgPrice - totalCostPerUnit;
-      const marginPercent = (profitPerUnit / avgPrice) * 100;
+      const marginPercent = avgPrice > 0 ? (profitPerUnit / avgPrice) * 100 : 0;
       const totalProfit = profitPerUnit * item.quantitySold;
 
       products.push({
@@ -238,17 +236,16 @@ const ProductClassificationTab = ({ abcData }: Props) => {
         cost,
         qtySold: item.quantitySold,
         revenue: item.totalRevenue,
-        variableCost,
+        variableCost: 0,
         totalCostPerUnit,
         profitPerUnit,
         marginPercent,
         totalProfit,
-        classification: 'CORE', // placeholder
+        classification: 'CORE',
         action: '',
       });
     }
 
-    // Calculate median qty for classification
     const sortedQty = products.map(p => p.qtySold).sort((a, b) => a - b);
     const medianQty = sortedQty[Math.floor(sortedQty.length / 2)] || 1;
 
