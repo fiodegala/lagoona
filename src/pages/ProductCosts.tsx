@@ -142,6 +142,7 @@ const ProductCosts = () => {
       variant: fail > 0 ? 'destructive' : 'default',
     });
     queryClient.invalidateQueries({ queryKey: ['product-costs'] });
+    queryClient.invalidateQueries({ queryKey: ['products-cost-map'] });
   };
 
   return (
