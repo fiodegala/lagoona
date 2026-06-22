@@ -112,6 +112,7 @@ const ProductCosts = () => {
     }
     toast({ title: 'Custo atualizado', description: formatBRL(value) });
     queryClient.invalidateQueries({ queryKey: ['product-costs'] });
+    queryClient.invalidateQueries({ queryKey: ['products-cost-map'] });
   };
 
   const saveAllChanged = async () => {
@@ -141,6 +142,7 @@ const ProductCosts = () => {
       variant: fail > 0 ? 'destructive' : 'default',
     });
     queryClient.invalidateQueries({ queryKey: ['product-costs'] });
+    queryClient.invalidateQueries({ queryKey: ['products-cost-map'] });
   };
 
   return (
