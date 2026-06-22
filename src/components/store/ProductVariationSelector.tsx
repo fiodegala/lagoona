@@ -18,11 +18,13 @@ const ProductVariationSelector = ({ productId, onVariationSelect, onHasVariation
   const [selectedValues, setSelectedValues] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [stockMap, setStockMap] = useState<Record<string, number>>({});
+  const [stockTrusted, setStockTrusted] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
       try {
         setIsLoading(true);
+        setStockTrusted(false);
         const [attrs, vars, stockRes] = await Promise.all([
           variationsService.getAttributesByProduct(productId),
           variationsService.getVariationsByProduct(productId),
@@ -37,13 +39,42 @@ const ProductVariationSelector = ({ productId, onVariationSelect, onHasVariation
         setVariations(activeVars);
         onHasVariations?.(activeVars.length > 0);
 
-        // Build stock map: variation_id -> total quantity across stores
+        // Build stock map. If the store_stock query errored (e.g. RLS blocks
+        // the visitor) or returned NO rows at all for a product that has
+        // active variations, we cannot trust it — fall back to the legacy
+        // `stock` field on each variation so the storefront never marks
+        // everything as "Esgotado" by mistake.
+        const rows = stockRes.data || [];
+        const queryFailed = !!stockRes.error;
+        const noRowsAtAll = !queryFailed && rows.length === 0 && activeVars.length > 0;
+        const useFallback = queryFailed || noRowsAtAll;
+
         const map: Record<string, number> = {};
-        (stockRes.data || []).forEach((row: any) => {
-          if (row.variation_id) {
-            map[row.variation_id] = (map[row.variation_id] || 0) + row.quantity;
+        if (useFallback) {
+          if (queryFailed) {
+            console.warn('[ProductVariationSelector] store_stock query failed, falling back to legacy stock:', stockRes.error);
+          } else {
+            console.warn('[ProductVariationSelector] store_stock returned no rows, falling back to legacy stock');
           }
-        });
+          activeVars.forEach(v => {
+            map[v.id] = typeof v.stock === 'number' ? v.stock : 1;
+          });
+          setStockTrusted(false);
+        } else {
+          rows.forEach((row: any) => {
+            if (row.variation_id) {
+              map[row.variation_id] = (map[row.variation_id] || 0) + row.quantity;
+            }
+          });
+          // For active variations missing in store_stock, fall back to legacy
+          // stock instead of silently treating them as out of stock.
+          activeVars.forEach(v => {
+            if (map[v.id] === undefined) {
+              map[v.id] = typeof v.stock === 'number' ? v.stock : 0;
+            }
+          });
+          setStockTrusted(true);
+        }
         setStockMap(map);
       } catch (error) {
         console.error('Error loading variations:', error);
