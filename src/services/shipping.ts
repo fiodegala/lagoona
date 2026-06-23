@@ -27,6 +27,28 @@ export interface CreateShippingZoneData {
   is_active?: boolean;
 }
 
+export const MIN_FREE_SHIPPING_VALUE = 499;
+
+function validateZoneInput(input: Partial<CreateShippingZoneData>) {
+  if (input.free_shipping_min_value != null && input.free_shipping_min_value < MIN_FREE_SHIPPING_VALUE) {
+    throw new Error(`Frete grátis só pode ser configurado a partir de R$ ${MIN_FREE_SHIPPING_VALUE.toFixed(2).replace('.', ',')}.`);
+  }
+  if (input.base_price != null && input.base_price < 0) throw new Error('Preço base não pode ser negativo.');
+  if (input.price_per_kg != null && input.price_per_kg < 0) throw new Error('Preço por kg não pode ser negativo.');
+  if (input.estimated_days_min != null && input.estimated_days_min < 1) throw new Error('Prazo mínimo deve ser pelo menos 1 dia.');
+  if (
+    input.estimated_days_min != null &&
+    input.estimated_days_max != null &&
+    input.estimated_days_max < input.estimated_days_min
+  ) throw new Error('Prazo máximo não pode ser menor que o prazo mínimo.');
+  if (input.zip_start && input.zip_end) {
+    const a = input.zip_start.replace(/\D/g, '');
+    const b = input.zip_end.replace(/\D/g, '');
+    if (a.length !== 8 || b.length !== 8) throw new Error('CEPs devem ter 8 dígitos.');
+    if (a > b) throw new Error('CEP inicial deve ser menor ou igual ao CEP final.');
+  }
+}
+
 export const shippingService = {
   async getAll(): Promise<ShippingZone[]> {
     const { data, error } = await supabase
