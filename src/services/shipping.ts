@@ -123,7 +123,11 @@ export const shippingService = {
     if (!data || data.length === 0) return null;
 
     const zone = data[0] as ShippingZone;
-    const isFreeShipping = zone.free_shipping_min_value !== null && orderTotal >= zone.free_shipping_min_value;
+    const effectiveMin =
+      zone.free_shipping_min_value !== null
+        ? Math.max(zone.free_shipping_min_value, MIN_FREE_SHIPPING_VALUE)
+        : null;
+    const isFreeShipping = effectiveMin !== null && orderTotal >= effectiveMin;
     const price = isFreeShipping ? 0 : zone.base_price + (zone.price_per_kg * weightKg);
     const estimatedDays = zone.estimated_days_min === zone.estimated_days_max
       ? `${zone.estimated_days_min} dias úteis`
