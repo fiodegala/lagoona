@@ -16,9 +16,14 @@ const isInIframe = (() => {
   }
 })();
 
+("use client");
+
+export default function Home() {
+  throw new Error("Erro forçado na home");
+}
+
 const isPreviewHost =
-  window.location.hostname.includes("id-preview--") ||
-  window.location.hostname.includes("lovableproject.com");
+  window.location.hostname.includes("id-preview--") || window.location.hostname.includes("lovableproject.com");
 
 // Register only the notification service worker and avoid preview cache pollution
 if ("serviceWorker" in navigator) {
