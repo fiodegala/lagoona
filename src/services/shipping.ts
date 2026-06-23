@@ -61,6 +61,7 @@ export const shippingService = {
   },
 
   async create(input: CreateShippingZoneData): Promise<ShippingZone> {
+    validateZoneInput(input);
     const { data, error } = await supabase
       .from('shipping_zones')
       .insert(input)
@@ -72,6 +73,7 @@ export const shippingService = {
   },
 
   async update(id: string, input: Partial<CreateShippingZoneData>): Promise<ShippingZone> {
+    validateZoneInput(input);
     const { data, error } = await supabase
       .from('shipping_zones')
       .update(input)
