@@ -1,0 +1,1 @@
+UPDATE public.shipping_zones SET free_shipping_min_value = 499 WHERE free_shipping_min_value IS NOT NULL AND free_shipping_min_value < 499;
