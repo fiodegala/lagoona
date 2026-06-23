@@ -348,9 +348,9 @@ const Shipping = () => {
               <Input
                 id="free_shipping_min_value"
                 type="number"
-                min="0"
+                min="499"
                 step="0.01"
-                placeholder="Deixe vazio para desativar"
+                placeholder="Mínimo R$ 499,00 — deixe vazio para desativar"
                 value={formData.free_shipping_min_value ?? ''}
                 onChange={e => {
                   const val = e.target.value;
@@ -360,6 +360,9 @@ const Shipping = () => {
                   }));
                 }}
               />
+              <p className="text-xs text-muted-foreground">
+                Por regra de negócio, o frete grátis só pode ser aplicado a partir de R$ 499,00.
+              </p>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
