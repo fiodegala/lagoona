@@ -16,12 +16,6 @@ const isInIframe = (() => {
   }
 })();
 
-("use client");
-
-export default function Home() {
-  throw new Error("Erro forçado na home");
-}
-
 const isPreviewHost =
   window.location.hostname.includes("id-preview--") || window.location.hostname.includes("lovableproject.com");
 
