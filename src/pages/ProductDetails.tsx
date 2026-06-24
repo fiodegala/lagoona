@@ -589,6 +589,9 @@ const ProductDetails = () => {
               {product.name}
             </h1>
 
+            {/* Review-with-photo incentive (top 5 only) */}
+            <ReviewIncentiveBanner productName={product.name} onWriteReview={openReviewForm} />
+
             {/* Rating Summary - only when there are real reviews */}
             {reviewStats.count > 0 && (
               <button
