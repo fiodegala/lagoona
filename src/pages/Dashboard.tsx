@@ -1457,7 +1457,57 @@ const Dashboard = () => {
           )}
         </div>
 
+        {/* Top 10 produtos mais vendidos no Site (todo o período) */}
+        {(canShowSiteSales || isViewingAllStores) && (
+          <Card className="card-elevated">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Package className="h-5 w-5 text-primary" />
+                Top 10 Produtos Mais Vendidos no Site
+              </CardTitle>
+              <CardDescription>
+                Ranking por quantidade — todo o período (pedidos confirmados, enviados ou entregues)
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {topProductsLoading ? (
+                <Skeleton className="h-[300px] w-full" />
+              ) : topSiteProducts.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-8">
+                  Nenhuma venda registrada ainda.
+                </p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b text-left text-muted-foreground">
+                        <th className="py-2 pr-4 w-10">#</th>
+                        <th className="py-2 pr-4">Produto</th>
+                        <th className="py-2 pr-4 text-right">Qtd</th>
+                        <th className="py-2 text-right">Receita</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {topSiteProducts.map((p, i) => (
+                        <tr key={p.name} className="border-b last:border-0 hover:bg-muted/40">
+                          <td className="py-2 pr-4 font-medium text-muted-foreground">{i + 1}</td>
+                          <td className="py-2 pr-4 font-medium">{p.name}</td>
+                          <td className="py-2 pr-4 text-right tabular-nums">{p.qty}</td>
+                          <td className="py-2 text-right tabular-nums">
+                            {p.revenue > 0 ? formatCurrency(p.revenue) : <span className="text-muted-foreground">—</span>}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
         {/* Comparison Chart - PDV vs Online - Only when viewing all stores */}
+
         {isViewingAllStores && (
         <Card className="card-elevated">
           <CardHeader>
