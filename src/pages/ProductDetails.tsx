@@ -50,6 +50,15 @@ const ProductDetails = () => {
   const [upsellHasSelection, setUpsellHasSelection] = useState(false);
   const [upsellBuyTogether, setUpsellBuyTogether] = useState<(() => void) | null>(null);
   const [tryOnOpen, setTryOnOpen] = useState(false);
+  const reviewsHandleRef = useRef<ProductReviewsHandle | null>(null);
+  const openReviewForm = useCallback(() => {
+    const tab = document.querySelector('[value="reviews"]') as HTMLElement | null;
+    tab?.click();
+    setTimeout(() => {
+      reviewsHandleRef.current?.openForm();
+      tab?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 50);
+  }, []);
   const [tryOnEnabled, setTryOnEnabled] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
