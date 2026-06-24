@@ -1369,7 +1369,7 @@ const Dashboard = () => {
                   </div>
                 </CardContent>
               </Card>
-              )}
+
 
               <Card className="card-elevated">
                 <CardContent className="p-6">
