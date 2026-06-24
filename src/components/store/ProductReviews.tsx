@@ -85,7 +85,7 @@ const ProductReviews = ({ productId, onReady }: ProductReviewsProps & { onReady?
 
     setIsSubmitting(true);
     try {
-      await reviewsService.create({
+      const created = await reviewsService.create({
         product_id: productId,
         customer_name: formData.name,
         customer_email: user.email,
@@ -94,9 +94,53 @@ const ProductReviews = ({ productId, onReady }: ProductReviewsProps & { onReady?
         comment: formData.comment || undefined,
       });
 
-      toast.success('Avaliação enviada! Será publicada após moderação.');
+      // Fetch newly inserted review id (create() doesn't return id reliably)
+      const { data: latest } = await supabase
+        .from('product_reviews')
+        .select('id')
+        .eq('product_id', productId)
+        .eq('customer_email', user.email)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      const reviewId = latest?.id;
+      let uploadedPhoto = false;
+
+      if (reviewId) {
+        for (const f of photos) {
+          try {
+            await reviewsService.uploadMedia(reviewId, f, 'image');
+            uploadedPhoto = true;
+          } catch (err) { console.error('photo upload failed', err); }
+        }
+        if (video) {
+          try { await reviewsService.uploadMedia(reviewId, video, 'video'); } catch (err) { console.error('video upload failed', err); }
+        }
+      }
+
+      if (uploadedPhoto) {
+        try {
+          const { data, error } = await supabase.functions.invoke('generate-review-coupon', {
+            body: { customer_email: user.email, product_id: productId },
+          });
+          if (!error && data?.code) {
+            setIssuedCoupon(data.code);
+          } else {
+            toast.success('Avaliação enviada! Será publicada após moderação.');
+          }
+        } catch (err) {
+          console.error('coupon error', err);
+          toast.success('Avaliação enviada! Será publicada após moderação.');
+        }
+      } else {
+        toast.success('Avaliação enviada! Será publicada após moderação.');
+      }
+
       setIsFormOpen(false);
       setFormData({ name: '', email: '', rating: 5, title: '', comment: '' });
+      setPhotos([]);
+      setVideo(null);
     } catch (error) {
       console.error('Error submitting review:', error);
       toast.error('Erro ao enviar avaliação. Tente novamente.');
