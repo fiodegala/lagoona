@@ -1509,14 +1509,62 @@ const Dashboard = () => {
         {(canShowSiteSales || isViewingAllStores) && (
           <Card className="card-elevated">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Package className="h-5 w-5 text-primary" />
-                Top 10 Produtos Mais Vendidos no Site
-              </CardTitle>
-              <CardDescription>
-                Ranking por quantidade — todo o período (pedidos confirmados, enviados ou entregues)
-              </CardDescription>
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Package className="h-5 w-5 text-primary" />
+                    Top 10 Produtos Mais Vendidos no Site
+                  </CardTitle>
+                  <CardDescription>
+                    Ranking por quantidade (pedidos confirmados, enviados ou entregues)
+                  </CardDescription>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Select value={topProductsPeriod} onValueChange={(v) => setTopProductsPeriod(v as PeriodFilter)}>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todo o período</SelectItem>
+                      <SelectItem value="today">Hoje</SelectItem>
+                      <SelectItem value="week">Últimos 7 dias</SelectItem>
+                      <SelectItem value="month">Últimos 30 dias</SelectItem>
+                      <SelectItem value="currentMonth">Mês atual</SelectItem>
+                      <SelectItem value="lastMonth">Mês passado</SelectItem>
+                      <SelectItem value="custom">Personalizado</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {topProductsPeriod === 'custom' && (
+                    <Popover open={isTopProductsDateOpen} onOpenChange={setIsTopProductsDateOpen}>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" size="sm" className="gap-2">
+                          <CalendarRange className="h-4 w-4" />
+                          {topProductsCustomRange?.from
+                            ? topProductsCustomRange.to
+                              ? `${format(topProductsCustomRange.from, 'dd/MM/yy', { locale: ptBR })} - ${format(topProductsCustomRange.to, 'dd/MM/yy', { locale: ptBR })}`
+                              : format(topProductsCustomRange.from, 'dd/MM/yyyy', { locale: ptBR })
+                            : 'Selecionar'}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="end">
+                        <CalendarComponent
+                          mode="range"
+                          selected={topProductsCustomRange}
+                          onSelect={(r) => {
+                            setTopProductsCustomRange(r);
+                            if (r?.from && r?.to) setIsTopProductsDateOpen(false);
+                          }}
+                          numberOfMonths={2}
+                          locale={ptBR}
+                          className={cn('p-3 pointer-events-auto')}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  )}
+                </div>
+              </div>
             </CardHeader>
+
             <CardContent>
               {topProductsLoading ? (
                 <Skeleton className="h-[300px] w-full" />
