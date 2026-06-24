@@ -167,7 +167,56 @@ const Dashboard = () => {
   const [salesGoals, setSalesGoals] = useState<SalesGoal[]>([]);
   const [customers, setCustomers] = useState<CustomerWithLocation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [topSiteProducts, setTopSiteProducts] = useState<{ name: string; qty: number; revenue: number }[]>([]);
+  const [topProductsLoading, setTopProductsLoading] = useState(true);
   const loadRequestRef = useRef(0);
+
+  // Load top-selling site products (all time)
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        setTopProductsLoading(true);
+        const agg: Record<string, { qty: number; revenue: number }> = {};
+        const pageSize = 1000;
+        let from = 0;
+        while (true) {
+          const { data, error } = await supabase
+            .from('orders')
+            .select('items')
+            .eq('store_id', SITE_STORE_ID)
+            .in('status', ['confirmed', 'completed', 'delivered', 'processing', 'shipped'])
+            .range(from, from + pageSize - 1);
+          if (error || !data || data.length === 0) break;
+          for (const o of data) {
+            const items = Array.isArray((o as any).items) ? (o as any).items : [];
+            for (const it of items) {
+              const rawName = (it?.name || it?.product_name || 'Produto').toString();
+              const name = rawName.split(/\s+[-—]\s+/)[0].split(' — ')[0].trim() || rawName;
+              const qty = Number(it?.quantity) || 0;
+              const price = Number(it?.price) || 0;
+              if (qty <= 0) continue;
+              if (!agg[name]) agg[name] = { qty: 0, revenue: 0 };
+              agg[name].qty += qty;
+              agg[name].revenue += qty * price;
+            }
+          }
+          if (data.length < pageSize) break;
+          from += pageSize;
+        }
+        if (cancelled) return;
+        const top = Object.entries(agg)
+          .map(([name, v]) => ({ name, qty: v.qty, revenue: v.revenue }))
+          .sort((a, b) => b.qty - a.qty)
+          .slice(0, 10);
+        setTopSiteProducts(top);
+      } finally {
+        if (!cancelled) setTopProductsLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
 
   // Load stores for selector (admin sees all, online users see their accessible stores)
   useEffect(() => {
