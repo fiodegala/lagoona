@@ -440,6 +440,12 @@ const Dashboard = () => {
     const pendingOrders = filteredOrders.filter(o => o.status === 'pending' || o.status === 'processing');
     const cancelledOrders = filteredOrders.filter(o => o.status === 'cancelled');
 
+    const completedRevenue = completedOrders.reduce((sum, o) => sum + Number(o.total), 0);
+    const completedItemsSold = completedOrders.reduce((sum, o) => {
+      if (!Array.isArray(o.items)) return sum;
+      return sum + (o.items as any[]).reduce((iSum, item) => iSum + Number(item.quantity || item.qty || 1), 0);
+    }, 0);
+
     return {
       totalProducts: visibleProducts.length,
       activeProducts: visibleProducts.filter(p => p.is_active).length,
@@ -447,11 +453,14 @@ const Dashboard = () => {
       pendingOrders: pendingOrders.length,
       completedOrders: completedOrders.length,
       cancelledOrders: cancelledOrders.length,
-      totalRevenue: completedOrders.reduce((sum, o) => sum + Number(o.total), 0),
+      totalRevenue: completedRevenue,
       totalReviews: reviews.length,
       pendingReviews: reviews.filter(r => !r.is_approved).length,
       activeCoupons: coupons.filter(c => c.is_active).length,
       totalCategories: categories.filter(c => c.is_active).length,
+      averageTicket: completedOrders.length > 0 ? completedRevenue / completedOrders.length : 0,
+      averageProductTicket: completedItemsSold > 0 ? completedRevenue / completedItemsSold : 0,
+      totalItemsSold: completedItemsSold,
     };
   }, [filteredOrders, products, reviews, coupons, categories, isLoading, isLagoonaStoreSelected]);
 
