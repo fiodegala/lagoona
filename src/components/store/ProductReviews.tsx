@@ -428,6 +428,42 @@ const ProductReviews = ({ productId, onReady }: ProductReviewsProps & { onReady?
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Coupon Reward Dialog */}
+      <Dialog open={!!issuedCoupon} onOpenChange={(o) => !o && setIssuedCoupon(null)}>
+        <DialogContent className="max-w-md text-center">
+          <DialogHeader>
+            <DialogTitle className="flex items-center justify-center gap-2">
+              <CheckCircle2 className="h-5 w-5 text-store-gold" />
+              Avaliação enviada!
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <p className="text-sm text-muted-foreground">
+              Obrigado por compartilhar sua experiência com foto! Aqui está seu cupom de <strong className="text-foreground">R$ 10 OFF</strong> (mín. R$ 50, válido por 30 dias):
+            </p>
+            <div className="rounded-lg border-2 border-dashed border-store-gold bg-store-gold/5 p-4 flex items-center justify-between gap-3">
+              <code className="text-lg font-bold tracking-wider text-store-accent">{issuedCoupon}</code>
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1"
+                onClick={() => {
+                  if (issuedCoupon) {
+                    navigator.clipboard.writeText(issuedCoupon);
+                    toast.success('Cupom copiado!');
+                  }
+                }}
+              >
+                <Copy className="h-3.5 w-3.5" /> Copiar
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Sua avaliação será publicada após moderação.
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
