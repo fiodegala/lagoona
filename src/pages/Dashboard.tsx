@@ -1316,7 +1316,6 @@ const Dashboard = () => {
               )}
 
               {(canShowSiteSales || isViewingAllStores) && (
-              {(canShowSiteSales || isViewingAllStores) && (
               <Card className="card-elevated">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
