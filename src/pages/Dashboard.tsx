@@ -44,6 +44,9 @@ interface DashboardStats {
   pendingReviews: number;
   activeCoupons: number;
   totalCategories: number;
+  averageTicket: number;
+  averageProductTicket: number;
+  totalItemsSold: number;
 }
 
 interface POSStats {
@@ -437,6 +440,12 @@ const Dashboard = () => {
     const pendingOrders = filteredOrders.filter(o => o.status === 'pending' || o.status === 'processing');
     const cancelledOrders = filteredOrders.filter(o => o.status === 'cancelled');
 
+    const completedRevenue = completedOrders.reduce((sum, o) => sum + Number(o.total), 0);
+    const completedItemsSold = completedOrders.reduce((sum, o) => {
+      if (!Array.isArray(o.items)) return sum;
+      return sum + (o.items as any[]).reduce((iSum, item) => iSum + Number(item.quantity || item.qty || 1), 0);
+    }, 0);
+
     return {
       totalProducts: visibleProducts.length,
       activeProducts: visibleProducts.filter(p => p.is_active).length,
@@ -444,11 +453,14 @@ const Dashboard = () => {
       pendingOrders: pendingOrders.length,
       completedOrders: completedOrders.length,
       cancelledOrders: cancelledOrders.length,
-      totalRevenue: completedOrders.reduce((sum, o) => sum + Number(o.total), 0),
+      totalRevenue: completedRevenue,
       totalReviews: reviews.length,
       pendingReviews: reviews.filter(r => !r.is_approved).length,
       activeCoupons: coupons.filter(c => c.is_active).length,
       totalCategories: categories.filter(c => c.is_active).length,
+      averageTicket: completedOrders.length > 0 ? completedRevenue / completedOrders.length : 0,
+      averageProductTicket: completedItemsSold > 0 ? completedRevenue / completedItemsSold : 0,
+      totalItemsSold: completedItemsSold,
     };
   }, [filteredOrders, products, reviews, coupons, categories, isLoading, isLagoonaStoreSelected]);
 
@@ -1308,6 +1320,43 @@ const Dashboard = () => {
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
+                      <p className="text-sm font-medium text-muted-foreground">Ticket Médio Venda</p>
+                      <p className="text-2xl font-bold mt-1">{formatCurrency(stats?.averageTicket || 0)}</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Por pedido do site
+                      </p>
+                    </div>
+                    <div className="bg-primary/10 p-3 rounded-xl">
+                      <TrendingUp className="h-6 w-6 text-primary" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              )}
+
+              {(canShowSiteSales || isViewingAllStores) && (
+              <Card className="card-elevated">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Ticket Médio Produto</p>
+                      <p className="text-2xl font-bold mt-1">{formatCurrency(stats?.averageProductTicket || 0)}</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {stats?.totalItemsSold || 0} itens vendidos
+                      </p>
+                    </div>
+                    <div className="bg-success/10 p-3 rounded-xl">
+                      <Tag className="h-6 w-6 text-success" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              )}
+
+              <Card className="card-elevated">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
                       <p className="text-sm font-medium text-muted-foreground">Pedidos</p>
                       <p className="text-2xl font-bold mt-1">{stats?.totalOrders || 0}</p>
                       <p className="text-xs text-warning mt-1">
@@ -1320,7 +1369,7 @@ const Dashboard = () => {
                   </div>
                 </CardContent>
               </Card>
-              )}
+
 
               <Card className="card-elevated">
                 <CardContent className="p-6">
