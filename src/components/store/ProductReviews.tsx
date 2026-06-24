@@ -287,19 +287,40 @@ const ProductReviews = ({ productId, onReady }: ProductReviewsProps & { onReady?
                   />
                 </div>
 
-                <div className="flex gap-2 pt-2">
-                  <Button type="button" variant="outline" className="flex-1 gap-2" disabled>
-                    <ImageIcon className="h-4 w-4" />
-                    Adicionar Foto
-                  </Button>
-                  <Button type="button" variant="outline" className="flex-1 gap-2" disabled>
-                    <Video className="h-4 w-4" />
-                    Adicionar Vídeo
-                  </Button>
+                <div className="rounded-lg border border-store-gold/40 bg-store-gold/5 p-3 space-y-3">
+                  <div className="flex items-start gap-2">
+                    <Gift className="h-4 w-4 text-store-gold mt-0.5 shrink-0" />
+                    <p className="text-xs text-store-accent">
+                      Envie pelo menos <strong>1 foto</strong> com sua avaliação e ganhe um cupom de <strong>R$ 10 OFF</strong> (mín. R$ 50) na sua próxima compra.
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <label className="flex flex-col items-center justify-center gap-1 border border-dashed rounded-md p-3 cursor-pointer hover:bg-muted/40 transition-colors">
+                      <ImageIcon className="h-4 w-4" />
+                      <span className="text-xs">{photos.length > 0 ? `${photos.length} foto(s)` : 'Adicionar Fotos'}</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        className="hidden"
+                        onChange={(e) => {
+                          const files = Array.from(e.target.files || []).slice(0, 5);
+                          setPhotos(files);
+                        }}
+                      />
+                    </label>
+                    <label className="flex flex-col items-center justify-center gap-1 border border-dashed rounded-md p-3 cursor-pointer hover:bg-muted/40 transition-colors">
+                      <Video className="h-4 w-4" />
+                      <span className="text-xs truncate max-w-full">{video ? video.name : 'Adicionar Vídeo'}</span>
+                      <input
+                        type="file"
+                        accept="video/*"
+                        className="hidden"
+                        onChange={(e) => setVideo(e.target.files?.[0] || null)}
+                      />
+                    </label>
+                  </div>
                 </div>
-                <p className="text-xs text-muted-foreground text-center">
-                  Upload de mídia estará disponível após a moderação inicial
-                </p>
 
                 <Button 
                   type="submit" 
