@@ -167,7 +167,56 @@ const Dashboard = () => {
   const [salesGoals, setSalesGoals] = useState<SalesGoal[]>([]);
   const [customers, setCustomers] = useState<CustomerWithLocation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [topSiteProducts, setTopSiteProducts] = useState<{ name: string; qty: number; revenue: number }[]>([]);
+  const [topProductsLoading, setTopProductsLoading] = useState(true);
   const loadRequestRef = useRef(0);
+
+  // Load top-selling site products (all time)
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        setTopProductsLoading(true);
+        const agg: Record<string, { qty: number; revenue: number }> = {};
+        const pageSize = 1000;
+        let from = 0;
+        while (true) {
+          const { data, error } = await supabase
+            .from('orders')
+            .select('items')
+            .eq('store_id', SITE_STORE_ID)
+            .in('status', ['confirmed', 'completed', 'delivered', 'processing', 'shipped'])
+            .range(from, from + pageSize - 1);
+          if (error || !data || data.length === 0) break;
+          for (const o of data) {
+            const items = Array.isArray((o as any).items) ? (o as any).items : [];
+            for (const it of items) {
+              const rawName = (it?.name || it?.product_name || 'Produto').toString();
+              const name = rawName.split(/\s+[-—]\s+/)[0].split(' — ')[0].trim() || rawName;
+              const qty = Number(it?.quantity) || 0;
+              const price = Number(it?.price) || 0;
+              if (qty <= 0) continue;
+              if (!agg[name]) agg[name] = { qty: 0, revenue: 0 };
+              agg[name].qty += qty;
+              agg[name].revenue += qty * price;
+            }
+          }
+          if (data.length < pageSize) break;
+          from += pageSize;
+        }
+        if (cancelled) return;
+        const top = Object.entries(agg)
+          .map(([name, v]) => ({ name, qty: v.qty, revenue: v.revenue }))
+          .sort((a, b) => b.qty - a.qty)
+          .slice(0, 10);
+        setTopSiteProducts(top);
+      } finally {
+        if (!cancelled) setTopProductsLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
 
   // Load stores for selector (admin sees all, online users see their accessible stores)
   useEffect(() => {
@@ -1408,7 +1457,57 @@ const Dashboard = () => {
           )}
         </div>
 
+        {/* Top 10 produtos mais vendidos no Site (todo o período) */}
+        {(canShowSiteSales || isViewingAllStores) && (
+          <Card className="card-elevated">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Package className="h-5 w-5 text-primary" />
+                Top 10 Produtos Mais Vendidos no Site
+              </CardTitle>
+              <CardDescription>
+                Ranking por quantidade — todo o período (pedidos confirmados, enviados ou entregues)
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {topProductsLoading ? (
+                <Skeleton className="h-[300px] w-full" />
+              ) : topSiteProducts.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-8">
+                  Nenhuma venda registrada ainda.
+                </p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b text-left text-muted-foreground">
+                        <th className="py-2 pr-4 w-10">#</th>
+                        <th className="py-2 pr-4">Produto</th>
+                        <th className="py-2 pr-4 text-right">Qtd</th>
+                        <th className="py-2 text-right">Receita</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {topSiteProducts.map((p, i) => (
+                        <tr key={p.name} className="border-b last:border-0 hover:bg-muted/40">
+                          <td className="py-2 pr-4 font-medium text-muted-foreground">{i + 1}</td>
+                          <td className="py-2 pr-4 font-medium">{p.name}</td>
+                          <td className="py-2 pr-4 text-right tabular-nums">{p.qty}</td>
+                          <td className="py-2 text-right tabular-nums">
+                            {p.revenue > 0 ? formatCurrency(p.revenue) : <span className="text-muted-foreground">—</span>}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
         {/* Comparison Chart - PDV vs Online - Only when viewing all stores */}
+
         {isViewingAllStores && (
         <Card className="card-elevated">
           <CardHeader>
