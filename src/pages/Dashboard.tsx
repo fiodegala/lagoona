@@ -44,6 +44,9 @@ interface DashboardStats {
   pendingReviews: number;
   activeCoupons: number;
   totalCategories: number;
+  averageTicket: number;
+  averageProductTicket: number;
+  totalItemsSold: number;
 }
 
 interface POSStats {
