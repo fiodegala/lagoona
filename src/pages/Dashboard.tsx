@@ -169,9 +169,54 @@ const Dashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [topSiteProducts, setTopSiteProducts] = useState<{ name: string; qty: number; revenue: number }[]>([]);
   const [topProductsLoading, setTopProductsLoading] = useState(true);
+  const [topProductsPeriod, setTopProductsPeriod] = useState<PeriodFilter>('all');
+  const [topProductsCustomRange, setTopProductsCustomRange] = useState<DateRange | undefined>(undefined);
+  const [isTopProductsDateOpen, setIsTopProductsDateOpen] = useState(false);
   const loadRequestRef = useRef(0);
 
-  // Load top-selling site products (all time)
+  // Compute date range for the top products filter
+  const topProductsDateRange = useMemo(() => {
+    const now = new Date();
+    const start = new Date(now);
+    let from: Date | null = null;
+    let to: Date | null = null;
+    switch (topProductsPeriod) {
+      case 'today':
+        start.setHours(0, 0, 0, 0);
+        from = start;
+        break;
+      case 'week':
+        start.setDate(start.getDate() - 7);
+        from = start;
+        break;
+      case 'month':
+        start.setDate(start.getDate() - 30);
+        from = start;
+        break;
+      case 'currentMonth':
+        from = new Date(now.getFullYear(), now.getMonth(), 1);
+        break;
+      case 'lastMonth':
+        from = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        to = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
+        break;
+      case 'custom':
+        if (topProductsCustomRange?.from) {
+          from = new Date(topProductsCustomRange.from);
+          from.setHours(0, 0, 0, 0);
+          if (topProductsCustomRange.to) {
+            to = new Date(topProductsCustomRange.to);
+            to.setHours(23, 59, 59, 999);
+          }
+        }
+        break;
+      default:
+        break;
+    }
+    return { from, to };
+  }, [topProductsPeriod, topProductsCustomRange]);
+
+  // Load top-selling site products (period filtered)
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -181,12 +226,14 @@ const Dashboard = () => {
         const pageSize = 1000;
         let from = 0;
         while (true) {
-          const { data, error } = await supabase
+          let q = supabase
             .from('orders')
             .select('items')
             .eq('store_id', SITE_STORE_ID)
-            .in('status', ['confirmed', 'completed', 'delivered', 'processing', 'shipped'])
-            .range(from, from + pageSize - 1);
+            .in('status', ['confirmed', 'completed', 'delivered', 'processing', 'shipped']);
+          if (topProductsDateRange.from) q = q.gte('created_at', topProductsDateRange.from.toISOString());
+          if (topProductsDateRange.to) q = q.lte('created_at', topProductsDateRange.to.toISOString());
+          const { data, error } = await q.range(from, from + pageSize - 1);
           if (error || !data || data.length === 0) break;
           for (const o of data) {
             const items = Array.isArray((o as any).items) ? (o as any).items : [];
@@ -215,7 +262,8 @@ const Dashboard = () => {
       }
     })();
     return () => { cancelled = true; };
-  }, []);
+  }, [topProductsDateRange.from, topProductsDateRange.to]);
+
 
 
   // Load stores for selector (admin sees all, online users see their accessible stores)
@@ -1461,14 +1509,62 @@ const Dashboard = () => {
         {(canShowSiteSales || isViewingAllStores) && (
           <Card className="card-elevated">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Package className="h-5 w-5 text-primary" />
-                Top 10 Produtos Mais Vendidos no Site
-              </CardTitle>
-              <CardDescription>
-                Ranking por quantidade — todo o período (pedidos confirmados, enviados ou entregues)
-              </CardDescription>
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Package className="h-5 w-5 text-primary" />
+                    Top 10 Produtos Mais Vendidos no Site
+                  </CardTitle>
+                  <CardDescription>
+                    Ranking por quantidade (pedidos confirmados, enviados ou entregues)
+                  </CardDescription>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Select value={topProductsPeriod} onValueChange={(v) => setTopProductsPeriod(v as PeriodFilter)}>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todo o período</SelectItem>
+                      <SelectItem value="today">Hoje</SelectItem>
+                      <SelectItem value="week">Últimos 7 dias</SelectItem>
+                      <SelectItem value="month">Últimos 30 dias</SelectItem>
+                      <SelectItem value="currentMonth">Mês atual</SelectItem>
+                      <SelectItem value="lastMonth">Mês passado</SelectItem>
+                      <SelectItem value="custom">Personalizado</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {topProductsPeriod === 'custom' && (
+                    <Popover open={isTopProductsDateOpen} onOpenChange={setIsTopProductsDateOpen}>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" size="sm" className="gap-2">
+                          <CalendarRange className="h-4 w-4" />
+                          {topProductsCustomRange?.from
+                            ? topProductsCustomRange.to
+                              ? `${format(topProductsCustomRange.from, 'dd/MM/yy', { locale: ptBR })} - ${format(topProductsCustomRange.to, 'dd/MM/yy', { locale: ptBR })}`
+                              : format(topProductsCustomRange.from, 'dd/MM/yyyy', { locale: ptBR })
+                            : 'Selecionar'}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="end">
+                        <CalendarComponent
+                          mode="range"
+                          selected={topProductsCustomRange}
+                          onSelect={(r) => {
+                            setTopProductsCustomRange(r);
+                            if (r?.from && r?.to) setIsTopProductsDateOpen(false);
+                          }}
+                          numberOfMonths={2}
+                          locale={ptBR}
+                          className={cn('p-3 pointer-events-auto')}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  )}
+                </div>
+              </div>
             </CardHeader>
+
             <CardContent>
               {topProductsLoading ? (
                 <Skeleton className="h-[300px] w-full" />
