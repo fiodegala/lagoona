@@ -23,7 +23,11 @@ interface ProductReviewsProps {
   productId: string;
 }
 
-const ProductReviews = ({ productId }: ProductReviewsProps) => {
+export interface ProductReviewsHandle {
+  openForm: () => void;
+}
+
+const ProductReviews = ({ productId, onReady }: ProductReviewsProps & { onReady?: (h: ProductReviewsHandle) => void }) => {
   const [reviews, setReviews] = useState<ProductReview[]>([]);
   const [stats, setStats] = useState({ average: 0, count: 0, distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } });
   const [isLoading, setIsLoading] = useState(true);
@@ -36,7 +40,14 @@ const ProductReviews = ({ productId }: ProductReviewsProps) => {
     title: '',
     comment: '',
   });
+  const [photos, setPhotos] = useState<File[]>([]);
+  const [video, setVideo] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [issuedCoupon, setIssuedCoupon] = useState<string | null>(null);
+
+  useEffect(() => {
+    onReady?.({ openForm: () => setIsFormOpen(true) });
+  }, [onReady]);
 
   useEffect(() => {
     loadReviews();
