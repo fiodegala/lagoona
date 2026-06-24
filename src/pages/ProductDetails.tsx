@@ -923,7 +923,7 @@ const ProductDetails = () => {
             </TabsContent>
 
             <TabsContent value="reviews" className="pt-6">
-              <ProductReviews productId={product.id} />
+              <ProductReviews productId={product.id} onReady={(h) => (reviewsHandleRef.current = h)} />
             </TabsContent>
           </Tabs>
         </div>
