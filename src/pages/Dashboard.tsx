@@ -169,9 +169,54 @@ const Dashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [topSiteProducts, setTopSiteProducts] = useState<{ name: string; qty: number; revenue: number }[]>([]);
   const [topProductsLoading, setTopProductsLoading] = useState(true);
+  const [topProductsPeriod, setTopProductsPeriod] = useState<PeriodFilter>('all');
+  const [topProductsCustomRange, setTopProductsCustomRange] = useState<DateRange | undefined>(undefined);
+  const [isTopProductsDateOpen, setIsTopProductsDateOpen] = useState(false);
   const loadRequestRef = useRef(0);
 
-  // Load top-selling site products (all time)
+  // Compute date range for the top products filter
+  const topProductsDateRange = useMemo(() => {
+    const now = new Date();
+    const start = new Date(now);
+    let from: Date | null = null;
+    let to: Date | null = null;
+    switch (topProductsPeriod) {
+      case 'today':
+        start.setHours(0, 0, 0, 0);
+        from = start;
+        break;
+      case 'week':
+        start.setDate(start.getDate() - 7);
+        from = start;
+        break;
+      case 'month':
+        start.setDate(start.getDate() - 30);
+        from = start;
+        break;
+      case 'currentMonth':
+        from = new Date(now.getFullYear(), now.getMonth(), 1);
+        break;
+      case 'lastMonth':
+        from = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        to = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
+        break;
+      case 'custom':
+        if (topProductsCustomRange?.from) {
+          from = new Date(topProductsCustomRange.from);
+          from.setHours(0, 0, 0, 0);
+          if (topProductsCustomRange.to) {
+            to = new Date(topProductsCustomRange.to);
+            to.setHours(23, 59, 59, 999);
+          }
+        }
+        break;
+      default:
+        break;
+    }
+    return { from, to };
+  }, [topProductsPeriod, topProductsCustomRange]);
+
+  // Load top-selling site products (period filtered)
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -181,12 +226,14 @@ const Dashboard = () => {
         const pageSize = 1000;
         let from = 0;
         while (true) {
-          const { data, error } = await supabase
+          let q = supabase
             .from('orders')
             .select('items')
             .eq('store_id', SITE_STORE_ID)
-            .in('status', ['confirmed', 'completed', 'delivered', 'processing', 'shipped'])
-            .range(from, from + pageSize - 1);
+            .in('status', ['confirmed', 'completed', 'delivered', 'processing', 'shipped']);
+          if (topProductsDateRange.from) q = q.gte('created_at', topProductsDateRange.from.toISOString());
+          if (topProductsDateRange.to) q = q.lte('created_at', topProductsDateRange.to.toISOString());
+          const { data, error } = await q.range(from, from + pageSize - 1);
           if (error || !data || data.length === 0) break;
           for (const o of data) {
             const items = Array.isArray((o as any).items) ? (o as any).items : [];
@@ -215,7 +262,8 @@ const Dashboard = () => {
       }
     })();
     return () => { cancelled = true; };
-  }, []);
+  }, [topProductsDateRange.from, topProductsDateRange.to]);
+
 
 
   // Load stores for selector (admin sees all, online users see their accessible stores)
