@@ -1316,6 +1316,44 @@ const Dashboard = () => {
               )}
 
               {(canShowSiteSales || isViewingAllStores) && (
+              {(canShowSiteSales || isViewingAllStores) && (
+              <Card className="card-elevated">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Ticket Médio Venda</p>
+                      <p className="text-2xl font-bold mt-1">{formatCurrency(stats?.averageTicket || 0)}</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Por pedido do site
+                      </p>
+                    </div>
+                    <div className="bg-primary/10 p-3 rounded-xl">
+                      <TrendingUp className="h-6 w-6 text-primary" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              )}
+
+              {(canShowSiteSales || isViewingAllStores) && (
+              <Card className="card-elevated">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Ticket Médio Produto</p>
+                      <p className="text-2xl font-bold mt-1">{formatCurrency(stats?.averageProductTicket || 0)}</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {stats?.totalItemsSold || 0} itens vendidos
+                      </p>
+                    </div>
+                    <div className="bg-success/10 p-3 rounded-xl">
+                      <Tag className="h-6 w-6 text-success" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              )}
+
               <Card className="card-elevated">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
