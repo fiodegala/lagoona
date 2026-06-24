@@ -17,7 +17,8 @@ import { getProductRealStock } from '@/services/stockService';
 import StoreLayout from '@/components/store/StoreLayout';
 import ProductVariationSelector from '@/components/store/ProductVariationSelector';
 import ShippingCalculator from '@/components/store/ShippingCalculator';
-import ProductReviews from '@/components/store/ProductReviews';
+import ProductReviews, { ProductReviewsHandle } from '@/components/store/ProductReviews';
+import ReviewIncentiveBanner from '@/components/store/ReviewIncentiveBanner';
 import SizeGuideModal from '@/components/store/SizeGuideModal';
 import ProductImageGallery from '@/components/store/ProductImageGallery';
 import RelatedProducts from '@/components/store/RelatedProducts';
@@ -49,6 +50,15 @@ const ProductDetails = () => {
   const [upsellHasSelection, setUpsellHasSelection] = useState(false);
   const [upsellBuyTogether, setUpsellBuyTogether] = useState<(() => void) | null>(null);
   const [tryOnOpen, setTryOnOpen] = useState(false);
+  const reviewsHandleRef = useRef<ProductReviewsHandle | null>(null);
+  const openReviewForm = useCallback(() => {
+    const tab = document.querySelector('[value="reviews"]') as HTMLElement | null;
+    tab?.click();
+    setTimeout(() => {
+      reviewsHandleRef.current?.openForm();
+      tab?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 50);
+  }, []);
   const [tryOnEnabled, setTryOnEnabled] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
@@ -579,6 +589,9 @@ const ProductDetails = () => {
               {product.name}
             </h1>
 
+            {/* Review-with-photo incentive (top 5 only) */}
+            <ReviewIncentiveBanner productName={product.name} onWriteReview={openReviewForm} />
+
             {/* Rating Summary - only when there are real reviews */}
             {reviewStats.count > 0 && (
               <button
@@ -913,7 +926,7 @@ const ProductDetails = () => {
             </TabsContent>
 
             <TabsContent value="reviews" className="pt-6">
-              <ProductReviews productId={product.id} />
+              <ProductReviews productId={product.id} onReady={(h) => (reviewsHandleRef.current = h)} />
             </TabsContent>
           </Tabs>
         </div>

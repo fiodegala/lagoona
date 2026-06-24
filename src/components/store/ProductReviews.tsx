@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Star, ThumbsUp, Image as ImageIcon, Video, User, Loader2 } from 'lucide-react';
+import { Star, ThumbsUp, Image as ImageIcon, Video, User, Loader2, Gift, Copy, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
@@ -23,7 +23,11 @@ interface ProductReviewsProps {
   productId: string;
 }
 
-const ProductReviews = ({ productId }: ProductReviewsProps) => {
+export interface ProductReviewsHandle {
+  openForm: () => void;
+}
+
+const ProductReviews = ({ productId, onReady }: ProductReviewsProps & { onReady?: (h: ProductReviewsHandle) => void }) => {
   const [reviews, setReviews] = useState<ProductReview[]>([]);
   const [stats, setStats] = useState({ average: 0, count: 0, distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } });
   const [isLoading, setIsLoading] = useState(true);
@@ -36,7 +40,14 @@ const ProductReviews = ({ productId }: ProductReviewsProps) => {
     title: '',
     comment: '',
   });
+  const [photos, setPhotos] = useState<File[]>([]);
+  const [video, setVideo] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [issuedCoupon, setIssuedCoupon] = useState<string | null>(null);
+
+  useEffect(() => {
+    onReady?.({ openForm: () => setIsFormOpen(true) });
+  }, [onReady]);
 
   useEffect(() => {
     loadReviews();
@@ -74,7 +85,7 @@ const ProductReviews = ({ productId }: ProductReviewsProps) => {
 
     setIsSubmitting(true);
     try {
-      await reviewsService.create({
+      const created = await reviewsService.create({
         product_id: productId,
         customer_name: formData.name,
         customer_email: user.email,
@@ -83,9 +94,53 @@ const ProductReviews = ({ productId }: ProductReviewsProps) => {
         comment: formData.comment || undefined,
       });
 
-      toast.success('Avaliação enviada! Será publicada após moderação.');
+      // Fetch newly inserted review id (create() doesn't return id reliably)
+      const { data: latest } = await supabase
+        .from('product_reviews')
+        .select('id')
+        .eq('product_id', productId)
+        .eq('customer_email', user.email)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      const reviewId = latest?.id;
+      let uploadedPhoto = false;
+
+      if (reviewId) {
+        for (const f of photos) {
+          try {
+            await reviewsService.uploadMedia(reviewId, f, 'image');
+            uploadedPhoto = true;
+          } catch (err) { console.error('photo upload failed', err); }
+        }
+        if (video) {
+          try { await reviewsService.uploadMedia(reviewId, video, 'video'); } catch (err) { console.error('video upload failed', err); }
+        }
+      }
+
+      if (uploadedPhoto) {
+        try {
+          const { data, error } = await supabase.functions.invoke('generate-review-coupon', {
+            body: { customer_email: user.email, product_id: productId },
+          });
+          if (!error && data?.code) {
+            setIssuedCoupon(data.code);
+          } else {
+            toast.success('Avaliação enviada! Será publicada após moderação.');
+          }
+        } catch (err) {
+          console.error('coupon error', err);
+          toast.success('Avaliação enviada! Será publicada após moderação.');
+        }
+      } else {
+        toast.success('Avaliação enviada! Será publicada após moderação.');
+      }
+
       setIsFormOpen(false);
       setFormData({ name: '', email: '', rating: 5, title: '', comment: '' });
+      setPhotos([]);
+      setVideo(null);
     } catch (error) {
       console.error('Error submitting review:', error);
       toast.error('Erro ao enviar avaliação. Tente novamente.');
@@ -232,19 +287,40 @@ const ProductReviews = ({ productId }: ProductReviewsProps) => {
                   />
                 </div>
 
-                <div className="flex gap-2 pt-2">
-                  <Button type="button" variant="outline" className="flex-1 gap-2" disabled>
-                    <ImageIcon className="h-4 w-4" />
-                    Adicionar Foto
-                  </Button>
-                  <Button type="button" variant="outline" className="flex-1 gap-2" disabled>
-                    <Video className="h-4 w-4" />
-                    Adicionar Vídeo
-                  </Button>
+                <div className="rounded-lg border border-store-gold/40 bg-store-gold/5 p-3 space-y-3">
+                  <div className="flex items-start gap-2">
+                    <Gift className="h-4 w-4 text-store-gold mt-0.5 shrink-0" />
+                    <p className="text-xs text-store-accent">
+                      Envie pelo menos <strong>1 foto</strong> com sua avaliação e ganhe um cupom de <strong>R$ 10 OFF</strong> (mín. R$ 50) na sua próxima compra.
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <label className="flex flex-col items-center justify-center gap-1 border border-dashed rounded-md p-3 cursor-pointer hover:bg-muted/40 transition-colors">
+                      <ImageIcon className="h-4 w-4" />
+                      <span className="text-xs">{photos.length > 0 ? `${photos.length} foto(s)` : 'Adicionar Fotos'}</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        className="hidden"
+                        onChange={(e) => {
+                          const files = Array.from(e.target.files || []).slice(0, 5);
+                          setPhotos(files);
+                        }}
+                      />
+                    </label>
+                    <label className="flex flex-col items-center justify-center gap-1 border border-dashed rounded-md p-3 cursor-pointer hover:bg-muted/40 transition-colors">
+                      <Video className="h-4 w-4" />
+                      <span className="text-xs truncate max-w-full">{video ? video.name : 'Adicionar Vídeo'}</span>
+                      <input
+                        type="file"
+                        accept="video/*"
+                        className="hidden"
+                        onChange={(e) => setVideo(e.target.files?.[0] || null)}
+                      />
+                    </label>
+                  </div>
                 </div>
-                <p className="text-xs text-muted-foreground text-center">
-                  Upload de mídia estará disponível após a moderação inicial
-                </p>
 
                 <Button 
                   type="submit" 
@@ -350,6 +426,42 @@ const ProductReviews = ({ productId }: ProductReviewsProps) => {
           {selectedMedia && (
             <img src={selectedMedia} alt="" className="w-full h-auto" />
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Coupon Reward Dialog */}
+      <Dialog open={!!issuedCoupon} onOpenChange={(o) => !o && setIssuedCoupon(null)}>
+        <DialogContent className="max-w-md text-center">
+          <DialogHeader>
+            <DialogTitle className="flex items-center justify-center gap-2">
+              <CheckCircle2 className="h-5 w-5 text-store-gold" />
+              Avaliação enviada!
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <p className="text-sm text-muted-foreground">
+              Obrigado por compartilhar sua experiência com foto! Aqui está seu cupom de <strong className="text-foreground">R$ 10 OFF</strong> (mín. R$ 50, válido por 30 dias):
+            </p>
+            <div className="rounded-lg border-2 border-dashed border-store-gold bg-store-gold/5 p-4 flex items-center justify-between gap-3">
+              <code className="text-lg font-bold tracking-wider text-store-accent">{issuedCoupon}</code>
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1"
+                onClick={() => {
+                  if (issuedCoupon) {
+                    navigator.clipboard.writeText(issuedCoupon);
+                    toast.success('Cupom copiado!');
+                  }
+                }}
+              >
+                <Copy className="h-3.5 w-3.5" /> Copiar
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Sua avaliação será publicada após moderação.
+            </p>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
