@@ -87,3 +87,6 @@ verify_jwt = false
 
 [functions.api-products]
 verify_jwt = false
+
+[functions.meta-capi]
+verify_jwt = false
