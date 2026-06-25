@@ -23,7 +23,7 @@ const FaqPage = () => {
         },
         {
           question: 'Como funciona o frete grátis?',
-          answer: 'Oferecemos frete grátis para compras acima de R$199,00 para todo o Brasil. Para compras abaixo desse valor, o frete é calculado com base no CEP de entrega no momento do checkout.',
+          answer: 'Oferecemos frete grátis para compras acima de R$499,00 para todo o Brasil. Para compras abaixo desse valor, o frete é calculado com base no CEP de entrega no momento do checkout.',
         },
         {
           question: 'Posso rastrear meu pedido?',
