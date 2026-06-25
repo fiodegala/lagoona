@@ -100,7 +100,7 @@ const CartPage = () => {
     );
   }
 
-  const REWARD_THRESHOLD = 500;
+  const REWARD_THRESHOLD = 499;
   const remainingForReward = Math.max(0, REWARD_THRESHOLD - total);
   const rewardProgress = Math.min(100, (total / REWARD_THRESHOLD) * 100);
   const rewardUnlocked = remainingForReward <= 0;
@@ -115,7 +115,7 @@ const CartPage = () => {
               <div className="flex items-start gap-2 mb-2 flex-wrap">
                 <Gift className="h-5 w-5 text-store-primary shrink-0 mt-0.5" />
                 <p className="text-sm">
-                  Falta <strong>{formatPrice(remainingForReward)}</strong> para completar <strong>R$ 500,00</strong> e ganhar um <strong>boné grátis</strong> + <strong>frete grátis</strong>!
+                  Falta <strong>{formatPrice(remainingForReward)}</strong> para completar <strong>R$ 499,00</strong> e ganhar um <strong>boné grátis</strong> + <strong>frete grátis</strong>!
                 </p>
               </div>
               <div className="w-full h-3 bg-muted rounded-full overflow-hidden shadow-inner">
