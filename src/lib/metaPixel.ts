@@ -170,3 +170,22 @@ export function trackMetaContact() {
 export function trackMetaCustomEvent(eventName: string, params?: Record<string, unknown>) {
   fbqTrack('trackCustom', eventName, params);
 }
+
+// ─── Helpers for server-side CAPI deduplication ────────────
+
+/** Read fbp / fbc cookies set by the Meta Pixel for advanced matching. */
+export function getMetaBrowserIds(): { fbp?: string; fbc?: string } {
+  if (typeof document === 'undefined') return {};
+  const cookies = document.cookie.split(';').reduce<Record<string, string>>((acc, raw) => {
+    const [k, ...v] = raw.trim().split('=');
+    if (k) acc[k] = decodeURIComponent(v.join('='));
+    return acc;
+  }, {});
+  return { fbp: cookies._fbp, fbc: cookies._fbc };
+}
+
+/** Generate a stable event_id to deduplicate browser pixel + server CAPI events. */
+export function generateMetaEventId(prefix = 'evt'): string {
+  return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+}
+
