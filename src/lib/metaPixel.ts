@@ -54,11 +54,21 @@ function ensureMetaPixelInitialized() {
   }
 }
 
-function fbqTrack(method: 'track' | 'trackCustom', eventName: string, params?: Record<string, unknown>) {
+function fbqTrack(
+  method: 'track' | 'trackCustom',
+  eventName: string,
+  params?: Record<string, unknown>,
+  eventID?: string,
+) {
   ensureMetaPixelInitialized();
   if (!window.fbq) return;
-  if (params) {
+  const opts = eventID ? { eventID } : undefined;
+  if (params && opts) {
+    window.fbq(method, eventName, params, opts);
+  } else if (params) {
     window.fbq(method, eventName, params);
+  } else if (opts) {
+    window.fbq(method, eventName, {}, opts);
   } else {
     window.fbq(method, eventName);
   }
@@ -128,19 +138,27 @@ export function trackMetaInitiateCheckout(params: {
   });
 }
 
-export function trackMetaPurchase(params: {
-  content_ids?: string[];
-  content_type?: string;
-  num_items?: number;
-  value: number;
-  currency?: string;
-  order_id?: string;
-}) {
-  fbqTrack('track', 'Purchase', {
-    content_type: 'product',
-    currency: 'BRL',
-    ...params,
-  });
+export function trackMetaPurchase(
+  params: {
+    content_ids?: string[];
+    content_type?: string;
+    num_items?: number;
+    value: number;
+    currency?: string;
+    order_id?: string;
+  },
+  eventID?: string,
+) {
+  fbqTrack(
+    'track',
+    'Purchase',
+    {
+      content_type: 'product',
+      currency: 'BRL',
+      ...params,
+    },
+    eventID,
+  );
 }
 
 export function trackMetaSearch(params: {
@@ -170,3 +188,22 @@ export function trackMetaContact() {
 export function trackMetaCustomEvent(eventName: string, params?: Record<string, unknown>) {
   fbqTrack('trackCustom', eventName, params);
 }
+
+// ─── Helpers for server-side CAPI deduplication ────────────
+
+/** Read fbp / fbc cookies set by the Meta Pixel for advanced matching. */
+export function getMetaBrowserIds(): { fbp?: string; fbc?: string } {
+  if (typeof document === 'undefined') return {};
+  const cookies = document.cookie.split(';').reduce<Record<string, string>>((acc, raw) => {
+    const [k, ...v] = raw.trim().split('=');
+    if (k) acc[k] = decodeURIComponent(v.join('='));
+    return acc;
+  }, {});
+  return { fbp: cookies._fbp, fbc: cookies._fbc };
+}
+
+/** Generate a stable event_id to deduplicate browser pixel + server CAPI events. */
+export function generateMetaEventId(prefix = 'evt'): string {
+  return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+}
+

@@ -16,7 +16,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { couponsService } from '@/services/coupons';
 import { trackAnalyticsEvent } from '@/hooks/useAnalyticsTracker';
 import { getAffiliateCode, clearAffiliateCode } from '@/lib/affiliateUtils';
-import { trackMetaInitiateCheckout, trackMetaPurchase } from '@/lib/metaPixel';
+import { trackMetaInitiateCheckout, trackMetaPurchase, getMetaBrowserIds, generateMetaEventId } from '@/lib/metaPixel';
 import { SEO } from "@/components/seo/SEO";
 
 const ABANDONED_CART_SESSION_KEY = 'abandoned-cart-session';
@@ -392,13 +392,53 @@ const CheckoutPage = () => {
       }
       localStorage.removeItem(ABANDONED_CART_SESSION_KEY);
 
-      // Meta Pixel: Purchase — só dispara quando pagamento APROVADO
-      trackMetaPurchase({
-        content_ids: items.map(i => i.productId),
-        num_items: getItemCount(),
-        value: total,
-        order_id: orderId || undefined,
-      });
+      // Meta Pixel + CAPI: Purchase — só dispara quando pagamento APROVADO
+      // event_id compartilhado entre browser pixel e server CAPI para deduplicação
+      const purchaseEventId = generateMetaEventId('purchase');
+      const purchaseValue = total;
+      const purchaseContentIds = items.map(i => i.productId);
+
+      trackMetaPurchase(
+        {
+          content_ids: purchaseContentIds,
+          num_items: getItemCount(),
+          value: purchaseValue,
+          order_id: orderId || undefined,
+        },
+        purchaseEventId,
+      );
+
+      // Server-side CAPI (paralelo, não bloqueia a UI)
+      const [firstName, ...rest] = (formData.name || '').trim().split(/\s+/);
+      const lastName = rest.join(' ');
+      const { fbp, fbc } = getMetaBrowserIds();
+      supabase.functions
+        .invoke('meta-capi', {
+          body: {
+            event_name: 'Purchase',
+            event_id: purchaseEventId,
+            event_source_url: window.location.href,
+            value: purchaseValue,
+            currency: 'BRL',
+            content_ids: purchaseContentIds,
+            num_items: getItemCount(),
+            order_id: orderId || undefined,
+            user_data: {
+              email: formData.email,
+              phone: formData.phone,
+              first_name: firstName,
+              last_name: lastName,
+              city: formData.city,
+              state: formData.state,
+              zip_code: formData.zipCode,
+              country: 'br',
+              external_id: orderId || formData.email,
+              fbp,
+              fbc,
+            },
+          },
+        })
+        .catch((capiErr) => console.error('Meta CAPI invoke error:', capiErr));
     }
 
     // Coupon usage is now recorded server-side by the payment webhook
