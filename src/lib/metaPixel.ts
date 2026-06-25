@@ -138,19 +138,27 @@ export function trackMetaInitiateCheckout(params: {
   });
 }
 
-export function trackMetaPurchase(params: {
-  content_ids?: string[];
-  content_type?: string;
-  num_items?: number;
-  value: number;
-  currency?: string;
-  order_id?: string;
-}) {
-  fbqTrack('track', 'Purchase', {
-    content_type: 'product',
-    currency: 'BRL',
-    ...params,
-  });
+export function trackMetaPurchase(
+  params: {
+    content_ids?: string[];
+    content_type?: string;
+    num_items?: number;
+    value: number;
+    currency?: string;
+    order_id?: string;
+  },
+  eventID?: string,
+) {
+  fbqTrack(
+    'track',
+    'Purchase',
+    {
+      content_type: 'product',
+      currency: 'BRL',
+      ...params,
+    },
+    eventID,
+  );
 }
 
 export function trackMetaSearch(params: {
