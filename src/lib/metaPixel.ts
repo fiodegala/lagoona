@@ -54,11 +54,21 @@ function ensureMetaPixelInitialized() {
   }
 }
 
-function fbqTrack(method: 'track' | 'trackCustom', eventName: string, params?: Record<string, unknown>) {
+function fbqTrack(
+  method: 'track' | 'trackCustom',
+  eventName: string,
+  params?: Record<string, unknown>,
+  eventID?: string,
+) {
   ensureMetaPixelInitialized();
   if (!window.fbq) return;
-  if (params) {
+  const opts = eventID ? { eventID } : undefined;
+  if (params && opts) {
+    window.fbq(method, eventName, params, opts);
+  } else if (params) {
     window.fbq(method, eventName, params);
+  } else if (opts) {
+    window.fbq(method, eventName, {}, opts);
   } else {
     window.fbq(method, eventName);
   }
