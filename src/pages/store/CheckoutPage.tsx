@@ -391,6 +391,14 @@ const CheckoutPage = () => {
         }
       }
       localStorage.removeItem(ABANDONED_CART_SESSION_KEY);
+
+      // Meta Pixel: Purchase — só dispara quando pagamento APROVADO
+      trackMetaPurchase({
+        content_ids: items.map(i => i.productId),
+        num_items: getItemCount(),
+        value: total,
+        order_id: orderId || undefined,
+      });
     }
 
     // Coupon usage is now recorded server-side by the payment webhook
@@ -405,13 +413,7 @@ const CheckoutPage = () => {
       },
     });
 
-    // Meta Pixel: Purchase
-    trackMetaPurchase({
-      content_ids: items.map(i => i.productId),
-      num_items: getItemCount(),
-      value: total,
-      order_id: orderId || undefined,
-    });
+    
     
     setOrderComplete(true);
     clearCart();
