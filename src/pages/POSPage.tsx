@@ -337,9 +337,8 @@ const POSPage = () => {
             return variation.exclusive_price ?? variation.price ?? product.exclusive_price ?? product.price;
           case 'brinde':
             return 0;
-          case 'troca':
-            // Troca integrada: produto novo com preço de varejo
-            return variation.price ?? product.price;
+          // 'troca' resolves via quotePriceMode above; falls through to default
+
           default:
             // Varejo: use regular retail price
             return variation.price ?? product.price;
