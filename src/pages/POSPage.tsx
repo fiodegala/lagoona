@@ -332,9 +332,9 @@ const POSPage = () => {
       const variationPrice = (() => {
         switch (effectivePriceType) {
           case 'atacado':
-            return variation.wholesale_price ?? variation.price ?? product.wholesale_price ?? product.price;
+            return variation.wholesale_price ?? product.wholesale_price ?? variation.price ?? product.price;
           case 'exclusivo':
-            return variation.exclusive_price ?? variation.price ?? product.exclusive_price ?? product.price;
+            return variation.exclusive_price ?? product.exclusive_price ?? variation.price ?? product.price;
           case 'brinde':
             return 0;
           // 'troca' resolves via quotePriceMode above; falls through to default
