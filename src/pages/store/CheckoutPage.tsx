@@ -1,25 +1,25 @@
-import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowLeft, Loader2, Package, CheckCircle, ShieldCheck, Lock, Percent } from 'lucide-react';
-import ShippingCalculator from '@/components/store/ShippingCalculator';
-import MercadoPagoPayment from '@/components/store/MercadoPagoPayment';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
-import StoreLayout from '@/components/store/StoreLayout';
-import { useCart } from '@/contexts/CartContext';
-import { supabase } from '@/integrations/supabase/client';
-import { couponsService } from '@/services/coupons';
-import { trackAnalyticsEvent } from '@/hooks/useAnalyticsTracker';
-import { getAffiliateCode, clearAffiliateCode } from '@/lib/affiliateUtils';
-import { trackMetaInitiateCheckout, trackMetaPurchase, getMetaBrowserIds, generateMetaEventId } from '@/lib/metaPixel';
+import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import { ArrowLeft, Loader2, Package, CheckCircle, ShieldCheck, Lock, Percent } from "lucide-react";
+import ShippingCalculator from "@/components/store/ShippingCalculator";
+import MercadoPagoPayment from "@/components/store/MercadoPagoPayment";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+import StoreLayout from "@/components/store/StoreLayout";
+import { useCart } from "@/contexts/CartContext";
+import { supabase } from "@/integrations/supabase/client";
+import { couponsService } from "@/services/coupons";
+import { trackAnalyticsEvent } from "@/hooks/useAnalyticsTracker";
+import { getAffiliateCode, clearAffiliateCode } from "@/lib/affiliateUtils";
+import { trackMetaInitiateCheckout, trackMetaPurchase, getMetaBrowserIds, generateMetaEventId } from "@/lib/metaPixel";
 import { SEO } from "@/components/seo/SEO";
 
-const ABANDONED_CART_SESSION_KEY = 'abandoned-cart-session';
+const ABANDONED_CART_SESSION_KEY = "abandoned-cart-session";
 
 const getOrCreateSessionId = () => {
   let sessionId = localStorage.getItem(ABANDONED_CART_SESSION_KEY);
@@ -31,40 +31,55 @@ const getOrCreateSessionId = () => {
 };
 
 const CheckoutPage = () => {
-  const { items, getTotal, getSubtotal, clearCart, getItemCount, comboFreeShipping, appliedCoupon, valentinesDiscount, valentinesPromoLabel } = useCart();
+  const {
+    items,
+    getTotal,
+    getSubtotal,
+    clearCart,
+    getItemCount,
+    comboFreeShipping,
+    appliedCoupon,
+    valentinesDiscount,
+    valentinesPromoLabel,
+  } = useCart();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderComplete, setOrderComplete] = useState(false);
   const [orderId, setOrderId] = useState<string | null>(null);
-  const [step, setStep] = useState<'info' | 'payment'>('info');
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>('pix');
+  const [step, setStep] = useState<"info" | "payment">("info");
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>("pix");
   const [abandonedCartSaved, setAbandonedCartSaved] = useState(false);
 
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    document: '',
-    zipCode: '',
-    address: '',
-    number: '',
-    neighborhood: '',
-    city: '',
-    state: '',
-    complement: '',
+    name: "",
+    email: "",
+    phone: "",
+    document: "",
+    zipCode: "",
+    address: "",
+    number: "",
+    neighborhood: "",
+    city: "",
+    state: "",
+    complement: "",
   });
   const [isFetchingCep, setIsFetchingCep] = useState(false);
-  const [shippingResult, setShippingResult] = useState<{ name: string; price: number; days: string; isFreeShipping: boolean } | null>(null);
+  const [shippingResult, setShippingResult] = useState<{
+    name: string;
+    price: number;
+    days: string;
+    isFreeShipping: boolean;
+  } | null>(null);
 
   const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
     }).format(price);
   };
 
   // Save/update abandoned cart when form data or items change
   useEffect(() => {
-    if (items.length === 0 || orderComplete || step === 'payment') return;
+    if (items.length === 0 || orderComplete || step === "payment") return;
     const hasData = formData.name || formData.email || formData.phone;
     if (!hasData && abandonedCartSaved) return;
     if (!hasData) return;
@@ -76,14 +91,16 @@ const CheckoutPage = () => {
           customer_name: formData.name || null,
           customer_email: formData.email || null,
           customer_phone: formData.phone || null,
-          shipping_address: formData.address ? {
-            address: formData.address,
-            city: formData.city,
-            state: formData.state,
-            zip_code: formData.zipCode,
-            complement: formData.complement,
-          } : null,
-          items: items.map(item => ({
+          shipping_address: formData.address
+            ? {
+                address: formData.address,
+                city: formData.city,
+                state: formData.state,
+                zip_code: formData.zipCode,
+                complement: formData.complement,
+              }
+            : null,
+          items: items.map((item) => ({
             productId: item.productId,
             variationId: item.variationId,
             name: item.name,
@@ -96,12 +113,12 @@ const CheckoutPage = () => {
           item_count: getItemCount(),
         };
 
-        await supabase.functions.invoke('abandoned-cart', {
-          body: { action: 'upsert', session_id: sessionId, cart_data: cartData },
+        await supabase.functions.invoke("abandoned-cart", {
+          body: { action: "upsert", session_id: sessionId, cart_data: cartData },
         });
         setAbandonedCartSaved(true);
       } catch (err) {
-        console.error('Error saving abandoned cart:', err);
+        console.error("Error saving abandoned cart:", err);
       }
     }, 2000);
 
@@ -126,10 +143,10 @@ const CheckoutPage = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
 
-    if (name === 'zipCode') {
-      const cleanCep = value.replace(/\D/g, '');
+    if (name === "zipCode") {
+      const cleanCep = value.replace(/\D/g, "");
       if (cleanCep.length === 8) {
         fetchAddressByCep(cleanCep);
       }
@@ -142,16 +159,16 @@ const CheckoutPage = () => {
       const res = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
       const data = await res.json();
       if (!data.erro) {
-        setFormData(prev => ({
+        setFormData((prev) => ({
           ...prev,
-          address: data.logradouro || '',
-          neighborhood: data.bairro || '',
-          city: data.localidade || '',
-          state: data.uf || '',
+          address: data.logradouro || "",
+          neighborhood: data.bairro || "",
+          city: data.localidade || "",
+          state: data.uf || "",
         }));
       }
     } catch (err) {
-      console.error('Erro ao buscar CEP:', err);
+      console.error("Erro ao buscar CEP:", err);
     } finally {
       setIsFetchingCep(false);
     }
@@ -161,7 +178,7 @@ const CheckoutPage = () => {
     e.preventDefault();
 
     if (items.length === 0) {
-      toast.error('Seu carrinho está vazio');
+      toast.error("Seu carrinho está vazio");
       return;
     }
 
@@ -176,21 +193,21 @@ const CheckoutPage = () => {
     const trimmedZipCode = formData.zipCode.trim();
 
     // Validate CPF/CNPJ FIRST - it's mandatory for shipping labels and invoices
-    const docDigits = trimmedDocument.replace(/\D/g, '');
+    const docDigits = trimmedDocument.replace(/\D/g, "");
     if (!trimmedDocument || docDigits.length === 0) {
-      toast.error('CPF ou CNPJ é obrigatório para finalizar a compra');
-      document.getElementById('document')?.focus();
+      toast.error("CPF ou CNPJ é obrigatório para finalizar a compra");
+      document.getElementById("document")?.focus();
       return;
     }
     if (docDigits.length !== 11 && docDigits.length !== 14) {
-      toast.error('CPF deve ter 11 dígitos ou CNPJ deve ter 14 dígitos');
-      document.getElementById('document')?.focus();
+      toast.error("CPF deve ter 11 dígitos ou CNPJ deve ter 14 dígitos");
+      document.getElementById("document")?.focus();
       return;
     }
     // Reject sequences of repeated digits (e.g. 00000000000)
     if (/^(\d)\1+$/.test(docDigits)) {
-      toast.error('CPF/CNPJ inválido');
-      document.getElementById('document')?.focus();
+      toast.error("CPF/CNPJ inválido");
+      document.getElementById("document")?.focus();
       return;
     }
     // Validate CPF check digits
@@ -204,17 +221,16 @@ const CheckoutPage = () => {
       const d1 = calcDigit(docDigits.substring(0, 9), 10);
       const d2 = calcDigit(docDigits.substring(0, 10), 11);
       if (d1 !== parseInt(docDigits[9]) || d2 !== parseInt(docDigits[10])) {
-        toast.error('CPF inválido. Verifique os dígitos.');
-        document.getElementById('document')?.focus();
+        toast.error("CPF inválido. Verifique os dígitos.");
+        document.getElementById("document")?.focus();
         return;
       }
     }
     // Validate CNPJ check digits
     if (docDigits.length === 14) {
       const calcCnpj = (base: string) => {
-        const weights = base.length === 12
-          ? [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
-          : [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+        const weights =
+          base.length === 12 ? [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2] : [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
         let sum = 0;
         for (let i = 0; i < base.length; i++) sum += parseInt(base[i]) * weights[i];
         const rest = sum % 11;
@@ -223,29 +239,38 @@ const CheckoutPage = () => {
       const d1 = calcCnpj(docDigits.substring(0, 12));
       const d2 = calcCnpj(docDigits.substring(0, 13));
       if (d1 !== parseInt(docDigits[12]) || d2 !== parseInt(docDigits[13])) {
-        toast.error('CNPJ inválido. Verifique os dígitos.');
-        document.getElementById('document')?.focus();
+        toast.error("CNPJ inválido. Verifique os dígitos.");
+        document.getElementById("document")?.focus();
         return;
       }
     }
 
-    if (!trimmedName || !trimmedEmail || !trimmedPhone || !trimmedAddress || !trimmedNumber || !trimmedCity || !trimmedState || !trimmedZipCode) {
-      toast.error('Preencha todos os campos obrigatórios');
+    if (
+      !trimmedName ||
+      !trimmedEmail ||
+      !trimmedPhone ||
+      !trimmedAddress ||
+      !trimmedNumber ||
+      !trimmedCity ||
+      !trimmedState ||
+      !trimmedZipCode
+    ) {
+      toast.error("Preencha todos os campos obrigatórios");
       return;
     }
 
     // Validate phone format (minimum digits)
-    const phoneDigits = trimmedPhone.replace(/\D/g, '');
+    const phoneDigits = trimmedPhone.replace(/\D/g, "");
     if (phoneDigits.length < 10) {
-      toast.error('Telefone deve ter no mínimo 10 dígitos');
-      document.getElementById('phone')?.focus();
+      toast.error("Telefone deve ter no mínimo 10 dígitos");
+      document.getElementById("phone")?.focus();
       return;
     }
 
     setIsSubmitting(true);
 
     // Track checkout_start event
-    trackAnalyticsEvent('checkout_start', {
+    trackAnalyticsEvent("checkout_start", {
       metadata: {
         item_count: getItemCount(),
         total: total,
@@ -254,7 +279,7 @@ const CheckoutPage = () => {
 
     // Meta Pixel: InitiateCheckout
     trackMetaInitiateCheckout({
-      content_ids: items.map(i => i.productId),
+      content_ids: items.map((i) => i.productId),
       num_items: getItemCount(),
       value: total,
     });
@@ -262,7 +287,7 @@ const CheckoutPage = () => {
     try {
       // Re-validate applied coupon against the checkout email (per-customer limit)
       if (appliedCoupon) {
-        const productIds = items.map(i => i.productId);
+        const productIds = items.map((i) => i.productId);
         const recheck = await couponsService.validateCoupon(
           appliedCoupon.coupon.code,
           getSubtotal(),
@@ -270,7 +295,7 @@ const CheckoutPage = () => {
           productIds,
         );
         if (!recheck.valid) {
-          toast.error(recheck.error || 'Cupom não pode mais ser utilizado');
+          toast.error(recheck.error || "Cupom não pode mais ser utilizado");
           setIsSubmitting(false);
           return;
         }
@@ -279,35 +304,32 @@ const CheckoutPage = () => {
       // Verify real-time stock availability before creating order
       const stockChecks = await Promise.all(
         items.map(async (item) => {
-          let query = supabase
-            .from('store_stock')
-            .select('quantity')
-            .eq('product_id', item.productId);
+          let query = supabase.from("store_stock").select("quantity").eq("product_id", item.productId);
 
           if (item.variationId) {
-            query = query.eq('variation_id', item.variationId);
+            query = query.eq("variation_id", item.variationId);
           }
 
           const { data: stockRows } = await query;
           const totalStock = (stockRows || []).reduce((sum, r) => sum + (r.quantity || 0), 0);
           return { item, totalStock };
-        })
+        }),
       );
 
-      const outOfStock = stockChecks.filter(s => s.totalStock < s.item.quantity);
+      const outOfStock = stockChecks.filter((s) => s.totalStock < s.item.quantity);
       if (outOfStock.length > 0) {
-        const names = outOfStock.map(s => {
+        const names = outOfStock.map((s) => {
           const available = s.totalStock;
           return available <= 0
             ? `"${s.item.name}" está esgotado`
             : `"${s.item.name}" tem apenas ${available} unidade(s) disponível(is)`;
         });
-        toast.error(`Estoque insuficiente: ${names.join('; ')}`);
+        toast.error(`Estoque insuficiente: ${names.join("; ")}`);
         setIsSubmitting(false);
         return;
       }
 
-      const orderItems = items.map(item => ({
+      const orderItems = items.map((item) => ({
         product_id: item.productId,
         variation_id: item.variationId || null,
         name: item.name,
@@ -323,80 +345,82 @@ const CheckoutPage = () => {
 
       const sessionId = getSessionId();
 
-      const { error } = await supabase
-        .from('orders')
-        .insert({
-          id: newOrderId,
-          customer_email: formData.email,
-          customer_name: formData.name,
-          shipping_address: {
-            address: formData.address,
-            number: formData.number,
-            neighborhood: formData.neighborhood,
-            city: formData.city,
-            state: formData.state,
-            zip_code: formData.zipCode,
-            complement: formData.complement,
-            phone: formData.phone,
-          },
-          items: orderItems,
-          total: grandTotal,
-          status: 'pending',
-          payment_status: 'pending',
-          store_id: 'e0b8ebbc-1b3b-4aec-b5f7-6925762e6ea1', // Site store
-          metadata: {
-            ...(sessionId ? { abandoned_cart_session_id: sessionId } : {}),
-            ...(getAffiliateCode() ? { affiliate_code: getAffiliateCode() } : {}),
-            customer_document: formData.document.trim(),
-            customer_phone: formData.phone.trim(),
-            ...(appliedCoupon ? {
-              coupon_id: appliedCoupon.coupon.id,
-              coupon_code: appliedCoupon.coupon.code,
-              coupon_discount: appliedCoupon.discount,
-            } : {}),
-            ...(valentinesDiscount > 0 ? {
-              valentines_promo: valentinesPromoLabel,
-              valentines_discount: valentinesDiscount,
-            } : {}),
-          },
-        });
+      const { error } = await supabase.from("orders").insert({
+        id: newOrderId,
+        customer_email: formData.email,
+        customer_name: formData.name,
+        shipping_address: {
+          address: formData.address,
+          number: formData.number,
+          neighborhood: formData.neighborhood,
+          city: formData.city,
+          state: formData.state,
+          zip_code: formData.zipCode,
+          complement: formData.complement,
+          phone: formData.phone,
+        },
+        items: orderItems,
+        total: grandTotal,
+        status: "pending",
+        payment_status: "pending",
+        store_id: "e0b8ebbc-1b3b-4aec-b5f7-6925762e6ea1", // Site store
+        metadata: {
+          ...(sessionId ? { abandoned_cart_session_id: sessionId } : {}),
+          ...(getAffiliateCode() ? { affiliate_code: getAffiliateCode() } : {}),
+          customer_document: formData.document.trim(),
+          customer_phone: formData.phone.trim(),
+          ...(appliedCoupon
+            ? {
+                coupon_id: appliedCoupon.coupon.id,
+                coupon_code: appliedCoupon.coupon.code,
+                coupon_discount: appliedCoupon.discount,
+              }
+            : {}),
+          ...(valentinesDiscount > 0
+            ? {
+                valentines_promo: valentinesPromoLabel,
+                valentines_discount: valentinesDiscount,
+              }
+            : {}),
+        },
+      });
 
       if (error) throw error;
 
       setOrderId(newOrderId);
-      setStep('payment');
-      toast.success('Pedido criado! Agora escolha a forma de pagamento.');
+      setStep("payment");
+      toast.success("Pedido criado! Agora escolha a forma de pagamento.");
     } catch (error) {
-      console.error('Error creating order:', error);
-      toast.error('Erro ao processar pedido. Tente novamente.');
+      console.error("Error creating order:", error);
+      toast.error("Erro ao processar pedido. Tente novamente.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handlePaymentSuccess = async (paymentData: any) => {
-    console.log('Payment success:', paymentData.status, paymentData.id);
+    console.log("Payment success:", paymentData.status, paymentData.id);
 
     // Mark abandoned cart as recovered ONLY when payment is actually approved
     // (PIX/boleto initially return 'pending' and may never be paid)
-    if (paymentData?.status === 'approved') {
+    if (paymentData?.status === "approved") {
       const sessionId = getSessionId();
       if (sessionId) {
         try {
-          await supabase.functions.invoke('abandoned-cart', {
-            body: { action: 'recover', session_id: sessionId },
+          await supabase.functions.invoke("abandoned-cart", {
+            body: { action: "recover", session_id: sessionId },
           });
         } catch (recoverErr) {
-          console.error('Error recovering abandoned cart:', recoverErr);
+          console.error("Error recovering abandoned cart:", recoverErr);
         }
       }
       localStorage.removeItem(ABANDONED_CART_SESSION_KEY);
 
       // Meta Pixel + CAPI: Purchase — só dispara quando pagamento APROVADO
       // event_id compartilhado entre browser pixel e server CAPI para deduplicação
-      const purchaseEventId = generateMetaEventId('purchase');
-      const purchaseValue = total;
-      const purchaseContentIds = items.map(i => i.productId);
+      const purchaseEventId = generateMetaEventId("purchase");
+      const purchaseValue = grandTotal;
+      const purchaseContentIds = items.map((i) => i.productId);
 
       trackMetaPurchase(
         {
@@ -409,19 +433,19 @@ const CheckoutPage = () => {
       );
 
       // Server-side CAPI (paralelo, não bloqueia a UI)
-      const [firstName, ...rest] = (formData.name || '').trim().split(/\s+/);
-      const lastName = rest.join(' ');
+      const [firstName, ...rest] = (formData.name || "").trim().split(/\s+/);
+      const lastName = rest.join(" ");
       const { fbp, fbc } = getMetaBrowserIds();
       supabase.functions
-        .invoke('meta-capi', {
+        .invoke("meta-capi", {
           body: {
-            event_name: 'Purchase',
+            event_name: "Purchase",
             event_id: purchaseEventId,
             event_time: Math.floor(Date.now() / 1000),
             event_source_url: window.location.href,
             user_data: {
               em: formData.email || undefined,
-              ph: formData.phone ? formData.phone.replace(/\D/g, '') : undefined,
+              ph: formData.phone ? formData.phone.replace(/\D/g, "") : undefined,
               fn: firstName || undefined,
               ln: lastName || undefined,
               client_user_agent: navigator.userAgent,
@@ -430,21 +454,21 @@ const CheckoutPage = () => {
             },
             custom_data: {
               value: purchaseValue,
-              currency: 'BRL',
+              currency: "BRL",
               content_ids: purchaseContentIds,
               num_items: getItemCount(),
               order_id: orderId || undefined,
             },
           },
         })
-        .catch((capiErr) => console.error('Meta CAPI invoke error:', capiErr));
+        .catch((capiErr) => console.error("Meta CAPI invoke error:", capiErr));
     }
 
     // Coupon usage is now recorded server-side by the payment webhook
     // when the payment is confirmed (idempotent via metadata.coupon_id)
 
     // Track checkout_complete event
-    trackAnalyticsEvent('checkout_complete', {
+    trackAnalyticsEvent("checkout_complete", {
       metadata: {
         order_id: orderId,
         payment_status: paymentData.status,
@@ -452,25 +476,21 @@ const CheckoutPage = () => {
       },
     });
 
-    
-    
     setOrderComplete(true);
     clearCart();
   };
 
   const handlePaymentError = (error: string) => {
-    console.error('Payment error:', error);
+    console.error("Payment error:", error);
   };
 
-  if (items.length === 0 && !orderComplete && step === 'info') {
+  if (items.length === 0 && !orderComplete && step === "info") {
     return (
       <StoreLayout>
         <div className="container mx-auto px-4 py-24 text-center">
           <Package className="h-16 w-16 mx-auto text-muted-foreground/30 mb-4" />
           <h1 className="text-2xl font-bold mb-2">Carrinho vazio</h1>
-          <p className="text-muted-foreground mb-6">
-            Adicione produtos ao carrinho para continuar.
-          </p>
+          <p className="text-muted-foreground mb-6">Adicione produtos ao carrinho para continuar.</p>
           <Button asChild>
             <Link to="/loja">Ver Produtos</Link>
           </Button>
@@ -487,15 +507,11 @@ const CheckoutPage = () => {
             <CheckCircle className="h-12 w-12 text-success" />
           </div>
           <h1 className="text-2xl font-bold mb-2">Pedido Realizado!</h1>
-          <p className="text-muted-foreground mb-2">
-            Seu pedido foi registrado com sucesso.
-          </p>
+          <p className="text-muted-foreground mb-2">Seu pedido foi registrado com sucesso.</p>
           <p className="text-sm font-mono bg-muted px-3 py-1 rounded inline-block mb-6">
             Pedido #{orderId.slice(0, 8).toUpperCase()}
           </p>
-          <p className="text-sm text-muted-foreground mb-8">
-            Enviamos um email de confirmação para {formData.email}
-          </p>
+          <p className="text-sm text-muted-foreground mb-8">Enviamos um email de confirmação para {formData.email}</p>
           <div className="flex flex-col gap-3">
             <Button asChild>
               <Link to="/loja">Continuar Comprando</Link>
@@ -515,34 +531,36 @@ const CheckoutPage = () => {
         {/* Progress Stepper */}
         <div className="flex items-center justify-center gap-0 mb-8 max-w-md mx-auto">
           {[
-            { label: 'Carrinho', step: 0 },
-            { label: 'Dados', step: 1 },
-            { label: 'Pagamento', step: 2 },
+            { label: "Carrinho", step: 0 },
+            { label: "Dados", step: 1 },
+            { label: "Pagamento", step: 2 },
           ].map((s, i) => {
-            const currentStep = step === 'info' ? 1 : 2;
+            const currentStep = step === "info" ? 1 : 2;
             const isActive = i <= currentStep;
             const isCurrent = i === currentStep;
             return (
               <div key={s.label} className="flex items-center flex-1">
                 <div className="flex flex-col items-center flex-1">
-                  <div className={cn(
-                    "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors",
-                    isCurrent ? "bg-store-gold text-store-dark" :
-                    isActive ? "bg-store-gold/80 text-store-dark" :
-                    "bg-muted text-muted-foreground"
-                  )}>
+                  <div
+                    className={cn(
+                      "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors",
+                      isCurrent
+                        ? "bg-store-gold text-store-dark"
+                        : isActive
+                          ? "bg-store-gold/80 text-store-dark"
+                          : "bg-muted text-muted-foreground",
+                    )}
+                  >
                     {isActive && i < currentStep ? <CheckCircle className="h-4 w-4" /> : i + 1}
                   </div>
-                  <span className={cn(
-                    "text-xs mt-1 font-medium",
-                    isCurrent ? "text-foreground" : "text-muted-foreground"
-                  )}>{s.label}</span>
+                  <span
+                    className={cn("text-xs mt-1 font-medium", isCurrent ? "text-foreground" : "text-muted-foreground")}
+                  >
+                    {s.label}
+                  </span>
                 </div>
                 {i < 2 && (
-                  <div className={cn(
-                    "h-0.5 flex-1 mx-1 -mt-4",
-                    i < currentStep ? "bg-store-gold" : "bg-muted"
-                  )} />
+                  <div className={cn("h-0.5 flex-1 mx-1 -mt-4", i < currentStep ? "bg-store-gold" : "bg-muted")} />
                 )}
               </div>
             );
@@ -550,15 +568,23 @@ const CheckoutPage = () => {
         </div>
 
         <Button variant="ghost" asChild className="mb-6">
-          <Link to={step === 'payment' ? '#' : '/carrinho'} onClick={step === 'payment' ? (e) => { e.preventDefault(); setStep('info'); } : undefined}>
+          <Link
+            to={step === "payment" ? "#" : "/carrinho"}
+            onClick={
+              step === "payment"
+                ? (e) => {
+                    e.preventDefault();
+                    setStep("info");
+                  }
+                : undefined
+            }
+          >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            {step === 'payment' ? 'Voltar aos Dados' : 'Voltar ao Carrinho'}
+            {step === "payment" ? "Voltar aos Dados" : "Voltar ao Carrinho"}
           </Link>
         </Button>
 
-        <h1 className="text-3xl font-bold mb-2">
-          {step === 'info' ? 'Finalizar Compra' : 'Pagamento'}
-        </h1>
+        <h1 className="text-3xl font-bold mb-2">{step === "info" ? "Finalizar Compra" : "Pagamento"}</h1>
         <div className="flex items-center gap-2 mb-8 text-sm text-muted-foreground">
           <Lock className="h-3.5 w-3.5" />
           <span>Compra 100% segura · Dados protegidos</span>
@@ -566,7 +592,7 @@ const CheckoutPage = () => {
 
         <div className="grid lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-6">
-            {step === 'info' ? (
+            {step === "info" ? (
               <form id="checkout-form" onSubmit={handleCreateOrder}>
                 {/* Personal data */}
                 <Card className="mb-6">
@@ -580,18 +606,44 @@ const CheckoutPage = () => {
                     </div>
                     <div>
                       <Label htmlFor="email">E-mail *</Label>
-                      <Input id="email" name="email" type="email" value={formData.email} onChange={handleInputChange} required />
+                      <Input
+                        id="email"
+                        name="email"
+                        type="email"
+                        value={formData.email}
+                        onChange={handleInputChange}
+                        required
+                      />
                     </div>
                     <div>
                       <Label htmlFor="phone">Telefone *</Label>
-                      <Input id="phone" name="phone" type="tel" placeholder="(00) 00000-0000" value={formData.phone} onChange={handleInputChange} required />
+                      <Input
+                        id="phone"
+                        name="phone"
+                        type="tel"
+                        placeholder="(00) 00000-0000"
+                        value={formData.phone}
+                        onChange={handleInputChange}
+                        required
+                      />
                     </div>
                     <div>
                       <Label htmlFor="document">CPF / CNPJ *</Label>
-                      <Input id="document" name="document" placeholder="000.000.000-00" value={formData.document} onChange={handleInputChange} required minLength={11} />
-                      {formData.document && formData.document.replace(/\D/g, '').length > 0 && formData.document.replace(/\D/g, '').length !== 11 && formData.document.replace(/\D/g, '').length !== 14 && (
-                        <p className="text-xs text-destructive mt-1">CPF deve ter 11 dígitos ou CNPJ 14 dígitos</p>
-                      )}
+                      <Input
+                        id="document"
+                        name="document"
+                        placeholder="000.000.000-00"
+                        value={formData.document}
+                        onChange={handleInputChange}
+                        required
+                        minLength={11}
+                      />
+                      {formData.document &&
+                        formData.document.replace(/\D/g, "").length > 0 &&
+                        formData.document.replace(/\D/g, "").length !== 11 &&
+                        formData.document.replace(/\D/g, "").length !== 14 && (
+                          <p className="text-xs text-destructive mt-1">CPF deve ter 11 dígitos ou CNPJ 14 dígitos</p>
+                        )}
                     </div>
                   </CardContent>
                 </Card>
@@ -605,26 +657,61 @@ const CheckoutPage = () => {
                     <div className="sm:col-span-1">
                       <Label htmlFor="zipCode">CEP *</Label>
                       <div className="relative">
-                        <Input id="zipCode" name="zipCode" placeholder="00000-000" value={formData.zipCode} onChange={handleInputChange} required />
-                        {isFetchingCep && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />}
+                        <Input
+                          id="zipCode"
+                          name="zipCode"
+                          placeholder="00000-000"
+                          value={formData.zipCode}
+                          onChange={handleInputChange}
+                          required
+                        />
+                        {isFetchingCep && (
+                          <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+                        )}
                       </div>
                     </div>
                     <div className="sm:col-span-1" />
                     <div className="sm:col-span-2">
                       <Label htmlFor="address">Rua / Avenida *</Label>
-                      <Input id="address" name="address" placeholder="Rua, avenida..." value={formData.address} onChange={handleInputChange} required />
+                      <Input
+                        id="address"
+                        name="address"
+                        placeholder="Rua, avenida..."
+                        value={formData.address}
+                        onChange={handleInputChange}
+                        required
+                      />
                     </div>
                     <div>
                       <Label htmlFor="number">Número *</Label>
-                      <Input id="number" name="number" placeholder="123" value={formData.number} onChange={handleInputChange} required />
+                      <Input
+                        id="number"
+                        name="number"
+                        placeholder="123"
+                        value={formData.number}
+                        onChange={handleInputChange}
+                        required
+                      />
                     </div>
                     <div>
                       <Label htmlFor="complement">Complemento</Label>
-                      <Input id="complement" name="complement" placeholder="Apto, bloco..." value={formData.complement} onChange={handleInputChange} />
+                      <Input
+                        id="complement"
+                        name="complement"
+                        placeholder="Apto, bloco..."
+                        value={formData.complement}
+                        onChange={handleInputChange}
+                      />
                     </div>
                     <div>
                       <Label htmlFor="neighborhood">Bairro *</Label>
-                      <Input id="neighborhood" name="neighborhood" value={formData.neighborhood} onChange={handleInputChange} required />
+                      <Input
+                        id="neighborhood"
+                        name="neighborhood"
+                        value={formData.neighborhood}
+                        onChange={handleInputChange}
+                        required
+                      />
                     </div>
                     <div>
                       <Label htmlFor="city">Cidade *</Label>
@@ -632,12 +719,24 @@ const CheckoutPage = () => {
                     </div>
                     <div>
                       <Label htmlFor="state">Estado *</Label>
-                      <Input id="state" name="state" placeholder="SP" maxLength={2} value={formData.state} onChange={handleInputChange} required />
+                      <Input
+                        id="state"
+                        name="state"
+                        placeholder="SP"
+                        maxLength={2}
+                        value={formData.state}
+                        onChange={handleInputChange}
+                        required
+                      />
                     </div>
                   </CardContent>
                 </Card>
 
-                <ShippingCalculator orderTotal={total} forceFreeShipping={comboFreeShipping} onShippingCalculated={setShippingResult} />
+                <ShippingCalculator
+                  orderTotal={total}
+                  forceFreeShipping={comboFreeShipping}
+                  onShippingCalculated={setShippingResult}
+                />
 
                 <div className="mt-6 lg:hidden">
                   <Button
@@ -645,9 +744,9 @@ const CheckoutPage = () => {
                     className="w-full font-semibold"
                     size="lg"
                     disabled={isSubmitting}
-                    style={{ backgroundColor: '#009C3B', color: '#FFDF00' }}
-                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#007A2F')}
-                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#009C3B')}
+                    style={{ backgroundColor: "#009C3B", color: "#FFDF00" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#007A2F")}
+                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#009C3B")}
                   >
                     {isSubmitting ? (
                       <>
@@ -655,7 +754,7 @@ const CheckoutPage = () => {
                         Processando...
                       </>
                     ) : (
-                      'Ir para Pagamento'
+                      "Ir para Pagamento"
                     )}
                   </Button>
                 </div>
@@ -703,9 +802,7 @@ const CheckoutPage = () => {
                           {item.quantity}x {formatPrice(item.price)}
                         </p>
                       </div>
-                      <p className="text-sm font-medium">
-                        {formatPrice(item.price * item.quantity)}
-                      </p>
+                      <p className="text-sm font-medium">{formatPrice(item.price * item.quantity)}</p>
                     </div>
                   ))}
                 </div>
@@ -713,20 +810,28 @@ const CheckoutPage = () => {
                 <Separator />
 
                 {(() => {
-                  const showPixDiscount = !valentinesActive && (step !== 'payment' || selectedPaymentMethod === 'pix');
+                  const showPixDiscount = !valentinesActive && (step !== "payment" || selectedPaymentMethod === "pix");
                   const finalTotal = showPixDiscount ? pixGrandTotal : grandTotal;
                   return (
                     <>
-                            <SEO title="Finalizar Compra — Fio de Gala" description="Conclua seu pedido na Fio de Gala com pagamento seguro via PIX, cartão ou boleto." canonicalPath="/checkout" />
-<div className="space-y-2">
+                      <SEO
+                        title="Finalizar Compra — Fio de Gala"
+                        description="Conclua seu pedido na Fio de Gala com pagamento seguro via PIX, cartão ou boleto."
+                        canonicalPath="/checkout"
+                      />
+                      <div className="space-y-2">
                         <div className="flex justify-between text-sm">
                           <span className="text-muted-foreground">Subtotal</span>
                           <span>{formatPrice(total)}</span>
                         </div>
                         <div className="flex justify-between text-sm">
                           <span className="text-muted-foreground">Frete</span>
-                          <span className={shippingResult?.price === 0 || !shippingResult ? 'text-success' : ''}>
-                            {!shippingResult ? 'Calcule o frete' : shippingResult.price === 0 ? 'Grátis' : formatPrice(shippingResult.price)}
+                          <span className={shippingResult?.price === 0 || !shippingResult ? "text-success" : ""}>
+                            {!shippingResult
+                              ? "Calcule o frete"
+                              : shippingResult.price === 0
+                                ? "Grátis"
+                                : formatPrice(shippingResult.price)}
                           </span>
                         </div>
                         {showPixDiscount && (
@@ -750,12 +855,10 @@ const CheckoutPage = () => {
                               {formatPrice(grandTotal)}
                             </div>
                           )}
-                          <span className={showPixDiscount ? 'text-emerald-600' : ''}>
-                            {formatPrice(finalTotal)}
-                          </span>
+                          <span className={showPixDiscount ? "text-emerald-600" : ""}>{formatPrice(finalTotal)}</span>
                           {showPixDiscount && (
                             <p className="text-[11px] text-muted-foreground font-normal mt-0.5">
-                              {step === 'payment' ? 'desconto aplicado' : 'pagando no PIX'}
+                              {step === "payment" ? "desconto aplicado" : "pagando no PIX"}
                             </p>
                           )}
                         </div>
@@ -764,7 +867,7 @@ const CheckoutPage = () => {
                   );
                 })()}
               </CardContent>
-              {step === 'info' && (
+              {step === "info" && (
                 <CardFooter>
                   <Button
                     type="submit"
@@ -772,9 +875,9 @@ const CheckoutPage = () => {
                     className="w-full hidden lg:flex font-semibold"
                     size="lg"
                     disabled={isSubmitting}
-                    style={{ backgroundColor: '#009C3B', color: '#FFDF00' }}
-                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#007A2F')}
-                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#009C3B')}
+                    style={{ backgroundColor: "#009C3B", color: "#FFDF00" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#007A2F")}
+                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#009C3B")}
                   >
                     {isSubmitting ? (
                       <>
@@ -782,7 +885,7 @@ const CheckoutPage = () => {
                         Processando...
                       </>
                     ) : (
-                      'Ir para Pagamento'
+                      "Ir para Pagamento"
                     )}
                   </Button>
                 </CardFooter>
