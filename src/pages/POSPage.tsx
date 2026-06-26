@@ -304,8 +304,8 @@ const POSPage = () => {
   // Diferença a devolver ao cliente (positiva quando devolução excede compras)
   const customerCredit = Math.max(0, -rawBalance);
 
-  // For quotes, use the selected quotePriceMode to determine pricing
-  const effectivePriceType = saleType === 'orcamento' ? quotePriceMode : saleType;
+  // For quotes and exchanges, use the selected quotePriceMode to determine pricing
+  const effectivePriceType = (saleType === 'orcamento' || saleType === 'troca') ? quotePriceMode : saleType;
 
   const resolvePrice = useCallback((product: ProductResult): number => {
     switch (effectivePriceType) {
