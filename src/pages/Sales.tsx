@@ -26,6 +26,7 @@ import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { auditService } from '@/services/auditService';
 import EditPaymentMethodModal from '@/components/EditPaymentMethodModal';
+import EditSaleItemsModal from '@/components/EditSaleItemsModal';
 
 const paymentMethodLabels: Record<string, string> = {
   cash: 'Dinheiro',
@@ -62,6 +63,7 @@ const Sales = () => {
   const [sellerFilter, setSellerFilter] = useState('all');
   const [storeFilter, setStoreFilter] = useState('all');
   const [isEditingPayment, setIsEditingPayment] = useState(false);
+  const [isEditingItems, setIsEditingItems] = useState(false);
 
   const WEBSITE_STORE_ID = 'e0b8ebbc-1b3b-4aec-b5f7-6925762e6ea1';
   const saleItems = (items: any) => {
@@ -725,6 +727,11 @@ const Sales = () => {
               {detailSale && detailSale.store_id === WEBSITE_STORE_ID && (
                 <Badge variant="secondary" className="text-xs"><Globe className="h-3 w-3 mr-1" /> Pedido do Site</Badge>
               )}
+              {canCancel && detailSale && (detailSale as any).status !== 'cancelled' && detailSale.store_id !== WEBSITE_STORE_ID && (
+                <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setIsEditingItems(true)}>
+                  <Pencil className="h-4 w-4" /> Editar itens
+                </Button>
+              )}
               {canCancel && detailSale && (detailSale as any).status !== 'cancelled' && (
                 <Button variant="destructive" size="sm" className="gap-1.5" onClick={() => setCancelSale(detailSale)}>
                   <Ban className="h-4 w-4" /> Cancelar
@@ -1096,6 +1103,18 @@ const Sales = () => {
         <EditPaymentMethodModal
           open={isEditingPayment}
           onOpenChange={setIsEditingPayment}
+          sale={detailSale}
+          onUpdated={(updated) => {
+            setDetailSale(updated);
+            queryClient.invalidateQueries({ queryKey: ['pos-sales'] });
+          }}
+        />
+      )}
+      {/* Edit Sale Items Modal */}
+      {detailSale && (
+        <EditSaleItemsModal
+          open={isEditingItems}
+          onOpenChange={setIsEditingItems}
           sale={detailSale}
           onUpdated={(updated) => {
             setDetailSale(updated);
