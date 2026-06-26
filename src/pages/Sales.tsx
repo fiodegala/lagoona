@@ -727,6 +727,11 @@ const Sales = () => {
               {detailSale && detailSale.store_id === WEBSITE_STORE_ID && (
                 <Badge variant="secondary" className="text-xs"><Globe className="h-3 w-3 mr-1" /> Pedido do Site</Badge>
               )}
+              {canCancel && detailSale && (detailSale as any).status !== 'cancelled' && detailSale.store_id !== WEBSITE_STORE_ID && (
+                <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setIsEditingItems(true)}>
+                  <Pencil className="h-4 w-4" /> Editar itens
+                </Button>
+              )}
               {canCancel && detailSale && (detailSale as any).status !== 'cancelled' && (
                 <Button variant="destructive" size="sm" className="gap-1.5" onClick={() => setCancelSale(detailSale)}>
                   <Ban className="h-4 w-4" /> Cancelar
