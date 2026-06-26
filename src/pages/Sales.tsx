@@ -63,6 +63,7 @@ const Sales = () => {
   const [sellerFilter, setSellerFilter] = useState('all');
   const [storeFilter, setStoreFilter] = useState('all');
   const [isEditingPayment, setIsEditingPayment] = useState(false);
+  const [isEditingItems, setIsEditingItems] = useState(false);
 
   const WEBSITE_STORE_ID = 'e0b8ebbc-1b3b-4aec-b5f7-6925762e6ea1';
   const saleItems = (items: any) => {
