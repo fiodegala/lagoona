@@ -315,9 +315,8 @@ const POSPage = () => {
         return product.exclusive_price ?? product.price;
       case 'brinde':
         return 0;
-      case 'troca':
-        // Troca integrada: produto novo entra com preço de varejo; o item de devolução é que abate o total
-        return product.price;
+      // 'troca' resolves via quotePriceMode above; falls through to default
+
       default:
         // Varejo: always use regular retail price
         return product.price;
