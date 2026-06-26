@@ -304,8 +304,8 @@ const POSPage = () => {
   // Diferença a devolver ao cliente (positiva quando devolução excede compras)
   const customerCredit = Math.max(0, -rawBalance);
 
-  // For quotes, use the selected quotePriceMode to determine pricing
-  const effectivePriceType = saleType === 'orcamento' ? quotePriceMode : saleType;
+  // For quotes and exchanges, use the selected quotePriceMode to determine pricing
+  const effectivePriceType = (saleType === 'orcamento' || saleType === 'troca') ? quotePriceMode : saleType;
 
   const resolvePrice = useCallback((product: ProductResult): number => {
     switch (effectivePriceType) {
@@ -315,9 +315,8 @@ const POSPage = () => {
         return product.exclusive_price ?? product.price;
       case 'brinde':
         return 0;
-      case 'troca':
-        // Troca integrada: produto novo entra com preço de varejo; o item de devolução é que abate o total
-        return product.price;
+      // 'troca' resolves via quotePriceMode above; falls through to default
+
       default:
         // Varejo: always use regular retail price
         return product.price;
@@ -338,9 +337,8 @@ const POSPage = () => {
             return variation.exclusive_price ?? variation.price ?? product.exclusive_price ?? product.price;
           case 'brinde':
             return 0;
-          case 'troca':
-            // Troca integrada: produto novo com preço de varejo
-            return variation.price ?? product.price;
+          // 'troca' resolves via quotePriceMode above; falls through to default
+
           default:
             // Varejo: use regular retail price
             return variation.price ?? product.price;
