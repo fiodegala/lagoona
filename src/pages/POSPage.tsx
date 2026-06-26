@@ -586,7 +586,16 @@ const POSPage = () => {
     if (variationId) {
       const variation = product.variations.find((v) => v.id === variationId);
       if (!variation) return;
-      const basePrice = variation.price ?? product.price;
+      const basePrice = (() => {
+        switch (effectivePriceType) {
+          case 'atacado':
+            return variation.wholesale_price ?? product.wholesale_price ?? variation.price ?? product.price;
+          case 'exclusivo':
+            return variation.exclusive_price ?? product.exclusive_price ?? variation.price ?? product.price;
+          default:
+            return variation.price ?? product.price;
+        }
+      })();
       const label = variation.label || variation.sku || variationId.slice(0, 8);
 
       const existingItem = cartItems.find((item) => item.product_id === product.id && item.variation_id === variationId && item.is_return);
@@ -617,6 +626,7 @@ const POSPage = () => {
         setCartItems((items) => [...items, newItem]);
       }
     } else {
+      const basePrice = resolvePrice(product);
       const existingItem = cartItems.find((item) => item.product_id === product.id && !item.variation_id && item.is_return);
       if (existingItem) {
         setCartItems((items) =>
@@ -632,18 +642,18 @@ const POSPage = () => {
           product_id: product.id,
           name: product.name,
           image_url: product.image_url || null,
-          unit_price: product.price,
+          unit_price: basePrice,
           quantity: 1,
           discount_amount: 0,
-          total: product.price,
+          total: basePrice,
           max_stock: 9999,
           is_return: true,
-          retail_price: product.price,
+          retail_price: basePrice,
         };
         setCartItems((items) => [...items, newItem]);
       }
     }
-  }, [cartItems]);
+  }, [cartItems, effectivePriceType, resolvePrice]);
 
   const handlePayment = async (method: 'cash' | 'card' | 'pix' | 'mixed' | 'boleto' | 'cheque', amountReceived?: number, paymentDetails?: Record<string, number>, saleDate?: string) => {
     if (cartItems.length === 0) return;
