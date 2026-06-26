@@ -1110,6 +1110,18 @@ const Sales = () => {
           }}
         />
       )}
+      {/* Edit Sale Items Modal */}
+      {detailSale && (
+        <EditSaleItemsModal
+          open={isEditingItems}
+          onOpenChange={setIsEditingItems}
+          sale={detailSale}
+          onUpdated={(updated) => {
+            setDetailSale(updated);
+            queryClient.invalidateQueries({ queryKey: ['pos-sales'] });
+          }}
+        />
+      )}
     </AdminLayout>
   );
 };
