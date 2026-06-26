@@ -61,10 +61,10 @@ const SaleTypeStep = ({ saleType, onSelect, onNext, quotePriceMode = 'varejo', o
         ))}
       </div>
 
-      {/* Sub-selection for quote price mode */}
-      {isQuote && (
+      {/* Sub-selection for price mode (quotes and exchanges) */}
+      {showPriceMode && (
         <div className="mt-6 w-full max-w-lg">
-          <p className="text-sm font-medium text-center mb-3">Modalidade de preço do orçamento:</p>
+          <p className="text-sm font-medium text-center mb-3">Modalidade de preço {isExchange ? 'da troca' : 'do orçamento'}:</p>
           <div className="grid grid-cols-3 gap-3">
             {quotePriceModes.map(({ value, label, icon: Icon, description }) => (
               <button
