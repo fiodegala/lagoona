@@ -31,6 +31,8 @@ const quotePriceModes: { value: QuotePriceMode; label: string; icon: typeof Shop
 
 const SaleTypeStep = ({ saleType, onSelect, onNext, quotePriceMode = 'varejo', onQuotePriceModeSelect }: SaleTypeStepProps) => {
   const isQuote = saleType === 'orcamento';
+  const isExchange = saleType === 'troca';
+  const showPriceMode = isQuote || isExchange;
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-8">
