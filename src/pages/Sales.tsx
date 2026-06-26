@@ -26,6 +26,7 @@ import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { auditService } from '@/services/auditService';
 import EditPaymentMethodModal from '@/components/EditPaymentMethodModal';
+import EditSaleItemsModal from '@/components/EditSaleItemsModal';
 
 const paymentMethodLabels: Record<string, string> = {
   cash: 'Dinheiro',
