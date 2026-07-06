@@ -64,7 +64,7 @@ const TopAnnouncementBar = () => {
   const Icon = current.icon;
 
   return (
-    <div className="text-xs sm:text-sm overflow-hidden bg-blue-900 text-white">
+    <div className="text-xs sm:text-sm overflow-hidden bg-[hsl(var(--store-dark))] text-[hsl(var(--store-primary))]">
       <div className="container mx-auto px-4 py-3.5 flex items-center justify-center min-h-[52px]">
         <div
           className={`flex items-center gap-2 transition-all duration-300 ${
