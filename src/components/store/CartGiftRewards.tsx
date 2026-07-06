@@ -7,8 +7,6 @@ export const GIFT_STORAGE_KEY = 'cart-gift-choice';
 const PROMO_START = GIFT_PROMO_START;
 const STORAGE_KEY = GIFT_STORAGE_KEY;
 
-type TierId = 'opener' | 'headphones' | 'smartwatch';
-
 export type GiftTierId = 'opener' | 'headphones' | 'smartwatch';
 type TierId = GiftTierId;
 
