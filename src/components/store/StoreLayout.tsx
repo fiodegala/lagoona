@@ -11,7 +11,6 @@ import { useAnalyticsTracker } from '@/hooks/useAnalyticsTracker';
 // Lazy load non-critical widgets
 const AIChatWidget = lazy(() => import('./AIChatWidget'));
 const SpinWheel = lazy(() => import('./SpinWheel'));
-const ScorePredictionPopup = lazy(() => import('./ScorePredictionPopup'));
 
 interface StoreLayoutProps {
   children: ReactNode;
@@ -46,7 +45,6 @@ const StoreLayout = ({ children }: StoreLayoutProps) => {
       <Suspense fallback={null}>
         <AIChatWidget />
         <SpinWheel />
-        <ScorePredictionPopup />
       </Suspense>
       <WhatsAppButton phoneNumber="5562994165785" />
     </div>

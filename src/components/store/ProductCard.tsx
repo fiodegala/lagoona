@@ -144,7 +144,7 @@ const ProductCard = memo(forwardRef<HTMLAnchorElement, ProductCardProps>(({ prod
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-        <div className="product-card relative bg-card rounded-[10px] border border-[#FFDF00] overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-[#FFDF00]">
+        <div className="product-card relative bg-card rounded-[10px] border border-[#60a5fa] overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-[#60a5fa]">
         {/* Image Container */}
         <div className="relative aspect-[4/5] overflow-hidden bg-store-secondary/30">
           {product.image_url ? (
@@ -227,9 +227,9 @@ const ProductCard = memo(forwardRef<HTMLAnchorElement, ProductCardProps>(({ prod
               onClick={handleAddToCart}
               disabled={isOutOfStock}
               className="w-full gap-2 font-semibold h-12 md:h-10 text-base md:text-sm"
-              style={{ backgroundColor: '#009C3B', color: '#FFDF00' }}
-              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#007A2F')}
-              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#009C3B')}
+              style={{ backgroundColor: '#1e3a8a', color: '#60a5fa' }}
+              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#1d4ed8')}
+              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#1e3a8a')}
             >
               <ShoppingCart className="h-5 w-5 md:h-4 md:w-4" />
               Adicionar

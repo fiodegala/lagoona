@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
-import { Truck, Sparkles, CreditCard } from 'lucide-react';
+import { Truck, Sparkles, CreditCard, Gift } from 'lucide-react';
 import HeroCountdown from './HeroCountdown';
 import { useDealsCountdown } from '@/hooks/useDealsCountdown';
 
-const WorldCupBanner = () => (
+const FathersDayBanner = () => (
   <span className="inline-flex items-center gap-1 font-semibold">
-    <span className="text-base">⚽</span>
-    <strong className="font-bold tracking-wider">COPA DO MUNDO</strong>
-    <span>— vista a camisa do estilo</span>
+    <span className="text-base">👔</span>
+    <strong className="font-bold tracking-wider">DIA DOS PAIS</strong>
+    <span>— presenteie com estilo</span>
     <span className="hidden sm:inline">com até</span>
     <strong className="hidden sm:inline font-bold">30% OFF</strong>
   </span>
@@ -15,9 +15,8 @@ const WorldCupBanner = () => (
 
 const messages = [
   {
-    icon: () => <span className="text-base leading-none">⚽</span>,
-    isWorldCup: true as const,
-    text: <WorldCupBanner />,
+    icon: Gift,
+    text: <FathersDayBanner />,
   },
   {
     icon: Truck,
@@ -77,14 +76,9 @@ const TopAnnouncementBar = () => {
 
   const current = messages[index % messages.length] ?? messages[0];
   const Icon = current.icon;
-  const isWorldCup = (current as { isWorldCup?: boolean }).isWorldCup === true;
-
-  const bg = isWorldCup
-    ? 'bg-gradient-to-r from-green-700 via-yellow-500 to-blue-700 text-white'
-    : 'bg-black text-white';
 
   return (
-    <div className={`text-xs sm:text-sm overflow-hidden ${bg}`}>
+    <div className="text-xs sm:text-sm overflow-hidden bg-blue-900 text-white">
       <div className="container mx-auto px-4 py-3.5 flex items-center justify-center min-h-[52px]">
         <div
           className={`flex items-center gap-2 transition-all duration-300 ${

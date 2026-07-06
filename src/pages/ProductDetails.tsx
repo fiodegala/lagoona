@@ -767,9 +767,9 @@ const ProductDetails = () => {
               <Button
                 size="lg"
                 className="flex-1 gap-2 font-semibold"
-                style={{ backgroundColor: '#009C3B', color: '#FFDF00' }}
-                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#007A2F')}
-                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#009C3B')}
+                style={{ backgroundColor: '#1e3a8a', color: '#60a5fa' }}
+                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#1d4ed8')}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#1e3a8a')}
                 onClick={upsellHasSelection && upsellBuyTogether ? upsellBuyTogether : handleAddToCart}
                 disabled={isOutOfStock || (productHasVariations && !selectedVariation)}
               >
@@ -959,9 +959,9 @@ const ProductDetails = () => {
         <Button
           size="lg"
           className="gap-2 font-semibold shrink-0"
-          style={{ backgroundColor: '#009C3B', color: '#FFDF00' }}
-          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#007A2F')}
-          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#009C3B')}
+          style={{ backgroundColor: '#1e3a8a', color: '#60a5fa' }}
+          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#1d4ed8')}
+          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#1e3a8a')}
           onClick={upsellHasSelection && upsellBuyTogether ? upsellBuyTogether : handleAddToCart}
           disabled={isOutOfStock || (productHasVariations && !selectedVariation)}
         >

@@ -121,7 +121,7 @@ const CartPage = () => {
               <div className="w-full h-3 bg-muted rounded-full overflow-hidden shadow-inner">
                 <div
                   className="h-full rounded-full transition-[width] duration-700 ease-[cubic-bezier(0.4,0,0.2,1)] progress-bar-glow relative overflow-hidden"
-                  style={{ width: `${rewardProgress}%`, backgroundColor: '#009C3B' }}
+                  style={{ width: `${rewardProgress}%`, backgroundColor: '#1e3a8a' }}
                 />
               </div>
               <p className="text-xs text-muted-foreground mt-2 text-right">
@@ -380,9 +380,9 @@ const CartPage = () => {
                   asChild
                   className="w-full gap-2 font-semibold"
                   size="lg"
-                  style={{ backgroundColor: '#009C3B', color: '#FFDF00' }}
-                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#007A2F')}
-                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#009C3B')}
+                  style={{ backgroundColor: '#1e3a8a', color: '#60a5fa' }}
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#1d4ed8')}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#1e3a8a')}
                 >
                   <Link to="/checkout">
                     Finalizar Compra

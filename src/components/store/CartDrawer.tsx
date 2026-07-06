@@ -188,28 +188,28 @@ const CartDrawer = () => {
                     <div className="flex items-start gap-2 text-[11px] sm:text-xs leading-snug">
                       {reached ? (
                         <>
-                          <PartyPopper className="h-3.5 w-3.5 text-[#FFDF00] shrink-0 mt-0.5" />
-                          <span className="font-medium text-[#009C3B] break-words">Você ganhou o boné e frete grátis! 🇧🇷🎉</span>
+                          <PartyPopper className="h-3.5 w-3.5 text-[#60a5fa] shrink-0 mt-0.5" />
+                          <span className="font-medium text-[#1e3a8a] break-words">Você ganhou frete grátis! 🎉</span>
                         </>
                       ) : (
                         <>
-                          <Truck className="h-3.5 w-3.5 text-[#FFDF00] shrink-0 mt-0.5" />
+                          <Truck className="h-3.5 w-3.5 text-[#60a5fa] shrink-0 mt-0.5" />
                           <span className="text-foreground break-words min-w-0">
-                            Falta <span className="font-semibold text-[#009C3B] whitespace-nowrap">{formatPrice(remaining)}</span> para você ganhar o <span className="font-semibold">boné e frete grátis</span> 🇧🇷
+                            Falta <span className="font-semibold text-[#1e3a8a] whitespace-nowrap">{formatPrice(remaining)}</span> para você ganhar <span className="font-semibold">frete grátis</span>
                           </span>
                         </>
                       )}
                     </div>
-                    <div className="relative h-2.5 w-full bg-[#002776]/15 rounded-full overflow-hidden">
+                    <div className="relative h-2.5 w-full bg-[#172554]/15 rounded-full overflow-hidden">
                       <div
-                        className={`h-full transition-all duration-500 ${reached ? 'bg-gradient-to-r from-[#009C3B] to-[#FFDF00]' : 'bg-gradient-to-r from-[#009C3B] to-[#FFDF00]'}`}
+                        className={`h-full transition-all duration-500 ${reached ? 'bg-gradient-to-r from-[#1e3a8a] to-[#60a5fa]' : 'bg-gradient-to-r from-[#1e3a8a] to-[#60a5fa]'}`}
                         style={{ width: `${progress}%` }}
                       />
                       <span
                         className="absolute top-1/2 -translate-y-1/2 text-sm leading-none pointer-events-none"
                         style={{ left: `calc(${Math.min(progress, 96)}% - 2px)` }}
                       >
-                        🇧🇷
+                        🎁
                       </span>
                     </div>
                   </div>
@@ -275,13 +275,13 @@ const CartDrawer = () => {
                     style={
                       valentinesPromoActive
                         ? undefined
-                        : { backgroundColor: '#009C3B', color: '#FFDF00' }
+                        : { backgroundColor: '#1e3a8a', color: '#60a5fa' }
                     }
                     onMouseEnter={(e) => {
-                      if (!valentinesPromoActive) e.currentTarget.style.backgroundColor = '#007A2F';
+                      if (!valentinesPromoActive) e.currentTarget.style.backgroundColor = '#1d4ed8';
                     }}
                     onMouseLeave={(e) => {
-                      if (!valentinesPromoActive) e.currentTarget.style.backgroundColor = '#009C3B';
+                      if (!valentinesPromoActive) e.currentTarget.style.backgroundColor = '#1e3a8a';
                     }}
                   >
                     <Link to="/checkout">

@@ -355,9 +355,9 @@ const UpsellSection = ({ currentProduct, currentPrice, currentVariation, categor
               size="sm"
               onClick={handleBuyTogether}
               className="gap-1.5 text-xs h-8"
-              style={{ backgroundColor: '#009C3B', color: '#FFDF00' }}
-              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#007A2F')}
-              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#009C3B')}
+              style={{ backgroundColor: '#1e3a8a', color: '#60a5fa' }}
+              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#1d4ed8')}
+              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#1e3a8a')}
             >
               <ShoppingCart className="h-3.5 w-3.5" />
               Comprar junto
