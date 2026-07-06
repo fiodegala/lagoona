@@ -744,9 +744,9 @@ const CheckoutPage = () => {
                     className="w-full font-semibold"
                     size="lg"
                     disabled={isSubmitting}
-                    style={{ backgroundColor: "#009C3B", color: "#FFDF00" }}
-                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#007A2F")}
-                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#009C3B")}
+                    style={{ backgroundColor: "#1e3a8a", color: "#60a5fa" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#1d4ed8")}
+                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#1e3a8a")}
                   >
                     {isSubmitting ? (
                       <>
@@ -875,9 +875,9 @@ const CheckoutPage = () => {
                     className="w-full hidden lg:flex font-semibold"
                     size="lg"
                     disabled={isSubmitting}
-                    style={{ backgroundColor: "#009C3B", color: "#FFDF00" }}
-                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#007A2F")}
-                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#009C3B")}
+                    style={{ backgroundColor: "#1e3a8a", color: "#60a5fa" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#1d4ed8")}
+                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#1e3a8a")}
                   >
                     {isSubmitting ? (
                       <>

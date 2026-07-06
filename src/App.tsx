@@ -56,7 +56,7 @@ const CashRegisterReport = lazy(() => import("./pages/CashRegisterReport"));
 const VisualMerchandising = lazy(() => import("./pages/VisualMerchandising"));
 const InternalChat = lazy(() => import("./pages/InternalChat"));
 const CalendarPage = lazy(() => import("./pages/Calendar"));
-const ScorePredictions = lazy(() => import("./pages/ScorePredictions"));
+
 const SellerReconciliation = lazy(() => import("./pages/SellerReconciliation"));
 const PdvSiteReport = lazy(() => import("./pages/PdvSiteReport"));
 const ProductCosts = lazy(() => import("./pages/ProductCosts"));
@@ -467,14 +467,6 @@ const App = () => (
                 }
               />
 
-              <Route
-                path="/admin/palpites"
-                element={
-                  <ProtectedRoute requiredRole="admin">
-                    <ScorePredictions />
-                  </ProtectedRoute>
-                }
-              />
 
               <Route
                 path="/admin/olist"

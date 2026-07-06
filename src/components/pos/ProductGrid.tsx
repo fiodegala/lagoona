@@ -151,7 +151,7 @@ const ProductGrid = ({
                 <button
                   key={product.id}
                   className={cn(
-                    'flex flex-col rounded-[10px] border border-[#FFDF00] bg-card overflow-hidden transition-all',
+                    'flex flex-col rounded-[10px] border border-[#60a5fa] bg-card overflow-hidden transition-all',
                     'hover:shadow-md hover:border-primary/50',
                     'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
                     !hasStock && !allowOutOfStock && 'opacity-50 cursor-not-allowed'

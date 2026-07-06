@@ -569,22 +569,6 @@ const HomePage = () => {
         )}
       </section>
 
-      {/* Copa Connection Bar */}
-      <section
-        className="border-b-4 border-[#FFDF00]"
-        style={{ background: 'linear-gradient(90deg, #009C3B 0%, #00A845 50%, #009C3B 100%)' }}
-        aria-label="Mensagem da Seleção Brasileira"
-      >
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-center gap-3 text-center">
-            <span className="text-2xl">🇧🇷</span>
-            <p className="text-white font-bold text-sm sm:text-base md:text-lg tracking-wide drop-shadow-[0_1px_1px_rgba(0,39,118,0.6)]">
-              Vista o verde e amarelo com estilo. A torcida começa aqui, na Fio de Gala!
-            </p>
-            <span className="text-2xl">⚽</span>
-          </div>
-        </div>
-      </section>
 
       {/* Categorias em Destaque */}
       {categories.length > 0 && (
@@ -653,8 +637,8 @@ const HomePage = () => {
 
       {/* Lançamentos - Grade */}
       <section
-        className="py-16 md:py-20 border-y-4 border-[#FFDF00]"
-        style={{ background: 'linear-gradient(135deg, #009C3B 0%, #00A845 50%, #009C3B 100%)' }}
+        className="py-16 md:py-20 border-y-4 border-[#60a5fa]"
+        style={{ background: 'linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 50%, #1e3a8a 100%)' }}
       >
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between mb-10">
@@ -662,9 +646,9 @@ const HomePage = () => {
               <h2 className="text-2xl md:text-3xl font-display font-bold italic text-white drop-shadow-[0_1px_2px_rgba(0,39,118,0.5)]">
                 Lançamentos
               </h2>
-              <div className="w-12 h-0.5 bg-[#FFDF00] mt-2" />
+              <div className="w-12 h-0.5 bg-[#60a5fa] mt-2" />
             </div>
-            <Button variant="outline" asChild className="gap-2 hidden sm:flex border-[#FFDF00] text-[#FFDF00] hover:bg-[#FFDF00]/10 hover:text-white bg-transparent">
+            <Button variant="outline" asChild className="gap-2 hidden sm:flex border-[#60a5fa] text-[#60a5fa] hover:bg-[#60a5fa]/10 hover:text-white bg-transparent">
               <Link to="/loja?ordenar=recentes">
                 Ver todos
                 <ArrowRight className="h-4 w-4" />
@@ -690,7 +674,7 @@ const HomePage = () => {
           )}
 
           <div className="mt-6 text-center sm:hidden">
-            <Button variant="outline" asChild className="gap-2 border-[#FFDF00] text-[#FFDF00] hover:bg-[#FFDF00]/10 hover:text-white bg-transparent">
+            <Button variant="outline" asChild className="gap-2 border-[#60a5fa] text-[#60a5fa] hover:bg-[#60a5fa]/10 hover:text-white bg-transparent">
               <Link to="/loja?ordenar=recentes">
                 Ver todos os lançamentos
                 <ArrowRight className="h-4 w-4" />
