@@ -401,6 +401,10 @@ const CheckoutPage = () => {
 
       if (error) throw error;
 
+      if (typeof window !== "undefined") {
+        localStorage.removeItem(GIFT_STORAGE_KEY);
+      }
+
       setOrderId(newOrderId);
       setStep("payment");
       toast.success("Pedido criado! Agora escolha a forma de pagamento.");
