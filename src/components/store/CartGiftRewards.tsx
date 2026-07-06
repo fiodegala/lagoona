@@ -2,8 +2,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { Gift, Check, Lock, Sparkles } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
-const PROMO_START = new Date('2026-07-09T00:00:00-03:00');
-const STORAGE_KEY = 'cart-gift-choice';
+export const GIFT_PROMO_START = new Date('2026-07-09T00:00:00-03:00');
+export const GIFT_STORAGE_KEY = 'cart-gift-choice';
+const PROMO_START = GIFT_PROMO_START;
+const STORAGE_KEY = GIFT_STORAGE_KEY;
 
 type TierId = 'opener' | 'headphones' | 'smartwatch';
 
