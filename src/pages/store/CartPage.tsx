@@ -11,6 +11,7 @@ import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { SEO } from "@/components/seo/SEO";
+import CartGiftRewards from '@/components/store/CartGiftRewards';
 
 const CartPage = () => {
   const { user } = useAuth();
