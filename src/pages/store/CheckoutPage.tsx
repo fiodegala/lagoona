@@ -18,6 +18,7 @@ import { trackAnalyticsEvent } from "@/hooks/useAnalyticsTracker";
 import { getAffiliateCode, clearAffiliateCode } from "@/lib/affiliateUtils";
 import { trackMetaInitiateCheckout, trackMetaPurchase, getMetaBrowserIds, generateMetaEventId } from "@/lib/metaPixel";
 import { SEO } from "@/components/seo/SEO";
+import CartGiftRewards from "@/components/store/CartGiftRewards";
 
 const ABANDONED_CART_SESSION_KEY = "abandoned-cart-session";
 
