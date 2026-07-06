@@ -846,7 +846,10 @@ const CheckoutPage = () => {
                         )}
                       </div>
 
+                      <CartGiftRewards subtotal={total} compact />
+
                       <Separator />
+
 
                       <div className="flex justify-between font-semibold text-lg">
                         <span>Total</span>
