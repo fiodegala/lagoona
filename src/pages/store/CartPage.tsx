@@ -256,6 +256,9 @@ const CartPage = () => {
 
                 <Separator />
 
+                <CartGiftRewards subtotal={subtotal} />
+
+
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">
                     Subtotal ({items.length} {items.length === 1 ? 'item' : 'itens'})
