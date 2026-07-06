@@ -37,7 +37,8 @@ export async function resolveOrderGift(
   total: number,
   chosen: TierId | null,
 ): Promise<{ id: TierId; label: string } | null> {
-  if (new Date() < PROMO_START) return null;
+  const previewActive = typeof window !== 'undefined' && sessionStorage.getItem('cart-gift-preview') === '1';
+  if (!previewActive && new Date() < PROMO_START) return null;
   const eligible = TIERS.filter((t) => total >= t.min);
   if (eligible.length === 0) return null;
 
