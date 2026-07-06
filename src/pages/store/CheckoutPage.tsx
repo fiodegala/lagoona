@@ -346,6 +346,12 @@ const CheckoutPage = () => {
 
       const sessionId = getSessionId();
 
+      // Resolve gift choice (uses product total after discounts, excludes shipping)
+      const storedGiftChoice = (typeof window !== "undefined"
+        ? (localStorage.getItem(GIFT_STORAGE_KEY) as GiftTierId | null)
+        : null);
+      const gift = await resolveOrderGift(total, storedGiftChoice);
+
       const { error } = await supabase.from("orders").insert({
         id: newOrderId,
         customer_email: formData.email,
