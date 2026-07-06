@@ -160,22 +160,29 @@ export const CartGiftRewards = ({ subtotal, compact }: Props) => {
       </div>
 
       {/* Progress bar */}
-      <div className="relative pt-6 pb-8">
+      <div className="relative pt-6 pb-8 px-1">
         <div className="h-2 rounded-full bg-amber-500/15 overflow-hidden">
           <div
             className="h-full bg-gradient-to-r from-amber-500 to-amber-600 transition-all duration-500"
             style={{ width: `${progressPct}%` }}
           />
         </div>
-        {TIERS.map((t) => {
+        {TIERS.map((t, idx) => {
           const reached = subtotal >= t.min;
           const soldOut = t.id === 'smartwatch' && smartwatchRemaining !== null && smartwatchRemaining <= 0;
           const leftPct = Math.min(100, (t.min / maxTierValue) * 100);
+          const isFirst = idx === 0;
+          const isLast = idx === TIERS.length - 1;
+          const alignClass = isFirst
+            ? 'items-start translate-x-0 text-left'
+            : isLast
+              ? 'items-end -translate-x-full text-right'
+              : 'items-center -translate-x-1/2 text-center';
           return (
             <div
               key={t.id}
-              className="absolute top-0 flex flex-col items-center -translate-x-1/2"
-              style={{ left: `${leftPct}%` }}
+              className={`absolute top-0 flex flex-col ${alignClass}`}
+              style={{ left: `${leftPct}%`, maxWidth: '33%' }}
             >
               <span className="text-[10px] font-medium text-amber-900/80 dark:text-amber-200/80 whitespace-nowrap">
                 {formatPrice(t.min)}
@@ -187,12 +194,12 @@ export const CartGiftRewards = ({ subtotal, compact }: Props) => {
                     : soldOut
                       ? 'bg-muted border-muted-foreground/40 text-muted-foreground'
                       : 'bg-background border-amber-500/50'
-                }`}
+                } ${isFirst ? 'self-start' : isLast ? 'self-end' : 'self-center'}`}
               >
                 {reached && !soldOut ? <Check className="h-2.5 w-2.5" /> : soldOut ? <Lock className="h-2 w-2" /> : null}
               </div>
-              <span className="mt-1 text-[10px] whitespace-nowrap text-muted-foreground">
-                {t.emoji} {t.short}
+              <span className={`mt-1 text-[10px] whitespace-nowrap text-muted-foreground ${isFirst ? 'self-start' : isLast ? 'self-end' : 'self-center'}`}>
+                <span aria-hidden>{t.emoji}</span> {t.short}
               </span>
             </div>
           );
