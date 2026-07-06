@@ -18,7 +18,7 @@ import { trackAnalyticsEvent } from "@/hooks/useAnalyticsTracker";
 import { getAffiliateCode, clearAffiliateCode } from "@/lib/affiliateUtils";
 import { trackMetaInitiateCheckout, trackMetaPurchase, getMetaBrowserIds, generateMetaEventId } from "@/lib/metaPixel";
 import { SEO } from "@/components/seo/SEO";
-import CartGiftRewards from "@/components/store/CartGiftRewards";
+import CartGiftRewards, { GIFT_STORAGE_KEY, GiftTierId, resolveOrderGift } from "@/components/store/CartGiftRewards";
 
 const ABANDONED_CART_SESSION_KEY = "abandoned-cart-session";
 
@@ -346,6 +346,12 @@ const CheckoutPage = () => {
 
       const sessionId = getSessionId();
 
+      // Resolve gift choice (uses product total after discounts, excludes shipping)
+      const storedGiftChoice = (typeof window !== "undefined"
+        ? (localStorage.getItem(GIFT_STORAGE_KEY) as GiftTierId | null)
+        : null);
+      const gift = await resolveOrderGift(total, storedGiftChoice);
+
       const { error } = await supabase.from("orders").insert({
         id: newOrderId,
         customer_email: formData.email,
@@ -383,10 +389,21 @@ const CheckoutPage = () => {
                 valentines_discount: valentinesDiscount,
               }
             : {}),
+          ...(gift
+            ? {
+                gift_id: gift.id,
+                gift_label: gift.label,
+                gift_chosen_by_customer: storedGiftChoice === gift.id,
+              }
+            : {}),
         },
       });
 
       if (error) throw error;
+
+      if (typeof window !== "undefined") {
+        localStorage.removeItem(GIFT_STORAGE_KEY);
+      }
 
       setOrderId(newOrderId);
       setStep("payment");
