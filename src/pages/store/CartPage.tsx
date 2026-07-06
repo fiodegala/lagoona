@@ -256,7 +256,7 @@ const CartPage = () => {
 
                 <Separator />
 
-                <CartGiftRewards subtotal={subtotal} />
+                <CartGiftRewards subtotal={total} />
 
 
                 <div className="flex justify-between text-sm">
