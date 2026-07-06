@@ -8,12 +8,12 @@ const TrustBar = () => {
   ];
 
   return (
-    <div className="w-full" style={{ background: '#172554' }}>
+    <div className="w-full bg-[hsl(var(--store-accent))]">
       <div className="container mx-auto px-4 py-2.5">
-        <div className="flex items-center justify-center divide-x divide-white/20">
+        <div className="flex items-center justify-center divide-x divide-[hsl(var(--store-primary))]/25">
           {items.map((item, i) => (
-            <div key={i} className="flex items-center justify-center gap-2 px-3 md:px-8 text-white">
-              <item.icon className="h-4 w-4 md:h-5 md:w-5 shrink-0" style={{ color: '#60a5fa' }} />
+            <div key={i} className="flex items-center justify-center gap-2 px-3 md:px-8 text-[hsl(var(--store-secondary))]">
+              <item.icon className="h-4 w-4 md:h-5 md:w-5 shrink-0 text-[hsl(var(--store-primary))]" />
               <div className="leading-tight text-center">
                 <span className="font-bold text-xs md:text-sm block">{item.title}</span>
                 <span className="text-[10px] md:text-xs opacity-80 block">{item.desc}</span>
