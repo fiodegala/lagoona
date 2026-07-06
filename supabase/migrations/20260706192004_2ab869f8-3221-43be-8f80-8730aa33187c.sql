@@ -1,0 +1,1 @@
+UPDATE public.banners SET is_active = true WHERE id = '9356797a-5375-4a47-b6cb-86d1b4d31738';
