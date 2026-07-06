@@ -389,6 +389,13 @@ const CheckoutPage = () => {
                 valentines_discount: valentinesDiscount,
               }
             : {}),
+          ...(gift
+            ? {
+                gift_id: gift.id,
+                gift_label: gift.label,
+                gift_chosen_by_customer: storedGiftChoice === gift.id,
+              }
+            : {}),
         },
       });
 
