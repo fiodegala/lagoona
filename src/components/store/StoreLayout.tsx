@@ -35,7 +35,7 @@ const StoreLayout = ({ children }: StoreLayoutProps) => {
 
   return (
     <div className="min-h-screen flex flex-col bg-background overflow-x-hidden w-full relative">
-      <WorldCupTheme />
+      <FathersDayTheme />
       <TopAnnouncementBar />
       <StoreHeader categories={categories} />
       <TrustBar />
