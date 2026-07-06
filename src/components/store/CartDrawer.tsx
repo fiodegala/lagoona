@@ -7,6 +7,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose 
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useCart } from '@/contexts/CartContext';
 import { getValentinesDiscountedUnits } from '@/lib/valentinesPromo';
+import CartGiftRewards from '@/components/store/CartGiftRewards';
 
 const CartDrawer = () => {
   const {
