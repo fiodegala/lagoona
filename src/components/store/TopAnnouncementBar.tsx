@@ -1,23 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Truck, Sparkles, CreditCard, Gift } from 'lucide-react';
+import { Truck, Sparkles, CreditCard } from 'lucide-react';
 import HeroCountdown from './HeroCountdown';
 import { useDealsCountdown } from '@/hooks/useDealsCountdown';
 
-const FathersDayBanner = () => (
-  <span className="inline-flex items-center gap-1 font-semibold">
-    <span className="text-base">👔</span>
-    <strong className="font-bold tracking-wider">DIA DOS PAIS</strong>
-    <span>— presenteie com estilo</span>
-    <span className="hidden sm:inline">com até</span>
-    <strong className="hidden sm:inline font-bold">30% OFF</strong>
-  </span>
-);
-
 const messages = [
-  {
-    icon: Gift,
-    text: <FathersDayBanner />,
-  },
   {
     icon: Truck,
     text: (
