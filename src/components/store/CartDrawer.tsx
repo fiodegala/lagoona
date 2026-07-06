@@ -216,7 +216,7 @@ const CartDrawer = () => {
                   </div>
                 );
               })()}
-              <CartGiftRewards subtotal={subtotal} compact />
+              <CartGiftRewards subtotal={total} compact />
               {valentinesPromoActive && items.length >= 2 && valentinesDiscount === 0 && (
                 <div className="flex items-start gap-2 rounded-md bg-rose-500/10 border border-rose-500/30 px-2 py-1.5 text-[11px] sm:text-xs text-rose-700 dark:text-rose-400">
                   <Heart className="h-3.5 w-3.5 mt-0.5 shrink-0" />
