@@ -37,7 +37,8 @@ export async function resolveOrderGift(
   total: number,
   chosen: TierId | null,
 ): Promise<{ id: TierId; label: string } | null> {
-  if (new Date() < PROMO_START) return null;
+  const previewActive = typeof window !== 'undefined' && sessionStorage.getItem('cart-gift-preview') === '1';
+  if (!previewActive && new Date() < PROMO_START) return null;
   const eligible = TIERS.filter((t) => total >= t.min);
   if (eligible.length === 0) return null;
 
@@ -69,8 +70,28 @@ interface Props {
   compact?: boolean;
 }
 
+const PREVIEW_KEY = 'cart-gift-preview';
+const isPreviewMode = () => {
+  if (typeof window === 'undefined') return false;
+  try {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('preview_gift') === '1') {
+      sessionStorage.setItem(PREVIEW_KEY, '1');
+      return true;
+    }
+    if (params.get('preview_gift') === '0') {
+      sessionStorage.removeItem(PREVIEW_KEY);
+      return false;
+    }
+    return sessionStorage.getItem(PREVIEW_KEY) === '1';
+  } catch {
+    return false;
+  }
+};
+
 export const CartGiftRewards = ({ subtotal, compact }: Props) => {
-  const active = new Date() >= PROMO_START;
+  const preview = isPreviewMode();
+  const active = preview || new Date() >= PROMO_START;
   const [smartwatchRemaining, setSmartwatchRemaining] = useState<number | null>(null);
   const [choice, setChoice] = useState<TierId | null>(() => {
     if (typeof window === 'undefined') return null;
