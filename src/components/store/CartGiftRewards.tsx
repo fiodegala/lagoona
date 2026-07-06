@@ -9,7 +9,10 @@ const STORAGE_KEY = GIFT_STORAGE_KEY;
 
 type TierId = 'opener' | 'headphones' | 'smartwatch';
 
-interface Tier {
+export type GiftTierId = 'opener' | 'headphones' | 'smartwatch';
+type TierId = GiftTierId;
+
+export interface GiftTier {
   id: TierId;
   min: number;
   label: string;
@@ -18,11 +21,47 @@ interface Tier {
   limited?: number;
 }
 
-const TIERS: Tier[] = [
+export const GIFT_TIERS: GiftTier[] = [
   { id: 'opener', min: 199, label: 'Abridor Premium em Aço Inox', short: 'Abridor', emoji: '🍾' },
   { id: 'headphones', min: 349, label: 'Fone Bluetooth Premium', short: 'Fone Bluetooth', emoji: '🎧' },
   { id: 'smartwatch', min: 649, label: 'SmartWatch Premium', short: 'SmartWatch', emoji: '⌚', limited: 10 },
 ];
+const TIERS = GIFT_TIERS;
+
+/**
+ * Resolves the effective gift for an order. Enforces:
+ * - promo is active
+ * - order total meets tier minimum
+ * - SmartWatch: only if fewer than 10 have been granted since promo start
+ * - Downgrades to the next best eligible tier if the chosen one is unavailable
+ */
+export async function resolveOrderGift(
+  total: number,
+  chosen: TierId | null,
+): Promise<{ id: TierId; label: string } | null> {
+  if (new Date() < PROMO_START) return null;
+  const eligible = TIERS.filter((t) => total >= t.min);
+  if (eligible.length === 0) return null;
+
+  // Check SmartWatch availability if it's in play
+  let smartwatchAvailable = true;
+  if (eligible.some((t) => t.id === 'smartwatch')) {
+    const { count } = await supabase
+      .from('orders')
+      .select('id', { count: 'exact', head: true })
+      .gte('created_at', PROMO_START.toISOString())
+      .neq('status', 'cancelled')
+      .contains('metadata', { gift_id: 'smartwatch' });
+    smartwatchAvailable = (count ?? 0) < 10;
+  }
+
+  const filtered = eligible.filter((t) => t.id !== 'smartwatch' || smartwatchAvailable);
+  if (filtered.length === 0) return null;
+
+  const pick =
+    filtered.find((t) => t.id === chosen) ?? filtered[filtered.length - 1]; // fallback: highest eligible
+  return { id: pick.id, label: pick.label };
+}
 
 const formatPrice = (v: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
