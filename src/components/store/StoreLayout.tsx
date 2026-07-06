@@ -4,7 +4,7 @@ import TopAnnouncementBar from './TopAnnouncementBar';
 import TrustBar from './TrustBar';
 import StoreFooter from './StoreFooter';
 import WhatsAppButton from './WhatsAppButton';
-import WorldCupTheme from './WorldCupTheme';
+import FathersDayTheme from './FathersDayTheme';
 import { categoriesService, Category } from '@/services/categories';
 import { useAnalyticsTracker } from '@/hooks/useAnalyticsTracker';
 
@@ -35,7 +35,7 @@ const StoreLayout = ({ children }: StoreLayoutProps) => {
 
   return (
     <div className="min-h-screen flex flex-col bg-background overflow-x-hidden w-full relative">
-      <WorldCupTheme />
+      <FathersDayTheme />
       <TopAnnouncementBar />
       <StoreHeader categories={categories} />
       <TrustBar />
