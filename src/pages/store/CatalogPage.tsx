@@ -699,7 +699,7 @@ const CatalogPage = () => {
           );
         })()}
       </div>
-    </StoreLayout>
+    </>
   );
 };
 
