@@ -193,16 +193,33 @@ const CatalogPage = () => {
     if (search.trim()) {
       list = fuzzyFilterProducts(list, search);
     }
-    // Lançamentos primeiro, mas produtos sem foto não devem ficar no topo.
-    // Critérios: 1) tem foto (própria ou em variação), 2) mais recente,
-    // 3) ordenação da categoria, 4) nome.
+    // Ordem desejada: Calças, Camisetas, Camisas, Shorts primeiro;
+    // depois produtos com foto, mais recentes, ordenação da categoria e nome.
     const catById = new Map(categories.map((c) => [c.id, c] as const));
+    const normalize = (s: string) =>
+      s
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .trim();
+    const priorityRank = (categoryId: string | null | undefined) => {
+      if (!categoryId) return 9999;
+      const name = normalize(catById.get(categoryId)?.name || '');
+      if (name.includes('calca')) return 0;
+      if (name.includes('camiseta')) return 1;
+      if (name.includes('camisa')) return 2;
+      if (name.includes('short')) return 3;
+      return 9999;
+    };
     const hasImage = (p: Product) => {
       if (p.image_url) return true;
       const variations = variationsMap[p.id] || [];
       return variations.some((v) => v.image_url);
     };
     return [...list].sort((a, b) => {
+      const prA = priorityRank(a.category_id);
+      const prB = priorityRank(b.category_id);
+      if (prA !== prB) return prA - prB;
       const imgA = hasImage(a);
       const imgB = hasImage(b);
       if (imgA !== imgB) return imgA ? -1 : 1;
@@ -491,10 +508,13 @@ const CatalogPage = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {visibleProducts.map((product, productIndex) => {
                   const variations = variationsMap[product.id] || [];
+                  const categoryName = categories.find((c) => c.id === product.category_id)?.name || '';
 
                   return (
                     <div
                       key={product.id}
+                      data-product-card
+                      data-category-name={categoryName}
                       className="group rounded-lg border bg-card text-card-foreground shadow-sm overflow-hidden flex flex-col"
                     >
                       {/* Image 4:7 ratio with arrows */}
@@ -592,7 +612,7 @@ const CatalogPage = () => {
 
                       {/* Info */}
                       <div className="p-3 flex flex-col flex-1 gap-2">
-                        <h3 className="text-sm font-medium text-foreground line-clamp-2 leading-tight">
+                        <h3 data-product-name className="text-sm font-medium text-foreground line-clamp-2 leading-tight">
                           {product.name}
                         </h3>
 
