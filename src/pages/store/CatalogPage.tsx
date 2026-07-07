@@ -218,7 +218,7 @@ const CatalogPage = () => {
       if (cna !== 0) return cna;
       return (a.name || '').localeCompare(b.name || '', 'pt-BR');
     });
-  }, [products, selectedCategory, search, categories]);
+  }, [products, selectedCategory, search, categories, variationsMap]);
 
   // Reset visible count when filters change
   useEffect(() => {
