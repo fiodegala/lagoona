@@ -193,16 +193,31 @@ const CatalogPage = () => {
     if (search.trim()) {
       list = fuzzyFilterProducts(list, search);
     }
-    // Lançamentos primeiro, mas produtos sem foto não devem ficar no topo.
-    // Critérios: 1) tem foto (própria ou em variação), 2) mais recente,
-    // 3) ordenação da categoria, 4) nome.
+    // Ordem desejada: Calças, Camisetas, Camisas, Shorts primeiro;
+    // depois produtos com foto, mais recentes, ordenação da categoria e nome.
     const catById = new Map(categories.map((c) => [c.id, c] as const));
+    const normalize = (s: string) =>
+      s
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .trim();
+    const priorityCategories = ['calcas', 'camisetas', 'camisas', 'shorts'];
+    const priorityRank = (categoryId: string | null | undefined) => {
+      if (!categoryId) return 9999;
+      const name = normalize(catById.get(categoryId)?.name || '');
+      const idx = priorityCategories.indexOf(name);
+      return idx === -1 ? 9999 : idx;
+    };
     const hasImage = (p: Product) => {
       if (p.image_url) return true;
       const variations = variationsMap[p.id] || [];
       return variations.some((v) => v.image_url);
     };
     return [...list].sort((a, b) => {
+      const prA = priorityRank(a.category_id);
+      const prB = priorityRank(b.category_id);
+      if (prA !== prB) return prA - prB;
       const imgA = hasImage(a);
       const imgB = hasImage(b);
       if (imgA !== imgB) return imgA ? -1 : 1;
