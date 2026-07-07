@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import StoreLayout from '@/components/store/StoreLayout';
 import { productsService, Product } from '@/services/products';
 import { categoriesService, Category } from '@/services/categories';
 import { fuzzyFilterProducts } from '@/lib/searchUtils';
@@ -397,9 +396,9 @@ const CatalogPage = () => {
   }, [productImagesMap]);
 
   return (
-    <StoreLayout>
-            <SEO title="Catálogo — Fio de Gala" description="Catálogo completo da coleção Fio de Gala para visualizar e compartilhar." canonicalPath="/catalogo" />
-<div className="min-h-screen bg-background">
+    <>
+      <SEO title="Catálogo — Fio de Gala" description="Catálogo completo da coleção Fio de Gala para visualizar e compartilhar." canonicalPath="/catalogo" />
+      <div className="min-h-screen bg-background">
         {/* Hero */}
         <div className="bg-primary/5 py-8 md:py-12">
           <div className="container mx-auto px-4 text-center">
@@ -700,7 +699,7 @@ const CatalogPage = () => {
           );
         })()}
       </div>
-    </StoreLayout>
+    </>
   );
 };
 
