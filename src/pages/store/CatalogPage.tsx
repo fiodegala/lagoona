@@ -396,9 +396,9 @@ const CatalogPage = () => {
   }, [productImagesMap]);
 
   return (
-    <StoreLayout>
-            <SEO title="Catálogo — Fio de Gala" description="Catálogo completo da coleção Fio de Gala para visualizar e compartilhar." canonicalPath="/catalogo" />
-<div className="min-h-screen bg-background">
+    <>
+      <SEO title="Catálogo — Fio de Gala" description="Catálogo completo da coleção Fio de Gala para visualizar e compartilhar." canonicalPath="/catalogo" />
+      <div className="min-h-screen bg-background">
         {/* Hero */}
         <div className="bg-primary/5 py-8 md:py-12">
           <div className="container mx-auto px-4 text-center">
