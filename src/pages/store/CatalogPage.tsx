@@ -202,12 +202,14 @@ const CatalogPage = () => {
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '')
         .trim();
-    const priorityCategories = ['calcas', 'camisetas', 'camisas', 'shorts'];
     const priorityRank = (categoryId: string | null | undefined) => {
       if (!categoryId) return 9999;
       const name = normalize(catById.get(categoryId)?.name || '');
-      const idx = priorityCategories.indexOf(name);
-      return idx === -1 ? 9999 : idx;
+      if (name.includes('calca')) return 0;
+      if (name.includes('camiseta')) return 1;
+      if (name.includes('camisa')) return 2;
+      if (name.includes('short')) return 3;
+      return 9999;
     };
     const hasImage = (p: Product) => {
       if (p.image_url) return true;
