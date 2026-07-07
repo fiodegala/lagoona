@@ -506,10 +506,13 @@ const CatalogPage = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {visibleProducts.map((product, productIndex) => {
                   const variations = variationsMap[product.id] || [];
+                  const categoryName = categories.find((c) => c.id === product.category_id)?.name || '';
 
                   return (
                     <div
                       key={product.id}
+                      data-product-card
+                      data-category-name={categoryName}
                       className="group rounded-lg border bg-card text-card-foreground shadow-sm overflow-hidden flex flex-col"
                     >
                       {/* Image 4:7 ratio with arrows */}
