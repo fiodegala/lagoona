@@ -193,9 +193,13 @@ const CatalogPage = () => {
     if (search.trim()) {
       list = fuzzyFilterProducts(list, search);
     }
-    // Ordena pelo sort_order da categoria (gerenciado em /admin/categories via drag-and-drop)
+    // Lançamentos primeiro: ordena do mais recente para o mais antigo,
+    // mantendo agrupamento por categoria e nome como critérios secundários.
     const catById = new Map(categories.map((c) => [c.id, c] as const));
     return [...list].sort((a, b) => {
+      const dateA = new Date(a.created_at).getTime();
+      const dateB = new Date(b.created_at).getTime();
+      if (dateB !== dateA) return dateB - dateA;
       const ca = a.category_id ? catById.get(a.category_id) : undefined;
       const cb = b.category_id ? catById.get(b.category_id) : undefined;
       const soa = ca?.sort_order ?? 9999;
