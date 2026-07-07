@@ -610,7 +610,7 @@ const CatalogPage = () => {
 
                       {/* Info */}
                       <div className="p-3 flex flex-col flex-1 gap-2">
-                        <h3 className="text-sm font-medium text-foreground line-clamp-2 leading-tight">
+                        <h3 data-product-name className="text-sm font-medium text-foreground line-clamp-2 leading-tight">
                           {product.name}
                         </h3>
 
