@@ -193,10 +193,19 @@ const CatalogPage = () => {
     if (search.trim()) {
       list = fuzzyFilterProducts(list, search);
     }
-    // Lançamentos primeiro: ordena do mais recente para o mais antigo,
-    // mantendo agrupamento por categoria e nome como critérios secundários.
+    // Lançamentos primeiro, mas produtos sem foto não devem ficar no topo.
+    // Critérios: 1) tem foto (própria ou em variação), 2) mais recente,
+    // 3) ordenação da categoria, 4) nome.
     const catById = new Map(categories.map((c) => [c.id, c] as const));
+    const hasImage = (p: Product) => {
+      if (p.image_url) return true;
+      const variations = variationsMap[p.id] || [];
+      return variations.some((v) => v.image_url);
+    };
     return [...list].sort((a, b) => {
+      const imgA = hasImage(a);
+      const imgB = hasImage(b);
+      if (imgA !== imgB) return imgA ? -1 : 1;
       const dateA = new Date(a.created_at).getTime();
       const dateB = new Date(b.created_at).getTime();
       if (dateB !== dateA) return dateB - dateA;
@@ -209,7 +218,7 @@ const CatalogPage = () => {
       if (cna !== 0) return cna;
       return (a.name || '').localeCompare(b.name || '', 'pt-BR');
     });
-  }, [products, selectedCategory, search, categories]);
+  }, [products, selectedCategory, search, categories, variationsMap]);
 
   // Reset visible count when filters change
   useEffect(() => {
