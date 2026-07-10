@@ -4,8 +4,10 @@ import TopAnnouncementBar from './TopAnnouncementBar';
 import TrustBar from './TrustBar';
 import StoreFooter from './StoreFooter';
 import WhatsAppButton from './WhatsAppButton';
+import FathersDayTheme from './FathersDayTheme';
 import { categoriesService, Category } from '@/services/categories';
 import { useAnalyticsTracker } from '@/hooks/useAnalyticsTracker';
+import { isFathersDayActive } from '@/lib/fathersDayPromo';
 
 // Lazy load non-critical widgets
 const AIChatWidget = lazy(() => import('./AIChatWidget'));
@@ -17,7 +19,9 @@ interface StoreLayoutProps {
 
 const StoreLayout = ({ children }: StoreLayoutProps) => {
   const [categories, setCategories] = useState<Category[]>([]);
+  const fathersDayOn = isFathersDayActive();
   useAnalyticsTracker();
+
 
   useEffect(() => {
     const loadCategories = async () => {
@@ -33,10 +37,11 @@ const StoreLayout = ({ children }: StoreLayoutProps) => {
 
   return (
     <div className="min-h-screen flex flex-col bg-background overflow-x-hidden w-full relative">
-
+      {fathersDayOn && <FathersDayTheme />}
       <TopAnnouncementBar />
-      <StoreHeader categories={categories} />
+      <StoreHeader categories={categories} fathersDay={fathersDayOn} />
       <TrustBar />
+
       <main className="flex-1">
         {children}
       </main>
