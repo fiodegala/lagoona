@@ -37,10 +37,11 @@ const StoreLayout = ({ children }: StoreLayoutProps) => {
 
   return (
     <div className="min-h-screen flex flex-col bg-background overflow-x-hidden w-full relative">
-
+      {fathersDayOn && <FathersDayTheme />}
       <TopAnnouncementBar />
-      <StoreHeader categories={categories} />
+      <StoreHeader categories={categories} fathersDay={fathersDayOn} />
       <TrustBar />
+
       <main className="flex-1">
         {children}
       </main>
