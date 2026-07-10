@@ -201,17 +201,27 @@ const StoreHeader = ({ categories, fathersDay = false }: StoreHeaderProps) => {
   return (
     <header
       className="sticky top-0 z-50 backdrop-blur-md border-b-4"
-      style={{
-        background: 'linear-gradient(90deg, #1e3a8a 0%, #1d4ed8 50%, #1e3a8a 100%)',
-        borderBottomColor: '#60a5fa',
-        boxShadow: '0 4px 14px rgba(30,58,138,0.25)',
-      }}
+      style={
+        fathersDay
+          ? {
+              background: 'linear-gradient(90deg, #1e3a8a 0%, #1d4ed8 50%, #1e3a8a 100%)',
+              borderBottomColor: '#60a5fa',
+              boxShadow: '0 4px 14px rgba(30,58,138,0.25)',
+            }
+          : {
+              background: 'hsl(var(--store-dark))',
+              borderBottomColor: 'hsl(var(--store-primary))',
+            }
+      }
     >
-      {/* Faixa Dia dos Pais - azul claro */}
-      <div
-        className="h-1 w-full"
-        style={{ background: 'linear-gradient(90deg, #60a5fa 0%, #1e3a8a 50%, #60a5fa 100%)' }}
-      />
+      {/* Faixa decorativa - somente na campanha Dia dos Pais */}
+      {fathersDay && (
+        <div
+          className="h-1 w-full"
+          style={{ background: 'linear-gradient(90deg, #60a5fa 0%, #1e3a8a 50%, #60a5fa 100%)' }}
+        />
+      )}
+
       <div className="container mx-auto px-2 sm:px-4 max-w-full">
         <div className="flex items-center justify-between h-16 min-w-0">
           {/* Logo */}
