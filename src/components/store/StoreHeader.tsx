@@ -24,9 +24,11 @@ interface SearchResult {
 
 interface StoreHeaderProps {
   categories: Category[];
+  fathersDay?: boolean;
 }
 
-const StoreHeader = ({ categories }: StoreHeaderProps) => {
+const StoreHeader = ({ categories, fathersDay = false }: StoreHeaderProps) => {
+
   const [searchQuery, setSearchQuery] = useState('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
