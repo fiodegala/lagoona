@@ -19,7 +19,9 @@ interface StoreLayoutProps {
 
 const StoreLayout = ({ children }: StoreLayoutProps) => {
   const [categories, setCategories] = useState<Category[]>([]);
+  const fathersDayOn = isFathersDayActive();
   useAnalyticsTracker();
+
 
   useEffect(() => {
     const loadCategories = async () => {
