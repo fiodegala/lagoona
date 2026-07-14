@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { Component, lazy, Suspense, type ErrorInfo, type ReactNode } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -106,6 +106,54 @@ const PageLoader = () => (
   </div>
 );
 
+const isDynamicImportError = (error: unknown) => {
+  const message = error instanceof Error ? error.message : String(error ?? "");
+
+  return /failed to fetch dynamically imported module|importing a module script failed|loading chunk \d+ failed|error loading dynamically imported module/i.test(
+    message,
+  );
+};
+
+class ChunkErrorBoundary extends Component<{ children: ReactNode }, { hasChunkError: boolean }> {
+  state = { hasChunkError: false };
+
+  static getDerivedStateFromError(error: unknown) {
+    return { hasChunkError: isDynamicImportError(error) };
+  }
+
+  componentDidCatch(error: unknown, errorInfo: ErrorInfo) {
+    if (!isDynamicImportError(error)) {
+      console.error("Application error:", error, errorInfo);
+      return;
+    }
+
+    console.warn("Recovered from stale application chunk:", error);
+  }
+
+  render() {
+    if (!this.state.hasChunkError) return this.props.children;
+
+    return (
+      <main className="min-h-screen bg-background text-foreground flex items-center justify-center px-4">
+        <div className="max-w-md text-center space-y-4">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground mx-auto" />
+          <h1 className="text-2xl font-semibold">Atualizando a loja</h1>
+          <p className="text-muted-foreground">
+            Uma nova versão foi publicada. Recarregue a página para continuar.
+          </p>
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+          >
+            Recarregar agora
+          </button>
+        </div>
+      </main>
+    );
+  }
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
@@ -116,7 +164,8 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <ScrollToTop />
-            <Suspense fallback={<PageLoader />}>
+            <ChunkErrorBoundary>
+              <Suspense fallback={<PageLoader />}>
             <Routes>
               {/* Public Store Routes */}
               <Route path="/" element={<HomePage />} />
@@ -528,7 +577,8 @@ const App = () => (
 
               <Route path="*" element={<NotFound />} />
             </Routes>
-            </Suspense>
+              </Suspense>
+            </ChunkErrorBoundary>
           </BrowserRouter>
           </TooltipProvider>
         </FavoritesProvider>
