@@ -626,7 +626,7 @@ const CatalogPage = () => {
                           </p>
                           {product.wholesale_price != null && product.wholesale_price > 0 && (
                             <p className="text-base font-bold text-emerald-600">
-                              Preço para revendedores: {formatPrice(product.wholesale_price)}
+                              Preço para revendedores ( ATACADO ): {formatPrice(product.wholesale_price)}
                             </p>
                           )}
                         </div>
