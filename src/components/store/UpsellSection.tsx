@@ -191,7 +191,8 @@ const UpsellSection = ({ currentProduct, currentPrice, currentVariation, categor
     if (!pickerProduct || !pickerMatchedVariation) return;
     const realStock = pickerStockMap[pickerMatchedVariation.id] ?? pickerMatchedVariation.stock;
     const enrichedVar = { ...pickerMatchedVariation, stock: realStock };
-    const price = enrichedVar.price ?? getPrice(pickerProduct);
+    const varPrice = siteRetailPrice(enrichedVar as any);
+    const price = varPrice > 0 ? varPrice : getPrice(pickerProduct);
 
     setSelectedItems(prev => {
       const next = new Map(prev);
