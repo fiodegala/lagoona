@@ -448,8 +448,8 @@ const UpsellSection = ({ currentProduct, currentPrice, currentVariation, categor
                   {pickerMatchedVariation && (
                     <div className="text-xs text-muted-foreground bg-muted/50 rounded-lg p-2">
                       Estoque: {pickerStockMap[pickerMatchedVariation.id] || 0} un.
-                      {pickerMatchedVariation.price && (
-                        <> · Preço: {formatPrice(pickerMatchedVariation.price)}</>
+                      {siteRetailPrice(pickerMatchedVariation as any) > 0 && (
+                        <> · Preço: {formatPrice(siteRetailPrice(pickerMatchedVariation as any))}</>
                       )}
                     </div>
                   )}
