@@ -1,34 +1,16 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 
 /**
  * Tema visual de Dia dos Pais para toda a loja.
- * - Gravatas e bigodes flutuando ao fundo
- * - Glow âmbar/azul-marinho nos cantos
+ * - Glow azul-marinho nos cantos
  * - Classe global `fathers-day-theme` no <html>
  */
-const ITEMS = Array.from({ length: 16 });
-
 const FathersDayTheme = () => {
   useEffect(() => {
     const root = document.documentElement;
     root.classList.add('fathers-day-theme');
     return () => root.classList.remove('fathers-day-theme');
   }, []);
-
-  const items = useMemo(
-    () =>
-      ITEMS.map((_, i) => {
-        const left = Math.random() * 100;
-        const delay = Math.random() * 12;
-        const duration = 16 + Math.random() * 14;
-        const size = 18 + Math.random() * 28;
-        const opacity = 0.25 + Math.random() * 0.4;
-        const drift = Math.random() > 0.5 ? 1 : -1;
-        const kind = i % 2 === 0 ? 'tie' : 'mustache';
-        return { i, left, delay, duration, size, opacity, drift, kind };
-      }),
-    []
-  );
 
   return (
     <>
