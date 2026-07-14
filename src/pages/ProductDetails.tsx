@@ -28,6 +28,7 @@ import ProductSEO from '@/components/store/ProductSEO';
 import PinchZoomImage from '@/components/store/PinchZoomImage';
 import { useCart } from '@/contexts/CartContext';
 import { useFavorites } from '@/contexts/FavoritesContext';
+import { siteRetailPrice } from '@/lib/sitePricing';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
