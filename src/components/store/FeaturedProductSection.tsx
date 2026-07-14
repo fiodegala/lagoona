@@ -9,6 +9,7 @@ import { Product } from '@/services/products';
 import { ProductVariation } from '@/services/variations';
 import { useCart } from '@/contexts/CartContext';
 import { toast } from 'sonner';
+import { siteRetailPrice } from '@/lib/sitePricing';
 
 interface FeaturedProductSectionProps {
   product: Product;
