@@ -99,8 +99,9 @@ const UpsellSection = ({ currentProduct, currentPrice, currentVariation, categor
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(price);
 
   const getPrice = (p: Product) => {
+    const retail = siteRetailPrice(p as any);
     const promo = p.promotional_price;
-    return promo && promo < p.price ? promo : p.price;
+    return promo && promo < retail ? promo : retail;
   };
 
   const selectedProducts = Array.from(selectedItems.values());
