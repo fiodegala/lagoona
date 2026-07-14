@@ -201,14 +201,14 @@ const RelatedProducts = ({
                   <div className="space-y-0.5">
                     {hasDiscount && (
                       <p className="text-xs text-muted-foreground line-through">
-                        {formatPrice(product.price)}
+                        {formatPrice(retailPrice)}
                       </p>
                     )}
                     <p className="font-bold text-store-accent">
                       {formatPrice(displayPrice)}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      ou 6x de {formatPrice(product.price / 6)}
+                      ou 6x de {formatPrice(retailPrice / 6)}
                     </p>
                   </div>
                 </CardContent>
