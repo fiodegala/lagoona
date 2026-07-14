@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { ProductCardMeta, ColorValueMeta } from '@/hooks/useProductCardsMeta';
 import { COLOR_MAP, isLightColor } from '@/lib/colorMap';
+import { siteRetailPrice } from '@/lib/sitePricing';
 
 interface ProductCardProps {
   product: Product;
