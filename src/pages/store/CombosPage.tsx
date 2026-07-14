@@ -51,7 +51,7 @@ const CombosPage = () => {
             const details = combo.items.map(item => {
               const product = productMap.get(item.product_id);
               if (!product) return null;
-              const unitPrice = product.price;
+              const unitPrice = siteRetailPrice(product as any);
               originalPrice += unitPrice * item.quantity;
               return {
                 id: product.id,
