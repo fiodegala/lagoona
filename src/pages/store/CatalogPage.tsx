@@ -618,7 +618,11 @@ const CatalogPage = () => {
 
                         <div className="mt-auto space-y-0.5">
                           <p className="text-base font-bold text-primary">
-                            {formatPrice(product.price)}
+                            {formatPrice(
+                              product.wholesale_price != null && product.wholesale_price > 0
+                                ? product.wholesale_price * 2
+                                : product.price
+                            )}
                           </p>
                           {product.wholesale_price != null && product.wholesale_price > 0 && (
                             <p className="text-base font-bold text-emerald-600">
