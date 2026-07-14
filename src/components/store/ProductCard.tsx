@@ -73,13 +73,18 @@ const ProductCard = memo(forwardRef<HTMLAnchorElement, ProductCardProps>(({ prod
     fetchProductMeta();
   }, [product.id, meta]);
 
+  // Preço de varejo no site = 2× atacado (quando houver). PDV continua usando product.price.
+  const wholesale = (product as any).wholesale_price;
+  const retailPrice =
+    wholesale != null && wholesale > 0 ? Number(wholesale) * 2 : product.price;
+
   // Desconto real baseado em promotional_price (só quando > 0 e < preço de varejo)
   const promoPrice = (product as any).promotional_price;
-  const hasRealDiscount = promoPrice != null && promoPrice > 0 && promoPrice < product.price;
+  const hasRealDiscount = promoPrice != null && promoPrice > 0 && promoPrice < retailPrice;
   const discountPercent = hasRealDiscount
-    ? Math.round(((product.price - promoPrice) / product.price) * 100)
+    ? Math.round(((retailPrice - promoPrice) / retailPrice) * 100)
     : 0;
-  const displayPrice = hasRealDiscount ? promoPrice : product.price;
+  const displayPrice = hasRealDiscount ? promoPrice : retailPrice;
 
   // Dia dos Namorados: se já houver item no carrinho com valor >= ao deste produto,
   // este produto entra como "2ª peça" com desconto.
@@ -315,7 +320,7 @@ const ProductCard = memo(forwardRef<HTMLAnchorElement, ProductCardProps>(({ prod
               <>
                 {showDiscount && hasRealDiscount && (
                   <p className="text-xs text-muted-foreground line-through">
-                    {formatPrice(product.price)}
+                    {formatPrice(retailPrice)}
                   </p>
                 )}
                 <p className="text-xl font-bold text-store-accent">
