@@ -28,6 +28,7 @@ import ProductSEO from '@/components/store/ProductSEO';
 import PinchZoomImage from '@/components/store/PinchZoomImage';
 import { useCart } from '@/contexts/CartContext';
 import { useFavorites } from '@/contexts/FavoritesContext';
+import { siteRetailPrice } from '@/lib/sitePricing';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
@@ -184,7 +185,7 @@ const ProductDetails = () => {
     return url && url.length > 0 ? url : undefined;
   }, [product]);
 
-  const basePrice = selectedVariation?.price ?? product?.price ?? 0;
+  const basePrice = siteRetailPrice(selectedVariation ?? product);
   const rawPromoPrice = selectedVariation?.promotional_price ?? product?.promotional_price ?? null;
   const promotionalPrice = rawPromoPrice != null && rawPromoPrice > 0 ? rawPromoPrice : null;
   const currentPrice = promotionalPrice && promotionalPrice < basePrice ? promotionalPrice : basePrice;

@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { productsService, Product } from '@/services/products';
 import { enrichProductsWithStock } from '@/services/stockService';
 import { cn } from '@/lib/utils';
+import { siteRetailPrice } from '@/lib/sitePricing';
 
 interface RelatedProductsProps {
   currentProductId: string;
@@ -149,11 +150,12 @@ const RelatedProducts = ({
           onScroll={handleScroll}
         >
         {products.map((product) => {
-          const hasDiscount = (product as any).promotional_price != null && (product as any).promotional_price < product.price;
+          const retailPrice = siteRetailPrice(product as any);
+          const hasDiscount = (product as any).promotional_price != null && (product as any).promotional_price < retailPrice;
           const discountPercent = hasDiscount
-            ? Math.round(((product.price - (product as any).promotional_price) / product.price) * 100)
+            ? Math.round(((retailPrice - (product as any).promotional_price) / retailPrice) * 100)
             : 0;
-          const displayPrice = hasDiscount ? (product as any).promotional_price : product.price;
+          const displayPrice = hasDiscount ? (product as any).promotional_price : retailPrice;
 
           return (
             <Link
@@ -199,14 +201,14 @@ const RelatedProducts = ({
                   <div className="space-y-0.5">
                     {hasDiscount && (
                       <p className="text-xs text-muted-foreground line-through">
-                        {formatPrice(product.price)}
+                        {formatPrice(retailPrice)}
                       </p>
                     )}
                     <p className="font-bold text-store-accent">
                       {formatPrice(displayPrice)}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      ou 6x de {formatPrice(product.price / 6)}
+                      ou 6x de {formatPrice(retailPrice / 6)}
                     </p>
                   </div>
                 </CardContent>

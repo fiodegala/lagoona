@@ -9,6 +9,7 @@ import { Product } from '@/services/products';
 import { ProductVariation } from '@/services/variations';
 import { useCart } from '@/contexts/CartContext';
 import { toast } from 'sonner';
+import { siteRetailPrice } from '@/lib/sitePricing';
 
 interface FeaturedProductSectionProps {
   product: Product;
@@ -33,7 +34,7 @@ const FeaturedProductSection = ({ product }: FeaturedProductSectionProps) => {
     }
   }, [product.image_url]);
 
-  const basePrice = selectedVariation?.price ?? product.price;
+  const basePrice = siteRetailPrice(selectedVariation ?? product);
   const promotionalPrice = selectedVariation?.promotional_price ?? (product as any).promotional_price ?? null;
   const currentPrice = promotionalPrice && promotionalPrice < basePrice ? promotionalPrice : basePrice;
   const hasDiscount = promotionalPrice !== null && promotionalPrice < basePrice;

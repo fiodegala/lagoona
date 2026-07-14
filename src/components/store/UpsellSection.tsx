@@ -10,6 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useCart } from '@/contexts/CartContext';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { siteRetailPrice } from '@/lib/sitePricing';
 
 interface UpsellSectionProps {
   currentProduct: Product;
@@ -98,8 +99,9 @@ const UpsellSection = ({ currentProduct, currentPrice, currentVariation, categor
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(price);
 
   const getPrice = (p: Product) => {
+    const retail = siteRetailPrice(p as any);
     const promo = p.promotional_price;
-    return promo && promo < p.price ? promo : p.price;
+    return promo && promo < retail ? promo : retail;
   };
 
   const selectedProducts = Array.from(selectedItems.values());
@@ -166,7 +168,8 @@ const UpsellSection = ({ currentProduct, currentPrice, currentVariation, categor
       if (next.has(key)) {
         next.delete(key);
       } else {
-        const price = variation?.price ?? getPrice(product);
+        const varPrice = variation ? siteRetailPrice(variation as any) : 0;
+        const price = varPrice > 0 ? varPrice : getPrice(product);
         next.set(key, { product, variation, price });
       }
       return next;
@@ -188,7 +191,8 @@ const UpsellSection = ({ currentProduct, currentPrice, currentVariation, categor
     if (!pickerProduct || !pickerMatchedVariation) return;
     const realStock = pickerStockMap[pickerMatchedVariation.id] ?? pickerMatchedVariation.stock;
     const enrichedVar = { ...pickerMatchedVariation, stock: realStock };
-    const price = enrichedVar.price ?? getPrice(pickerProduct);
+    const varPrice = siteRetailPrice(enrichedVar as any);
+    const price = varPrice > 0 ? varPrice : getPrice(pickerProduct);
 
     setSelectedItems(prev => {
       const next = new Map(prev);
@@ -444,8 +448,8 @@ const UpsellSection = ({ currentProduct, currentPrice, currentVariation, categor
                   {pickerMatchedVariation && (
                     <div className="text-xs text-muted-foreground bg-muted/50 rounded-lg p-2">
                       Estoque: {pickerStockMap[pickerMatchedVariation.id] || 0} un.
-                      {pickerMatchedVariation.price && (
-                        <> · Preço: {formatPrice(pickerMatchedVariation.price)}</>
+                      {siteRetailPrice(pickerMatchedVariation as any) > 0 && (
+                        <> · Preço: {formatPrice(siteRetailPrice(pickerMatchedVariation as any))}</>
                       )}
                     </div>
                   )}
