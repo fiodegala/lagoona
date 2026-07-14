@@ -168,7 +168,8 @@ const UpsellSection = ({ currentProduct, currentPrice, currentVariation, categor
       if (next.has(key)) {
         next.delete(key);
       } else {
-        const price = variation?.price ?? getPrice(product);
+        const varPrice = variation ? siteRetailPrice(variation as any) : 0;
+        const price = varPrice > 0 ? varPrice : getPrice(product);
         next.set(key, { product, variation, price });
       }
       return next;
