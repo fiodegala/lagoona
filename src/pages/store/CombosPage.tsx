@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useCart } from '@/contexts/CartContext';
 import { toast } from 'sonner';
 import { SEO } from "@/components/seo/SEO";
+import { siteRetailPrice } from '@/lib/sitePricing';
 
 interface ComboWithProducts extends Combo {
   productDetails?: {
