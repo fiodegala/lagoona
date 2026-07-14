@@ -320,7 +320,7 @@ const ProductCard = memo(forwardRef<HTMLAnchorElement, ProductCardProps>(({ prod
               <>
                 {showDiscount && hasRealDiscount && (
                   <p className="text-xs text-muted-foreground line-through">
-                    {formatPrice(product.price)}
+                    {formatPrice(retailPrice)}
                   </p>
                 )}
                 <p className="text-xl font-bold text-store-accent">
