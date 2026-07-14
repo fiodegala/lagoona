@@ -10,6 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useCart } from '@/contexts/CartContext';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { siteRetailPrice } from '@/lib/sitePricing';
 
 interface UpsellSectionProps {
   currentProduct: Product;
