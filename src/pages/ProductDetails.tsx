@@ -185,7 +185,7 @@ const ProductDetails = () => {
     return url && url.length > 0 ? url : undefined;
   }, [product]);
 
-  const basePrice = selectedVariation?.price ?? product?.price ?? 0;
+  const basePrice = siteRetailPrice(selectedVariation ?? product);
   const rawPromoPrice = selectedVariation?.promotional_price ?? product?.promotional_price ?? null;
   const promotionalPrice = rawPromoPrice != null && rawPromoPrice > 0 ? rawPromoPrice : null;
   const currentPrice = promotionalPrice && promotionalPrice < basePrice ? promotionalPrice : basePrice;
