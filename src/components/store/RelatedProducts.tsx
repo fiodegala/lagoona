@@ -150,11 +150,12 @@ const RelatedProducts = ({
           onScroll={handleScroll}
         >
         {products.map((product) => {
-          const hasDiscount = (product as any).promotional_price != null && (product as any).promotional_price < product.price;
+          const retailPrice = siteRetailPrice(product as any);
+          const hasDiscount = (product as any).promotional_price != null && (product as any).promotional_price < retailPrice;
           const discountPercent = hasDiscount
-            ? Math.round(((product.price - (product as any).promotional_price) / product.price) * 100)
+            ? Math.round(((retailPrice - (product as any).promotional_price) / retailPrice) * 100)
             : 0;
-          const displayPrice = hasDiscount ? (product as any).promotional_price : product.price;
+          const displayPrice = hasDiscount ? (product as any).promotional_price : retailPrice;
 
           return (
             <Link
