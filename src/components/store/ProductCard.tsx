@@ -74,9 +74,7 @@ const ProductCard = memo(forwardRef<HTMLAnchorElement, ProductCardProps>(({ prod
   }, [product.id, meta]);
 
   // Preço de varejo no site = 2× atacado (quando houver). PDV continua usando product.price.
-  const wholesale = (product as any).wholesale_price;
-  const retailPrice =
-    wholesale != null && wholesale > 0 ? Number(wholesale) * 2 : product.price;
+  const retailPrice = siteRetailPrice(product as any);
 
   // Desconto real baseado em promotional_price (só quando > 0 e < preço de varejo)
   const promoPrice = (product as any).promotional_price;
