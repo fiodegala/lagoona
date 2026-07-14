@@ -439,7 +439,7 @@ const CatalogPage = () => {
               Confira todos os nossos produtos — varejo e atacado
             </p>
             <p className="text-primary font-semibold text-sm md:text-base mb-4">
-              ATACADO a partir de 6 peças do mesmo produto ( podendo varias cores e tamanhos )
+              ATACADO a partir de 6 peças do mesmo produto ( podendo variar cores e tamanhos )
             </p>
             <div className="flex gap-2 justify-center flex-wrap">
               <Button onClick={shareCatalog} variant="outline" size="sm" className="gap-2">
