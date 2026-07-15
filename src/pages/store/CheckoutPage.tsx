@@ -305,14 +305,12 @@ const CheckoutPage = () => {
       // Verify real-time stock availability before creating order
       const stockChecks = await Promise.all(
         items.map(async (item) => {
-          let query = supabase.from("store_stock").select("quantity").eq("product_id", item.productId);
-
-          if (item.variationId) {
-            query = query.eq("variation_id", item.variationId);
-          }
-
-          const { data: stockRows } = await query;
-          const totalStock = (stockRows || []).reduce((sum, r) => sum + (r.quantity || 0), 0);
+          const { data: stockRows } = await supabase.rpc('get_product_stock' as any, { _product_id: item.productId });
+          const rows = (stockRows || []) as Array<{ variation_id: string | null; quantity: number }>;
+          const relevant = item.variationId
+            ? rows.filter((r) => r.variation_id === item.variationId)
+            : rows.filter((r) => r.variation_id === null);
+          const totalStock = relevant.reduce((sum, r) => sum + (r.quantity || 0), 0);
           return { item, totalStock };
         }),
       );
