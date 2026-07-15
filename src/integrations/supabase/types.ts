@@ -3422,35 +3422,20 @@ export type Database = {
           },
         ]
       }
-      public_product_stock: {
-        Row: {
-          product_id: string | null
-          quantity: number | null
-          variation_id: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "store_stock_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "store_stock_variation_id_fkey"
-            columns: ["variation_id"]
-            isOneToOne: false
-            referencedRelation: "product_variations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
     }
     Functions: {
       can_manage_goals: { Args: { _user_id: string }; Returns: boolean }
       can_manage_products: { Args: { _user_id: string }; Returns: boolean }
       can_manage_users: { Args: { _user_id: string }; Returns: boolean }
       cleanup_old_nonces: { Args: never; Returns: undefined }
+      get_product_stock: {
+        Args: { _product_id: string }
+        Returns: {
+          product_id: string
+          quantity: number
+          variation_id: string
+        }[]
+      }
       has_any_admin_role: { Args: { _user_id: string }; Returns: boolean }
       has_role: {
         Args: {
