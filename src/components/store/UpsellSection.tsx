@@ -118,11 +118,7 @@ const UpsellSection = ({ currentProduct, currentPrice, currentVariation, categor
       const [attrs, vars, stockRes] = await Promise.all([
         variationsService.getAttributesByProduct(product.id),
         variationsService.getVariationsByProduct(product.id),
-        supabase
-          .from('store_stock')
-          .select('variation_id, quantity')
-          .eq('product_id', product.id)
-          .not('variation_id', 'is', null),
+        supabase.rpc('get_product_stock' as any, { _product_id: product.id }),
       ]);
 
       const activeVars = vars.filter(v => v.is_active);

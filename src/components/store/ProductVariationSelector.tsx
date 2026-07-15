@@ -28,11 +28,7 @@ const ProductVariationSelector = ({ productId, onVariationSelect, onHasVariation
         const [attrs, vars, stockRes] = await Promise.all([
           variationsService.getAttributesByProduct(productId),
           variationsService.getVariationsByProduct(productId),
-          supabase
-            .from('store_stock')
-            .select('variation_id, quantity')
-            .eq('product_id', productId)
-            .not('variation_id', 'is', null),
+          supabase.rpc('get_product_stock' as any, { _product_id: productId }),
         ]);
         setAttributes(attrs);
         const activeVars = vars.filter(v => v.is_active);

@@ -3428,6 +3428,14 @@ export type Database = {
       can_manage_products: { Args: { _user_id: string }; Returns: boolean }
       can_manage_users: { Args: { _user_id: string }; Returns: boolean }
       cleanup_old_nonces: { Args: never; Returns: undefined }
+      get_product_stock: {
+        Args: { _product_id: string }
+        Returns: {
+          product_id: string
+          quantity: number
+          variation_id: string
+        }[]
+      }
       has_any_admin_role: { Args: { _user_id: string }; Returns: boolean }
       has_role: {
         Args: {
