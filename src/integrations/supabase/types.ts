@@ -3422,6 +3422,29 @@ export type Database = {
           },
         ]
       }
+      public_product_stock: {
+        Row: {
+          product_id: string | null
+          quantity: number | null
+          variation_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_stock_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "store_stock_variation_id_fkey"
+            columns: ["variation_id"]
+            isOneToOne: false
+            referencedRelation: "product_variations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       can_manage_goals: { Args: { _user_id: string }; Returns: boolean }
