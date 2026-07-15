@@ -48,14 +48,8 @@ async function getStoresSortedByStock(
     }
   }
 
-  // Prioritize Bernardo Sayão: always try to deduct from it first for online/site orders.
-  physicalRows.sort((a, b) => {
-    if (a.store_id === BERNARDO_SAYAO_STORE_ID && b.store_id !== BERNARDO_SAYAO_STORE_ID) return -1;
-    if (b.store_id === BERNARDO_SAYAO_STORE_ID && a.store_id !== BERNARDO_SAYAO_STORE_ID) return 1;
-    return b.quantity - a.quantity;
-  });
-
-  return physicalRows;
+  // Online/Site sales deduct ONLY from Bernardo Sayão (no fallback to other stores).
+  return physicalRows.filter((r) => r.store_id === BERNARDO_SAYAO_STORE_ID);
 }
 
 /**
