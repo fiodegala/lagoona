@@ -94,6 +94,9 @@ const CustomerPurchasesByProduct = () => {
       const scan = (list: any[], source: 'PDV' | 'Site') => {
         for (const s of list || []) {
           const items = Array.isArray(s.items) ? s.items : [];
+          const cust = source === 'PDV' && s.customer_id ? customerMap.get(s.customer_id) : null;
+          const phone = cust?.phone ?? s.customer_phone ?? '';
+          const email = cust?.email ?? s.customer_email ?? '';
           for (const it of items) {
             const name: string = it?.name || it?.product_name || '';
             if (!norm(name).includes(needle)) continue;
@@ -104,8 +107,8 @@ const CustomerPurchasesByProduct = () => {
               source,
               saleId: s.id,
               customerName: s.customer_name || '-',
-              phone: s.customer_phone || '',
-              email: s.customer_email || '',
+              phone,
+              email,
               productName: name,
               variation: it?.variation_name || it?.variation || it?.sku || '',
               quantity: qty,
