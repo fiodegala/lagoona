@@ -1,0 +1,1 @@
+REVOKE SELECT (cost_price) ON public.products FROM anon;
