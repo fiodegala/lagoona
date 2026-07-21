@@ -74,6 +74,7 @@ export const navItems: MenuItem[] = [
   { icon: UserPlus, label: 'Clientes', path: '/admin/customers', menuKey: 'customers' },
   { icon: ShoppingCart, label: 'Pedidos', path: '/admin/orders', menuKey: 'orders' },
   { icon: Receipt, label: 'Vendas', path: '/admin/sales', menuKey: 'sales' },
+  { icon: Search, label: 'Compras por Produto', path: '/admin/compras-por-produto', menuKey: 'customer-purchases-by-product' },
   { icon: Wrench, label: 'Reconciliação Vendedores', path: '/admin/reconciliacao-vendedores', menuKey: 'seller-reconciliation', requireAdmin: true },
   { icon: BarChart3, label: 'Relatório PDV vs Site', path: '/admin/relatorio-pdv-site', menuKey: 'pdv-site-report', requireAdmin: true },
   { icon: ShoppingBasket, label: 'Carrinhos Abandonados', path: '/admin/abandoned-carts', menuKey: 'abandoned-carts' },
