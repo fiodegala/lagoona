@@ -288,6 +288,14 @@ const App = () => (
                 }
               />
               <Route
+                path="/admin/compras-por-produto"
+                element={
+                  <ProtectedRoute>
+                    <CustomerPurchasesByProduct />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
                 path="/admin/reconciliacao-vendedores"
                 element={
                   <ProtectedRoute requiredRole="admin">
