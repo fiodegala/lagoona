@@ -78,8 +78,11 @@ const CustomerPurchasesByProduct = () => {
       if (posRes.error) throw posRes.error;
       if (ordRes.error) throw ordRes.error;
 
-      // Fetch phone/email for POS customers by customer_id
-      const customerIds = Array.from(new Set((posRes.data || []).map((s: any) => s.customer_id).filter(Boolean)));
+      // Fetch phone/email for customers by customer_id (both POS and Site)
+      const customerIds = Array.from(new Set([
+        ...(posRes.data || []).map((s: any) => s.customer_id),
+        ...(ordRes.data || []).map((s: any) => s.customer_id),
+      ].filter(Boolean)));
       const customerMap = new Map<string, { phone: string; email: string }>();
       if (customerIds.length) {
         const { data: custs } = await supabase
@@ -94,9 +97,10 @@ const CustomerPurchasesByProduct = () => {
       const scan = (list: any[], source: 'PDV' | 'Site') => {
         for (const s of list || []) {
           const items = Array.isArray(s.items) ? s.items : [];
-          const cust = source === 'PDV' && s.customer_id ? customerMap.get(s.customer_id) : null;
-          const phone = cust?.phone ?? s.customer_phone ?? '';
-          const email = cust?.email ?? s.customer_email ?? '';
+          const cust = s.customer_id ? customerMap.get(s.customer_id) : null;
+          const addr = s.shipping_address || {};
+          const phone = cust?.phone || addr?.phone || addr?.telefone || s.customer_phone || '';
+          const email = cust?.email || s.customer_email || '';
           for (const it of items) {
             const name: string = it?.name || it?.product_name || '';
             if (!norm(name).includes(needle)) continue;
