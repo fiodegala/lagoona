@@ -61,7 +61,7 @@ const CustomerPurchasesByProduct = () => {
       const [posRes, ordRes] = await Promise.all([
         supabase
           .from('pos_sales')
-          .select('id, created_at, customer_name, customer_phone, customer_email, items, status')
+          .select('id, created_at, customer_name, customer_id, items, status')
           .gte('created_at', startIso)
           .lte('created_at', endIso)
           .neq('status', 'cancelled')
@@ -77,6 +77,17 @@ const CustomerPurchasesByProduct = () => {
 
       if (posRes.error) throw posRes.error;
       if (ordRes.error) throw ordRes.error;
+
+      // Fetch phone/email for POS customers by customer_id
+      const customerIds = Array.from(new Set((posRes.data || []).map((s: any) => s.customer_id).filter(Boolean)));
+      const customerMap = new Map<string, { phone: string; email: string }>();
+      if (customerIds.length) {
+        const { data: custs } = await supabase
+          .from('customers')
+          .select('id, phone, email')
+          .in('id', customerIds);
+        (custs || []).forEach((c: any) => customerMap.set(c.id, { phone: c.phone || '', email: c.email || '' }));
+      }
 
       const collected: Row[] = [];
 
