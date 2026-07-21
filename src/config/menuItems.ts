@@ -36,6 +36,7 @@ import {
   Calendar,
   Trophy,
   Wrench,
+  Search,
 } from 'lucide-react';
 
 export interface MenuItem {
