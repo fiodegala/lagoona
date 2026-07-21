@@ -60,6 +60,7 @@ const CalendarPage = lazy(() => import("./pages/Calendar"));
 const SellerReconciliation = lazy(() => import("./pages/SellerReconciliation"));
 const PdvSiteReport = lazy(() => import("./pages/PdvSiteReport"));
 const ProductCosts = lazy(() => import("./pages/ProductCosts"));
+const CustomerPurchasesByProduct = lazy(() => import("./pages/CustomerPurchasesByProduct"));
 
 // Lazy-loaded Store Pages
 const HomePage = lazy(() => import("./pages/store/HomePage"));
