@@ -61,7 +61,7 @@ const CustomerPurchasesByProduct = () => {
       const [posRes, ordRes] = await Promise.all([
         supabase
           .from('pos_sales')
-          .select('id, created_at, customer_name, customer_phone, customer_email, items, status')
+          .select('id, created_at, customer_name, customer_id, items, status')
           .gte('created_at', startIso)
           .lte('created_at', endIso)
           .neq('status', 'cancelled')
@@ -78,11 +78,25 @@ const CustomerPurchasesByProduct = () => {
       if (posRes.error) throw posRes.error;
       if (ordRes.error) throw ordRes.error;
 
+      // Fetch phone/email for POS customers by customer_id
+      const customerIds = Array.from(new Set((posRes.data || []).map((s: any) => s.customer_id).filter(Boolean)));
+      const customerMap = new Map<string, { phone: string; email: string }>();
+      if (customerIds.length) {
+        const { data: custs } = await supabase
+          .from('customers')
+          .select('id, phone, email')
+          .in('id', customerIds);
+        (custs || []).forEach((c: any) => customerMap.set(c.id, { phone: c.phone || '', email: c.email || '' }));
+      }
+
       const collected: Row[] = [];
 
       const scan = (list: any[], source: 'PDV' | 'Site') => {
         for (const s of list || []) {
           const items = Array.isArray(s.items) ? s.items : [];
+          const cust = source === 'PDV' && s.customer_id ? customerMap.get(s.customer_id) : null;
+          const phone = cust?.phone ?? s.customer_phone ?? '';
+          const email = cust?.email ?? s.customer_email ?? '';
           for (const it of items) {
             const name: string = it?.name || it?.product_name || '';
             if (!norm(name).includes(needle)) continue;
@@ -93,8 +107,8 @@ const CustomerPurchasesByProduct = () => {
               source,
               saleId: s.id,
               customerName: s.customer_name || '-',
-              phone: s.customer_phone || '',
-              email: s.customer_email || '',
+              phone,
+              email,
               productName: name,
               variation: it?.variation_name || it?.variation || it?.sku || '',
               quantity: qty,
