@@ -68,7 +68,7 @@ const CustomerPurchasesByProduct = () => {
           .order('created_at', { ascending: false }),
         supabase
           .from('orders')
-          .select('id, created_at, customer_name, customer_phone, customer_email, items, status')
+          .select('id, created_at, customer_name, customer_id, customer_email, shipping_address, items, status')
           .gte('created_at', startIso)
           .lte('created_at', endIso)
           .in('status', ['confirmed', 'processing', 'shipped', 'delivered', 'completed', 'paid'])
