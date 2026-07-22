@@ -123,12 +123,24 @@ const Customers = () => {
   const { data: customers = [], isLoading } = useQuery({
     queryKey: ['customers'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('customers')
-        .select('*')
-        .order('name');
-      if (error) throw error;
-      return data as Customer[];
+      const pageSize = 1000;
+      let from = 0;
+      const all: Customer[] = [];
+      // Paginate to bypass the default 1000-row PostgREST limit
+      // eslint-disable-next-line no-constant-condition
+      while (true) {
+        const { data, error } = await supabase
+          .from('customers')
+          .select('*')
+          .order('name')
+          .range(from, from + pageSize - 1);
+        if (error) throw error;
+        if (!data || data.length === 0) break;
+        all.push(...(data as Customer[]));
+        if (data.length < pageSize) break;
+        from += pageSize;
+      }
+      return all;
     },
   });
 
