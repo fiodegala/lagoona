@@ -17,6 +17,8 @@ export const COLOR_MAP: Record<string, string> = {
   'bege claro': '#E8D5B7',
   'bege média': '#C4A87A',
   'bege médio': '#C4A87A',
+  'bege acinzentado': '#A59F87',
+  'bege acinzentada': '#A59F87',
   nude: '#E8C4A2',
   creme: '#FFFDD0',
   palha: '#E6D5A8',
