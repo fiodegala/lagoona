@@ -39,6 +39,8 @@ const CheckoutPage = () => {
     clearCart,
     getItemCount,
     comboFreeShipping,
+    appliedCombos,
+    comboDiscount,
     appliedCoupon,
     valentinesDiscount,
     valentinesPromoLabel,
@@ -385,6 +387,19 @@ const CheckoutPage = () => {
             ? {
                 valentines_promo: valentinesPromoLabel,
                 valentines_discount: valentinesDiscount,
+              }
+            : {}),
+          ...(appliedCombos && appliedCombos.length > 0
+            ? {
+                combo_discount: comboDiscount,
+                combo_free_shipping: comboFreeShipping,
+                combos_applied: appliedCombos.map((ac) => ({
+                  id: ac.combo.id,
+                  name: ac.combo.name,
+                  combo_price: ac.combo.combo_price,
+                  discount: ac.discount,
+                  free_shipping: ac.freeShipping,
+                })),
               }
             : {}),
           ...(gift

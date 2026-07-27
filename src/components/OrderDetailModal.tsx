@@ -552,6 +552,111 @@ const OrderDetailModal = ({ open, onOpenChange, order }: OrderDetailModalProps) 
               );
             })()}
 
+            {/* Origem do Desconto */}
+            {(() => {
+              const fmt = (n: number) => `R$ ${Number(n || 0).toFixed(2).replace('.', ',')}`;
+              const couponDiscount = Number(meta.coupon_discount || 0);
+              const couponCode = meta.coupon_code as string | undefined;
+              const valentinesDiscount = Number(meta.valentines_discount || 0);
+              const valentinesLabel = meta.valentines_promo as string | undefined;
+              const comboDiscount = Number(meta.combo_discount || 0);
+              const combosApplied: Array<any> = Array.isArray(meta.combos_applied) ? meta.combos_applied : [];
+              const comboFreeShipping = Boolean(meta.combo_free_shipping);
+              const itemsSubtotal = items.reduce(
+                (s: number, it: any) => s + Number(it.price || 0) * Number(it.quantity || 1),
+                0,
+              );
+              const orderTotal = Number(order.total || 0);
+              const shipping = Math.max(
+                0,
+                Math.round((orderTotal - (itemsSubtotal - couponDiscount - valentinesDiscount - comboDiscount)) * 100) / 100,
+              );
+              const freeShippingByOrder = shipping === 0 && itemsSubtotal > 0;
+
+              const hasAny =
+                couponDiscount > 0 ||
+                valentinesDiscount > 0 ||
+                comboDiscount > 0 ||
+                combosApplied.length > 0 ||
+                comboFreeShipping ||
+                freeShippingByOrder;
+
+              if (!hasAny) return null;
+
+              return (
+                <>
+                  <Separator />
+                  <div>
+                    <h4 className="text-sm font-semibold mb-2">Origem do desconto</h4>
+                    <div className="space-y-2 text-sm">
+                      {combosApplied.length > 0
+                        ? combosApplied.map((c, i) => (
+                            <div key={i} className="rounded-md border border-green-200 dark:border-green-900 bg-green-50/50 dark:bg-green-950/30 p-2.5">
+                              <div className="flex items-center justify-between">
+                                <span className="font-medium text-green-700 dark:text-green-400">
+                                  Combo: {c.name}
+                                </span>
+                                {Number(c.discount) > 0 && (
+                                  <span className="font-semibold text-green-700 dark:text-green-400">
+                                    -{fmt(Number(c.discount))}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="mt-1 text-xs text-muted-foreground space-y-0.5">
+                                {Number(c.combo_price) > 0 && (
+                                  <div>Preço do combo: {fmt(Number(c.combo_price))}</div>
+                                )}
+                                {c.free_shipping && <div>+ Frete grátis pelo combo</div>}
+                              </div>
+                            </div>
+                          ))
+                        : comboDiscount > 0 && (
+                            <div className="flex items-center justify-between rounded-md border p-2.5">
+                              <span className="font-medium">Desconto de combo</span>
+                              <span className="font-semibold text-green-600 dark:text-green-400">
+                                -{fmt(comboDiscount)}
+                              </span>
+                            </div>
+                          )}
+
+                      {couponDiscount > 0 && (
+                        <div className="rounded-md border p-2.5">
+                          <div className="flex items-center justify-between">
+                            <span className="font-medium">
+                              Cupom {couponCode ? `(${couponCode})` : ''}
+                            </span>
+                            <span className="font-semibold text-green-600 dark:text-green-400">
+                              -{fmt(couponDiscount)}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+
+                      {valentinesDiscount > 0 && (
+                        <div className="rounded-md border p-2.5">
+                          <div className="flex items-center justify-between">
+                            <span className="font-medium">{valentinesLabel || 'Promoção sazonal'}</span>
+                            <span className="font-semibold text-green-600 dark:text-green-400">
+                              -{fmt(valentinesDiscount)}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+
+                      {(comboFreeShipping || freeShippingByOrder) && (
+                        <div className="flex items-center justify-between rounded-md border p-2.5">
+                          <span className="font-medium">Frete grátis</span>
+                          <span className="font-semibold text-green-600 dark:text-green-400">
+                            {comboFreeShipping ? 'Aplicado pelo combo' : 'Aplicado no pedido'}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </>
+              );
+            })()}
+
             {/* Notas */}
             {order.notes && (
               <>
