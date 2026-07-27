@@ -94,9 +94,15 @@ const OrderDetailModal = ({ open, onOpenChange, order }: OrderDetailModalProps) 
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl w-[95vw] max-h-[90vh] flex flex-col overflow-hidden">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Package className="h-5 w-5" />
-            Pedido #{order.id.slice(0, 8).toUpperCase()}
+          <DialogTitle className="flex items-center justify-between gap-2 pr-8">
+            <span className="flex items-center gap-2">
+              <Package className="h-5 w-5" />
+              Pedido #{order.id.slice(0, 8).toUpperCase()}
+            </span>
+            <Button variant="outline" size="sm" onClick={() => handlePrint(order, items, addr, meta, paymentMethodLabel, status.label, paymentStatus.label)}>
+              <Printer className="h-4 w-4 mr-1.5" />
+              Imprimir
+            </Button>
           </DialogTitle>
         </DialogHeader>
 
