@@ -39,6 +39,8 @@ const CheckoutPage = () => {
     clearCart,
     getItemCount,
     comboFreeShipping,
+    appliedCombos,
+    comboDiscount,
     appliedCoupon,
     valentinesDiscount,
     valentinesPromoLabel,
