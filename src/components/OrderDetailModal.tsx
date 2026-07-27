@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
-import { Package, Mail, MapPin, CreditCard, Clock, Truck, User, Phone, FileText } from 'lucide-react';
+import { Package, Mail, MapPin, CreditCard, Clock, Truck, User, Phone, FileText, Printer } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import AdminShippingQuote from '@/components/AdminShippingQuote';
@@ -35,6 +35,128 @@ interface OrderDetailModalProps {
   onOpenChange: (open: boolean) => void;
   order: any | null;
 }
+
+const handlePrint = (
+  order: any,
+  items: any[],
+  addr: any,
+  meta: any,
+  paymentMethodLabel: string | null,
+  statusLabel: string,
+  paymentStatusLabel: string,
+) => {
+  const fmt = (n: number) => `R$ ${Number(n || 0).toFixed(2).replace('.', ',')}`;
+  const dt = format(new Date(order.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
+  const installments = meta?.installments || null;
+  const installmentAmount = installments && installments > 0 ? Number(order.total) / installments : null;
+
+  const itemsSubtotal = items.reduce(
+    (s: number, it: any) => s + Number(it.price || 0) * Number(it.quantity || 1),
+    0,
+  );
+  const couponDiscount = Number(meta?.coupon_discount || 0);
+  const valentinesDiscount = Number(meta?.valentines_discount || 0);
+  const comboDiscount = Number(meta?.combo_discount || 0);
+  const orderTotal = Number(order.total || 0);
+  const shipping = Math.max(
+    0,
+    Math.round((orderTotal - (itemsSubtotal - couponDiscount - valentinesDiscount - comboDiscount)) * 100) / 100,
+  );
+
+  const itemRows = items
+    .map((it: any) => {
+      const unit = Number(it.price || 0);
+      const qty = Number(it.quantity || 1);
+      return `<tr>
+        <td>${(it.name || it.product_name || 'Produto')}${it.variation_label || it.variation ? ` <span style="color:#666">(${it.variation_label || it.variation})</span>` : ''}${it.sku ? `<br/><small style="color:#666">SKU: ${it.sku}</small>` : ''}</td>
+        <td style="text-align:center">${qty}</td>
+        <td style="text-align:right">${fmt(unit)}</td>
+        <td style="text-align:right">${fmt(unit * qty)}</td>
+      </tr>`;
+    })
+    .join('');
+
+  const html = `<!doctype html><html><head><meta charset="utf-8"/>
+<title>Pedido ${order.id.slice(0, 8).toUpperCase()}</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; color: #111; padding: 24px; max-width: 800px; margin: 0 auto; font-size: 13px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  h2 { font-size: 14px; margin: 20px 0 8px; padding-bottom: 4px; border-bottom: 1px solid #ddd; text-transform: uppercase; letter-spacing: 0.5px; }
+  .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #111; padding-bottom: 12px; margin-bottom: 8px; }
+  .muted { color: #666; }
+  .badges span { display: inline-block; padding: 2px 8px; border: 1px solid #999; border-radius: 4px; font-size: 11px; margin-right: 6px; }
+  table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+  th, td { padding: 6px 8px; border-bottom: 1px solid #eee; text-align: left; font-size: 12px; vertical-align: top; }
+  th { background: #f5f5f5; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .totals { margin-top: 12px; margin-left: auto; width: 300px; }
+  .totals div { display: flex; justify-content: space-between; padding: 4px 0; }
+  .totals .grand { border-top: 2px solid #111; margin-top: 6px; padding-top: 8px; font-weight: 700; font-size: 15px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media print { body { padding: 0; } .noprint { display: none; } }
+</style></head><body>
+<div class="header">
+  <div>
+    <h1>Pedido #${order.id.slice(0, 8).toUpperCase()}</h1>
+    <div class="muted">${dt}</div>
+    <div class="badges" style="margin-top:6px"><span>${statusLabel}</span><span>${paymentStatusLabel}</span></div>
+  </div>
+  <div style="text-align:right">
+    <strong>Fio de Gala</strong><br/>
+    <span class="muted">fiodegala.shop</span>
+  </div>
+</div>
+
+<div class="grid">
+  <div>
+    <h2>Cliente</h2>
+    <div><strong>${order.customer_name || '—'}</strong></div>
+    <div>${order.customer_email || ''}</div>
+    ${addr?.phone || meta?.customer_phone ? `<div>${addr?.phone || meta?.customer_phone}</div>` : ''}
+    ${meta?.customer_document ? `<div>CPF/CNPJ: ${meta.customer_document}</div>` : ''}
+  </div>
+  <div>
+    <h2>Entrega</h2>
+    ${addr?.recipient_name ? `<div><strong>${addr.recipient_name}</strong></div>` : ''}
+    ${addr?.address ? `<div>${addr.address}${addr.number ? `, ${addr.number}` : ''}</div>` : ''}
+    ${addr?.complement ? `<div>${addr.complement}</div>` : ''}
+    ${addr?.neighborhood ? `<div>${addr.neighborhood}</div>` : ''}
+    ${addr?.city || addr?.state ? `<div>${[addr.city, addr.state].filter(Boolean).join(' - ')}</div>` : ''}
+    ${addr?.zip_code ? `<div>CEP: ${addr.zip_code}</div>` : ''}
+  </div>
+</div>
+
+${paymentMethodLabel ? `<h2>Pagamento</h2>
+<div>${paymentMethodLabel}${installments && installments > 1 ? ` — ${installments}x de ${fmt(installmentAmount || 0)} sem juros` : installments === 1 ? ' — À vista' : ''}</div>` : ''}
+
+${order.tracking_code ? `<h2>Rastreamento</h2>
+<div><strong>${order.tracking_code}</strong>${order.shipping_carrier ? ` — ${order.shipping_carrier}` : ''}</div>` : ''}
+
+<h2>Itens</h2>
+<table>
+  <thead><tr><th>Produto</th><th style="text-align:center">Qtd</th><th style="text-align:right">Unitário</th><th style="text-align:right">Subtotal</th></tr></thead>
+  <tbody>${itemRows}</tbody>
+</table>
+
+<div class="totals">
+  <div><span>Subtotal</span><span>${fmt(itemsSubtotal)}</span></div>
+  ${couponDiscount > 0 ? `<div><span>Cupom ${meta?.coupon_code ? `(${meta.coupon_code})` : ''}</span><span>-${fmt(couponDiscount)}</span></div>` : ''}
+  ${valentinesDiscount > 0 ? `<div><span>${meta?.valentines_promo || 'Promoção'}</span><span>-${fmt(valentinesDiscount)}</span></div>` : ''}
+  ${comboDiscount > 0 ? `<div><span>Desconto combo</span><span>-${fmt(comboDiscount)}</span></div>` : ''}
+  <div><span>Frete</span><span>${shipping > 0 ? fmt(shipping) : 'Grátis'}</span></div>
+  <div class="grand"><span>TOTAL</span><span>${fmt(orderTotal)}</span></div>
+</div>
+
+${order.notes ? `<h2>Observações</h2><div>${order.notes}</div>` : ''}
+
+<script>window.onload = () => { window.print(); };</script>
+</body></html>`;
+
+  const w = window.open('', '_blank', 'width=900,height=700');
+  if (!w) return;
+  w.document.write(html);
+  w.document.close();
+};
 
 const OrderDetailModal = ({ open, onOpenChange, order }: OrderDetailModalProps) => {
   const [showQuote, setShowQuote] = useState(false);
@@ -94,9 +216,15 @@ const OrderDetailModal = ({ open, onOpenChange, order }: OrderDetailModalProps) 
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl w-[95vw] max-h-[90vh] flex flex-col overflow-hidden">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Package className="h-5 w-5" />
-            Pedido #{order.id.slice(0, 8).toUpperCase()}
+          <DialogTitle className="flex items-center justify-between gap-2 pr-8">
+            <span className="flex items-center gap-2">
+              <Package className="h-5 w-5" />
+              Pedido #{order.id.slice(0, 8).toUpperCase()}
+            </span>
+            <Button variant="outline" size="sm" onClick={() => handlePrint(order, items, addr, meta, paymentMethodLabel, status.label, paymentStatus.label)}>
+              <Printer className="h-4 w-4 mr-1.5" />
+              Imprimir
+            </Button>
           </DialogTitle>
         </DialogHeader>
 
