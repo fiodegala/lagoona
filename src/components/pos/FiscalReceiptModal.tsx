@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import logoEtiqueta from '@/assets/logo-etiqueta.png';
 
 interface FiscalCustomerData {
   name?: string;
@@ -248,12 +249,14 @@ const FiscalReceiptModal = ({
       const fullSaleId = String(sale.id);
       const shortSaleId = fullSaleId.slice(0, 8).toUpperCase();
       const trackingUrl = `${window.location.origin}/rastrear-pedido?order=${encodeURIComponent(fullSaleId)}`;
+      const logoUrl = new URL(logoEtiqueta, window.location.origin).href;
       const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(trackingUrl)}`;
       win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Pedido #${shortSaleId}</title>
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
   body{font-family:'Segoe UI',Arial,sans-serif;padding:24px;color:#1a1a1a;font-size:13px;max-width:380px;margin:0 auto}
   .header{text-align:center;margin-bottom:16px;border-bottom:2px solid #1a1a1a;padding-bottom:12px}
+  .header .logo{height:52px;margin:0 auto 8px;display:block}
   .header h1{font-size:18px;font-weight:700}
   .header h2{font-size:14px;font-weight:600;margin-top:4px}
   .header p{font-size:11px;color:#666;margin-top:4px}
@@ -280,6 +283,7 @@ const FiscalReceiptModal = ({
   @media print{body{padding:12px}}
 </style></head><body>
   <div class="header">
+    <img class="logo" src="${logoUrl}" alt="Fio de Gala" />
     ${store.name ? `<h1>${store.name}</h1>` : ''}
     <h2>PEDIDO DE VENDA</h2>
     <p>#${shortSaleId} &bull; ${dateStr}</p>
@@ -325,7 +329,7 @@ const FiscalReceiptModal = ({
 </body></html>`);
       win.document.close();
       win.focus();
-      setTimeout(() => win.print(), 300);
+      setTimeout(() => win.print(), 700);
     } catch (e) {
       console.error('Erro ao imprimir pedido:', e);
       toast.error('Erro ao gerar impressão do pedido');
