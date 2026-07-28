@@ -120,7 +120,7 @@ const OrderExchangeModal = ({ open, onOpenChange, order, onExchangeComplete }: O
       const nameIds = (byName || []).map(p => p.id);
       const barcodeIds = (byBarcode || []).map(p => p.id);
       const varProductIds = (varMatches || []).map(v => v.product_id);
-      const allIds = [...new Set([...nameIds, ...barcodeIds, ...varProductIds])];
+      const allIds = [...new Set([...nameIds, ...barcodeIds, ...varProductIds, ...(exactProductId ? [exactProductId] : [])])];
 
       const missingIds = allIds.filter(id => !nameIds.includes(id) && !barcodeIds.includes(id));
       let extraProducts: any[] = [];
