@@ -84,6 +84,19 @@ const OrderExchangeModal = ({ open, onOpenChange, order, onExchangeComplete }: O
     try {
       const term = searchQuery.trim();
 
+      // Correspondência exata por código de barras / SKU (leitor de código de barras)
+      const { data: exactVar } = await supabase
+        .from('product_variations')
+        .select('id, product_id')
+        .or(`barcode.eq.${term},sku.eq.${term}`)
+        .eq('is_active', true)
+        .limit(1)
+        .maybeSingle();
+      const exactVariationId = exactVar?.id || null;
+      const exactProductId = exactVar?.product_id || null;
+
+
+
       const { data: byName } = await supabase
         .from('products')
         .select('id, name, price, image_url')
@@ -107,7 +120,7 @@ const OrderExchangeModal = ({ open, onOpenChange, order, onExchangeComplete }: O
       const nameIds = (byName || []).map(p => p.id);
       const barcodeIds = (byBarcode || []).map(p => p.id);
       const varProductIds = (varMatches || []).map(v => v.product_id);
-      const allIds = [...new Set([...nameIds, ...barcodeIds, ...varProductIds])];
+      const allIds = [...new Set([...nameIds, ...barcodeIds, ...varProductIds, ...(exactProductId ? [exactProductId] : [])])];
 
       const missingIds = allIds.filter(id => !nameIds.includes(id) && !barcodeIds.includes(id));
       let extraProducts: any[] = [];
@@ -179,6 +192,16 @@ const OrderExchangeModal = ({ open, onOpenChange, order, onExchangeComplete }: O
       }));
 
       setSearchResults(results);
+
+      // Código de barras exato → adiciona direto a variação correspondente
+      if (exactVariationId) {
+        const prod = results.find(p => p.id === exactProductId);
+        const variation = prod?.variations.find(v => v.id === exactVariationId);
+        if (prod && variation) {
+          addNewProduct(prod, variation);
+          setSearchQuery('');
+        }
+      }
     } catch {
       toast.error('Erro ao buscar produtos');
     } finally {
