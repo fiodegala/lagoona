@@ -135,8 +135,8 @@ const OrderExchangeModal = ({ open, onOpenChange, order, onExchangeComplete }: O
         const { data: extra } = await supabase
           .from('products')
           .select('id, name, price, image_url')
-          .in('id', missingIds)
-          .eq('is_active', true);
+          .in('id', missingIds);
+
         extraProducts = extra || [];
       }
 
