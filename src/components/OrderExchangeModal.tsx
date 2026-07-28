@@ -84,6 +84,19 @@ const OrderExchangeModal = ({ open, onOpenChange, order, onExchangeComplete }: O
     try {
       const term = searchQuery.trim();
 
+      // Correspondência exata por código de barras / SKU (leitor de código de barras)
+      const { data: exactVar } = await supabase
+        .from('product_variations')
+        .select('id, product_id')
+        .or(`barcode.eq.${term},sku.eq.${term}`)
+        .eq('is_active', true)
+        .limit(1)
+        .maybeSingle();
+      const exactVariationId = exactVar?.id || null;
+      const exactProductId = exactVar?.product_id || null;
+
+
+
       const { data: byName } = await supabase
         .from('products')
         .select('id, name, price, image_url')
