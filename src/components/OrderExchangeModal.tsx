@@ -84,16 +84,23 @@ const OrderExchangeModal = ({ open, onOpenChange, order, onExchangeComplete }: O
     try {
       const term = searchQuery.trim();
 
-      // Correspondência exata por código de barras / SKU (leitor de código de barras)
-      const { data: exactVar } = await supabase
+      // Correspondência exata por código de barras / SKU (igual ao PDV: case-insensitive)
+      const { data: exactVars } = await supabase
         .from('product_variations')
-        .select('id, product_id')
-        .or(`barcode.eq.${term},sku.eq.${term}`)
-        .eq('is_active', true)
-        .limit(1)
-        .maybeSingle();
-      const exactVariationId = exactVar?.id || null;
-      const exactProductId = exactVar?.product_id || null;
+        .select('id, product_id, sku, barcode, is_active')
+        .or(`barcode.ilike.${term},sku.ilike.${term}`)
+        .limit(10);
+
+      const normalize = (v: string | null | undefined) => (v || '').trim().toLowerCase();
+      const termNorm = term.toLowerCase();
+      const bestVar =
+        (exactVars || []).find(v => normalize(v.barcode) === termNorm) ||
+        (exactVars || []).find(v => normalize(v.sku) === termNorm) ||
+        null;
+
+      const exactVariationId = bestVar?.id || null;
+      const exactProductId = bestVar?.product_id || null;
+
 
 
 
@@ -128,8 +135,8 @@ const OrderExchangeModal = ({ open, onOpenChange, order, onExchangeComplete }: O
         const { data: extra } = await supabase
           .from('products')
           .select('id, name, price, image_url')
-          .in('id', missingIds)
-          .eq('is_active', true);
+          .in('id', missingIds);
+
         extraProducts = extra || [];
       }
 
