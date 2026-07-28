@@ -192,6 +192,16 @@ const OrderExchangeModal = ({ open, onOpenChange, order, onExchangeComplete }: O
       }));
 
       setSearchResults(results);
+
+      // Código de barras exato → adiciona direto a variação correspondente
+      if (exactVariationId) {
+        const prod = results.find(p => p.id === exactProductId);
+        const variation = prod?.variations.find(v => v.id === exactVariationId);
+        if (prod && variation) {
+          addNewProduct(prod, variation);
+          setSearchQuery('');
+        }
+      }
     } catch {
       toast.error('Erro ao buscar produtos');
     } finally {
