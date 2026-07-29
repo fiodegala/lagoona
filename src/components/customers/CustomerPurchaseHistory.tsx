@@ -1,8 +1,12 @@
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ShoppingCart, Monitor, Package, Loader2, Calendar } from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { ShoppingCart, Monitor, Package, Loader2, Calendar, ChevronDown } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -13,13 +17,147 @@ interface CustomerPurchaseHistoryProps {
 }
 
 interface OrderItem {
-  name: string;
-  quantity: number;
-  unit_price: number;
-  total: number;
+  name?: string;
+  product_name?: string;
+  variation_name?: string;
+  variation?: string;
+  sku?: string;
+  quantity?: number;
+  qty?: number;
+  unit_price?: number;
+  price?: number;
+  total?: number;
 }
 
-const CustomerPurchaseHistory = ({ customerId, customerName }: CustomerPurchaseHistoryProps) => {
+const formatCurrency = (value: number) =>
+  Number(value || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+const formatDate = (date: string) =>
+  format(new Date(date), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
+
+const getItems = (raw: unknown): OrderItem[] =>
+  Array.isArray(raw) ? (raw as unknown as OrderItem[]) : [];
+
+const itemQty = (i: OrderItem) => Number(i.quantity ?? i.qty ?? 1);
+const itemUnit = (i: OrderItem) => {
+  const unit = Number(i.unit_price ?? i.price ?? 0);
+  if (unit > 0) return unit;
+  const total = Number(i.total ?? 0);
+  const qty = itemQty(i) || 1;
+  return total > 0 ? total / qty : 0;
+};
+const itemTotal = (i: OrderItem) => {
+  const total = Number(i.total ?? 0);
+  return total > 0 ? total : itemUnit(i) * itemQty(i);
+};
+
+interface SaleCardProps {
+  type: 'online' | 'pdv';
+  sale: any;
+}
+
+const SaleCard = ({ type, sale }: SaleCardProps) => {
+  const [open, setOpen] = useState(false);
+  const items = getItems(sale.items);
+  const itemsTotal = items.reduce((acc, i) => acc + itemTotal(i), 0);
+  const discount = Number(sale.discount_amount || 0);
+
+  return (
+    <Card>
+      <CardContent className="py-4">
+        <Collapsible open={open} onOpenChange={setOpen}>
+          <div className="flex items-start justify-between gap-4">
+            <div className="space-y-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <Badge variant={type === 'online' ? 'default' : 'secondary'}>
+                  {type === 'online' ? 'Online' : 'PDV'}
+                </Badge>
+                {sale.status && <Badge variant="outline">{sale.status}</Badge>}
+                {sale.payment_method && <Badge variant="outline">{sale.payment_method}</Badge>}
+              </div>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Calendar className="h-3 w-3" />
+                {formatDate(sale.created_at)}
+              </div>
+              <div className="text-sm text-muted-foreground">
+                {items.length} {items.length === 1 ? 'item' : 'itens'}
+              </div>
+            </div>
+            <div className="text-right shrink-0">
+              <div className="text-lg font-bold">{formatCurrency(Number(sale.total))}</div>
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" size="sm" className="mt-1">
+                  {open ? 'Ocultar' : 'Detalhes'}
+                  <ChevronDown
+                    className={`h-4 w-4 ml-1 transition-transform ${open ? 'rotate-180' : ''}`}
+                  />
+                </Button>
+              </CollapsibleTrigger>
+            </div>
+          </div>
+
+          <CollapsibleContent className="mt-3">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Produto</TableHead>
+                    <TableHead className="text-right">Qtd</TableHead>
+                    <TableHead className="text-right">Valor unit.</TableHead>
+                    <TableHead className="text-right">Total</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {items.map((i, idx) => (
+                    <TableRow key={idx}>
+                      <TableCell>
+                        <div className="font-medium">{i.name || i.product_name || 'Produto'}</div>
+                        {(i.variation_name || i.variation || i.sku) && (
+                          <div className="text-xs text-muted-foreground">
+                            {i.variation_name || i.variation || i.sku}
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">{itemQty(i)}</TableCell>
+                      <TableCell className="text-right">{formatCurrency(itemUnit(i))}</TableCell>
+                      <TableCell className="text-right">{formatCurrency(itemTotal(i))}</TableCell>
+                    </TableRow>
+                  ))}
+                  {!items.length && (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center text-muted-foreground py-4">
+                        Sem itens registrados
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+
+            <div className="mt-3 space-y-1 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Soma dos itens</span>
+                <span>{formatCurrency(itemsTotal)}</span>
+              </div>
+              {discount > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Desconto</span>
+                  <span>- {formatCurrency(discount)}</span>
+                </div>
+              )}
+              <div className="flex justify-between font-semibold">
+                <span>Total pago</span>
+                <span>{formatCurrency(Number(sale.total))}</span>
+              </div>
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
+      </CardContent>
+    </Card>
+  );
+};
+
+const CustomerPurchaseHistory = ({ customerId }: CustomerPurchaseHistoryProps) => {
   const { data: orders = [], isLoading: loadingOrders } = useQuery({
     queryKey: ['customer-orders', customerId],
     queryFn: async () => {
@@ -46,19 +184,11 @@ const CustomerPurchaseHistory = ({ customerId, customerName }: CustomerPurchaseH
     },
   });
 
-  const formatCurrency = (value: number) =>
-    value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-
-  const formatDate = (date: string) =>
-    format(new Date(date), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
-
   const totalOrders = orders.reduce((acc, order) => acc + Number(order.total), 0);
   const totalPOS = posSales.reduce((acc, sale) => acc + Number(sale.total), 0);
   const totalGeral = totalOrders + totalPOS;
 
-  const isLoading = loadingOrders || loadingPOS;
-
-  if (isLoading) {
+  if (loadingOrders || loadingPOS) {
     return (
       <div className="flex items-center justify-center py-8">
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -70,7 +200,6 @@ const CustomerPurchaseHistory = ({ customerId, customerName }: CustomerPurchaseH
 
   return (
     <div className="space-y-4">
-      {/* Summary Cards */}
       <div className="grid gap-4 sm:grid-cols-3">
         <Card>
           <CardContent className="pt-4">
@@ -80,9 +209,7 @@ const CustomerPurchaseHistory = ({ customerId, customerName }: CustomerPurchaseH
             </div>
             <div className="mt-1">
               <span className="text-2xl font-bold">{orders.length}</span>
-              <span className="text-sm text-muted-foreground ml-2">
-                {formatCurrency(totalOrders)}
-              </span>
+              <span className="text-sm text-muted-foreground ml-2">{formatCurrency(totalOrders)}</span>
             </div>
           </CardContent>
         </Card>
@@ -94,9 +221,7 @@ const CustomerPurchaseHistory = ({ customerId, customerName }: CustomerPurchaseH
             </div>
             <div className="mt-1">
               <span className="text-2xl font-bold">{posSales.length}</span>
-              <span className="text-sm text-muted-foreground ml-2">
-                {formatCurrency(totalPOS)}
-              </span>
+              <span className="text-sm text-muted-foreground ml-2">{formatCurrency(totalPOS)}</span>
             </div>
           </CardContent>
         </Card>
@@ -108,9 +233,7 @@ const CustomerPurchaseHistory = ({ customerId, customerName }: CustomerPurchaseH
             </div>
             <div className="mt-1">
               <span className="text-2xl font-bold">{orders.length + posSales.length}</span>
-              <span className="text-sm text-muted-foreground ml-2">
-                {formatCurrency(totalGeral)}
-              </span>
+              <span className="text-sm text-muted-foreground ml-2">{formatCurrency(totalGeral)}</span>
             </div>
           </CardContent>
         </Card>
@@ -135,114 +258,28 @@ const CustomerPurchaseHistory = ({ customerId, customerName }: CustomerPurchaseH
           </TabsList>
 
           <TabsContent value="all" className="space-y-3 mt-4">
-            {[...orders.map(o => ({ ...o, type: 'online' as const })), 
-              ...posSales.map(s => ({ ...s, type: 'pdv' as const }))]
-              .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-              .map((item) => (
-                <Card key={item.id}>
-                  <CardContent className="py-4">
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <Badge variant={item.type === 'online' ? 'default' : 'secondary'}>
-                            {item.type === 'online' ? 'Online' : 'PDV'}
-                          </Badge>
-                          {'status' in item && (
-                            <Badge variant="outline">{item.status}</Badge>
-                          )}
-                          {'payment_method' in item && (
-                            <Badge variant="outline">{item.payment_method}</Badge>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <Calendar className="h-3 w-3" />
-                          {formatDate(item.created_at)}
-                        </div>
-                      <div className="text-sm">
-                        {Array.isArray(item.items) && (item.items as unknown as OrderItem[]).map((i, idx) => (
-                          <span key={idx}>
-                            {i.quantity}x {i.name}
-                            {idx < (item.items as unknown as OrderItem[]).length - 1 ? ', ' : ''}
-                          </span>
-                        ))}
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <span className="text-lg font-bold">
-                          {formatCurrency(Number(item.total))}
-                        </span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+            {[
+              ...orders.map((o) => ({ sale: o, type: 'online' as const })),
+              ...posSales.map((s) => ({ sale: s, type: 'pdv' as const })),
+            ]
+              .sort(
+                (a, b) =>
+                  new Date(b.sale.created_at).getTime() - new Date(a.sale.created_at).getTime()
+              )
+              .map(({ sale, type }) => (
+                <SaleCard key={`${type}-${sale.id}`} sale={sale} type={type} />
               ))}
           </TabsContent>
 
           <TabsContent value="online" className="space-y-3 mt-4">
             {orders.map((order) => (
-              <Card key={order.id}>
-                <CardContent className="py-4">
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <Badge>Online</Badge>
-                        <Badge variant="outline">{order.status}</Badge>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Calendar className="h-3 w-3" />
-                        {formatDate(order.created_at)}
-                      </div>
-                      <div className="text-sm">
-                        {Array.isArray(order.items) && (order.items as unknown as OrderItem[]).map((i, idx) => (
-                          <span key={idx}>
-                            {i.quantity}x {i.name}
-                            {idx < (order.items as unknown as OrderItem[]).length - 1 ? ', ' : ''}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-lg font-bold">
-                        {formatCurrency(Number(order.total))}
-                      </span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              <SaleCard key={order.id} sale={order} type="online" />
             ))}
           </TabsContent>
 
           <TabsContent value="pdv" className="space-y-3 mt-4">
             {posSales.map((sale) => (
-              <Card key={sale.id}>
-                <CardContent className="py-4">
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <Badge variant="secondary">PDV</Badge>
-                        <Badge variant="outline">{sale.payment_method}</Badge>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Calendar className="h-3 w-3" />
-                        {formatDate(sale.created_at)}
-                      </div>
-                      <div className="text-sm">
-                        {Array.isArray(sale.items) && (sale.items as unknown as OrderItem[]).map((i, idx) => (
-                          <span key={idx}>
-                            {i.quantity}x {i.name}
-                            {idx < (sale.items as unknown as OrderItem[]).length - 1 ? ', ' : ''}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-lg font-bold">
-                        {formatCurrency(Number(sale.total))}
-                      </span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              <SaleCard key={sale.id} sale={sale} type="pdv" />
             ))}
           </TabsContent>
         </Tabs>
