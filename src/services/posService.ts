@@ -399,75 +399,18 @@ export const posService = {
       }
     }
 
-    // Update store_stock for the seller's store
+    // Update store_stock via secure RPC (works for sellers/cashiers too — direct
+    // UPDATE on store_stock is blocked by RLS for non-admin roles)
     const storeId = saleData.store_id;
     if (storeId) {
-      // Check if this is an online/website store sale (needs priority deduction from physical stores)
-      const { data: storeData } = await supabase.from('stores').select('type').eq('id', storeId).single();
-      const isOnlineSale = storeData?.type === 'online' || storeData?.type === 'website';
-
-      if (isOnlineSale) {
-        // Deduct from store with HIGHEST quantity for each item
-        for (const item of saleData.items) {
-          if (!item.product_id) continue; // virtual items (e.g. cartão presente)
-          let remaining = item.quantity;
-
-          // Get all stock records for this product/variation sorted by quantity DESC
-          let stockQuery = supabase
-            .from('store_stock')
-            .select('id, store_id, quantity')
-            .eq('product_id', item.product_id)
-            .order('quantity', { ascending: false });
-
-          if (item.variation_id) {
-            stockQuery = stockQuery.eq('variation_id', item.variation_id);
-          } else {
-            stockQuery = stockQuery.is('variation_id', null);
-          }
-
-          const { data: stockRows } = await stockQuery;
-
-          for (const stock of (stockRows || [])) {
-            if (remaining <= 0) break;
-            if (stock.quantity <= 0) continue;
-
-            // Skip online/website stores
-            const { data: st } = await supabase.from('stores').select('type').eq('id', stock.store_id).single();
-            if (st && ['online', 'website'].includes(st.type)) continue;
-
-            const deduct = Math.min(remaining, stock.quantity);
-            await supabase
-              .from('store_stock')
-              .update({ quantity: stock.quantity - deduct })
-              .eq('id', stock.id);
-            remaining -= deduct;
-          }
-        }
-      } else {
-        // Regular physical store deduction
-        for (const item of saleData.items) {
-          if (!item.product_id) continue; // virtual items (e.g. cartão presente)
-          let query = supabase
-            .from('store_stock')
-            .select('id, quantity')
-            .eq('store_id', storeId)
-            .eq('product_id', item.product_id);
-
-          if (item.variation_id) {
-            query = query.eq('variation_id', item.variation_id);
-          } else {
-            query = query.is('variation_id', null);
-          }
-
-          const { data: stock } = await query.maybeSingle();
-
-          if (stock) {
-            await supabase
-              .from('store_stock')
-              .update({ quantity: Math.max(0, stock.quantity - item.quantity) })
-              .eq('id', stock.id);
-          }
-        }
+      const { data: stockResult, error: stockError } = await supabase.rpc('deduct_sale_stock', {
+        _store_id: storeId,
+        _items: saleData.items as any,
+      });
+      if (stockError) {
+        console.error('Erro ao baixar estoque da venda:', stockError);
+      } else if (stockResult && (stockResult as any).success === false) {
+        console.error('Baixa de estoque não autorizada:', (stockResult as any).error);
       }
     }
 
