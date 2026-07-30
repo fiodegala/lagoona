@@ -646,9 +646,17 @@ const Sales = () => {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Badge variant="secondary" className="text-xs">
-                            {items.length} {items.length === 1 ? 'item' : 'itens'}
-                          </Badge>
+                          {(() => {
+                            const totalPieces = items.reduce(
+                              (acc: number, i: any) => acc + Number(i?.quantity ?? i?.qty ?? 1),
+                              0
+                            );
+                            return (
+                              <Badge variant="secondary" className="text-xs">
+                                {totalPieces} {totalPieces === 1 ? 'item' : 'itens'}
+                              </Badge>
+                            );
+                          })()}
                         </TableCell>
                         <TableCell className="text-sm">R$ {Number(sale.subtotal).toFixed(2)}</TableCell>
                         <TableCell className="text-sm">
