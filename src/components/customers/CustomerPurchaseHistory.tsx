@@ -80,7 +80,8 @@ const SaleCard = ({ type, sale }: SaleCardProps) => {
                 {formatDate(sale.created_at)}
               </div>
               <div className="text-sm text-muted-foreground">
-                {items.length} {items.length === 1 ? 'item' : 'itens'}
+                {items.reduce((acc, i) => acc + itemQty(i), 0)}{' '}
+                {items.reduce((acc, i) => acc + itemQty(i), 0) === 1 ? 'item' : 'itens'}
               </div>
             </div>
             <div className="text-right shrink-0">
