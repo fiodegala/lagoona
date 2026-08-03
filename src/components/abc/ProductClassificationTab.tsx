@@ -185,9 +185,10 @@ const classConfig: Record<Classification, { color: string; icon: typeof Star; la
   SUPORTE: { color: 'bg-blue-500/10 text-blue-700 border-blue-500/30', icon: ShieldCheck, label: 'SUPORTE' },
   ENTRADA: { color: 'bg-yellow-500/10 text-yellow-700 border-yellow-500/30', icon: DoorOpen, label: 'ENTRADA' },
   CONTROLADO: { color: 'bg-red-500/10 text-red-700 border-red-500/30', icon: Ban, label: 'CONTROLADO' },
+  'SEM CUSTO': { color: 'bg-muted text-muted-foreground border-border', icon: AlertTriangle, label: 'SEM CUSTO' },
 };
 
-const ProductClassificationTab = ({ abcData }: Props) => {
+const ProductClassificationTab = ({ abcData, period, onPeriodChange, periods }: Props) => {
   const queryClient = useQueryClient();
 
   const { data: costsData } = useQuery({
