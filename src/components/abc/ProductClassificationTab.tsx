@@ -371,7 +371,7 @@ const ProductClassificationTab = ({ abcData, period, onPeriodChange, periods }: 
             </div>
           </CardContent>
         </Card>
-        {(['CORE', 'SUPORTE', 'ENTRADA', 'CONTROLADO'] as Classification[]).map(cls => {
+        {(['CORE', 'SUPORTE', 'ENTRADA', 'CONTROLADO', 'SEM CUSTO'] as Classification[]).map(cls => {
           const cfg = classConfig[cls];
           const items = stats.grouped[cls];
           const Icon = cfg.icon;
@@ -393,7 +393,7 @@ const ProductClassificationTab = ({ abcData, period, onPeriodChange, periods }: 
       </div>
 
       {/* Grouped cards by classification */}
-      {(['CORE', 'SUPORTE', 'ENTRADA', 'CONTROLADO'] as Classification[]).map(cls => {
+      {(['CORE', 'SUPORTE', 'ENTRADA', 'CONTROLADO', 'SEM CUSTO'] as Classification[]).map(cls => {
         const cfg = classConfig[cls];
         const items = stats.grouped[cls];
         if (!items.length) return null;
