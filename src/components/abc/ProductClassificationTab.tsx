@@ -249,7 +249,9 @@ const ProductClassificationTab = ({ abcData, period, onPeriodChange, periods }: 
         const nameKey = item.productName.toLowerCase().trim();
         if (costByName[nameKey] != null) cost = costByName[nameKey];
       }
-      if (cost === null) continue;
+      const hasCost = cost !== null && cost > 0;
+      const costValue = hasCost ? (cost as number) : 0;
+
 
       const avgPrice = item.totalRevenue / item.quantitySold;
       const totalCostPerUnit = cost;
