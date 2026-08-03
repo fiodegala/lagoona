@@ -249,20 +249,20 @@ const ProductClassificationTab = ({ abcData, period, onPeriodChange, periods }: 
         const nameKey = item.productName.toLowerCase().trim();
         if (costByName[nameKey] != null) cost = costByName[nameKey];
       }
-      const hasCost = cost !== null && cost > 0;
-      const costValue = hasCost ? (cost as number) : 0;
+      const hasCost = cost !== null && Number(cost) > 0;
+      const costValue = hasCost ? Number(cost) : 0;
 
-
-      const avgPrice = item.totalRevenue / item.quantitySold;
-      const totalCostPerUnit = cost;
-      const profitPerUnit = avgPrice - totalCostPerUnit;
-      const marginPercent = avgPrice > 0 ? (profitPerUnit / avgPrice) * 100 : 0;
-      const totalProfit = profitPerUnit * item.quantitySold;
+      const avgPrice = item.quantitySold > 0 ? item.totalRevenue / item.quantitySold : 0;
+      const totalCostPerUnit = costValue;
+      const profitPerUnit = hasCost ? avgPrice - totalCostPerUnit : 0;
+      const marginPercent = hasCost && avgPrice > 0 ? (profitPerUnit / avgPrice) * 100 : 0;
+      const totalProfit = hasCost ? profitPerUnit * item.quantitySold : 0;
 
       products.push({
         name: item.productName,
         avgPrice,
-        cost,
+        cost: costValue,
+        hasCost,
         qtySold: item.quantitySold,
         revenue: item.totalRevenue,
         variableCost: 0,
@@ -275,10 +275,16 @@ const ProductClassificationTab = ({ abcData, period, onPeriodChange, periods }: 
       });
     }
 
-    const sortedQty = products.map(p => p.qtySold).sort((a, b) => a - b);
+    const withCost = products.filter(p => p.hasCost);
+    const sortedQty = withCost.map(p => p.qtySold).sort((a, b) => a - b);
     const medianQty = sortedQty[Math.floor(sortedQty.length / 2)] || 1;
 
     for (const p of products) {
+      if (!p.hasCost) {
+        p.classification = 'SEM CUSTO';
+        p.action = 'Cadastrar custo em "Custos de Produtos"';
+        continue;
+      }
       const { classification, action } = classify(p.marginPercent, p.qtySold, p.totalProfit, medianQty);
       p.classification = classification;
       p.action = action;
