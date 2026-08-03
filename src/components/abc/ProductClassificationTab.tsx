@@ -147,6 +147,7 @@ interface ClassifiedProduct {
   name: string;
   avgPrice: number;
   cost: number;
+  hasCost?: boolean;
   qtySold: number;
   revenue: number;
   variableCost: number;
