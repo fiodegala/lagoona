@@ -141,7 +141,7 @@ function findCost(productName: string): number | null {
   return null;
 }
 
-type Classification = 'CORE' | 'SUPORTE' | 'ENTRADA' | 'CONTROLADO';
+type Classification = 'CORE' | 'SUPORTE' | 'ENTRADA' | 'CONTROLADO' | 'SEM CUSTO';
 
 interface ClassifiedProduct {
   name: string;
