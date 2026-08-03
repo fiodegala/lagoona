@@ -299,7 +299,7 @@ const ProductClassificationTab = ({ abcData, period, onPeriodChange, periods }: 
     for (const p of classifiedProducts) {
       grouped[p.classification].push(p);
     }
-    const losers = classifiedProducts.filter(p => p.profitPerUnit < 0);
+    const losers = classifiedProducts.filter(p => p.hasCost && p.profitPerUnit < 0);
     const totalProfit = classifiedProducts.reduce((s, p) => s + p.totalProfit, 0);
     return { grouped, losers, totalProfit };
   }, [classifiedProducts]);
