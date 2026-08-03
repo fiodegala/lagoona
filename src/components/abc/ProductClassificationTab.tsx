@@ -324,6 +324,13 @@ const ProductClassificationTab = ({ abcData, period, onPeriodChange, periods, cu
           {p.label}
         </Button>
       ))}
+      {period === 'custom' && onCustomFromChange && onCustomToChange && (
+        <div className="flex items-center gap-2 ml-2">
+          <Input type="date" value={customFrom ?? ''} onChange={e => onCustomFromChange(e.target.value)} className="h-9 w-[150px]" />
+          <span className="text-xs text-muted-foreground">até</span>
+          <Input type="date" value={customTo ?? ''} onChange={e => onCustomToChange(e.target.value)} className="h-9 w-[150px]" />
+        </div>
+      )}
     </div>
   ) : null;
 
