@@ -193,7 +193,7 @@ const classConfig: Record<Classification, { color: string; icon: typeof Star; la
   'SEM CUSTO': { color: 'bg-muted text-muted-foreground border-border', icon: AlertTriangle, label: 'SEM CUSTO' },
 };
 
-const ProductClassificationTab = ({ abcData, period, onPeriodChange, periods }: Props) => {
+const ProductClassificationTab = ({ abcData, period, onPeriodChange, periods, customFrom, customTo, onCustomFromChange, onCustomToChange }: Props) => {
   const queryClient = useQueryClient();
 
   const { data: costsData } = useQuery({
