@@ -18,7 +18,7 @@ import ABCAnalysisReport from '@/components/abc/ABCAnalysisReport';
 import ProductClassificationTab from '@/components/abc/ProductClassificationTab';
 import { subDays, startOfMonth } from 'date-fns';
 
-type PeriodFilter = '7d' | '30d' | '90d' | 'month' | 'all';
+type PeriodFilter = '7d' | '30d' | '90d' | 'month' | 'all' | 'custom';
 
 interface VariationBreakdown {
   key: string;
@@ -41,6 +41,8 @@ interface ABCItem {
 
 const ABCCurve = () => {
   const [period, setPeriod] = useState<PeriodFilter>('30d');
+  const [customFrom, setCustomFrom] = useState<string>('');
+  const [customTo, setCustomTo] = useState<string>('');
   const [search, setSearch] = useState('');
   const [storeId, setStoreId] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'revenue' | 'quantity'>('revenue');
@@ -70,15 +72,22 @@ const ABCCurve = () => {
       case '30d': return subDays(now, 30).toISOString();
       case '90d': return subDays(now, 90).toISOString();
       case 'month': return startOfMonth(now).toISOString();
+      case 'custom': return customFrom ? new Date(`${customFrom}T00:00:00`).toISOString() : null;
       case 'all': return null;
     }
-  }, [period]);
+  }, [period, customFrom]);
+
+  const dateTo = useMemo(() => {
+    if (period !== 'custom' || !customTo) return null;
+    return new Date(`${customTo}T23:59:59.999`).toISOString();
+  }, [period, customTo]);
 
   const { data: posSales, isLoading: loadingPos } = useQuery({
-    queryKey: ['abc-pos-sales', dateFrom, storeId],
+    queryKey: ['abc-pos-sales', dateFrom, dateTo, storeId],
     queryFn: async () => {
       let query = supabase.from('pos_sales').select('items, total, created_at, store_id').neq('status', 'cancelled');
       if (dateFrom) query = query.gte('created_at', dateFrom);
+      if (dateTo) query = query.lte('created_at', dateTo);
       if (storeId !== 'all') query = query.eq('store_id', storeId);
       const { data, error } = await query;
       if (error) throw error;
@@ -87,10 +96,11 @@ const ABCCurve = () => {
   });
 
   const { data: orders, isLoading: loadingOrders } = useQuery({
-    queryKey: ['abc-orders', dateFrom, storeId],
+    queryKey: ['abc-orders', dateFrom, dateTo, storeId],
     queryFn: async () => {
       let query = supabase.from('orders').select('items, total, created_at, store_id').neq('status', 'cancelled');
       if (dateFrom) query = query.gte('created_at', dateFrom);
+      if (dateTo) query = query.lte('created_at', dateTo);
       if (storeId !== 'all') query = query.eq('store_id', storeId);
       const { data, error } = await query;
       if (error) throw error;
@@ -243,6 +253,7 @@ const ABCCurve = () => {
     { key: '90d', label: '90 dias' },
     { key: 'month', label: 'Mês atual' },
     { key: 'all', label: 'Todo período' },
+    { key: 'custom', label: 'Personalizado' },
   ];
 
   return (
@@ -280,8 +291,16 @@ const ABCCurve = () => {
                 </Button>
               ))}
             </div>
+            {period === 'custom' && (
+              <div className="flex items-center gap-2">
+                <Input type="date" value={customFrom} onChange={e => setCustomFrom(e.target.value)} className="w-[150px]" />
+                <span className="text-xs text-muted-foreground">até</span>
+                <Input type="date" value={customTo} onChange={e => setCustomTo(e.target.value)} className="w-[150px]" />
+              </div>
+            )}
           </div>
         </div>
+
 
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
@@ -524,8 +543,13 @@ const ABCCurve = () => {
                 period={period}
                 onPeriodChange={(p) => setPeriod(p as PeriodFilter)}
                 periods={periods}
+                customFrom={customFrom}
+                customTo={customTo}
+                onCustomFromChange={setCustomFrom}
+                onCustomToChange={setCustomTo}
               />
             </TabsContent>
+
           </Tabs>
         )}
       </div>

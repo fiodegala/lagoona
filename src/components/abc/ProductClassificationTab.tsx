@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertTriangle, Star, ShieldCheck, DoorOpen, Ban, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { exportClassificationToXLSX } from '@/lib/abcExport';
 import { exportClassificationToPDF } from '@/lib/abcPdfExport';
 import { supabase } from '@/integrations/supabase/client';
@@ -25,6 +26,10 @@ interface Props {
   period?: string;
   onPeriodChange?: (p: string) => void;
   periods?: { key: string; label: string }[];
+  customFrom?: string;
+  customTo?: string;
+  onCustomFromChange?: (v: string) => void;
+  onCustomToChange?: (v: string) => void;
 }
 
 const COST_MAP: Record<string, number> = {
@@ -189,7 +194,7 @@ const classConfig: Record<Classification, { color: string; icon: typeof Star; la
   'SEM CUSTO': { color: 'bg-muted text-muted-foreground border-border', icon: AlertTriangle, label: 'SEM CUSTO' },
 };
 
-const ProductClassificationTab = ({ abcData, period, onPeriodChange, periods }: Props) => {
+const ProductClassificationTab = ({ abcData, period, onPeriodChange, periods, customFrom, customTo, onCustomFromChange, onCustomToChange }: Props) => {
   const queryClient = useQueryClient();
 
   const { data: costsData } = useQuery({
@@ -320,6 +325,13 @@ const ProductClassificationTab = ({ abcData, period, onPeriodChange, periods }: 
           {p.label}
         </Button>
       ))}
+      {period === 'custom' && onCustomFromChange && onCustomToChange && (
+        <div className="flex items-center gap-2 ml-2">
+          <Input type="date" value={customFrom ?? ''} onChange={e => onCustomFromChange(e.target.value)} className="h-9 w-[150px]" />
+          <span className="text-xs text-muted-foreground">até</span>
+          <Input type="date" value={customTo ?? ''} onChange={e => onCustomToChange(e.target.value)} className="h-9 w-[150px]" />
+        </div>
+      )}
     </div>
   ) : null;
 
