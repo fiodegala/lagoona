@@ -291,8 +291,16 @@ const ABCCurve = () => {
                 </Button>
               ))}
             </div>
+            {period === 'custom' && (
+              <div className="flex items-center gap-2">
+                <Input type="date" value={customFrom} onChange={e => setCustomFrom(e.target.value)} className="w-[150px]" />
+                <span className="text-xs text-muted-foreground">até</span>
+                <Input type="date" value={customTo} onChange={e => setCustomTo(e.target.value)} className="w-[150px]" />
+              </div>
+            )}
           </div>
         </div>
+
 
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
