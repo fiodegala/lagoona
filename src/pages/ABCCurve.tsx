@@ -18,7 +18,7 @@ import ABCAnalysisReport from '@/components/abc/ABCAnalysisReport';
 import ProductClassificationTab from '@/components/abc/ProductClassificationTab';
 import { subDays, startOfMonth } from 'date-fns';
 
-type PeriodFilter = '7d' | '30d' | '90d' | 'month' | 'all';
+type PeriodFilter = '7d' | '30d' | '90d' | 'month' | 'all' | 'custom';
 
 interface VariationBreakdown {
   key: string;
