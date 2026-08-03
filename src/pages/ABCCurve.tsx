@@ -253,6 +253,7 @@ const ABCCurve = () => {
     { key: '90d', label: '90 dias' },
     { key: 'month', label: 'Mês atual' },
     { key: 'all', label: 'Todo período' },
+    { key: 'custom', label: 'Personalizado' },
   ];
 
   return (
