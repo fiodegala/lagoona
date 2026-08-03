@@ -524,8 +524,13 @@ const ABCCurve = () => {
                 period={period}
                 onPeriodChange={(p) => setPeriod(p as PeriodFilter)}
                 periods={periods}
+                customFrom={customFrom}
+                customTo={customTo}
+                onCustomFromChange={setCustomFrom}
+                onCustomToChange={setCustomTo}
               />
             </TabsContent>
+
           </Tabs>
         )}
       </div>
