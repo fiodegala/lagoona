@@ -295,7 +295,7 @@ const ProductClassificationTab = ({ abcData, period, onPeriodChange, periods }: 
   }, [abcData, costById, costByName]);
 
   const stats = useMemo(() => {
-    const grouped: Record<Classification, ClassifiedProduct[]> = { CORE: [], SUPORTE: [], ENTRADA: [], CONTROLADO: [] };
+    const grouped: Record<Classification, ClassifiedProduct[]> = { CORE: [], SUPORTE: [], ENTRADA: [], CONTROLADO: [], 'SEM CUSTO': [] };
     for (const p of classifiedProducts) {
       grouped[p.classification].push(p);
     }
