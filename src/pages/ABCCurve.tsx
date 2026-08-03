@@ -519,7 +519,12 @@ const ABCCurve = () => {
             </TabsContent>
 
             <TabsContent value="classification">
-              <ProductClassificationTab abcData={abcData} />
+              <ProductClassificationTab
+                abcData={abcData}
+                period={period}
+                onPeriodChange={(p) => setPeriod(p as PeriodFilter)}
+                periods={periods}
+              />
             </TabsContent>
           </Tabs>
         )}
