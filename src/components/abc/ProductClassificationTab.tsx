@@ -307,19 +307,40 @@ const ProductClassificationTab = ({ abcData, period, onPeriodChange, periods }: 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   const pct = (v: number) => `${v.toFixed(1)}%`;
 
+  const periodSelector = periods?.length && onPeriodChange ? (
+    <div className="flex flex-wrap items-center gap-1">
+      <span className="text-xs text-muted-foreground mr-1">Período:</span>
+      {periods.map(p => (
+        <Button
+          key={p.key}
+          variant={period === p.key ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => onPeriodChange(p.key)}
+        >
+          {p.label}
+        </Button>
+      ))}
+    </div>
+  ) : null;
+
   if (!classifiedProducts.length) {
     return (
-      <Card>
-        <CardContent className="py-10 text-center text-muted-foreground">
-          Nenhum dado disponível para classificação. Verifique se há vendas no período.
-        </CardContent>
-      </Card>
+      <div className="space-y-4">
+        {periodSelector}
+        <Card>
+          <CardContent className="py-10 text-center text-muted-foreground">
+            Nenhum dado disponível para classificação. Verifique se há vendas no período.
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-end gap-2">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        {periodSelector}
+        <div className="flex justify-end gap-2">
         <Button
           variant="outline"
           size="sm"
