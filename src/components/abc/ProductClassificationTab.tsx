@@ -22,6 +22,9 @@ interface ABCItem {
 
 interface Props {
   abcData: ABCItem[];
+  period?: string;
+  onPeriodChange?: (p: string) => void;
+  periods?: { key: string; label: string }[];
 }
 
 const COST_MAP: Record<string, number> = {
