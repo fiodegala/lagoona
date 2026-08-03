@@ -25,6 +25,10 @@ interface Props {
   period?: string;
   onPeriodChange?: (p: string) => void;
   periods?: { key: string; label: string }[];
+  customFrom?: string;
+  customTo?: string;
+  onCustomFromChange?: (v: string) => void;
+  onCustomToChange?: (v: string) => void;
 }
 
 const COST_MAP: Record<string, number> = {
