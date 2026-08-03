@@ -22,6 +22,9 @@ interface ABCItem {
 
 interface Props {
   abcData: ABCItem[];
+  period?: string;
+  onPeriodChange?: (p: string) => void;
+  periods?: { key: string; label: string }[];
 }
 
 const COST_MAP: Record<string, number> = {
@@ -138,12 +141,13 @@ function findCost(productName: string): number | null {
   return null;
 }
 
-type Classification = 'CORE' | 'SUPORTE' | 'ENTRADA' | 'CONTROLADO';
+type Classification = 'CORE' | 'SUPORTE' | 'ENTRADA' | 'CONTROLADO' | 'SEM CUSTO';
 
 interface ClassifiedProduct {
   name: string;
   avgPrice: number;
   cost: number;
+  hasCost?: boolean;
   qtySold: number;
   revenue: number;
   variableCost: number;
@@ -182,9 +186,10 @@ const classConfig: Record<Classification, { color: string; icon: typeof Star; la
   SUPORTE: { color: 'bg-blue-500/10 text-blue-700 border-blue-500/30', icon: ShieldCheck, label: 'SUPORTE' },
   ENTRADA: { color: 'bg-yellow-500/10 text-yellow-700 border-yellow-500/30', icon: DoorOpen, label: 'ENTRADA' },
   CONTROLADO: { color: 'bg-red-500/10 text-red-700 border-red-500/30', icon: Ban, label: 'CONTROLADO' },
+  'SEM CUSTO': { color: 'bg-muted text-muted-foreground border-border', icon: AlertTriangle, label: 'SEM CUSTO' },
 };
 
-const ProductClassificationTab = ({ abcData }: Props) => {
+const ProductClassificationTab = ({ abcData, period, onPeriodChange, periods }: Props) => {
   const queryClient = useQueryClient();
 
   const { data: costsData } = useQuery({
@@ -245,18 +250,20 @@ const ProductClassificationTab = ({ abcData }: Props) => {
         const nameKey = item.productName.toLowerCase().trim();
         if (costByName[nameKey] != null) cost = costByName[nameKey];
       }
-      if (cost === null) continue;
+      const hasCost = cost !== null && Number(cost) > 0;
+      const costValue = hasCost ? Number(cost) : 0;
 
-      const avgPrice = item.totalRevenue / item.quantitySold;
-      const totalCostPerUnit = cost;
-      const profitPerUnit = avgPrice - totalCostPerUnit;
-      const marginPercent = avgPrice > 0 ? (profitPerUnit / avgPrice) * 100 : 0;
-      const totalProfit = profitPerUnit * item.quantitySold;
+      const avgPrice = item.quantitySold > 0 ? item.totalRevenue / item.quantitySold : 0;
+      const totalCostPerUnit = costValue;
+      const profitPerUnit = hasCost ? avgPrice - totalCostPerUnit : 0;
+      const marginPercent = hasCost && avgPrice > 0 ? (profitPerUnit / avgPrice) * 100 : 0;
+      const totalProfit = hasCost ? profitPerUnit * item.quantitySold : 0;
 
       products.push({
         name: item.productName,
         avgPrice,
-        cost,
+        cost: costValue,
+        hasCost,
         qtySold: item.quantitySold,
         revenue: item.totalRevenue,
         variableCost: 0,
@@ -269,10 +276,16 @@ const ProductClassificationTab = ({ abcData }: Props) => {
       });
     }
 
-    const sortedQty = products.map(p => p.qtySold).sort((a, b) => a - b);
+    const withCost = products.filter(p => p.hasCost);
+    const sortedQty = withCost.map(p => p.qtySold).sort((a, b) => a - b);
     const medianQty = sortedQty[Math.floor(sortedQty.length / 2)] || 1;
 
     for (const p of products) {
+      if (!p.hasCost) {
+        p.classification = 'SEM CUSTO';
+        p.action = 'Cadastrar custo em "Custos de Produtos"';
+        continue;
+      }
       const { classification, action } = classify(p.marginPercent, p.qtySold, p.totalProfit, medianQty);
       p.classification = classification;
       p.action = action;
@@ -282,11 +295,11 @@ const ProductClassificationTab = ({ abcData }: Props) => {
   }, [abcData, costById, costByName]);
 
   const stats = useMemo(() => {
-    const grouped: Record<Classification, ClassifiedProduct[]> = { CORE: [], SUPORTE: [], ENTRADA: [], CONTROLADO: [] };
+    const grouped: Record<Classification, ClassifiedProduct[]> = { CORE: [], SUPORTE: [], ENTRADA: [], CONTROLADO: [], 'SEM CUSTO': [] };
     for (const p of classifiedProducts) {
       grouped[p.classification].push(p);
     }
-    const losers = classifiedProducts.filter(p => p.profitPerUnit < 0);
+    const losers = classifiedProducts.filter(p => p.hasCost && p.profitPerUnit < 0);
     const totalProfit = classifiedProducts.reduce((s, p) => s + p.totalProfit, 0);
     return { grouped, losers, totalProfit };
   }, [classifiedProducts]);
@@ -294,19 +307,40 @@ const ProductClassificationTab = ({ abcData }: Props) => {
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   const pct = (v: number) => `${v.toFixed(1)}%`;
 
+  const periodSelector = periods?.length && onPeriodChange ? (
+    <div className="flex flex-wrap items-center gap-1">
+      <span className="text-xs text-muted-foreground mr-1">Período:</span>
+      {periods.map(p => (
+        <Button
+          key={p.key}
+          variant={period === p.key ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => onPeriodChange(p.key)}
+        >
+          {p.label}
+        </Button>
+      ))}
+    </div>
+  ) : null;
+
   if (!classifiedProducts.length) {
     return (
-      <Card>
-        <CardContent className="py-10 text-center text-muted-foreground">
-          Nenhum dado disponível para classificação. Verifique se há vendas no período.
-        </CardContent>
-      </Card>
+      <div className="space-y-4">
+        {periodSelector}
+        <Card>
+          <CardContent className="py-10 text-center text-muted-foreground">
+            Nenhum dado disponível para classificação. Verifique se há vendas no período.
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-end gap-2">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        {periodSelector}
+        <div className="flex justify-end gap-2">
         <Button
           variant="outline"
           size="sm"
@@ -325,9 +359,10 @@ const ProductClassificationTab = ({ abcData }: Props) => {
           <Download className="h-4 w-4 mr-2" />
           Exportar PDF
         </Button>
+        </div>
       </div>
       {/* KPI Cards */}
-      <div data-classification-summary className="grid grid-cols-2 md:grid-cols-5 gap-4">
+      <div data-classification-summary className="grid grid-cols-2 md:grid-cols-6 gap-4">
         <Card>
           <CardContent className="pt-4 pb-4">
             <div className="text-xs text-muted-foreground">Lucro Total Estimado</div>
@@ -336,7 +371,7 @@ const ProductClassificationTab = ({ abcData }: Props) => {
             </div>
           </CardContent>
         </Card>
-        {(['CORE', 'SUPORTE', 'ENTRADA', 'CONTROLADO'] as Classification[]).map(cls => {
+        {(['CORE', 'SUPORTE', 'ENTRADA', 'CONTROLADO', 'SEM CUSTO'] as Classification[]).map(cls => {
           const cfg = classConfig[cls];
           const items = stats.grouped[cls];
           const Icon = cfg.icon;
@@ -358,7 +393,7 @@ const ProductClassificationTab = ({ abcData }: Props) => {
       </div>
 
       {/* Grouped cards by classification */}
-      {(['CORE', 'SUPORTE', 'ENTRADA', 'CONTROLADO'] as Classification[]).map(cls => {
+      {(['CORE', 'SUPORTE', 'ENTRADA', 'CONTROLADO', 'SEM CUSTO'] as Classification[]).map(cls => {
         const cfg = classConfig[cls];
         const items = stats.grouped[cls];
         if (!items.length) return null;
