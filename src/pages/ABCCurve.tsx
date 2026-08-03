@@ -72,15 +72,22 @@ const ABCCurve = () => {
       case '30d': return subDays(now, 30).toISOString();
       case '90d': return subDays(now, 90).toISOString();
       case 'month': return startOfMonth(now).toISOString();
+      case 'custom': return customFrom ? new Date(`${customFrom}T00:00:00`).toISOString() : null;
       case 'all': return null;
     }
-  }, [period]);
+  }, [period, customFrom]);
+
+  const dateTo = useMemo(() => {
+    if (period !== 'custom' || !customTo) return null;
+    return new Date(`${customTo}T23:59:59.999`).toISOString();
+  }, [period, customTo]);
 
   const { data: posSales, isLoading: loadingPos } = useQuery({
-    queryKey: ['abc-pos-sales', dateFrom, storeId],
+    queryKey: ['abc-pos-sales', dateFrom, dateTo, storeId],
     queryFn: async () => {
       let query = supabase.from('pos_sales').select('items, total, created_at, store_id').neq('status', 'cancelled');
       if (dateFrom) query = query.gte('created_at', dateFrom);
+      if (dateTo) query = query.lte('created_at', dateTo);
       if (storeId !== 'all') query = query.eq('store_id', storeId);
       const { data, error } = await query;
       if (error) throw error;
@@ -89,10 +96,11 @@ const ABCCurve = () => {
   });
 
   const { data: orders, isLoading: loadingOrders } = useQuery({
-    queryKey: ['abc-orders', dateFrom, storeId],
+    queryKey: ['abc-orders', dateFrom, dateTo, storeId],
     queryFn: async () => {
       let query = supabase.from('orders').select('items, total, created_at, store_id').neq('status', 'cancelled');
       if (dateFrom) query = query.gte('created_at', dateFrom);
+      if (dateTo) query = query.lte('created_at', dateTo);
       if (storeId !== 'all') query = query.eq('store_id', storeId);
       const { data, error } = await query;
       if (error) throw error;
