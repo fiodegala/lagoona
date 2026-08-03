@@ -41,6 +41,8 @@ interface ABCItem {
 
 const ABCCurve = () => {
   const [period, setPeriod] = useState<PeriodFilter>('30d');
+  const [customFrom, setCustomFrom] = useState<string>('');
+  const [customTo, setCustomTo] = useState<string>('');
   const [search, setSearch] = useState('');
   const [storeId, setStoreId] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'revenue' | 'quantity'>('revenue');
