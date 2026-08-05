@@ -26,7 +26,12 @@ interface VariationInfo {
 
 type ProductVariationsMap = Record<string, VariationInfo[]>;
 
-const CatalogPage = () => {
+interface CatalogPageProps {
+  /** Quando true, exibe apenas o preço de varejo (sem atacado). */
+  retailOnly?: boolean;
+}
+
+const CatalogPage = ({ retailOnly = false }: CatalogPageProps) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -260,7 +265,9 @@ const CatalogPage = () => {
     return () => observer.disconnect();
   }, [hasMore, filtered.length]);
 
-  const catalogUrl = typeof window !== 'undefined' ? window.location.origin + '/catalogo' : '';
+  const catalogUrl = typeof window !== 'undefined'
+    ? window.location.origin + (retailOnly ? '/catalogo-varejo' : '/catalogo')
+    : '';
 
   const shareCatalog = () => {
     const text = encodeURIComponent(`Confira nosso catálogo de produtos:\n${catalogUrl}`);
@@ -280,7 +287,7 @@ const CatalogPage = () => {
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(120, 120, 120);
-      doc.text('Varejo e Atacado', 105, 27, { align: 'center' });
+      doc.text(retailOnly ? 'Preços de Varejo' : 'Varejo e Atacado', 105, 27, { align: 'center' });
       doc.setTextColor(0, 0, 0);
 
       const categoryMap = new Map<string, Product[]>();
@@ -314,26 +321,33 @@ const CatalogPage = () => {
 
         const tableData = prods.map((p) => {
           const colors = (variationsMap[p.id] || []).map((v) => v.label).join(', ');
-          return [
-            p.name,
-            colors || '—',
-            formatPrice(p.price),
-            p.wholesale_price && p.wholesale_price > 0 ? formatPrice(p.wholesale_price) : '—',
-          ];
+          const retail =
+            p.wholesale_price != null && p.wholesale_price > 0 ? p.wholesale_price * 2 : p.price;
+          const row = [p.name, colors || '—', formatPrice(retail)];
+          if (!retailOnly) {
+            row.push(p.wholesale_price && p.wholesale_price > 0 ? formatPrice(p.wholesale_price) : '—');
+          }
+          return row;
         });
 
         autoTable(doc, {
           startY,
-          head: [['Produto', 'Cores', 'Varejo', 'Atacado']],
+          head: [retailOnly ? ['Produto', 'Cores', 'Varejo'] : ['Produto', 'Cores', 'Varejo', 'Atacado']],
           body: tableData,
           styles: { fontSize: 8, cellPadding: 2 },
           headStyles: { fillColor: [30, 30, 30], textColor: 255, fontStyle: 'bold', fontSize: 8 },
-          columnStyles: {
-            0: { cellWidth: 65 },
-            1: { cellWidth: 65 },
-            2: { cellWidth: 25, halign: 'right' },
-            3: { cellWidth: 25, halign: 'right', textColor: [22, 163, 74] },
-          },
+          columnStyles: retailOnly
+            ? {
+                0: { cellWidth: 80 },
+                1: { cellWidth: 72 },
+                2: { cellWidth: 28, halign: 'right' },
+              }
+            : {
+                0: { cellWidth: 65 },
+                1: { cellWidth: 65 },
+                2: { cellWidth: 25, halign: 'right' },
+                3: { cellWidth: 25, halign: 'right', textColor: [22, 163, 74] },
+              },
           margin: { left: 14, right: 14 },
           didDrawPage: () => {
             doc.setFontSize(7);
@@ -346,13 +360,13 @@ const CatalogPage = () => {
         startY = (doc as any).lastAutoTable?.finalY + 8 || startY + 20;
       });
 
-      doc.save('catalogo-fio-de-gala.pdf');
+      doc.save(retailOnly ? 'catalogo-varejo-fio-de-gala.pdf' : 'catalogo-fio-de-gala.pdf');
     } catch (e) {
       console.error('Erro ao gerar PDF:', e);
     } finally {
       setGeneratingPdf(false);
     }
-  }, [filtered, categories, variationsMap]);
+  }, [filtered, categories, variationsMap, retailOnly]);
 
   const askAboutProduct = (product: Product) => {
     const productUrl = `${window.location.origin}/produto/${product.id}`;
@@ -427,20 +441,28 @@ const CatalogPage = () => {
 
   return (
     <>
-      <SEO title="Catálogo — Fio de Gala" description="Catálogo completo da coleção Fio de Gala para visualizar e compartilhar." canonicalPath="/catalogo" />
+      <SEO
+        title={retailOnly ? 'Catálogo Varejo — Fio de Gala' : 'Catálogo — Fio de Gala'}
+        description={retailOnly ? 'Catálogo Fio de Gala com preços de varejo.' : 'Catálogo completo da coleção Fio de Gala para visualizar e compartilhar.'}
+        canonicalPath={retailOnly ? '/catalogo-varejo' : '/catalogo'}
+      />
       <div className="min-h-screen bg-background">
         {/* Hero */}
         <div className="bg-primary/5 py-8 md:py-12">
           <div className="container mx-auto px-4 text-center">
             <h1 className="text-2xl md:text-4xl font-bold text-foreground mb-2">
-              Catálogo de Produtos
+              {retailOnly ? 'Catálogo de Produtos — Varejo' : 'Catálogo de Produtos'}
             </h1>
             <p className="text-muted-foreground text-sm md:text-base mb-2">
-              Confira todos os nossos produtos — varejo e atacado
+              {retailOnly
+                ? 'Confira todos os nossos produtos com preço de varejo'
+                : 'Confira todos os nossos produtos — varejo e atacado'}
             </p>
-            <p className="text-primary font-semibold text-sm md:text-base mb-4">
-              ATACADO a partir de 6 peças do mesmo produto ( podendo variar cores e tamanhos )
-            </p>
+            {!retailOnly && (
+              <p className="text-primary font-semibold text-sm md:text-base mb-4">
+                ATACADO a partir de 6 peças do mesmo produto ( podendo variar cores e tamanhos )
+              </p>
+            )}
             <div className="flex gap-2 justify-center flex-wrap">
               <Button onClick={shareCatalog} variant="outline" size="sm" className="gap-2">
                 <Share2 className="h-4 w-4" />
@@ -627,7 +649,7 @@ const CatalogPage = () => {
                                 : product.price
                             )}
                           </p>
-                          {product.wholesale_price != null && product.wholesale_price > 0 && (
+                          {!retailOnly && product.wholesale_price != null && product.wholesale_price > 0 && (
                             <p className="text-base font-bold text-emerald-600">
                               Preço para revendedores ( ATACADO ): {formatPrice(product.wholesale_price)}
                             </p>
