@@ -26,7 +26,12 @@ interface VariationInfo {
 
 type ProductVariationsMap = Record<string, VariationInfo[]>;
 
-const CatalogPage = () => {
+interface CatalogPageProps {
+  /** Quando true, exibe apenas o preço de varejo (sem atacado). */
+  retailOnly?: boolean;
+}
+
+const CatalogPage = ({ retailOnly = false }: CatalogPageProps) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
