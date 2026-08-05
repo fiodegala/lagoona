@@ -439,20 +439,28 @@ const CatalogPage = ({ retailOnly = false }: CatalogPageProps) => {
 
   return (
     <>
-      <SEO title="Catálogo — Fio de Gala" description="Catálogo completo da coleção Fio de Gala para visualizar e compartilhar." canonicalPath="/catalogo" />
+      <SEO
+        title={retailOnly ? 'Catálogo Varejo — Fio de Gala' : 'Catálogo — Fio de Gala'}
+        description={retailOnly ? 'Catálogo Fio de Gala com preços de varejo.' : 'Catálogo completo da coleção Fio de Gala para visualizar e compartilhar.'}
+        canonicalPath={retailOnly ? '/catalogo-varejo' : '/catalogo'}
+      />
       <div className="min-h-screen bg-background">
         {/* Hero */}
         <div className="bg-primary/5 py-8 md:py-12">
           <div className="container mx-auto px-4 text-center">
             <h1 className="text-2xl md:text-4xl font-bold text-foreground mb-2">
-              Catálogo de Produtos
+              {retailOnly ? 'Catálogo de Produtos — Varejo' : 'Catálogo de Produtos'}
             </h1>
             <p className="text-muted-foreground text-sm md:text-base mb-2">
-              Confira todos os nossos produtos — varejo e atacado
+              {retailOnly
+                ? 'Confira todos os nossos produtos com preço de varejo'
+                : 'Confira todos os nossos produtos — varejo e atacado'}
             </p>
-            <p className="text-primary font-semibold text-sm md:text-base mb-4">
-              ATACADO a partir de 6 peças do mesmo produto ( podendo variar cores e tamanhos )
-            </p>
+            {!retailOnly && (
+              <p className="text-primary font-semibold text-sm md:text-base mb-4">
+                ATACADO a partir de 6 peças do mesmo produto ( podendo variar cores e tamanhos )
+              </p>
+            )}
             <div className="flex gap-2 justify-center flex-wrap">
               <Button onClick={shareCatalog} variant="outline" size="sm" className="gap-2">
                 <Share2 className="h-4 w-4" />
