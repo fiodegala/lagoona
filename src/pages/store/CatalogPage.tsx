@@ -358,13 +358,13 @@ const CatalogPage = ({ retailOnly = false }: CatalogPageProps) => {
         startY = (doc as any).lastAutoTable?.finalY + 8 || startY + 20;
       });
 
-      doc.save('catalogo-fio-de-gala.pdf');
+      doc.save(retailOnly ? 'catalogo-varejo-fio-de-gala.pdf' : 'catalogo-fio-de-gala.pdf');
     } catch (e) {
       console.error('Erro ao gerar PDF:', e);
     } finally {
       setGeneratingPdf(false);
     }
-  }, [filtered, categories, variationsMap]);
+  }, [filtered, categories, variationsMap, retailOnly]);
 
   const askAboutProduct = (product: Product) => {
     const productUrl = `${window.location.origin}/produto/${product.id}`;
