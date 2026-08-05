@@ -285,7 +285,7 @@ const CatalogPage = ({ retailOnly = false }: CatalogPageProps) => {
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(120, 120, 120);
-      doc.text('Varejo e Atacado', 105, 27, { align: 'center' });
+      doc.text(retailOnly ? 'Preços de Varejo' : 'Varejo e Atacado', 105, 27, { align: 'center' });
       doc.setTextColor(0, 0, 0);
 
       const categoryMap = new Map<string, Product[]>();
