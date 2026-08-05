@@ -319,26 +319,33 @@ const CatalogPage = ({ retailOnly = false }: CatalogPageProps) => {
 
         const tableData = prods.map((p) => {
           const colors = (variationsMap[p.id] || []).map((v) => v.label).join(', ');
-          return [
-            p.name,
-            colors || '—',
-            formatPrice(p.price),
-            p.wholesale_price && p.wholesale_price > 0 ? formatPrice(p.wholesale_price) : '—',
-          ];
+          const retail =
+            p.wholesale_price != null && p.wholesale_price > 0 ? p.wholesale_price * 2 : p.price;
+          const row = [p.name, colors || '—', formatPrice(retail)];
+          if (!retailOnly) {
+            row.push(p.wholesale_price && p.wholesale_price > 0 ? formatPrice(p.wholesale_price) : '—');
+          }
+          return row;
         });
 
         autoTable(doc, {
           startY,
-          head: [['Produto', 'Cores', 'Varejo', 'Atacado']],
+          head: [retailOnly ? ['Produto', 'Cores', 'Varejo'] : ['Produto', 'Cores', 'Varejo', 'Atacado']],
           body: tableData,
           styles: { fontSize: 8, cellPadding: 2 },
           headStyles: { fillColor: [30, 30, 30], textColor: 255, fontStyle: 'bold', fontSize: 8 },
-          columnStyles: {
-            0: { cellWidth: 65 },
-            1: { cellWidth: 65 },
-            2: { cellWidth: 25, halign: 'right' },
-            3: { cellWidth: 25, halign: 'right', textColor: [22, 163, 74] },
-          },
+          columnStyles: retailOnly
+            ? {
+                0: { cellWidth: 80 },
+                1: { cellWidth: 72 },
+                2: { cellWidth: 28, halign: 'right' },
+              }
+            : {
+                0: { cellWidth: 65 },
+                1: { cellWidth: 65 },
+                2: { cellWidth: 25, halign: 'right' },
+                3: { cellWidth: 25, halign: 'right', textColor: [22, 163, 74] },
+              },
           margin: { left: 14, right: 14 },
           didDrawPage: () => {
             doc.setFontSize(7);
