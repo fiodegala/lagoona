@@ -191,6 +191,7 @@ const App = () => (
               <Route path="/trabalhe-conosco" element={<WorkWithUsPage />} />
               <Route path="/orcamento/:id" element={<QuoteViewPage />} />
               <Route path="/catalogo" element={<CatalogPage />} />
+              <Route path="/catalogo-varejo" element={<CatalogPage retailOnly />} />
               <Route path="/catalogo-revendedor" element={<ResellerCatalogPage />} />
               <Route path="/afiliados" element={<AffiliateSignupPage />} />
               <Route path="/afiliados/painel" element={<AffiliateDashboardPage />} />
