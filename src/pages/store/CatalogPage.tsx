@@ -265,7 +265,9 @@ const CatalogPage = ({ retailOnly = false }: CatalogPageProps) => {
     return () => observer.disconnect();
   }, [hasMore, filtered.length]);
 
-  const catalogUrl = typeof window !== 'undefined' ? window.location.origin + '/catalogo' : '';
+  const catalogUrl = typeof window !== 'undefined'
+    ? window.location.origin + (retailOnly ? '/catalogo-varejo' : '/catalogo')
+    : '';
 
   const shareCatalog = () => {
     const text = encodeURIComponent(`Confira nosso catálogo de produtos:\n${catalogUrl}`);
