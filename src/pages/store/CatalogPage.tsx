@@ -647,7 +647,7 @@ const CatalogPage = ({ retailOnly = false }: CatalogPageProps) => {
                                 : product.price
                             )}
                           </p>
-                          {product.wholesale_price != null && product.wholesale_price > 0 && (
+                          {!retailOnly && product.wholesale_price != null && product.wholesale_price > 0 && (
                             <p className="text-base font-bold text-emerald-600">
                               Preço para revendedores ( ATACADO ): {formatPrice(product.wholesale_price)}
                             </p>
