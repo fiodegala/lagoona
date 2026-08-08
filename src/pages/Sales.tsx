@@ -40,9 +40,9 @@ const paymentMethodLabels: Record<string, string> = {
 };
 
 const Sales = () => {
-  const { isAdmin, isManager, user, userStoreId } = useAuth();
+  const { isAdmin, isManager, user, userStoreId, allowedMenus } = useAuth();
   const queryClient = useQueryClient();
-  const canCancel = isAdmin || isManager;
+  const canCancel = isAdmin || isManager || allowedMenus.includes('sales-manage');
   const [search, setSearch] = useState('');
   const [periodFilter, setPeriodFilter] = useState('today');
   const [customStart, setCustomStart] = useState('');
