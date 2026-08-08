@@ -3426,6 +3426,7 @@ export type Database = {
     Functions: {
       can_manage_goals: { Args: { _user_id: string }; Returns: boolean }
       can_manage_products: { Args: { _user_id: string }; Returns: boolean }
+      can_manage_sales: { Args: { _user_id: string }; Returns: boolean }
       can_manage_users: { Args: { _user_id: string }; Returns: boolean }
       cleanup_old_nonces: { Args: never; Returns: undefined }
       deduct_sale_stock: {
