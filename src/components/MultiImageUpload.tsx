@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import ImageCropModal from './ImageCropModal';
+import { compressImage } from '@/lib/imageCompression';
 
 interface MultiImageUploadProps {
   values: string[];
