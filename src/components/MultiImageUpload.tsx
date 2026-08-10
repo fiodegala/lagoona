@@ -73,18 +73,18 @@ const MultiImageUpload = ({
 
     for (const file of validFiles) {
       try {
-        // Generate unique filename — preserve original extension
-        const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
-        const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${ext}`;
+        // Resize to max 1200px wide + WebP 80% (proporção preservada)
+        const optimized = await compressImage(file);
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${optimized.ext}`;
         const filePath = folder ? `${folder}/${fileName}` : fileName;
 
         // Upload to Supabase Storage with explicit content type
         const { error: uploadError } = await supabase.storage
           .from(bucket)
-          .upload(filePath, file, {
-            cacheControl: '3600',
+          .upload(filePath, optimized.blob, {
+            cacheControl: '31536000',
             upsert: false,
-            contentType: file.type || 'image/jpeg',
+            contentType: optimized.contentType,
           });
 
         if (uploadError) throw uploadError;
