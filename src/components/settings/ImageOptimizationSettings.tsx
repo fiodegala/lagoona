@@ -27,10 +27,31 @@ const ImageOptimizationSettings = () => {
     try {
       // eslint-disable-next-line no-constant-condition
       while (true) {
-        const { data, error } = await supabase.functions.invoke('optimize-product-images', {
-          body: { limit: BATCH, offset },
-        });
-        if (error) throw error;
+        let data: any = null;
+        let lastErr: any = null;
+
+        for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+          const res = await supabase.functions.invoke('optimize-product-images', {
+            body: { limit: BATCH, offset },
+          });
+          if (!res.error) {
+            data = res.data;
+            lastErr = null;
+            break;
+          }
+          lastErr = res.error;
+          await new Promise((r) => setTimeout(r, 1500 * (attempt + 1)));
+        }
+
+        if (lastErr || !data) {
+          setLog((l) => [
+            ...l,
+            `Lote no offset ${offset} falhou (${lastErr?.message || 'erro'}). Pulando para o próximo.`,
+          ]);
+          offset += BATCH;
+          if (offset > 5000) break;
+          continue;
+        }
 
         const productsDone = Number(data?.productsUpdated ?? 0);
         const variationsDone = Number(data?.variationsUpdated ?? 0);
@@ -50,6 +71,7 @@ const ImageOptimizationSettings = () => {
         offset = Number(data.nextOffset);
         if (offset > 5000) break;
       }
+
 
       toast.success(`Otimização concluída: ${acc.images} imagens convertidas para WebP.`);
     } catch (e: any) {
