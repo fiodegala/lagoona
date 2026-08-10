@@ -6,7 +6,8 @@ import { ImageDown, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-const BATCH = 20;
+const BATCH = 4;
+const MAX_RETRIES = 2;
 
 type Totals = { products: number; variations: number; images: number; batches: number };
 
