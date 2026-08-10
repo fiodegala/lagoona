@@ -5,6 +5,7 @@ import { Upload, X, Loader2, ImageIcon, Crop } from 'lucide-react';
 import { toast } from 'sonner';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import ImageCropModal from './ImageCropModal';
+import { compressImage } from '@/lib/imageCompression';
 
 interface ImageUploadProps {
   value?: string;
@@ -49,16 +50,17 @@ const ImageUpload = ({ value, onChange, bucket, folder = '' }: ImageUploadProps)
   const uploadFile = async (fileOrBlob: Blob) => {
     setIsUploading(true);
     try {
-      // Always save as .jpg since the cropper outputs jpeg blobs
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.jpg`;
+      // Resize to max 1200px wide + WebP 80% (proporção preservada)
+      const optimized = await compressImage(fileOrBlob);
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${optimized.ext}`;
       const filePath = folder ? `${folder}/${fileName}` : fileName;
 
       const { error: uploadError } = await supabase.storage
         .from(bucket)
-        .upload(filePath, fileOrBlob, {
-          cacheControl: '3600',
+        .upload(filePath, optimized.blob, {
+          cacheControl: '31536000',
           upsert: false,
-          contentType: 'image/jpeg',
+          contentType: optimized.contentType,
         });
 
       if (uploadError) throw uploadError;
@@ -113,15 +115,16 @@ const ImageUpload = ({ value, onChange, bucket, folder = '' }: ImageUploadProps)
   const handleEditCropComplete = async (croppedBlob: Blob) => {
     setIsUploading(true);
     try {
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.jpg`;
+      const optimized = await compressImage(croppedBlob);
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${optimized.ext}`;
       const filePath = folder ? `${folder}/${fileName}` : fileName;
 
       const { error: uploadError } = await supabase.storage
         .from(bucket)
-        .upload(filePath, croppedBlob, {
-          cacheControl: '3600',
+        .upload(filePath, optimized.blob, {
+          cacheControl: '31536000',
           upsert: false,
-          contentType: 'image/jpeg',
+          contentType: optimized.contentType,
         });
 
       if (uploadError) throw uploadError;
