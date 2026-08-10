@@ -24,6 +24,7 @@ import PushNotificationSettings from '@/components/settings/PushNotificationSett
 import CustomerFeedbackSettings from '@/components/settings/CustomerFeedbackSettings';
 import InstagramIntegrationSettings from '@/components/settings/InstagramIntegrationSettings';
 import LookbookSettings from '@/components/settings/LookbookSettings';
+import ImageOptimizationSettings from '@/components/settings/ImageOptimizationSettings';
 
 const Settings = () => {
   const { profile, isAdmin, user } = useAuth();
@@ -232,6 +233,7 @@ const Settings = () => {
             <LowStockAlertSettings />
             <AITryOnSettings />
             <InstagramIntegrationSettings />
+            <ImageOptimizationSettings />
           </>
         )}
 
