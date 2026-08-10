@@ -297,14 +297,15 @@ const MultiImageUpload = ({
           onClose={() => setCropIndex(null)}
           onCropComplete={async (croppedBlob) => {
             try {
-              const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.jpg`;
+              const optimized = await compressImage(croppedBlob);
+              const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${optimized.ext}`;
               const filePath = folder ? `${folder}/${fileName}` : fileName;
               const { error: uploadError } = await supabase.storage
                 .from(bucket)
-                .upload(filePath, croppedBlob, {
-                  cacheControl: '3600',
+                .upload(filePath, optimized.blob, {
+                  cacheControl: '31536000',
                   upsert: false,
-                  contentType: 'image/jpeg',
+                  contentType: optimized.contentType,
                 });
               if (uploadError) throw uploadError;
               const { data: { publicUrl } } = supabase.storage
