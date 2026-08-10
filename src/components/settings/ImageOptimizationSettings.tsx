@@ -31,10 +31,9 @@ const ImageOptimizationSettings = () => {
         });
         if (error) throw error;
 
-        const productsDone = Number(data?.products_updated ?? 0);
-        const variationsDone = Number(data?.variations_updated ?? 0);
-        const imagesDone = Number(data?.images_optimized ?? 0);
-        const scanned = Number(data?.scanned ?? 0);
+        const productsDone = Number(data?.productsUpdated ?? 0);
+        const variationsDone = Number(data?.variationsUpdated ?? 0);
+        const imagesDone = Number(data?.imagesConverted ?? 0);
 
         acc.products += productsDone;
         acc.variations += variationsDone;
@@ -46,9 +45,8 @@ const ImageOptimizationSettings = () => {
           `Lote ${acc.batches} (offset ${offset}): ${imagesDone} imagens otimizadas, ${productsDone} produtos, ${variationsDone} variações.`,
         ]);
 
-        if (!data?.has_more && scanned < BATCH) break;
-        if (data?.has_more === false) break;
-        offset += BATCH;
+        if (data?.done || data?.nextOffset == null) break;
+        offset = Number(data.nextOffset);
         if (offset > 5000) break;
       }
 
