@@ -92,6 +92,8 @@ const POSPage = () => {
   const [quotePriceMode, setQuotePriceMode] = useState<QuotePriceMode>('varejo');
   const [selectedSeller, setSelectedSeller] = useState<Seller | null>(null);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [isCampaignCustomer, setIsCampaignCustomer] = useState(false);
+
   const [customerCreditBalance, setCustomerCreditBalance] = useState(0);
 
   // Cart state
