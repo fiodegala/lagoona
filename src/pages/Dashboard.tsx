@@ -953,6 +953,37 @@ const Dashboard = () => {
         .sort((a, b) => b.total - a.total),
     };
   }, [filteredPOSSales, filteredOrders]);
+  // Campaign customers stats
+  const campaignStats = useMemo(() => {
+    const sales = filteredPOSSales.filter(s => s.is_campaign);
+    const customersSet = new Set<string>();
+    const byProduct: Record<string, { qty: number; total: number }> = {};
+
+    sales.forEach(sale => {
+      customersSet.add(sale.customer_id || sale.customer_name || sale.id);
+      (sale.items || []).forEach((item: any) => {
+        const name = item.name || 'Produto';
+        const qty = Number(item.quantity || item.qty || 1);
+        const total = Number(item.total ?? (item.unit_price ?? item.price ?? 0) * qty);
+        if (!byProduct[name]) byProduct[name] = { qty: 0, total: 0 };
+        byProduct[name].qty += qty;
+        byProduct[name].total += total;
+      });
+    });
+
+    const totalValue = sales.reduce((sum, s) => sum + Number(s.total), 0);
+
+    return {
+      salesCount: sales.length,
+      customersCount: customersSet.size,
+      totalValue,
+      averageTicket: sales.length > 0 ? totalValue / sales.length : 0,
+      products: Object.entries(byProduct)
+        .map(([name, data]) => ({ name, ...data }))
+        .sort((a, b) => b.total - a.total),
+    };
+  }, [filteredPOSSales]);
+
 
   // Individual sales (current user only) vs store total
   // storeRevenue/storeSales = PDV + Site orders consolidados
