@@ -109,6 +109,7 @@ interface RawPOSSale {
   discount_amount: number | null;
   status: string;
   sale_type: string | null;
+  is_campaign: boolean;
   notes: string | null;
   items: { product_id?: string; name?: string; qty?: number; quantity?: number; unit_price?: number; price?: number; is_lagoona?: boolean; is_promotional?: boolean; original_price?: number; total?: number }[];
   created_at: string;
@@ -400,6 +401,7 @@ const Dashboard = () => {
         discount_amount: sale.discount_amount ? Number(sale.discount_amount) : null,
         status: sale.status,
         sale_type: (sale as any).sale_type || null,
+        is_campaign: Boolean((sale as any).is_campaign),
         notes: sale.notes || null,
         items: (sale.items as any[] || []),
         created_at: sale.created_at,
@@ -951,6 +953,37 @@ const Dashboard = () => {
         .sort((a, b) => b.total - a.total),
     };
   }, [filteredPOSSales, filteredOrders]);
+  // Campaign customers stats
+  const campaignStats = useMemo(() => {
+    const sales = filteredPOSSales.filter(s => s.is_campaign);
+    const customersSet = new Set<string>();
+    const byProduct: Record<string, { qty: number; total: number }> = {};
+
+    sales.forEach(sale => {
+      customersSet.add(sale.customer_id || sale.customer_name || sale.id);
+      (sale.items || []).forEach((item: any) => {
+        const name = item.name || 'Produto';
+        const qty = Number(item.quantity || item.qty || 1);
+        const total = Number(item.total ?? (item.unit_price ?? item.price ?? 0) * qty);
+        if (!byProduct[name]) byProduct[name] = { qty: 0, total: 0 };
+        byProduct[name].qty += qty;
+        byProduct[name].total += total;
+      });
+    });
+
+    const totalValue = sales.reduce((sum, s) => sum + Number(s.total), 0);
+
+    return {
+      salesCount: sales.length,
+      customersCount: customersSet.size,
+      totalValue,
+      averageTicket: sales.length > 0 ? totalValue / sales.length : 0,
+      products: Object.entries(byProduct)
+        .map(([name, data]) => ({ name, ...data }))
+        .sort((a, b) => b.total - a.total),
+    };
+  }, [filteredPOSSales]);
+
 
   // Individual sales (current user only) vs store total
   // storeRevenue/storeSales = PDV + Site orders consolidados
@@ -2291,6 +2324,63 @@ const Dashboard = () => {
             </CardContent>
           </Card>
         )}
+
+        {/* Campaign Customers Section */}
+        <Card className="card-elevated border-l-4 border-l-accent">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Tag className="h-5 w-5 text-accent" />
+              Clientes de Campanha
+            </CardTitle>
+            <CardDescription>
+              Vendas marcadas como cliente de campanha — {getPeriodLabel(periodFilter)}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {campaignStats.salesCount === 0 ? (
+              <p className="text-sm text-muted-foreground">Nenhuma venda de campanha no período.</p>
+            ) : (
+              <div className="grid gap-6 lg:grid-cols-3">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-3 bg-accent/5 rounded-lg border border-accent/20">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Clientes</p>
+                      <p className="text-2xl font-bold">{campaignStats.customersCount}</p>
+                      <p className="text-xs text-muted-foreground">{campaignStats.salesCount} venda(s)</p>
+                    </div>
+                    <Users className="h-8 w-8 text-accent/60" />
+                  </div>
+                  <div className="flex items-center justify-between p-3 bg-success/5 rounded-lg border border-success/20">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Valor total</p>
+                      <p className="text-2xl font-bold">{formatCurrency(campaignStats.totalValue)}</p>
+                      <p className="text-xs text-muted-foreground">
+                        Ticket médio: {formatCurrency(campaignStats.averageTicket)}
+                      </p>
+                    </div>
+                    <DollarSign className="h-8 w-8 text-success/60" />
+                  </div>
+                </div>
+
+                <div className="space-y-2 lg:col-span-2">
+                  <h4 className="text-sm font-medium text-muted-foreground mb-3">Produtos vendidos</h4>
+                  <div className="space-y-2 max-h-64 overflow-y-auto">
+                    {campaignStats.products.map((p, i) => (
+                      <div key={i} className="flex items-center justify-between text-sm py-1.5 border-b last:border-0">
+                        <div className="flex-1 min-w-0">
+                          <p className="truncate font-medium">{p.name}</p>
+                          <p className="text-xs text-muted-foreground">{p.qty} un.</p>
+                        </div>
+                        <span className="font-semibold ml-2 shrink-0">{formatCurrency(p.total)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
 
         {/* Sales by Modality & Exchange Metrics */}
         {(!canShowSiteSales || isOnlineStoreSelected) && (
