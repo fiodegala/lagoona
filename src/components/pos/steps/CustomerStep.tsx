@@ -48,9 +48,12 @@ import { toast } from 'sonner';
 interface CustomerStepProps {
   selectedCustomer: Customer | null;
   onSelectCustomer: (customer: Customer | null) => void;
+  isCampaign?: boolean;
+  onCampaignChange?: (value: boolean) => void;
   saleType: SaleType;
   onNext: () => void;
   onBack: () => void;
+
 }
 
 const emptyForm = {
@@ -79,7 +82,7 @@ const emptyForm = {
   profession: '',
 };
 
-const CustomerStep = ({ selectedCustomer, onSelectCustomer, saleType, onNext, onBack }: CustomerStepProps) => {
+const CustomerStep = ({ selectedCustomer, onSelectCustomer, isCampaign = false, onCampaignChange, saleType, onNext, onBack }: CustomerStepProps) => {
   const isExchange = saleType === 'troca';
   const isColaborador = saleType === 'colaborador';
   const isGiftCard = saleType === 'cartao_presente';
@@ -293,6 +296,34 @@ const CustomerStep = ({ selectedCustomer, onSelectCustomer, saleType, onNext, on
       </p>
 
       <div className="w-full max-w-md space-y-4">
+        {/* Campaign tag */}
+        {!isColaborador && (
+          <label className="flex items-center gap-3 p-3 rounded-xl border-2 border-dashed cursor-pointer hover:bg-muted/40">
+            <Checkbox
+              checked={isCampaign}
+              onCheckedChange={async (checked) => {
+                const value = checked === true;
+                onCampaignChange?.(value);
+                if (selectedCustomer?.id) {
+                  const { error } = await supabase
+                    .from('customers')
+                    .update({ is_campaign: value } as never)
+                    .eq('id', selectedCustomer.id);
+                  if (error) toast.error('Não foi possível salvar a etiqueta no cadastro do cliente');
+                }
+              }}
+            />
+            <div>
+              <div className="font-medium text-sm flex items-center gap-2">
+                🏷️ Cliente de campanha
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Marque se este cliente veio de uma campanha de marketing
+              </p>
+            </div>
+          </label>
+        )}
+
         {/* Selected customer display */}
         {selectedCustomer ? (
           <div className="flex items-center gap-3 p-4 rounded-xl border-2 border-primary bg-primary/5">

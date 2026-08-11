@@ -92,6 +92,8 @@ const POSPage = () => {
   const [quotePriceMode, setQuotePriceMode] = useState<QuotePriceMode>('varejo');
   const [selectedSeller, setSelectedSeller] = useState<Seller | null>(null);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [isCampaignCustomer, setIsCampaignCustomer] = useState(false);
+
   const [customerCreditBalance, setCustomerCreditBalance] = useState(0);
 
   // Cart state
@@ -147,16 +149,19 @@ const POSPage = () => {
       if (selectedCustomer?.id) {
         const { data } = await supabase
           .from('customers')
-          .select('credit_balance')
+          .select('credit_balance, is_campaign')
           .eq('id', selectedCustomer.id)
           .single();
         setCustomerCreditBalance(data?.credit_balance || 0);
+        setIsCampaignCustomer(Boolean((data as { is_campaign?: boolean } | null)?.is_campaign));
       } else {
         setCustomerCreditBalance(0);
+        setIsCampaignCustomer(false);
       }
     };
     fetchCreditBalance();
   }, [selectedCustomer?.id]);
+
 
   useEffect(() => {
     const loadSession = async () => {
@@ -744,6 +749,7 @@ const POSPage = () => {
       store_id: resolvedStoreId,
       seller_id: selectedSeller?.user_id,
       customer_id: isColaboradorSale ? undefined : selectedCustomer?.id,
+      is_campaign: isCampaignCustomer,
       customer_name: selectedCustomer?.name,
       customer_document: selectedCustomer?.document || undefined,
       items: cartItems.filter(i => !i.is_return).map((item) => ({
@@ -1040,6 +1046,8 @@ const POSPage = () => {
             <CustomerStep
               selectedCustomer={selectedCustomer}
               onSelectCustomer={setSelectedCustomer}
+              isCampaign={isCampaignCustomer}
+              onCampaignChange={setIsCampaignCustomer}
               saleType={saleType}
               onNext={() => setCurrentStep(isExchangeMode ? 'products' : 'products')}
               onBack={() => setCurrentStep('seller')}
