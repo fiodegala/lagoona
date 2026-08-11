@@ -749,6 +749,7 @@ const POSPage = () => {
       store_id: resolvedStoreId,
       seller_id: selectedSeller?.user_id,
       customer_id: isColaboradorSale ? undefined : selectedCustomer?.id,
+      is_campaign: isCampaignCustomer,
       customer_name: selectedCustomer?.name,
       customer_document: selectedCustomer?.document || undefined,
       items: cartItems.filter(i => !i.is_return).map((item) => ({
@@ -1045,6 +1046,8 @@ const POSPage = () => {
             <CustomerStep
               selectedCustomer={selectedCustomer}
               onSelectCustomer={setSelectedCustomer}
+              isCampaign={isCampaignCustomer}
+              onCampaignChange={setIsCampaignCustomer}
               saleType={saleType}
               onNext={() => setCurrentStep(isExchangeMode ? 'products' : 'products')}
               onBack={() => setCurrentStep('seller')}

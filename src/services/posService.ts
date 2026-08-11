@@ -91,6 +91,7 @@ export interface CreateSaleData {
   store_id?: string;
   seller_id?: string;
   customer_id?: string;
+  is_campaign?: boolean;
   customer_name?: string;
   customer_document?: string;
   items: POSSaleItem[];
