@@ -109,6 +109,7 @@ interface RawPOSSale {
   discount_amount: number | null;
   status: string;
   sale_type: string | null;
+  is_campaign: boolean;
   notes: string | null;
   items: { product_id?: string; name?: string; qty?: number; quantity?: number; unit_price?: number; price?: number; is_lagoona?: boolean; is_promotional?: boolean; original_price?: number; total?: number }[];
   created_at: string;
