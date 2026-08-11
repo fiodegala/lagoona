@@ -82,7 +82,7 @@ const emptyForm = {
   profession: '',
 };
 
-const CustomerStep = ({ selectedCustomer, onSelectCustomer, saleType, onNext, onBack }: CustomerStepProps) => {
+const CustomerStep = ({ selectedCustomer, onSelectCustomer, isCampaign = false, onCampaignChange, saleType, onNext, onBack }: CustomerStepProps) => {
   const isExchange = saleType === 'troca';
   const isColaborador = saleType === 'colaborador';
   const isGiftCard = saleType === 'cartao_presente';
