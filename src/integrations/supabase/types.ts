@@ -974,6 +974,7 @@ export type Database = {
           inscricao_estadual: string | null
           inscricao_municipal: string | null
           is_active: boolean
+          is_campaign: boolean
           name: string
           neighborhood: string | null
           nome_fantasia: string | null
@@ -1005,6 +1006,7 @@ export type Database = {
           inscricao_estadual?: string | null
           inscricao_municipal?: string | null
           is_active?: boolean
+          is_campaign?: boolean
           name: string
           neighborhood?: string | null
           nome_fantasia?: string | null
@@ -1036,6 +1038,7 @@ export type Database = {
           inscricao_estadual?: string | null
           inscricao_municipal?: string | null
           is_active?: boolean
+          is_campaign?: boolean
           name?: string
           neighborhood?: string | null
           nome_fantasia?: string | null
@@ -1705,6 +1708,7 @@ export type Database = {
           discount_type: string | null
           discount_value: number | null
           id: string
+          is_campaign: boolean
           items: Json
           local_id: string
           notes: string | null
@@ -1738,6 +1742,7 @@ export type Database = {
           discount_type?: string | null
           discount_value?: number | null
           id?: string
+          is_campaign?: boolean
           items?: Json
           local_id: string
           notes?: string | null
@@ -1771,6 +1776,7 @@ export type Database = {
           discount_type?: string | null
           discount_value?: number | null
           id?: string
+          is_campaign?: boolean
           items?: Json
           local_id?: string
           notes?: string | null
