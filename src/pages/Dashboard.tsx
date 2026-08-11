@@ -401,6 +401,7 @@ const Dashboard = () => {
         discount_amount: sale.discount_amount ? Number(sale.discount_amount) : null,
         status: sale.status,
         sale_type: (sale as any).sale_type || null,
+        is_campaign: Boolean((sale as any).is_campaign),
         notes: sale.notes || null,
         items: (sale.items as any[] || []),
         created_at: sale.created_at,
