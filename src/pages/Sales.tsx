@@ -64,6 +64,35 @@ const Sales = () => {
   const [storeFilter, setStoreFilter] = useState('all');
   const [isEditingPayment, setIsEditingPayment] = useState(false);
   const [isEditingItems, setIsEditingItems] = useState(false);
+  const [isSavingCampaign, setIsSavingCampaign] = useState(false);
+
+  const handleToggleCampaign = async (value: boolean) => {
+    if (!detailSale) return;
+    setIsSavingCampaign(true);
+    try {
+      const { error } = await supabase
+        .from('pos_sales')
+        .update({ is_campaign: value } as never)
+        .eq('id', detailSale.id);
+      if (error) throw error;
+
+      if (detailSale.customer_id) {
+        await supabase
+          .from('customers')
+          .update({ is_campaign: value } as never)
+          .eq('id', detailSale.customer_id);
+      }
+
+      setDetailSale({ ...detailSale, is_campaign: value });
+      queryClient.invalidateQueries({ queryKey: ['pos-sales'] });
+      toast.success(value ? 'Venda marcada como campanha' : 'Etiqueta de campanha removida');
+    } catch (e: any) {
+      toast.error('Erro ao atualizar etiqueta: ' + (e.message || ''));
+    } finally {
+      setIsSavingCampaign(false);
+    }
+  };
+
 
   const WEBSITE_STORE_ID = 'e0b8ebbc-1b3b-4aec-b5f7-6925762e6ea1';
   const saleItems = (items: any) => {
