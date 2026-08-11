@@ -343,6 +343,7 @@ export const posService = {
       user_id: user.id,
       seller_id: saleData.seller_id || user.id,
       customer_id: saleData.customer_id || null,
+      is_campaign: saleData.is_campaign || false,
       customer_name: saleData.customer_name || null,
       customer_document: saleData.customer_document || null,
       items: saleData.items as unknown as Record<string, unknown>[],

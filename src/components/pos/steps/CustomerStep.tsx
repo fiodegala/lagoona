@@ -48,9 +48,12 @@ import { toast } from 'sonner';
 interface CustomerStepProps {
   selectedCustomer: Customer | null;
   onSelectCustomer: (customer: Customer | null) => void;
+  isCampaign?: boolean;
+  onCampaignChange?: (value: boolean) => void;
   saleType: SaleType;
   onNext: () => void;
   onBack: () => void;
+
 }
 
 const emptyForm = {
