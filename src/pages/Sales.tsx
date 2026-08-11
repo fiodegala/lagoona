@@ -672,6 +672,12 @@ const Sales = () => {
                                 Presencial
                               </Badge>
                             ) : null}
+                            {(sale as any).is_campaign && (
+                              <Badge variant="outline" className="text-[10px] gap-1 border-fuchsia-500/40 text-fuchsia-700 bg-fuchsia-500/10">
+                                <Megaphone className="h-2.5 w-2.5" /> Campanha
+                              </Badge>
+                            )}
+
                           </div>
                         </TableCell>
                         <TableCell>
