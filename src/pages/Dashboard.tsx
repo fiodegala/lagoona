@@ -2325,6 +2325,63 @@ const Dashboard = () => {
           </Card>
         )}
 
+        {/* Campaign Customers Section */}
+        <Card className="card-elevated border-l-4 border-l-accent">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Tag className="h-5 w-5 text-accent" />
+              Clientes de Campanha
+            </CardTitle>
+            <CardDescription>
+              Vendas marcadas como cliente de campanha — {getPeriodLabel(periodFilter)}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {campaignStats.salesCount === 0 ? (
+              <p className="text-sm text-muted-foreground">Nenhuma venda de campanha no período.</p>
+            ) : (
+              <div className="grid gap-6 lg:grid-cols-3">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-3 bg-accent/5 rounded-lg border border-accent/20">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Clientes</p>
+                      <p className="text-2xl font-bold">{campaignStats.customersCount}</p>
+                      <p className="text-xs text-muted-foreground">{campaignStats.salesCount} venda(s)</p>
+                    </div>
+                    <Users className="h-8 w-8 text-accent/60" />
+                  </div>
+                  <div className="flex items-center justify-between p-3 bg-success/5 rounded-lg border border-success/20">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Valor total</p>
+                      <p className="text-2xl font-bold">{formatCurrency(campaignStats.totalValue)}</p>
+                      <p className="text-xs text-muted-foreground">
+                        Ticket médio: {formatCurrency(campaignStats.averageTicket)}
+                      </p>
+                    </div>
+                    <DollarSign className="h-8 w-8 text-success/60" />
+                  </div>
+                </div>
+
+                <div className="space-y-2 lg:col-span-2">
+                  <h4 className="text-sm font-medium text-muted-foreground mb-3">Produtos vendidos</h4>
+                  <div className="space-y-2 max-h-64 overflow-y-auto">
+                    {campaignStats.products.map((p, i) => (
+                      <div key={i} className="flex items-center justify-between text-sm py-1.5 border-b last:border-0">
+                        <div className="flex-1 min-w-0">
+                          <p className="truncate font-medium">{p.name}</p>
+                          <p className="text-xs text-muted-foreground">{p.qty} un.</p>
+                        </div>
+                        <span className="font-semibold ml-2 shrink-0">{formatCurrency(p.total)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+
         {/* Sales by Modality & Exchange Metrics */}
         {(!canShowSiteSales || isOnlineStoreSelected) && (
           <Card className="card-elevated border-l-4 border-l-primary">
