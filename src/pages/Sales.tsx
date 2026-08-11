@@ -11,11 +11,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
+
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Receipt, Search, Eye, Calendar as CalendarIcon, DollarSign, TrendingUp, ShoppingBag, Printer, User, Phone, Mail, MapPin, FileText, Building2, Ban, Pencil, Check, X, Globe } from 'lucide-react';
+import { Receipt, Search, Eye, Calendar as CalendarIcon, DollarSign, TrendingUp, ShoppingBag, Printer, User, Phone, Mail, MapPin, FileText, Building2, Ban, Pencil, Check, X, Globe, Megaphone } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { supabase } from '@/integrations/supabase/client';
@@ -64,6 +66,35 @@ const Sales = () => {
   const [storeFilter, setStoreFilter] = useState('all');
   const [isEditingPayment, setIsEditingPayment] = useState(false);
   const [isEditingItems, setIsEditingItems] = useState(false);
+  const [isSavingCampaign, setIsSavingCampaign] = useState(false);
+
+  const handleToggleCampaign = async (value: boolean) => {
+    if (!detailSale) return;
+    setIsSavingCampaign(true);
+    try {
+      const { error } = await supabase
+        .from('pos_sales')
+        .update({ is_campaign: value } as never)
+        .eq('id', detailSale.id);
+      if (error) throw error;
+
+      if (detailSale.customer_id) {
+        await supabase
+          .from('customers')
+          .update({ is_campaign: value } as never)
+          .eq('id', detailSale.customer_id);
+      }
+
+      setDetailSale({ ...detailSale, is_campaign: value });
+      queryClient.invalidateQueries({ queryKey: ['pos-sales'] });
+      toast.success(value ? 'Venda marcada como campanha' : 'Etiqueta de campanha removida');
+    } catch (e: any) {
+      toast.error('Erro ao atualizar etiqueta: ' + (e.message || ''));
+    } finally {
+      setIsSavingCampaign(false);
+    }
+  };
+
 
   const WEBSITE_STORE_ID = 'e0b8ebbc-1b3b-4aec-b5f7-6925762e6ea1';
   const saleItems = (items: any) => {
@@ -643,6 +674,12 @@ const Sales = () => {
                                 Presencial
                               </Badge>
                             ) : null}
+                            {(sale as any).is_campaign && (
+                              <Badge variant="outline" className="text-[10px] gap-1 border-fuchsia-500/40 text-fuchsia-700 bg-fuchsia-500/10">
+                                <Megaphone className="h-2.5 w-2.5" /> Campanha
+                              </Badge>
+                            )}
+
                           </div>
                         </TableCell>
                         <TableCell>
@@ -752,7 +789,24 @@ const Sales = () => {
           </DialogHeader>
           {detailSale && (
             <div className="flex-1 overflow-y-auto pr-2 space-y-4" style={{ maxHeight: 'calc(90vh - 100px)' }}>
+              {/* Campaign tag */}
+              <div className="flex items-center justify-between rounded-lg border border-fuchsia-500/30 bg-fuchsia-500/5 p-3">
+                <div className="flex items-center gap-2">
+                  <Megaphone className="h-4 w-4 text-fuchsia-600" />
+                  <div>
+                    <p className="text-sm font-medium">Cliente de campanha</p>
+                    <p className="text-xs text-muted-foreground">Marque se esta venda veio de uma campanha</p>
+                  </div>
+                </div>
+                <Switch
+                  checked={Boolean((detailSale as any).is_campaign)}
+                  disabled={!canCancel || isSavingCampaign}
+                  onCheckedChange={handleToggleCampaign}
+                />
+              </div>
+
               {/* Sale info */}
+
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
                 <div>
                   <p className="text-muted-foreground text-xs">ID da Venda</p>
