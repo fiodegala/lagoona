@@ -110,7 +110,7 @@ const PageLoader = () => (
 const isDynamicImportError = (error: unknown) => {
   const message = error instanceof Error ? error.message : String(error ?? "");
 
-  return /failed to fetch dynamically imported module|importing a module script failed|loading chunk \d+ failed|error loading dynamically imported module/i.test(
+  return /failed to fetch dynamically imported module|importing a module script failed|loading chunk \d+ failed|error loading dynamically imported module|cannot read properties of undefined \(reading ['"]default['"]\)/i.test(
     message,
   );
 };
