@@ -147,16 +147,19 @@ const POSPage = () => {
       if (selectedCustomer?.id) {
         const { data } = await supabase
           .from('customers')
-          .select('credit_balance')
+          .select('credit_balance, is_campaign')
           .eq('id', selectedCustomer.id)
           .single();
         setCustomerCreditBalance(data?.credit_balance || 0);
+        setIsCampaignCustomer(Boolean((data as { is_campaign?: boolean } | null)?.is_campaign));
       } else {
         setCustomerCreditBalance(0);
+        setIsCampaignCustomer(false);
       }
     };
     fetchCreditBalance();
   }, [selectedCustomer?.id]);
+
 
   useEffect(() => {
     const loadSession = async () => {
