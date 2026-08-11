@@ -4,7 +4,8 @@ import "./index.css";
 
 import { initMetaPixel, trackMetaPageView } from "@/lib/metaPixel";
 
-const CHUNK_RELOAD_STORAGE_KEY = "fdg:chunk-reload-attempted";
+const CHUNK_RELOAD_STORAGE_KEY = "fdg:chunk-reload-attempted-at";
+const CHUNK_RELOAD_COOLDOWN_MS = 60_000;
 
 const isDynamicImportError = (error: unknown) => {
   const message =
@@ -14,7 +15,7 @@ const isDynamicImportError = (error: unknown) => {
         ? error
         : String((error as { message?: unknown } | null)?.message ?? "");
 
-  return /failed to fetch dynamically imported module|importing a module script failed|loading chunk \d+ failed|error loading dynamically imported module/i.test(
+  return /failed to fetch dynamically imported module|importing a module script failed|loading chunk \d+ failed|error loading dynamically imported module|cannot read properties of undefined \(reading ['"]default['"]\)/i.test(
     message,
   );
 };
@@ -32,11 +33,12 @@ const clearClientCaches = async () => {
 };
 
 const recoverFromChunkError = async () => {
-  const alreadyTried = window.sessionStorage.getItem(CHUNK_RELOAD_STORAGE_KEY) === "true";
+  const lastAttempt = Number(window.sessionStorage.getItem(CHUNK_RELOAD_STORAGE_KEY) ?? 0);
+  const alreadyTriedRecently = Number.isFinite(lastAttempt) && Date.now() - lastAttempt < CHUNK_RELOAD_COOLDOWN_MS;
 
-  if (alreadyTried) return;
+  if (alreadyTriedRecently) return;
 
-  window.sessionStorage.setItem(CHUNK_RELOAD_STORAGE_KEY, "true");
+  window.sessionStorage.setItem(CHUNK_RELOAD_STORAGE_KEY, Date.now().toString());
 
   try {
     await clearClientCaches();
