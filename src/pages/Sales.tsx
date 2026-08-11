@@ -787,7 +787,24 @@ const Sales = () => {
           </DialogHeader>
           {detailSale && (
             <div className="flex-1 overflow-y-auto pr-2 space-y-4" style={{ maxHeight: 'calc(90vh - 100px)' }}>
+              {/* Campaign tag */}
+              <div className="flex items-center justify-between rounded-lg border border-fuchsia-500/30 bg-fuchsia-500/5 p-3">
+                <div className="flex items-center gap-2">
+                  <Megaphone className="h-4 w-4 text-fuchsia-600" />
+                  <div>
+                    <p className="text-sm font-medium">Cliente de campanha</p>
+                    <p className="text-xs text-muted-foreground">Marque se esta venda veio de uma campanha</p>
+                  </div>
+                </div>
+                <Switch
+                  checked={Boolean((detailSale as any).is_campaign)}
+                  disabled={!canCancel || isSavingCampaign}
+                  onCheckedChange={handleToggleCampaign}
+                />
+              </div>
+
               {/* Sale info */}
+
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
                 <div>
                   <p className="text-muted-foreground text-xs">ID da Venda</p>
