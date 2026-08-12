@@ -240,12 +240,31 @@ export default function TikTokIntegration() {
               </Badge>
               {authStatus?.seller_name && <Badge variant="secondary">Vendedor: {authStatus.seller_name}</Badge>}
               {authStatus?.shop_name && <Badge variant="secondary">Loja: {authStatus.shop_name}</Badge>}
+              {authStatus?.token_created_at && (
+                <Badge variant="secondary">
+                  Token criado em {new Date(authStatus.token_created_at).toLocaleString('pt-BR')}
+                </Badge>
+              )}
               {authStatus?.access_token_expires_at && (
                 <Badge variant="secondary">
                   Expira em {new Date(authStatus.access_token_expires_at).toLocaleString('pt-BR')}
                 </Badge>
               )}
             </div>
+
+            {authWarning && (
+              <div className="flex items-start gap-2 rounded-md border border-yellow-600/30 bg-yellow-50 p-3 text-sm text-yellow-800 dark:bg-yellow-950/30 dark:text-yellow-200">
+                <AlertTriangle className="h-5 w-5 shrink-0" />
+                <div>
+                  <p className="font-medium">Atenção na autorização</p>
+                  <p className="mt-1">{authWarning}</p>
+                  <p className="mt-1">
+                    Se o teste de conexão continuar falhando, clique em <strong>Limpar autorização</strong>, gere um novo link
+                    no Partner Center com os escopos marcados e autorize novamente.
+                  </p>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
