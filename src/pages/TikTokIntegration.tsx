@@ -185,12 +185,16 @@ export default function TikTokIntegration() {
                   run('authorize', async () => {
                     const r = await tiktokService.authorize(extractAuthCode(authCode));
                     setAuthCode('');
+                    setAuthWarning(r.shop_fetch_warning || null);
                     const st = await tiktokService.authStatus();
                     setAuthStatus(st);
                     return r;
-                  }, (r: { seller_name: string | null; shops: { name: string }[] }) =>
-                    `Autorizado${r.seller_name ? `: ${r.seller_name}` : ''}${r.shops?.length ? ` — loja ${r.shops.map((s) => s.name).join(', ')}` : ''}`,
-                  )
+                  }, (r: { seller_name: string | null; shop_cipher_configured: boolean; shop_fetch_warning: string | null; shops: { name: string }[] }) => {
+                    if (r.shop_fetch_warning) {
+                      return `Token salvo, mas a loja não foi lida automaticamente. Clique em Testar conexão ou Limpar autorização e refaça.`;
+                    }
+                    return `Autorizado${r.seller_name ? `: ${r.seller_name}` : ''}${r.shops?.length ? ` — loja ${r.shops.map((s) => s.name).join(', ')}` : ''}`;
+                  })
                 }
               >
                 {busy === 'authorize' ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <KeyRound className="h-4 w-4 mr-2" />}
@@ -210,6 +214,21 @@ export default function TikTokIntegration() {
                 {busy === 'refresh-token' ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <RefreshCw className="h-4 w-4 mr-2" />}
                 Renovar token
               </Button>
+              <Button
+                variant="outline"
+                disabled={busy !== null || !authStatus?.has_token}
+                onClick={() =>
+                  run('clear-auth', async () => {
+                    const r = await tiktokService.clearAuth();
+                    setAuthStatus(await tiktokService.authStatus());
+                    setAuthWarning(null);
+                    return r;
+                  }, () => 'Autorização removida. Gere um novo link e autorize novamente.')
+                }
+              >
+                {busy === 'clear-auth' ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Trash2 className="h-4 w-4 mr-2" />}
+                Limpar autorização
+              </Button>
             </div>
 
             <div className="flex flex-wrap gap-2 text-sm">
@@ -221,12 +240,31 @@ export default function TikTokIntegration() {
               </Badge>
               {authStatus?.seller_name && <Badge variant="secondary">Vendedor: {authStatus.seller_name}</Badge>}
               {authStatus?.shop_name && <Badge variant="secondary">Loja: {authStatus.shop_name}</Badge>}
+              {authStatus?.token_created_at && (
+                <Badge variant="secondary">
+                  Token criado em {new Date(authStatus.token_created_at).toLocaleString('pt-BR')}
+                </Badge>
+              )}
               {authStatus?.access_token_expires_at && (
                 <Badge variant="secondary">
                   Expira em {new Date(authStatus.access_token_expires_at).toLocaleString('pt-BR')}
                 </Badge>
               )}
             </div>
+
+            {authWarning && (
+              <div className="flex items-start gap-2 rounded-md border border-yellow-600/30 bg-yellow-50 p-3 text-sm text-yellow-800 dark:bg-yellow-950/30 dark:text-yellow-200">
+                <AlertTriangle className="h-5 w-5 shrink-0" />
+                <div>
+                  <p className="font-medium">Atenção na autorização</p>
+                  <p className="mt-1">{authWarning}</p>
+                  <p className="mt-1">
+                    Se o teste de conexão continuar falhando, clique em <strong>Limpar autorização</strong>, gere um novo link
+                    no Partner Center com os escopos marcados e autorize novamente.
+                  </p>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
