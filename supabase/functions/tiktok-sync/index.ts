@@ -269,8 +269,7 @@ async function authorize(supabase: any, authCode: string) {
   // Discover shop cipher / id for this seller
   let shops: any[] = [];
   try {
-    const shopData = await tiktokRequest("GET", "/authorization/202309/shops", { withCipher: false });
-    shops = shopData?.shops || [];
+    shops = await fetchAuthorizedShops();
   } catch (e) {
     console.error("Falha ao buscar lojas autorizadas:", e);
   }
