@@ -221,7 +221,14 @@ async function saveTokens(supabase: any, data: any) {
     await supabase.from("tiktok_auth").insert(row);
   }
   ACCESS_TOKEN = data.access_token;
-  return row;
+  return { ...row, created_at: existing?.created_at || new Date(now).toISOString() };
+}
+
+async function clearAuth(supabase: any) {
+  await supabase.from("tiktok_auth").delete().not("id", "is", null);
+  ACCESS_TOKEN = "";
+  SHOP_CIPHER = "";
+  return { cleared: true };
 }
 
 /** Builds the seller authorization URL (Partner Center service link). */
