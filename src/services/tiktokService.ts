@@ -72,10 +72,26 @@ async function callTikTok<T>(action: string, body?: Record<string, unknown>): Pr
   return data as T;
 }
 
+export interface TikTokAuthStatus {
+  has_app_credentials: boolean;
+  has_token: boolean;
+  seller_name: string | null;
+  access_token_expires_at: string | null;
+  refresh_token_expires_at: string | null;
+  shop_cipher_configured: boolean;
+  shop_name: string | null;
+  shop_id: string | null;
+}
+
 export const tiktokService = {
+  authStatus: () => callTikTok<TikTokAuthStatus>('auth-status'),
+  authorize: (authCode: string) =>
+    callTikTok<{ authorized: boolean; seller_name: string | null; shops: { id: string; name: string }[] }>('authorize', { auth_code: authCode }),
+  refreshToken: () => callTikTok<{ refreshed: boolean; access_token_expires_at: string | null }>('refresh-token'),
   testConnection: () => callTikTok<{ connected: boolean; shops: { id: string; name: string }[] }>('test-connection'),
   getConfig: () => callTikTok<TikTokConfig>('get-config'),
   saveConfig: (config: Partial<TikTokConfig>) => callTikTok<TikTokConfig>('save-config', config as Record<string, unknown>),
+
   pullProducts: () =>
     callTikTok<{ processed: number; matched: number; unmatched: number; unmatchedSample: { title: string; seller_sku: string | null }[] }>('pull-products'),
   pushStock: () => callTikTok<{ processed: number; failed: number; message?: string }>('push-stock'),
