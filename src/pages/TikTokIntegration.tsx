@@ -27,6 +27,14 @@ const statusVariant = (status: string) => {
   return 'destructive';
 };
 
+/** Accepts a raw auth code or the full redirect URL and returns just the code. */
+const extractAuthCode = (input: string) => {
+  const value = (input || '').trim();
+  if (!value) return '';
+  const match = value.match(/[?&]code=([^&\s]+)/);
+  return match ? decodeURIComponent(match[1]) : value;
+};
+
 export default function TikTokIntegration() {
   const { toast } = useToast();
   const [config, setConfig] = useState<TikTokConfig | null>(null);
