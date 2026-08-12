@@ -330,6 +330,7 @@ async function authStatus(supabase: any) {
     seller_name: authRow?.seller_name ?? null,
     access_token_expires_at: authRow?.access_token_expires_at ?? null,
     refresh_token_expires_at: authRow?.refresh_token_expires_at ?? null,
+    token_created_at: authRow?.created_at ?? null,
     shop_cipher_configured: !!(config?.shop_cipher || SHOP_CIPHER),
     shop_name: config?.shop_name ?? null,
     shop_id: config?.shop_id ?? null,
