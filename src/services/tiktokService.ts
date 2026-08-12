@@ -78,6 +78,7 @@ export interface TikTokAuthStatus {
   seller_name: string | null;
   access_token_expires_at: string | null;
   refresh_token_expires_at: string | null;
+  token_created_at: string | null;
   shop_cipher_configured: boolean;
   shop_name: string | null;
   shop_id: string | null;
