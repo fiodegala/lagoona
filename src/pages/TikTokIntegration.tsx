@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -16,8 +17,9 @@ import {
   type TikTokSyncLog,
   type TikTokProductMapping,
   type TikTokOrderMapping,
+  type TikTokAuthStatus,
 } from '@/services/tiktokService';
-import { Loader2, RefreshCw, Download, Upload, PlugZap, ShoppingBag } from 'lucide-react';
+import { Loader2, RefreshCw, Download, Upload, PlugZap, ShoppingBag, KeyRound } from 'lucide-react';
 
 const statusVariant = (status: string) => {
   if (status === 'success' || status === 'linked' || status === 'synced') return 'default';
@@ -34,16 +36,20 @@ export default function TikTokIntegration() {
   const [orderMappings, setOrderMappings] = useState<TikTokOrderMapping[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
+  const [authCode, setAuthCode] = useState('');
+  const [authStatus, setAuthStatus] = useState<TikTokAuthStatus | null>(null);
 
   const loadAll = async () => {
     try {
-      const [cfg, logsData, prodMaps, orderMaps] = await Promise.all([
+      const [cfg, status, logsData, prodMaps, orderMaps] = await Promise.all([
         tiktokService.getConfig(),
+        tiktokService.authStatus().catch(() => null),
         tiktokService.getLogs(),
         tiktokService.getProductMappings(),
         tiktokService.getOrderMappings(),
       ]);
       setConfig(cfg);
+      setAuthStatus(status);
       setLogs(logsData);
       setProductMappings(prodMaps);
       setOrderMappings(orderMaps);
