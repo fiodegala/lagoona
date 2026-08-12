@@ -271,13 +271,18 @@ async function authorize(supabase: any, authCode: string) {
     }
     throw e;
   }
+
+  // Remove any previous token so the new one is guaranteed to carry current scopes.
+  await clearAuth(supabase);
   const saved = await saveTokens(supabase, data);
 
   // Discover shop cipher / id for this seller
   let shops: any[] = [];
+  let shopError: string | null = null;
   try {
     shops = await fetchAuthorizedShops();
   } catch (e) {
+    shopError = String((e as Error).message || e);
     console.error("Falha ao buscar lojas autorizadas:", e);
   }
 
@@ -297,6 +302,8 @@ async function authorize(supabase: any, authCode: string) {
     authorized: true,
     seller_name: saved.seller_name,
     access_token_expires_at: saved.access_token_expires_at,
+    shop_cipher_configured: !!(SHOP_CIPHER || shops[0]?.cipher),
+    shop_fetch_warning: shopError,
     shops: shops.map((s) => ({ id: s.id, name: s.name, region: s.region })),
   };
 }
