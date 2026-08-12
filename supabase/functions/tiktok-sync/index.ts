@@ -224,15 +224,46 @@ async function saveTokens(supabase: any, data: any) {
   return row;
 }
 
+/** Builds the seller authorization URL (Partner Center service link). */
+function authUrl(serviceId: string, state = "fiodegala") {
+  const sid = (serviceId || Deno.env.get("TIKTOK_SERVICE_ID") || "").trim();
+  if (!sid) {
+    throw new Error(
+      "Informe o Service ID do app (TikTok Partner Center → Manage Apps → seu app → Service ID).",
+    );
+  }
+  return {
+    url: `https://services.tiktokshop.com/open/authorize?service_id=${encodeURIComponent(sid)}&state=${encodeURIComponent(state)}`,
+    service_id: sid,
+  };
+}
+
 /** Exchanges the authorization code shown in the TikTok Partner Center for tokens. */
 async function authorize(supabase: any, authCode: string) {
-  if (!authCode) throw new Error("Informe o código de autorização.");
-  const data = await authRequest("/api/v2/token/get", {
-    app_key: APP_KEY,
-    app_secret: APP_SECRET,
-    auth_code: authCode.trim(),
-    grant_type: "authorized_code",
-  });
+  const code = (authCode || "").trim();
+  if (!code) throw new Error("Informe o código de autorização.");
+  if (/^\d+$/.test(code)) {
+    throw new Error(
+      "Esse valor é o ID da autorização, não o auth code. Gere o link de autorização, autorize a loja e copie o parâmetro 'code' da URL de retorno.",
+    );
+  }
+  let data: any;
+  try {
+    data = await authRequest("/api/v2/token/get", {
+      app_key: APP_KEY,
+      app_secret: APP_SECRET,
+      auth_code: code,
+      grant_type: "authorized_code",
+    });
+  } catch (e) {
+    const msg = String((e as Error).message || e);
+    if (/invalid auth code/i.test(msg)) {
+      throw new Error(
+        "Auth code inválido ou expirado (ele vale poucos minutos e só pode ser usado uma vez). Gere o link de autorização novamente e cole o 'code' da URL de retorno.",
+      );
+    }
+    throw e;
+  }
   const saved = await saveTokens(supabase, data);
 
   // Discover shop cipher / id for this seller
