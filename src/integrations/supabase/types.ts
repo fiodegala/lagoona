@@ -3096,6 +3096,202 @@ export type Database = {
         }
         Relationships: []
       }
+      tiktok_integration: {
+        Row: {
+          auto_import_orders: boolean
+          auto_sync_price: boolean
+          auto_sync_stock: boolean
+          created_at: string
+          id: string
+          is_active: boolean
+          last_order_sync_at: string | null
+          last_sync_at: string | null
+          shop_cipher: string | null
+          shop_id: string | null
+          shop_name: string | null
+          store_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          auto_import_orders?: boolean
+          auto_sync_price?: boolean
+          auto_sync_stock?: boolean
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_order_sync_at?: string | null
+          last_sync_at?: string | null
+          shop_cipher?: string | null
+          shop_id?: string | null
+          shop_name?: string | null
+          store_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          auto_import_orders?: boolean
+          auto_sync_price?: boolean
+          auto_sync_stock?: boolean
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_order_sync_at?: string | null
+          last_sync_at?: string | null
+          shop_cipher?: string | null
+          shop_id?: string | null
+          shop_name?: string | null
+          store_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tiktok_integration_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tiktok_order_mappings: {
+        Row: {
+          created_at: string
+          id: string
+          local_status: string | null
+          order_id: string | null
+          raw_payload: Json | null
+          stock_deducted: boolean
+          tiktok_order_id: string
+          tiktok_status: string | null
+          total: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          local_status?: string | null
+          order_id?: string | null
+          raw_payload?: Json | null
+          stock_deducted?: boolean
+          tiktok_order_id: string
+          tiktok_status?: string | null
+          total?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          local_status?: string | null
+          order_id?: string | null
+          raw_payload?: Json | null
+          stock_deducted?: boolean
+          tiktok_order_id?: string
+          tiktok_status?: string | null
+          total?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tiktok_order_mappings_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tiktok_product_mappings: {
+        Row: {
+          created_at: string
+          id: string
+          last_synced_at: string | null
+          product_id: string | null
+          seller_sku: string | null
+          sync_error: string | null
+          sync_status: string
+          tiktok_product_id: string
+          tiktok_sku_id: string | null
+          updated_at: string
+          variation_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_synced_at?: string | null
+          product_id?: string | null
+          seller_sku?: string | null
+          sync_error?: string | null
+          sync_status?: string
+          tiktok_product_id: string
+          tiktok_sku_id?: string | null
+          updated_at?: string
+          variation_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_synced_at?: string | null
+          product_id?: string | null
+          seller_sku?: string | null
+          sync_error?: string | null
+          sync_status?: string
+          tiktok_product_id?: string
+          tiktok_sku_id?: string | null
+          updated_at?: string
+          variation_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tiktok_product_mappings_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tiktok_product_mappings_variation_id_fkey"
+            columns: ["variation_id"]
+            isOneToOne: false
+            referencedRelation: "product_variations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tiktok_sync_logs: {
+        Row: {
+          created_at: string
+          details: Json | null
+          direction: string
+          id: string
+          items_failed: number
+          items_processed: number
+          message: string | null
+          status: string
+          sync_type: string
+        }
+        Insert: {
+          created_at?: string
+          details?: Json | null
+          direction?: string
+          id?: string
+          items_failed?: number
+          items_processed?: number
+          message?: string | null
+          status?: string
+          sync_type: string
+        }
+        Update: {
+          created_at?: string
+          details?: Json | null
+          direction?: string
+          id?: string
+          items_failed?: number
+          items_processed?: number
+          message?: string | null
+          status?: string
+          sync_type?: string
+        }
+        Relationships: []
+      }
       used_nonces: {
         Row: {
           api_key_id: string
