@@ -163,18 +163,18 @@ export default function TikTokIntegration() {
 
             <div className="flex flex-wrap items-end gap-3">
               <div className="space-y-2 flex-1 min-w-[260px]">
-                <Label>Código de autorização (auth code)</Label>
+                <Label>Código de autorização (auth code) ou URL de retorno</Label>
                 <Input
                   value={authCode}
                   onChange={(e) => setAuthCode(e.target.value)}
-                  placeholder="Ex.: ROW_xxxxxxxxxxxxxxxx"
+                  placeholder="Cole o code ROW_... ou a URL completa de retorno"
                 />
               </div>
               <Button
-                disabled={busy !== null || !authCode.trim()}
+                disabled={busy !== null || !extractAuthCode(authCode)}
                 onClick={() =>
                   run('authorize', async () => {
-                    const r = await tiktokService.authorize(authCode.trim());
+                    const r = await tiktokService.authorize(extractAuthCode(authCode));
                     setAuthCode('');
                     const st = await tiktokService.authStatus();
                     setAuthStatus(st);
