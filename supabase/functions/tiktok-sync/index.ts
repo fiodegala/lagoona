@@ -10,12 +10,16 @@ const corsHeaders = {
 };
 
 const TIKTOK_BASE = "https://open-api.tiktokglobalshop.com";
+const TIKTOK_AUTH_BASE = "https://auth.tiktok-shops.com";
 
 const APP_KEY = Deno.env.get("TIKTOK_APP_KEY") ?? "";
 const APP_SECRET = Deno.env.get("TIKTOK_APP_SECRET") ?? "";
-const ACCESS_TOKEN = Deno.env.get("TIKTOK_ACCESS_TOKEN") ?? "";
-const SHOP_CIPHER = Deno.env.get("TIKTOK_SHOP_CIPHER") ?? "";
 const SHOP_ID = Deno.env.get("TIKTOK_SHOP_ID") ?? "";
+
+// Runtime credentials (DB first, env as fallback) — set by loadCredentials()
+let ACCESS_TOKEN = Deno.env.get("TIKTOK_ACCESS_TOKEN") ?? "";
+let SHOP_CIPHER = Deno.env.get("TIKTOK_SHOP_CIPHER") ?? "";
+
 
 function json(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
