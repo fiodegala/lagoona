@@ -37,6 +37,7 @@ export default function TikTokIntegration() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
   const [authCode, setAuthCode] = useState('');
+  const [serviceId, setServiceId] = useState('');
   const [authStatus, setAuthStatus] = useState<TikTokAuthStatus | null>(null);
 
   const loadAll = async () => {
