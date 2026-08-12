@@ -324,9 +324,38 @@ async function authStatus(supabase: any) {
 
 /* ------------------------- ACTIONS ------------------------- */
 
+/**
+ * Fetches the shops authorized for this seller. TikTok exposes the same data on
+ * different endpoints depending on the app's granted API scopes, so we try each
+ * one before reporting a scope problem.
+ */
+async function fetchAuthorizedShops(): Promise<any[]> {
+  const paths = [
+    "/authorization/202309/shops",
+    "/seller/202309/shops",
+    "/authorization/202312/shops",
+  ];
+  let lastError: unknown = null;
+  for (const path of paths) {
+    try {
+      const data = await tiktokRequest("GET", path, { withCipher: false });
+      const shops = data?.shops || data?.shop_list || [];
+      if (Array.isArray(shops)) return shops;
+    } catch (e) {
+      lastError = e;
+    }
+  }
+  const msg = String((lastError as Error)?.message || lastError || "");
+  if (/access denied|scope/i.test(msg)) {
+    throw new Error(
+      "O app não tem permissão (scope) para ler as lojas autorizadas. No TikTok Partner Center abra seu app → API Scopes e habilite pelo menos: Authorization/Shop, Product, Inventory (Global Products), Order e Fulfillment. Depois salve, aguarde a aprovação e refaça a autorização do vendedor.",
+    );
+  }
+  throw (lastError as Error) ?? new Error("Não foi possível listar as lojas autorizadas.");
+}
+
 async function testConnection(supabase: any) {
-  const data = await tiktokRequest("GET", "/authorization/202309/shops", { withCipher: false });
-  const shops = data?.shops || [];
+  const shops = await fetchAuthorizedShops();
   if (shops.length) {
     const shop = shops[0];
     SHOP_CIPHER = shop.cipher || SHOP_CIPHER;
