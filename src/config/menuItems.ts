@@ -37,6 +37,8 @@ import {
   Trophy,
   Wrench,
   Search,
+  ShoppingBag,
+
 } from 'lucide-react';
 
 export interface MenuItem {
