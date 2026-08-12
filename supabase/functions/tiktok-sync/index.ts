@@ -618,8 +618,8 @@ serve(async (req) => {
   const auth = await requireAdmin(req);
   if (!auth.ok) return json({ error: auth.error }, 401);
 
-  if (!APP_KEY || !APP_SECRET || !ACCESS_TOKEN) {
-    return json({ error: "Credenciais do TikTok Shop não configuradas." }, 400);
+  if (!APP_KEY || !APP_SECRET) {
+    return json({ error: "APP KEY / APP SECRET do TikTok Shop não configurados." }, 400);
   }
 
   const supabase = serviceClient();
@@ -627,9 +627,20 @@ serve(async (req) => {
   try {
     const body = req.method === "POST" ? await req.json().catch(() => ({})) : {};
 
+    await loadCredentials(supabase);
+
+    if (action === "authorize") return json(await authorize(supabase, String(body.auth_code || "")));
+    if (action === "refresh-token") return json(await refreshToken(supabase));
+    if (action === "auth-status") return json(await authStatus(supabase));
+
+    if (!ACCESS_TOKEN) {
+      return json({ error: "Token do vendedor ausente. Cole o código de autorização e clique em Autorizar." }, 400);
+    }
+
     switch (action) {
       case "test-connection":
-        return json(await testConnection());
+        return json(await testConnection(supabase));
+
 
       case "get-config":
         return json(await getConfig(supabase));
