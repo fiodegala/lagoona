@@ -185,12 +185,16 @@ export default function TikTokIntegration() {
                   run('authorize', async () => {
                     const r = await tiktokService.authorize(extractAuthCode(authCode));
                     setAuthCode('');
+                    setAuthWarning(r.shop_fetch_warning || null);
                     const st = await tiktokService.authStatus();
                     setAuthStatus(st);
                     return r;
-                  }, (r: { seller_name: string | null; shops: { name: string }[] }) =>
-                    `Autorizado${r.seller_name ? `: ${r.seller_name}` : ''}${r.shops?.length ? ` — loja ${r.shops.map((s) => s.name).join(', ')}` : ''}`,
-                  )
+                  }, (r: { seller_name: string | null; shop_cipher_configured: boolean; shop_fetch_warning: string | null; shops: { name: string }[] }) => {
+                    if (r.shop_fetch_warning) {
+                      return `Token salvo, mas a loja não foi lida automaticamente. Clique em Testar conexão ou Limpar autorização e refaça.`;
+                    }
+                    return `Autorizado${r.seller_name ? `: ${r.seller_name}` : ''}${r.shops?.length ? ` — loja ${r.shops.map((s) => s.name).join(', ')}` : ''}`;
+                  })
                 }
               >
                 {busy === 'authorize' ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <KeyRound className="h-4 w-4 mr-2" />}
@@ -209,6 +213,21 @@ export default function TikTokIntegration() {
               >
                 {busy === 'refresh-token' ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <RefreshCw className="h-4 w-4 mr-2" />}
                 Renovar token
+              </Button>
+              <Button
+                variant="outline"
+                disabled={busy !== null || !authStatus?.has_token}
+                onClick={() =>
+                  run('clear-auth', async () => {
+                    const r = await tiktokService.clearAuth();
+                    setAuthStatus(await tiktokService.authStatus());
+                    setAuthWarning(null);
+                    return r;
+                  }, () => 'Autorização removida. Gere um novo link e autorize novamente.')
+                }
+              >
+                {busy === 'clear-auth' ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Trash2 className="h-4 w-4 mr-2" />}
+                Limpar autorização
               </Button>
             </div>
 
