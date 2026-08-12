@@ -344,25 +344,28 @@ async function authStatus(supabase: any) {
  * one before reporting a scope problem.
  */
 async function fetchAuthorizedShops(): Promise<any[]> {
+  // TikTok exposes shop listing on several endpoints depending on version/scope.
   const paths = [
     "/authorization/202309/shops",
+    "/shop/202309/shops",
     "/seller/202309/shops",
     "/authorization/202312/shops",
+    "/shop/202312/shops",
   ];
   let lastError: unknown = null;
   for (const path of paths) {
     try {
       const data = await tiktokRequest("GET", path, { withCipher: false });
-      const shops = data?.shops || data?.shop_list || [];
-      if (Array.isArray(shops)) return shops;
+      const shops = data?.shops || data?.shop_list || data?.shop_info_list || [];
+      if (Array.isArray(shops) && shops.length) return shops;
     } catch (e) {
       lastError = e;
     }
   }
   const msg = String((lastError as Error)?.message || lastError || "");
-  if (/access denied|scope/i.test(msg)) {
+  if (/access denied|scope|not authorized to access|not contain the required access scope/i.test(msg)) {
     throw new Error(
-      "O app não tem permissão (scope) para ler as lojas autorizadas. No TikTok Partner Center abra seu app → API Scopes e habilite pelo menos: Authorization/Shop, Product, Inventory (Global Products), Order e Fulfillment. Depois salve, aguarde a aprovação e refaça a autorização do vendedor.",
+      "O access token atual não tem permissão para este endpoint. Isso acontece quando o token foi gerado ANTES de os escopos serem habilitados no TikTok Partner Center. Clique em 'Limpar autorização' e refaça a autorização com um novo auth code — o novo token já virá com todos os escopos atuais.",
     );
   }
   throw (lastError as Error) ?? new Error("Não foi possível listar as lojas autorizadas.");
