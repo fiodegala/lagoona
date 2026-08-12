@@ -49,6 +49,7 @@ const ProductPricing = lazy(() => import("./pages/ProductPricing"));
 const ServiceOrders = lazy(() => import("./pages/ServiceOrders"));
 const AdminAnnouncements = lazy(() => import("./pages/AdminAnnouncements"));
 const OlistIntegration = lazy(() => import("./pages/OlistIntegration"));
+const TikTokIntegration = lazy(() => import("./pages/TikTokIntegration"));
 const DatabaseExport = lazy(() => import("./pages/DatabaseExport"));
 const StockDistribution = lazy(() => import("./pages/StockDistribution"));
 const ABCCurve = lazy(() => import("./pages/ABCCurve"));
@@ -527,6 +528,14 @@ const App = () => (
               />
 
 
+              <Route
+                path="/admin/tiktok"
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <TikTokIntegration />
+                  </ProtectedRoute>
+                }
+              />
               <Route
                 path="/admin/olist"
                 element={
