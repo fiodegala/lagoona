@@ -663,6 +663,7 @@ serve(async (req) => {
     if (action === "authorize") return json(await authorize(supabase, String(body.auth_code || "")));
     if (action === "refresh-token") return json(await refreshToken(supabase));
     if (action === "auth-status") return json(await authStatus(supabase));
+    if (action === "auth-url") return json(authUrl(String(body.service_id || "")));
 
     if (!ACCESS_TOKEN) {
       return json({ error: "Token do vendedor ausente. Cole o código de autorização e clique em Autorizar." }, 400);
