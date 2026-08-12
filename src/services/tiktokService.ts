@@ -85,6 +85,7 @@ export interface TikTokAuthStatus {
 
 export const tiktokService = {
   authStatus: () => callTikTok<TikTokAuthStatus>('auth-status'),
+  authUrl: (serviceId: string) => callTikTok<{ url: string; service_id: string }>('auth-url', { service_id: serviceId }),
   authorize: (authCode: string) =>
     callTikTok<{ authorized: boolean; seller_name: string | null; shops: { id: string; name: string }[] }>('authorize', { auth_code: authCode }),
   refreshToken: () => callTikTok<{ refreshed: boolean; access_token_expires_at: string | null }>('refresh-token'),
