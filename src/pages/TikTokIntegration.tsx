@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -16,8 +17,9 @@ import {
   type TikTokSyncLog,
   type TikTokProductMapping,
   type TikTokOrderMapping,
+  type TikTokAuthStatus,
 } from '@/services/tiktokService';
-import { Loader2, RefreshCw, Download, Upload, PlugZap, ShoppingBag } from 'lucide-react';
+import { Loader2, RefreshCw, Download, Upload, PlugZap, ShoppingBag, KeyRound } from 'lucide-react';
 
 const statusVariant = (status: string) => {
   if (status === 'success' || status === 'linked' || status === 'synced') return 'default';
@@ -34,16 +36,20 @@ export default function TikTokIntegration() {
   const [orderMappings, setOrderMappings] = useState<TikTokOrderMapping[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
+  const [authCode, setAuthCode] = useState('');
+  const [authStatus, setAuthStatus] = useState<TikTokAuthStatus | null>(null);
 
   const loadAll = async () => {
     try {
-      const [cfg, logsData, prodMaps, orderMaps] = await Promise.all([
+      const [cfg, status, logsData, prodMaps, orderMaps] = await Promise.all([
         tiktokService.getConfig(),
+        tiktokService.authStatus().catch(() => null),
         tiktokService.getLogs(),
         tiktokService.getProductMappings(),
         tiktokService.getOrderMappings(),
       ]);
       setConfig(cfg);
+      setAuthStatus(status);
       setLogs(logsData);
       setProductMappings(prodMaps);
       setOrderMappings(orderMaps);
@@ -120,6 +126,76 @@ export default function TikTokIntegration() {
         </div>
 
         <Card>
+          <CardHeader>
+            <CardTitle>Autorização do vendedor</CardTitle>
+            <CardDescription>
+              No Partner Center do TikTok o vendedor recebe apenas um <strong>código/ID de autorização</strong>. Cole esse código
+              abaixo — o sistema troca por token de acesso e descobre automaticamente o shop cipher da loja.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex flex-wrap items-end gap-3">
+              <div className="space-y-2 flex-1 min-w-[260px]">
+                <Label>Código de autorização (auth code)</Label>
+                <Input
+                  value={authCode}
+                  onChange={(e) => setAuthCode(e.target.value)}
+                  placeholder="Ex.: ROW_xxxxxxxxxxxxxxxx"
+                />
+              </div>
+              <Button
+                disabled={busy !== null || !authCode.trim()}
+                onClick={() =>
+                  run('authorize', async () => {
+                    const r = await tiktokService.authorize(authCode.trim());
+                    setAuthCode('');
+                    const st = await tiktokService.authStatus();
+                    setAuthStatus(st);
+                    return r;
+                  }, (r: { seller_name: string | null; shops: { name: string }[] }) =>
+                    `Autorizado${r.seller_name ? `: ${r.seller_name}` : ''}${r.shops?.length ? ` — loja ${r.shops.map((s) => s.name).join(', ')}` : ''}`,
+                  )
+                }
+              >
+                {busy === 'authorize' ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <KeyRound className="h-4 w-4 mr-2" />}
+                Autorizar
+              </Button>
+              <Button
+                variant="outline"
+                disabled={busy !== null}
+                onClick={() =>
+                  run('refresh-token', async () => {
+                    const r = await tiktokService.refreshToken();
+                    setAuthStatus(await tiktokService.authStatus());
+                    return r;
+                  }, () => 'Token renovado')
+                }
+              >
+                {busy === 'refresh-token' ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <RefreshCw className="h-4 w-4 mr-2" />}
+                Renovar token
+              </Button>
+            </div>
+
+            <div className="flex flex-wrap gap-2 text-sm">
+              <Badge variant={authStatus?.has_token ? 'default' : 'destructive'}>
+                {authStatus?.has_token ? 'Token ativo' : 'Sem token'}
+              </Badge>
+              <Badge variant={authStatus?.shop_cipher_configured ? 'default' : 'secondary'}>
+                {authStatus?.shop_cipher_configured ? 'Shop cipher OK' : 'Shop cipher pendente'}
+              </Badge>
+              {authStatus?.seller_name && <Badge variant="secondary">Vendedor: {authStatus.seller_name}</Badge>}
+              {authStatus?.shop_name && <Badge variant="secondary">Loja: {authStatus.shop_name}</Badge>}
+              {authStatus?.access_token_expires_at && (
+                <Badge variant="secondary">
+                  Expira em {new Date(authStatus.access_token_expires_at).toLocaleString('pt-BR')}
+                </Badge>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+
           <CardHeader>
             <CardTitle>Configuração</CardTitle>
             <CardDescription>Defina de qual loja o estoque será enviado e o comportamento da sincronização.</CardDescription>

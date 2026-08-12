@@ -3096,6 +3096,42 @@ export type Database = {
         }
         Relationships: []
       }
+      tiktok_auth: {
+        Row: {
+          access_token: string | null
+          access_token_expires_at: string | null
+          created_at: string
+          id: string
+          open_id: string | null
+          refresh_token: string | null
+          refresh_token_expires_at: string | null
+          seller_name: string | null
+          updated_at: string
+        }
+        Insert: {
+          access_token?: string | null
+          access_token_expires_at?: string | null
+          created_at?: string
+          id?: string
+          open_id?: string | null
+          refresh_token?: string | null
+          refresh_token_expires_at?: string | null
+          seller_name?: string | null
+          updated_at?: string
+        }
+        Update: {
+          access_token?: string | null
+          access_token_expires_at?: string | null
+          created_at?: string
+          id?: string
+          open_id?: string | null
+          refresh_token?: string | null
+          refresh_token_expires_at?: string | null
+          seller_name?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       tiktok_integration: {
         Row: {
           auto_import_orders: boolean
