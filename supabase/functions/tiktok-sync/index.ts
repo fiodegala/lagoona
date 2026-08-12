@@ -739,6 +739,8 @@ serve(async (req) => {
   } catch (err) {
     console.error("tiktok-sync error:", err);
     await logSync(supabase, action || "unknown", "n/a", "error", 0, 0, String(err));
-    return json({ error: String(err instanceof Error ? err.message : err) }, 500);
+    const message = String(err instanceof Error ? err.message : err);
+    const isCredential = /auth code|access_token|Invalid credentials|Service ID|refresh token|shop_cipher/i.test(message);
+    return json({ error: message }, isCredential ? 400 : 500);
   }
 });
