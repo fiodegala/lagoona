@@ -710,6 +710,7 @@ serve(async (req) => {
     if (action === "refresh-token") return json(await refreshToken(supabase));
     if (action === "auth-status") return json(await authStatus(supabase));
     if (action === "auth-url") return json(authUrl(String(body.service_id || "")));
+    if (action === "clear-auth") return json(await clearAuth(supabase));
 
     if (!ACCESS_TOKEN) {
       return json({ error: "Token do vendedor ausente. Cole o código de autorização e clique em Autorizar." }, 400);
