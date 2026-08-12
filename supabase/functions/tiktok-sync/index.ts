@@ -148,13 +148,167 @@ async function getConfig(supabase: any) {
   return created;
 }
 
+/* ---------------------- AUTHORIZATION ---------------------- */
+
+async function getAuthRow(supabase: any) {
+  const { data } = await supabase
+    .from("tiktok_auth")
+    .select("*")
+    .order("updated_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  return data;
+}
+
+/** Loads access token / shop cipher from DB (falls back to env secrets). */
+async function loadCredentials(supabase: any) {
+  const authRow = await getAuthRow(supabase);
+  if (authRow?.access_token) ACCESS_TOKEN = authRow.access_token;
+
+  const config = await getConfig(supabase);
+  if (config?.shop_cipher) SHOP_CIPHER = config.shop_cipher;
+
+  // Auto-refresh when the token is about to expire
+  if (
+    authRow?.refresh_token &&
+    authRow.access_token_expires_at &&
+    new Date(authRow.access_token_expires_at).getTime() - Date.now() < 10 * 60 * 1000
+  ) {
+    try {
+      await refreshToken(supabase);
+    } catch (e) {
+      console.error("TikTok token refresh failed:", e);
+    }
+  }
+  return { authRow, config };
+}
+
+async function authRequest(path: string, params: Record<string, string>) {
+  const url = `${TIKTOK_AUTH_BASE}${path}?${new URLSearchParams(params).toString()}`;
+  const res = await fetch(url, { headers: { "Content-Type": "application/json" } });
+  const text = await res.text();
+  let payload: any = {};
+  try {
+    payload = text ? JSON.parse(text) : {};
+  } catch {
+    payload = { raw: text };
+  }
+  if (!res.ok || (payload.code !== undefined && payload.code !== 0)) {
+    throw new Error(payload.message || `TikTok Auth ${res.status}: ${text.slice(0, 300)}`);
+  }
+  return payload.data ?? payload;
+}
+
+async function saveTokens(supabase: any, data: any) {
+  const now = Date.now();
+  const row = {
+    access_token: data.access_token,
+    refresh_token: data.refresh_token ?? null,
+    access_token_expires_at: data.access_token_expire_in
+      ? new Date(Number(data.access_token_expire_in) * 1000).toISOString()
+      : null,
+    refresh_token_expires_at: data.refresh_token_expire_in
+      ? new Date(Number(data.refresh_token_expire_in) * 1000).toISOString()
+      : null,
+    seller_name: data.seller_name ?? null,
+    open_id: data.open_id ?? null,
+    updated_at: new Date(now).toISOString(),
+  };
+  const existing = await getAuthRow(supabase);
+  if (existing) {
+    await supabase.from("tiktok_auth").update(row).eq("id", existing.id);
+  } else {
+    await supabase.from("tiktok_auth").insert(row);
+  }
+  ACCESS_TOKEN = data.access_token;
+  return row;
+}
+
+/** Exchanges the authorization code shown in the TikTok Partner Center for tokens. */
+async function authorize(supabase: any, authCode: string) {
+  if (!authCode) throw new Error("Informe o código de autorização.");
+  const data = await authRequest("/api/v2/token/get", {
+    app_key: APP_KEY,
+    app_secret: APP_SECRET,
+    auth_code: authCode.trim(),
+    grant_type: "authorized_code",
+  });
+  const saved = await saveTokens(supabase, data);
+
+  // Discover shop cipher / id for this seller
+  let shops: any[] = [];
+  try {
+    const shopData = await tiktokRequest("GET", "/authorization/202309/shops", { withCipher: false });
+    shops = shopData?.shops || [];
+  } catch (e) {
+    console.error("Falha ao buscar lojas autorizadas:", e);
+  }
+
+  if (shops.length) {
+    const shop = shops[0];
+    SHOP_CIPHER = shop.cipher || SHOP_CIPHER;
+    const config = await getConfig(supabase);
+    await supabase
+      .from("tiktok_integration")
+      .update({ shop_cipher: shop.cipher ?? null, shop_id: shop.id ?? config.shop_id, shop_name: shop.name ?? config.shop_name })
+      .eq("id", config.id);
+  }
+
+  await logSync(supabase, "authorize", "inbound", "success", shops.length, 0, "Autorização concluída");
+
+  return {
+    authorized: true,
+    seller_name: saved.seller_name,
+    access_token_expires_at: saved.access_token_expires_at,
+    shops: shops.map((s) => ({ id: s.id, name: s.name, region: s.region })),
+  };
+}
+
+async function refreshToken(supabase: any) {
+  const existing = await getAuthRow(supabase);
+  if (!existing?.refresh_token) throw new Error("Sem refresh token. Refaça a autorização.");
+  const data = await authRequest("/api/v2/token/refresh", {
+    app_key: APP_KEY,
+    app_secret: APP_SECRET,
+    refresh_token: existing.refresh_token,
+    grant_type: "refresh_token",
+  });
+  const saved = await saveTokens(supabase, data);
+  return { refreshed: true, access_token_expires_at: saved.access_token_expires_at };
+}
+
+async function authStatus(supabase: any) {
+  const authRow = await getAuthRow(supabase);
+  const config = await getConfig(supabase);
+  return {
+    has_app_credentials: !!(APP_KEY && APP_SECRET),
+    has_token: !!(authRow?.access_token || ACCESS_TOKEN),
+    seller_name: authRow?.seller_name ?? null,
+    access_token_expires_at: authRow?.access_token_expires_at ?? null,
+    refresh_token_expires_at: authRow?.refresh_token_expires_at ?? null,
+    shop_cipher_configured: !!(config?.shop_cipher || SHOP_CIPHER),
+    shop_name: config?.shop_name ?? null,
+    shop_id: config?.shop_id ?? null,
+  };
+}
+
 /* ------------------------- ACTIONS ------------------------- */
 
-async function testConnection() {
+async function testConnection(supabase: any) {
   const data = await tiktokRequest("GET", "/authorization/202309/shops", { withCipher: false });
   const shops = data?.shops || [];
+  if (shops.length) {
+    const shop = shops[0];
+    SHOP_CIPHER = shop.cipher || SHOP_CIPHER;
+    const config = await getConfig(supabase);
+    await supabase
+      .from("tiktok_integration")
+      .update({ shop_cipher: shop.cipher ?? config.shop_cipher, shop_id: shop.id ?? config.shop_id, shop_name: shop.name ?? config.shop_name })
+      .eq("id", config.id);
+  }
   return { connected: true, shops };
 }
+
 
 async function getWarehouseId(): Promise<string | null> {
   try {
