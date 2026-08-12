@@ -129,11 +129,37 @@ export default function TikTokIntegration() {
           <CardHeader>
             <CardTitle>Autorização do vendedor</CardTitle>
             <CardDescription>
-              No Partner Center do TikTok o vendedor recebe apenas um <strong>código/ID de autorização</strong>. Cole esse código
-              abaixo — o sistema troca por token de acesso e descobre automaticamente o shop cipher da loja.
+              O número que aparece no Partner Center é o <strong>ID da autorização</strong> e não serve para gerar token. Gere o
+              link abaixo com o <strong>Service ID</strong> do seu app, autorize a loja e copie o parâmetro <code>code</code> da
+              URL de retorno — é esse valor que deve ser colado no campo "auth code".
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            <div className="flex flex-wrap items-end gap-3">
+              <div className="space-y-2 flex-1 min-w-[220px]">
+                <Label>Service ID do app</Label>
+                <Input
+                  value={serviceId}
+                  onChange={(e) => setServiceId(e.target.value)}
+                  placeholder="Ex.: 7496250824178567890"
+                />
+              </div>
+              <Button
+                variant="outline"
+                disabled={busy !== null}
+                onClick={() =>
+                  run('auth-url', async () => {
+                    const r = await tiktokService.authUrl(serviceId.trim());
+                    window.open(r.url, '_blank', 'noopener');
+                    return r;
+                  }, () => 'Link de autorização aberto em nova aba')
+                }
+              >
+                {busy === 'auth-url' ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <KeyRound className="h-4 w-4 mr-2" />}
+                Gerar link de autorização
+              </Button>
+            </div>
+
             <div className="flex flex-wrap items-end gap-3">
               <div className="space-y-2 flex-1 min-w-[260px]">
                 <Label>Código de autorização (auth code)</Label>
