@@ -221,7 +221,14 @@ async function saveTokens(supabase: any, data: any) {
     await supabase.from("tiktok_auth").insert(row);
   }
   ACCESS_TOKEN = data.access_token;
-  return row;
+  return { ...row, created_at: existing?.created_at || new Date(now).toISOString() };
+}
+
+async function clearAuth(supabase: any) {
+  await supabase.from("tiktok_auth").delete().not("id", "is", null);
+  ACCESS_TOKEN = "";
+  SHOP_CIPHER = "";
+  return { cleared: true };
 }
 
 /** Builds the seller authorization URL (Partner Center service link). */
@@ -264,13 +271,18 @@ async function authorize(supabase: any, authCode: string) {
     }
     throw e;
   }
+
+  // Remove any previous token so the new one is guaranteed to carry current scopes.
+  await clearAuth(supabase);
   const saved = await saveTokens(supabase, data);
 
   // Discover shop cipher / id for this seller
   let shops: any[] = [];
+  let shopError: string | null = null;
   try {
     shops = await fetchAuthorizedShops();
   } catch (e) {
+    shopError = String((e as Error).message || e);
     console.error("Falha ao buscar lojas autorizadas:", e);
   }
 
@@ -290,6 +302,8 @@ async function authorize(supabase: any, authCode: string) {
     authorized: true,
     seller_name: saved.seller_name,
     access_token_expires_at: saved.access_token_expires_at,
+    shop_cipher_configured: !!(SHOP_CIPHER || shops[0]?.cipher),
+    shop_fetch_warning: shopError,
     shops: shops.map((s) => ({ id: s.id, name: s.name, region: s.region })),
   };
 }
@@ -316,6 +330,7 @@ async function authStatus(supabase: any) {
     seller_name: authRow?.seller_name ?? null,
     access_token_expires_at: authRow?.access_token_expires_at ?? null,
     refresh_token_expires_at: authRow?.refresh_token_expires_at ?? null,
+    token_created_at: authRow?.created_at ?? null,
     shop_cipher_configured: !!(config?.shop_cipher || SHOP_CIPHER),
     shop_name: config?.shop_name ?? null,
     shop_id: config?.shop_id ?? null,
@@ -330,25 +345,28 @@ async function authStatus(supabase: any) {
  * one before reporting a scope problem.
  */
 async function fetchAuthorizedShops(): Promise<any[]> {
+  // TikTok exposes shop listing on several endpoints depending on version/scope.
   const paths = [
     "/authorization/202309/shops",
+    "/shop/202309/shops",
     "/seller/202309/shops",
     "/authorization/202312/shops",
+    "/shop/202312/shops",
   ];
   let lastError: unknown = null;
   for (const path of paths) {
     try {
       const data = await tiktokRequest("GET", path, { withCipher: false });
-      const shops = data?.shops || data?.shop_list || [];
-      if (Array.isArray(shops)) return shops;
+      const shops = data?.shops || data?.shop_list || data?.shop_info_list || [];
+      if (Array.isArray(shops) && shops.length) return shops;
     } catch (e) {
       lastError = e;
     }
   }
   const msg = String((lastError as Error)?.message || lastError || "");
-  if (/access denied|scope/i.test(msg)) {
+  if (/access denied|scope|not authorized to access|not contain the required access scope/i.test(msg)) {
     throw new Error(
-      "O app não tem permissão (scope) para ler as lojas autorizadas. No TikTok Partner Center abra seu app → API Scopes e habilite pelo menos: Authorization/Shop, Product, Inventory (Global Products), Order e Fulfillment. Depois salve, aguarde a aprovação e refaça a autorização do vendedor.",
+      "O access token atual não tem permissão para este endpoint. Isso acontece quando o token foi gerado ANTES de os escopos serem habilitados no TikTok Partner Center. Clique em 'Limpar autorização' e refaça a autorização com um novo auth code — o novo token já virá com todos os escopos atuais.",
     );
   }
   throw (lastError as Error) ?? new Error("Não foi possível listar as lojas autorizadas.");
@@ -692,6 +710,7 @@ serve(async (req) => {
     if (action === "refresh-token") return json(await refreshToken(supabase));
     if (action === "auth-status") return json(await authStatus(supabase));
     if (action === "auth-url") return json(authUrl(String(body.service_id || "")));
+    if (action === "clear-auth") return json(await clearAuth(supabase));
 
     if (!ACCESS_TOKEN) {
       return json({ error: "Token do vendedor ausente. Cole o código de autorização e clique em Autorizar." }, 400);

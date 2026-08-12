@@ -19,7 +19,7 @@ import {
   type TikTokOrderMapping,
   type TikTokAuthStatus,
 } from '@/services/tiktokService';
-import { Loader2, RefreshCw, Download, Upload, PlugZap, ShoppingBag, KeyRound } from 'lucide-react';
+import { Loader2, RefreshCw, Download, Upload, PlugZap, ShoppingBag, KeyRound, Trash2, AlertTriangle } from 'lucide-react';
 
 const statusVariant = (status: string) => {
   if (status === 'success' || status === 'linked' || status === 'synced') return 'default';
@@ -47,6 +47,7 @@ export default function TikTokIntegration() {
   const [authCode, setAuthCode] = useState('');
   const [serviceId, setServiceId] = useState('');
   const [authStatus, setAuthStatus] = useState<TikTokAuthStatus | null>(null);
+  const [authWarning, setAuthWarning] = useState<string | null>(null);
 
   const loadAll = async () => {
     try {

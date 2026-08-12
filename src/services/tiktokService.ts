@@ -78,6 +78,7 @@ export interface TikTokAuthStatus {
   seller_name: string | null;
   access_token_expires_at: string | null;
   refresh_token_expires_at: string | null;
+  token_created_at: string | null;
   shop_cipher_configured: boolean;
   shop_name: string | null;
   shop_id: string | null;
@@ -87,8 +88,9 @@ export const tiktokService = {
   authStatus: () => callTikTok<TikTokAuthStatus>('auth-status'),
   authUrl: (serviceId: string) => callTikTok<{ url: string; service_id: string }>('auth-url', { service_id: serviceId }),
   authorize: (authCode: string) =>
-    callTikTok<{ authorized: boolean; seller_name: string | null; shops: { id: string; name: string }[] }>('authorize', { auth_code: authCode }),
+    callTikTok<{ authorized: boolean; seller_name: string | null; shop_cipher_configured: boolean; shop_fetch_warning: string | null; shops: { id: string; name: string }[] }>('authorize', { auth_code: authCode }),
   refreshToken: () => callTikTok<{ refreshed: boolean; access_token_expires_at: string | null }>('refresh-token'),
+  clearAuth: () => callTikTok<{ cleared: boolean }>('clear-auth'),
   testConnection: () => callTikTok<{ connected: boolean; shops: { id: string; name: string }[] }>('test-connection'),
   getConfig: () => callTikTok<TikTokConfig>('get-config'),
   saveConfig: (config: Partial<TikTokConfig>) => callTikTok<TikTokConfig>('save-config', config as Record<string, unknown>),
