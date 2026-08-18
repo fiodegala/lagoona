@@ -63,33 +63,34 @@ const PdvSiteReport = lazy(() => import("./pages/PdvSiteReport"));
 const ProductCosts = lazy(() => import("./pages/ProductCosts"));
 const CustomerPurchasesByProduct = lazy(() => import("./pages/CustomerPurchasesByProduct"));
 
-// Lazy-loaded Store Pages
-const HomePage = lazy(() => import("./pages/store/HomePage"));
-const StorePage = lazy(() => import("./pages/store/StorePage"));
-const CategoryPage = lazy(() => import("./pages/store/CategoryPage"));
-const CategoriesPage = lazy(() => import("./pages/store/CategoriesPage"));
-const CartPage = lazy(() => import("./pages/store/CartPage"));
-const CheckoutPage = lazy(() => import("./pages/store/CheckoutPage"));
-const AboutPage = lazy(() => import("./pages/store/AboutPage"));
-const ContactPage = lazy(() => import("./pages/store/ContactPage"));
-const FaqPage = lazy(() => import("./pages/store/FaqPage"));
-const PrivacyPolicyPage = lazy(() => import("./pages/store/PrivacyPolicyPage"));
-const TermsPage = lazy(() => import("./pages/store/TermsPage"));
-const ExchangesReturnsPage = lazy(() => import("./pages/store/ExchangesReturnsPage"));
-const FavoritesPage = lazy(() => import("./pages/store/FavoritesPage"));
-const OrderTrackingPage = lazy(() => import("./pages/store/OrderTrackingPage"));
-const StoreLoginPage = lazy(() => import("./pages/store/StoreLoginPage"));
-const MyAccountPage = lazy(() => import("./pages/store/MyAccountPage"));
-const WholesalePage = lazy(() => import("./pages/store/WholesalePage"));
-const WorkWithUsPage = lazy(() => import("./pages/store/WorkWithUsPage"));
-const CombosPage = lazy(() => import("./pages/store/CombosPage"));
-const QuoteViewPage = lazy(() => import("./pages/store/QuoteViewPage"));
-const CatalogPage = lazy(() => import("./pages/store/CatalogPage"));
-const ResellerCatalogPage = lazy(() => import("./pages/store/ResellerCatalogPage"));
-const AffiliateSignupPage = lazy(() => import("./pages/store/AffiliateSignupPage"));
-const AffiliateDashboardPage = lazy(() => import("./pages/store/AffiliateDashboardPage"));
-const AffiliateRedirectPage = lazy(() => import("./pages/store/AffiliateRedirectPage"));
-const ApiImportDocsPage = lazy(() => import("./pages/store/ApiImportDocsPage"));
+// Store pages temporarily redirected to the new address
+// const HomePage = lazy(() => import("./pages/store/HomePage"));
+// const StorePage = lazy(() => import("./pages/store/StorePage"));
+// const CategoryPage = lazy(() => import("./pages/store/CategoryPage"));
+// const CategoriesPage = lazy(() => import("./pages/store/CategoriesPage"));
+// const CartPage = lazy(() => import("./pages/store/CartPage"));
+// const CheckoutPage = lazy(() => import("./pages/store/CheckoutPage"));
+// const AboutPage = lazy(() => import("./pages/store/AboutPage"));
+// const ContactPage = lazy(() => import("./pages/store/ContactPage"));
+// const FaqPage = lazy(() => import("./pages/store/FaqPage"));
+// const PrivacyPolicyPage = lazy(() => import("./pages/store/PrivacyPolicyPage"));
+// const TermsPage = lazy(() => import("./pages/store/TermsPage"));
+// const ExchangesReturnsPage = lazy(() => import("./pages/store/ExchangesReturnsPage"));
+// const FavoritesPage = lazy(() => import("./pages/store/FavoritesPage"));
+// const OrderTrackingPage = lazy(() => import("./pages/store/OrderTrackingPage"));
+// const StoreLoginPage = lazy(() => import("./pages/store/StoreLoginPage"));
+// const MyAccountPage = lazy(() => import("./pages/store/MyAccountPage"));
+// const WholesalePage = lazy(() => import("./pages/store/WholesalePage"));
+// const WorkWithUsPage = lazy(() => import("./pages/store/WorkWithUsPage"));
+// const CombosPage = lazy(() => import("./pages/store/CombosPage"));
+// const QuoteViewPage = lazy(() => import("./pages/store/QuoteViewPage"));
+// const CatalogPage = lazy(() => import("./pages/store/CatalogPage"));
+// const ResellerCatalogPage = lazy(() => import("./pages/store/ResellerCatalogPage"));
+// const AffiliateSignupPage = lazy(() => import("./pages/store/AffiliateSignupPage"));
+// const AffiliateDashboardPage = lazy(() => import("./pages/store/AffiliateDashboardPage"));
+// const AffiliateRedirectPage = lazy(() => import("./pages/store/AffiliateRedirectPage"));
+// const ApiImportDocsPage = lazy(() => import("./pages/store/ApiImportDocsPage"));
+const StoreMovedPage = lazy(() => import("./pages/store/StoreMovedPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
