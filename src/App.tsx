@@ -170,35 +170,35 @@ const App = () => (
             <ChunkErrorBoundary>
               <Suspense fallback={<PageLoader />}>
             <Routes>
-              {/* Public Store Routes */}
-              <Route path="/" element={<HomePage />} />
-              <Route path="/loja" element={<StorePage />} />
-              <Route path="/loja/categoria/:slug" element={<CategoryPage />} />
-              <Route path="/categorias" element={<CategoriesPage />} />
-              <Route path="/carrinho" element={<CartPage />} />
-              <Route path="/checkout" element={<CheckoutPage />} />
-              <Route path="/produto/:id" element={<ProductDetails />} />
-              <Route path="/sobre" element={<AboutPage />} />
-              <Route path="/contato" element={<ContactPage />} />
-              <Route path="/faq" element={<FaqPage />} />
-              <Route path="/privacidade" element={<PrivacyPolicyPage />} />
-              <Route path="/termos" element={<TermsPage />} />
-              <Route path="/trocas-devolucoes" element={<ExchangesReturnsPage />} />
-              <Route path="/favoritos" element={<FavoritesPage />} />
-              <Route path="/rastrear-pedido" element={<OrderTrackingPage />} />
-              <Route path="/conta/login" element={<StoreLoginPage />} />
-              <Route path="/minha-conta" element={<MyAccountPage />} />
-              <Route path="/atacado" element={<WholesalePage />} />
-              <Route path="/combos" element={<CombosPage />} />
-              <Route path="/trabalhe-conosco" element={<WorkWithUsPage />} />
-              <Route path="/orcamento/:id" element={<QuoteViewPage />} />
-              <Route path="/catalogo" element={<CatalogPage />} />
-              <Route path="/catalogo-varejo" element={<CatalogPage retailOnly />} />
-              <Route path="/catalogo-revendedor" element={<ResellerCatalogPage />} />
-              <Route path="/afiliados" element={<AffiliateSignupPage />} />
-              <Route path="/afiliados/painel" element={<AffiliateDashboardPage />} />
-              <Route path="/r/:code" element={<AffiliateRedirectPage />} />
-              <Route path="/docs/api-import" element={<ApiImportDocsPage />} />
+              {/* Public Store Routes — temporarily redirected to the new address */}
+              <Route path="/" element={<StoreMovedPage />} />
+              <Route path="/loja" element={<StoreMovedPage />} />
+              <Route path="/loja/categoria/:slug" element={<StoreMovedPage />} />
+              <Route path="/categorias" element={<StoreMovedPage />} />
+              <Route path="/carrinho" element={<StoreMovedPage />} />
+              <Route path="/checkout" element={<StoreMovedPage />} />
+              <Route path="/produto/:id" element={<StoreMovedPage />} />
+              <Route path="/sobre" element={<StoreMovedPage />} />
+              <Route path="/contato" element={<StoreMovedPage />} />
+              <Route path="/faq" element={<StoreMovedPage />} />
+              <Route path="/privacidade" element={<StoreMovedPage />} />
+              <Route path="/termos" element={<StoreMovedPage />} />
+              <Route path="/trocas-devolucoes" element={<StoreMovedPage />} />
+              <Route path="/favoritos" element={<StoreMovedPage />} />
+              <Route path="/rastrear-pedido" element={<StoreMovedPage />} />
+              <Route path="/conta/login" element={<StoreMovedPage />} />
+              <Route path="/minha-conta" element={<StoreMovedPage />} />
+              <Route path="/atacado" element={<StoreMovedPage />} />
+              <Route path="/combos" element={<StoreMovedPage />} />
+              <Route path="/trabalhe-conosco" element={<StoreMovedPage />} />
+              <Route path="/orcamento/:id" element={<StoreMovedPage />} />
+              <Route path="/catalogo" element={<StoreMovedPage />} />
+              <Route path="/catalogo-varejo" element={<StoreMovedPage />} />
+              <Route path="/catalogo-revendedor" element={<StoreMovedPage />} />
+              <Route path="/afiliados" element={<StoreMovedPage />} />
+              <Route path="/afiliados/painel" element={<StoreMovedPage />} />
+              <Route path="/r/:code" element={<StoreMovedPage />} />
+              <Route path="/docs/api-import" element={<StoreMovedPage />} />
 
               {/* Admin Routes */}
               <Route path="/login" element={<Login />} />
