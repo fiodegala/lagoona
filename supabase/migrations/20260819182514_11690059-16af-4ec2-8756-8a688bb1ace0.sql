@@ -1,0 +1,2 @@
+ALTER TABLE public.stock_transfers DROP CONSTRAINT stock_transfers_product_id_fkey;
+ALTER TABLE public.stock_transfers ADD CONSTRAINT stock_transfers_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id) ON DELETE CASCADE;
