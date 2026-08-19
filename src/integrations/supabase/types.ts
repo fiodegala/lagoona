@@ -3679,6 +3679,13 @@ export type Database = {
           variation_id: string
         }[]
       }
+      get_staff_names: {
+        Args: { _user_ids: string[] }
+        Returns: {
+          full_name: string
+          user_id: string
+        }[]
+      }
       has_any_admin_role: { Args: { _user_id: string }; Returns: boolean }
       has_role: {
         Args: {
