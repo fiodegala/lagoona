@@ -155,9 +155,14 @@ const PendingTransferModal: React.FC = () => {
     }
 
     const requesterIds = [...new Set(data.map(t => t.requested_by))];
-    const { data: profiles } = await supabase.from('profiles').select('user_id, full_name').in('user_id', requesterIds);
     const profileMap: Record<string, string> = {};
-    (profiles || []).forEach(p => { profileMap[p.user_id] = p.full_name; });
+    const { data: staffNames } = await supabase.rpc('get_staff_names', { _user_ids: requesterIds });
+    (staffNames || []).forEach((p: any) => { if (p.full_name) profileMap[p.user_id] = p.full_name; });
+    if (Object.keys(profileMap).length < requesterIds.length) {
+      const { data: profiles } = await supabase.from('profiles').select('user_id, full_name').in('user_id', requesterIds);
+      (profiles || []).forEach(p => { if (p.full_name) profileMap[p.user_id] = p.full_name; });
+    }
+
 
     const enriched = data.map(t => ({
       ...t,
