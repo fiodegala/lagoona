@@ -42,7 +42,8 @@ function createBeep(ctx: AudioContext, freq: number, startTime: number, duration
 /** Pedidos, vendas PDV, carrinhos — 2 beeps rápidos agudos */
 export function playNotificationSound() {
   try {
-    const ctx = new AudioContext();
+    const ctx = getCtx();
+    if (!ctx) return;
     const now = ctx.currentTime;
     createBeep(ctx, 880, now, 0.15, 0.8);
     createBeep(ctx, 1100, now + 0.2, 0.15, 0.85);
@@ -52,7 +53,8 @@ export function playNotificationSound() {
 /** Transferências de estoque — alarme urgente com 4 beeps crescentes */
 export function playTransferAlertSound() {
   try {
-    const ctx = new AudioContext();
+    const ctx = getCtx();
+    if (!ctx) return;
     const now = ctx.currentTime;
     const freqs = [660, 880, 1100, 1320];
     freqs.forEach((f, i) => {
@@ -68,7 +70,8 @@ export function playTransferAlertSound() {
 /** Ordens de serviço — 3 tons médios distintos */
 export function playServiceOrderSound() {
   try {
-    const ctx = new AudioContext();
+    const ctx = getCtx();
+    if (!ctx) return;
     const now = ctx.currentTime;
     createBeep(ctx, 523, now, 0.2, 0.8, 'triangle');
     createBeep(ctx, 659, now + 0.25, 0.2, 0.85, 'triangle');
@@ -79,7 +82,8 @@ export function playServiceOrderSound() {
 /** Comunicados — fanfarra/chime com acordes */
 export function playAnnouncementSound() {
   try {
-    const ctx = new AudioContext();
+    const ctx = getCtx();
+    if (!ctx) return;
     const now = ctx.currentTime;
     // Chord 1
     createBeep(ctx, 523, now, 0.3, 0.7);
@@ -95,7 +99,8 @@ export function playAnnouncementSound() {
 /** Chat interno — som tipo WhatsApp: 2 tons suaves rápidos */
 export function playChatMessageSound() {
   try {
-    const ctx = new AudioContext();
+    const ctx = getCtx();
+    if (!ctx) return;
     const now = ctx.currentTime;
     createBeep(ctx, 600, now, 0.1, 0.6, 'sine');
     createBeep(ctx, 900, now + 0.12, 0.15, 0.7, 'sine');
