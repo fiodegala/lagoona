@@ -1,5 +1,30 @@
 // Centralized alert sounds with high volume for system notifications
 
+// Browsers block AudioContext until the user interacts with the page.
+// Track the first gesture and reuse a single context to avoid console warnings.
+let hasUserGesture = false;
+let sharedCtx: AudioContext | null = null;
+
+if (typeof window !== 'undefined') {
+  const markGesture = () => {
+    hasUserGesture = true;
+  };
+  ['pointerdown', 'keydown', 'touchstart'].forEach((evt) =>
+    window.addEventListener(evt, markGesture, { once: true, passive: true }),
+  );
+}
+
+function getCtx(): AudioContext | null {
+  if (!hasUserGesture || typeof window === 'undefined') return null;
+  try {
+    if (!sharedCtx || sharedCtx.state === 'closed') sharedCtx = new AudioContext();
+    if (sharedCtx.state === 'suspended') void sharedCtx.resume();
+    return sharedCtx;
+  } catch {
+    return null;
+  }
+}
+
 function createBeep(ctx: AudioContext, freq: number, startTime: number, duration: number, gainValue: number, type: OscillatorType = 'sine') {
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
@@ -12,6 +37,7 @@ function createBeep(ctx: AudioContext, freq: number, startTime: number, duration
   osc.start(startTime);
   osc.stop(startTime + duration);
 }
+
 
 /** Pedidos, vendas PDV, carrinhos — 2 beeps rápidos agudos */
 export function playNotificationSound() {
