@@ -2,7 +2,7 @@ import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
 
-import { initMetaPixel, trackMetaPageView } from "@/lib/metaPixel";
+import { initMetaPixel } from "@/lib/metaPixel";
 
 const CHUNK_RELOAD_STORAGE_KEY = "fdg:chunk-reload-attempted-at";
 const CHUNK_RELOAD_COOLDOWN_MS = 60_000;
@@ -68,9 +68,9 @@ window.addEventListener("error", (event) => {
   void recoverFromChunkError();
 });
 
-// Initialize Meta Pixel as early as possible
+// Initialize Meta Pixel as early as possible (PageView is fired by the inline snippet in index.html)
 initMetaPixel();
-trackMetaPageView();
+
 
 const isInIframe = (() => {
   try {
