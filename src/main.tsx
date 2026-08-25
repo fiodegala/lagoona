@@ -68,9 +68,9 @@ window.addEventListener("error", (event) => {
   void recoverFromChunkError();
 });
 
-// Initialize Meta Pixel as early as possible
+// Initialize Meta Pixel as early as possible (PageView is fired by the inline snippet in index.html)
 initMetaPixel();
-trackMetaPageView();
+
 
 const isInIframe = (() => {
   try {
