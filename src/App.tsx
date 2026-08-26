@@ -84,7 +84,7 @@ const CustomerPurchasesByProduct = lazy(() => import("./pages/CustomerPurchasesB
 // const WorkWithUsPage = lazy(() => import("./pages/store/WorkWithUsPage"));
 // const CombosPage = lazy(() => import("./pages/store/CombosPage"));
 // const QuoteViewPage = lazy(() => import("./pages/store/QuoteViewPage"));
-// const CatalogPage = lazy(() => import("./pages/store/CatalogPage"));
+const CatalogPage = lazy(() => import("./pages/store/CatalogPage"));
 // const ResellerCatalogPage = lazy(() => import("./pages/store/ResellerCatalogPage"));
 // const AffiliateSignupPage = lazy(() => import("./pages/store/AffiliateSignupPage"));
 // const AffiliateDashboardPage = lazy(() => import("./pages/store/AffiliateDashboardPage"));
@@ -192,7 +192,7 @@ const App = () => (
               <Route path="/combos" element={<StoreMovedPage />} />
               <Route path="/trabalhe-conosco" element={<StoreMovedPage />} />
               <Route path="/orcamento/:id" element={<StoreMovedPage />} />
-              <Route path="/catalogo" element={<StoreMovedPage />} />
+              <Route path="/catalogo" element={<CatalogPage />} />
               <Route path="/catalogo-varejo" element={<StoreMovedPage />} />
               <Route path="/catalogo-revendedor" element={<StoreMovedPage />} />
               <Route path="/afiliados" element={<StoreMovedPage />} />
