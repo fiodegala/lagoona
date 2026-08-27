@@ -132,18 +132,86 @@ Deno.serve(async (req) => {
   }
 });
 
+async function createCardToken(cardDetails: any, accessToken: string) {
+  const number = String(cardDetails.card_number || '').replace(/\D/g, '');
+  let month = String(cardDetails.expiration_month || '').replace(/\D/g, '');
+  let year = String(cardDetails.expiration_year || '').replace(/\D/g, '');
+  if (year.length === 2) year = `20${year}`;
+  const cvv = String(cardDetails.security_code || '').replace(/\D/g, '');
+  const name = String(cardDetails.cardholder_name || '').trim();
+
+  if (number.length < 13 || number.length > 19) throw new Error('Número do cartão inválido');
+  if (!month || Number(month) < 1 || Number(month) > 12) throw new Error('Mês de validade inválido');
+  if (year.length !== 4) throw new Error('Ano de validade inválido');
+  if (cvv.length < 3 || cvv.length > 4) throw new Error('CVV inválido');
+  if (!name) throw new Error('Nome do titular obrigatório');
+
+  const payload: any = {
+    card_number: number,
+    expiration_month: Number(month),
+    expiration_year: Number(year),
+    security_code: cvv,
+    cardholder: {
+      name,
+      identification: cardDetails.identification || undefined,
+    },
+  };
+
+  const res = await fetch(`${MP_API}/v1/card_tokens`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${accessToken}`,
+      'X-Idempotency-Key': crypto.randomUUID(),
+    },
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json();
+  if (!res.ok || !data?.id) {
+    console.error('MP card_tokens error:', JSON.stringify(data));
+    throw new Error(data?.message || 'Não foi possível validar os dados do cartão');
+  }
+  return data;
+}
+
+async function detectPaymentMethodId(bin: string, accessToken: string): Promise<string | null> {
+  try {
+    const res = await fetch(`${MP_API}/v1/payment_methods/search?bin=${bin}`, {
+      headers: { 'Authorization': `Bearer ${accessToken}` },
+    });
+    const data = await res.json();
+    return data?.results?.[0]?.id || null;
+  } catch (_e) {
+    return null;
+  }
+}
+
 async function createPayment(body: any, accessToken: string) {
   const {
-    payment_method_id,
     transaction_amount,
     description,
     installments,
-    token,
     issuer_id,
     payer,
     order_id,
     additional_info,
+    card_details,
   } = body;
+
+  let { payment_method_id, token } = body;
+
+  // Server-side tokenization when raw card data is sent (no front-end mock/SDK)
+  if (!token && card_details) {
+    const cardToken = await createCardToken(
+      { ...card_details, identification: card_details.identification || payer?.identification },
+      accessToken,
+    );
+    token = cardToken.id;
+    if (!payment_method_id) {
+      const bin = cardToken.first_six_digits || String(card_details.card_number || '').replace(/\D/g, '').slice(0, 6);
+      payment_method_id = await detectPaymentMethodId(bin, accessToken);
+    }
+  }
 
   // Input validation
   if (!payment_method_id || !transaction_amount || !payer?.email) {
@@ -160,6 +228,7 @@ async function createPayment(body: any, accessToken: string) {
       { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
+
 
   // Server-side enforcement of Valentine's promo rules:
   // - credit card installments capped at 2x
