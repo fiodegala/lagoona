@@ -29,9 +29,11 @@ type ProductVariationsMap = Record<string, VariationInfo[]>;
 interface CatalogPageProps {
   /** Quando true, exibe apenas o preço de varejo (sem atacado). */
   retailOnly?: boolean;
+  /** Quando true, não exibe nenhum preço (catálogo apenas visual). */
+  noPrice?: boolean;
 }
 
-const CatalogPage = ({ retailOnly = false }: CatalogPageProps) => {
+const CatalogPage = ({ retailOnly = false, noPrice = false }: CatalogPageProps) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -266,7 +268,7 @@ const CatalogPage = ({ retailOnly = false }: CatalogPageProps) => {
   }, [hasMore, filtered.length]);
 
   const catalogUrl = typeof window !== 'undefined'
-    ? window.location.origin + (retailOnly ? '/catalogo-varejo' : '/catalogo')
+    ? window.location.origin + (noPrice ? '/catalogo-sem-preco' : retailOnly ? '/catalogo-varejo' : '/catalogo')
     : '';
 
   const shareCatalog = () => {
@@ -287,7 +289,7 @@ const CatalogPage = ({ retailOnly = false }: CatalogPageProps) => {
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(120, 120, 120);
-      doc.text(retailOnly ? 'Preços de Varejo' : 'Varejo e Atacado', 105, 27, { align: 'center' });
+      doc.text(noPrice ? 'Coleção' : retailOnly ? 'Preços de Varejo' : 'Varejo e Atacado', 105, 27, { align: 'center' });
       doc.setTextColor(0, 0, 0);
 
       const categoryMap = new Map<string, Product[]>();
@@ -323,6 +325,7 @@ const CatalogPage = ({ retailOnly = false }: CatalogPageProps) => {
           const colors = (variationsMap[p.id] || []).map((v) => v.label).join(', ');
           const retail =
             p.wholesale_price != null && p.wholesale_price > 0 ? p.wholesale_price * 2 : p.price;
+          if (noPrice) return [p.name, colors || '—'];
           const row = [p.name, colors || '—', formatPrice(retail)];
           if (!retailOnly) {
             row.push(p.wholesale_price && p.wholesale_price > 0 ? formatPrice(p.wholesale_price) : '—');
@@ -332,11 +335,16 @@ const CatalogPage = ({ retailOnly = false }: CatalogPageProps) => {
 
         autoTable(doc, {
           startY,
-          head: [retailOnly ? ['Produto', 'Cores', 'Varejo'] : ['Produto', 'Cores', 'Varejo', 'Atacado']],
+          head: [noPrice ? ['Produto', 'Cores'] : retailOnly ? ['Produto', 'Cores', 'Varejo'] : ['Produto', 'Cores', 'Varejo', 'Atacado']],
           body: tableData,
           styles: { fontSize: 8, cellPadding: 2 },
           headStyles: { fillColor: [30, 30, 30], textColor: 255, fontStyle: 'bold', fontSize: 8 },
-          columnStyles: retailOnly
+          columnStyles: noPrice
+            ? {
+                0: { cellWidth: 90 },
+                1: { cellWidth: 90 },
+              }
+            : retailOnly
             ? {
                 0: { cellWidth: 80 },
                 1: { cellWidth: 72 },
@@ -360,13 +368,13 @@ const CatalogPage = ({ retailOnly = false }: CatalogPageProps) => {
         startY = (doc as any).lastAutoTable?.finalY + 8 || startY + 20;
       });
 
-      doc.save(retailOnly ? 'catalogo-varejo-fio-de-gala.pdf' : 'catalogo-fio-de-gala.pdf');
+      doc.save(noPrice ? 'catalogo-sem-preco-fio-de-gala.pdf' : retailOnly ? 'catalogo-varejo-fio-de-gala.pdf' : 'catalogo-fio-de-gala.pdf');
     } catch (e) {
       console.error('Erro ao gerar PDF:', e);
     } finally {
       setGeneratingPdf(false);
     }
-  }, [filtered, categories, variationsMap, retailOnly]);
+  }, [filtered, categories, variationsMap, retailOnly, noPrice]);
 
   const askAboutProduct = (product: Product) => {
     const productUrl = `${window.location.origin}/produto/${product.id}`;
@@ -442,23 +450,25 @@ const CatalogPage = ({ retailOnly = false }: CatalogPageProps) => {
   return (
     <>
       <SEO
-        title={retailOnly ? 'Catálogo Varejo — Fio de Gala' : 'Catálogo — Fio de Gala'}
-        description={retailOnly ? 'Catálogo Fio de Gala com preços de varejo.' : 'Catálogo completo da coleção Fio de Gala para visualizar e compartilhar.'}
-        canonicalPath={retailOnly ? '/catalogo-varejo' : '/catalogo'}
+        title={noPrice ? 'Catálogo sem Preço — Fio de Gala' : retailOnly ? 'Catálogo Varejo — Fio de Gala' : 'Catálogo — Fio de Gala'}
+        description={noPrice ? 'Catálogo Fio de Gala apenas com produtos e cores, sem preços.' : retailOnly ? 'Catálogo Fio de Gala com preços de varejo.' : 'Catálogo completo da coleção Fio de Gala para visualizar e compartilhar.'}
+        canonicalPath={noPrice ? '/catalogo-sem-preco' : retailOnly ? '/catalogo-varejo' : '/catalogo'}
       />
       <div className="min-h-screen bg-background">
         {/* Hero */}
         <div className="bg-primary/5 py-8 md:py-12">
           <div className="container mx-auto px-4 text-center">
             <h1 className="text-2xl md:text-4xl font-bold text-foreground mb-2">
-              {retailOnly ? 'Catálogo de Produtos — Varejo' : 'Catálogo de Produtos'}
+              {noPrice ? 'Catálogo de Produtos' : retailOnly ? 'Catálogo de Produtos — Varejo' : 'Catálogo de Produtos'}
             </h1>
             <p className="text-muted-foreground text-sm md:text-base mb-2">
-              {retailOnly
+              {noPrice
+                ? 'Confira todos os nossos produtos'
+                : retailOnly
                 ? 'Confira todos os nossos produtos com preço de varejo'
                 : 'Confira todos os nossos produtos — varejo e atacado'}
             </p>
-            {!retailOnly && (
+            {!retailOnly && !noPrice && (
               <p className="text-primary font-semibold text-sm md:text-base mb-4">
                 ATACADO a partir de 6 peças do mesmo produto ( podendo variar cores e tamanhos )
               </p>
@@ -641,6 +651,7 @@ const CatalogPage = ({ retailOnly = false }: CatalogPageProps) => {
                           {product.name}
                         </h3>
 
+                        {!noPrice && (
                         <div className="mt-auto space-y-0.5">
                           <p className="text-base font-bold text-primary">
                             {formatPrice(
@@ -655,6 +666,7 @@ const CatalogPage = ({ retailOnly = false }: CatalogPageProps) => {
                             </p>
                           )}
                         </div>
+                        )}
                       </div>
                     </div>
                   );
