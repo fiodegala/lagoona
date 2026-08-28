@@ -193,6 +193,7 @@ const App = () => (
               <Route path="/trabalhe-conosco" element={<StoreMovedPage />} />
               <Route path="/orcamento/:id" element={<StoreMovedPage />} />
               <Route path="/catalogo" element={<CatalogPage />} />
+              <Route path="/catalogo-sem-preco" element={<CatalogPage noPrice />} />
               <Route path="/catalogo-varejo" element={<StoreMovedPage />} />
               <Route path="/catalogo-revendedor" element={<StoreMovedPage />} />
               <Route path="/afiliados" element={<StoreMovedPage />} />
