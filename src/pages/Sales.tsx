@@ -17,7 +17,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Receipt, Search, Eye, Calendar as CalendarIcon, DollarSign, TrendingUp, ShoppingBag, Printer, User, Phone, Mail, MapPin, FileText, Building2, Ban, Pencil, Check, X, Globe, Megaphone } from 'lucide-react';
+import { Receipt, Search, Eye, Calendar as CalendarIcon, DollarSign, TrendingUp, ShoppingBag, Printer, User, Phone, Mail, MapPin, FileText, Building2, Ban, Pencil, Check, X, Globe, Megaphone, Tag, Store } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { supabase } from '@/integrations/supabase/client';
@@ -664,6 +664,29 @@ const Sales = () => {
               className="w-[110px]"
             />
           </div>
+          <Select value={saleTypeFilter} onValueChange={v => setSaleTypeFilter(v as any)}>
+            <SelectTrigger className="w-[160px]">
+              <Tag className="h-4 w-4 mr-2" />
+              <SelectValue placeholder="Modalidade" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas modalidades</SelectItem>
+              <SelectItem value="varejo">Varejo</SelectItem>
+              <SelectItem value="atacado">Atacado</SelectItem>
+              <SelectItem value="exclusivo">Exclusivo</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={channelFilter} onValueChange={v => setChannelFilter(v as any)}>
+            <SelectTrigger className="w-[160px]">
+              <Store className="h-4 w-4 mr-2" />
+              <SelectValue placeholder="Canal" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos canais</SelectItem>
+              <SelectItem value="presencial">Presencial</SelectItem>
+              <SelectItem value="online">Online</SelectItem>
+            </SelectContent>
+          </Select>
           <Select value={sortOrder} onValueChange={v => setSortOrder(v as 'newest' | 'az' | 'za' | 'highest' | 'lowest')}>
             <SelectTrigger className="w-[180px]">
               <TrendingUp className="h-4 w-4 mr-2" />
