@@ -66,7 +66,7 @@ const Sales = () => {
   const [storeFilter, setStoreFilter] = useState('all');
   const [minValue, setMinValue] = useState('');
   const [maxValue, setMaxValue] = useState('');
-  const [sortOrder, setSortOrder] = useState<'newest' | 'az' | 'za'>('newest');
+  const [sortOrder, setSortOrder] = useState<'newest' | 'az' | 'za' | 'highest' | 'lowest'>('newest');
   const [isEditingPayment, setIsEditingPayment] = useState(false);
   const [isEditingItems, setIsEditingItems] = useState(false);
   const [isSavingCampaign, setIsSavingCampaign] = useState(false);
@@ -513,6 +513,12 @@ const Sales = () => {
       case 'za':
         result.sort((a, b) => (b.customer_name || '').localeCompare(a.customer_name || '', 'pt-BR'));
         break;
+      case 'highest':
+        result.sort((a, b) => Number(b.total) - Number(a.total));
+        break;
+      case 'lowest':
+        result.sort((a, b) => Number(a.total) - Number(b.total));
+        break;
       case 'newest':
       default:
         result.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
@@ -650,7 +656,7 @@ const Sales = () => {
               className="w-[110px]"
             />
           </div>
-          <Select value={sortOrder} onValueChange={v => setSortOrder(v as 'newest' | 'az' | 'za')}>
+          <Select value={sortOrder} onValueChange={v => setSortOrder(v as 'newest' | 'az' | 'za' | 'highest' | 'lowest')}>
             <SelectTrigger className="w-[180px]">
               <TrendingUp className="h-4 w-4 mr-2" />
               <SelectValue placeholder="Ordenar" />
@@ -659,6 +665,8 @@ const Sales = () => {
               <SelectItem value="newest">Mais recentes</SelectItem>
               <SelectItem value="az">Cliente A-Z</SelectItem>
               <SelectItem value="za">Cliente Z-A</SelectItem>
+              <SelectItem value="highest">Maior valor</SelectItem>
+              <SelectItem value="lowest">Menor valor</SelectItem>
             </SelectContent>
           </Select>
         </div>
