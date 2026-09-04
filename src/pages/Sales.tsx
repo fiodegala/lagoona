@@ -635,7 +635,34 @@ const Sales = () => {
               </Select>
             </>
           )}
+          <div className="flex items-center gap-2">
+            <Input
+              placeholder="Valor mín."
+              value={minValue}
+              onChange={e => setMinValue(e.target.value)}
+              className="w-[110px]"
+            />
+            <span className="text-muted-foreground">até</span>
+            <Input
+              placeholder="Valor máx."
+              value={maxValue}
+              onChange={e => setMaxValue(e.target.value)}
+              className="w-[110px]"
+            />
+          </div>
+          <Select value={sortOrder} onValueChange={v => setSortOrder(v as 'newest' | 'az' | 'za')}>
+            <SelectTrigger className="w-[180px]">
+              <TrendingUp className="h-4 w-4 mr-2" />
+              <SelectValue placeholder="Ordenar" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="newest">Mais recentes</SelectItem>
+              <SelectItem value="az">Cliente A-Z</SelectItem>
+              <SelectItem value="za">Cliente Z-A</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
+
 
         {/* Table */}
         {isLoading ? (
