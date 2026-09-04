@@ -67,6 +67,8 @@ const Sales = () => {
   const [minValue, setMinValue] = useState('');
   const [maxValue, setMaxValue] = useState('');
   const [sortOrder, setSortOrder] = useState<'newest' | 'az' | 'za' | 'highest' | 'lowest'>('newest');
+  const [saleTypeFilter, setSaleTypeFilter] = useState<'all' | 'varejo' | 'atacado' | 'exclusivo'>('all');
+  const [channelFilter, setChannelFilter] = useState<'all' | 'presencial' | 'online'>('all');
   const [isEditingPayment, setIsEditingPayment] = useState(false);
   const [isEditingItems, setIsEditingItems] = useState(false);
   const [isSavingCampaign, setIsSavingCampaign] = useState(false);
@@ -478,7 +480,13 @@ const Sales = () => {
         s.id.toLowerCase().includes(search.toLowerCase());
 
       const matchesSeller = sellerFilter === 'all' || s.user_id === sellerFilter || (s as any).seller_id === sellerFilter;
-      if (!matchesSearch || !matchesSeller) return acc;
+      const matchesSaleType = saleTypeFilter === 'all' || (s as any).sale_type === saleTypeFilter;
+      const matchesChannel =
+        channelFilter === 'all' ||
+        (channelFilter === 'online' && s.store_id === WEBSITE_STORE_ID) ||
+        (channelFilter === 'presencial' && s.store_id !== WEBSITE_STORE_ID);
+
+      if (!matchesSearch || !matchesSeller || !matchesSaleType || !matchesChannel) return acc;
 
       const saleTotal = Number(s.total);
       if (saleTotal < min || saleTotal > max) return acc;
@@ -526,7 +534,7 @@ const Sales = () => {
     }
 
     return result;
-  }, [sales, search, sellerFilter, storeFilter, minValue, maxValue, sortOrder]);
+  }, [sales, search, sellerFilter, storeFilter, minValue, maxValue, sortOrder, saleTypeFilter, channelFilter]);
 
 
   const activeSales = filteredSales.filter(s => (s as any).status !== 'cancelled');
