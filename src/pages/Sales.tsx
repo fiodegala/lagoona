@@ -17,7 +17,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Receipt, Search, Eye, Calendar as CalendarIcon, DollarSign, TrendingUp, ShoppingBag, Printer, User, Phone, Mail, MapPin, FileText, Building2, Ban, Pencil, Check, X, Globe, Megaphone } from 'lucide-react';
+import { Receipt, Search, Eye, Calendar as CalendarIcon, DollarSign, TrendingUp, ShoppingBag, Printer, User, Phone, Mail, MapPin, FileText, Building2, Ban, Pencil, Check, X, Globe, Megaphone, Tag, Store } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { supabase } from '@/integrations/supabase/client';
@@ -67,6 +67,8 @@ const Sales = () => {
   const [minValue, setMinValue] = useState('');
   const [maxValue, setMaxValue] = useState('');
   const [sortOrder, setSortOrder] = useState<'newest' | 'az' | 'za' | 'highest' | 'lowest'>('newest');
+  const [saleTypeFilter, setSaleTypeFilter] = useState<'all' | 'varejo' | 'atacado' | 'exclusivo'>('all');
+  const [channelFilter, setChannelFilter] = useState<'all' | 'presencial' | 'online'>('all');
   const [isEditingPayment, setIsEditingPayment] = useState(false);
   const [isEditingItems, setIsEditingItems] = useState(false);
   const [isSavingCampaign, setIsSavingCampaign] = useState(false);
@@ -478,7 +480,13 @@ const Sales = () => {
         s.id.toLowerCase().includes(search.toLowerCase());
 
       const matchesSeller = sellerFilter === 'all' || s.user_id === sellerFilter || (s as any).seller_id === sellerFilter;
-      if (!matchesSearch || !matchesSeller) return acc;
+      const matchesSaleType = saleTypeFilter === 'all' || (s as any).sale_type === saleTypeFilter;
+      const matchesChannel =
+        channelFilter === 'all' ||
+        (channelFilter === 'online' && s.store_id === WEBSITE_STORE_ID) ||
+        (channelFilter === 'presencial' && s.store_id !== WEBSITE_STORE_ID);
+
+      if (!matchesSearch || !matchesSeller || !matchesSaleType || !matchesChannel) return acc;
 
       const saleTotal = Number(s.total);
       if (saleTotal < min || saleTotal > max) return acc;
@@ -526,7 +534,7 @@ const Sales = () => {
     }
 
     return result;
-  }, [sales, search, sellerFilter, storeFilter, minValue, maxValue, sortOrder]);
+  }, [sales, search, sellerFilter, storeFilter, minValue, maxValue, sortOrder, saleTypeFilter, channelFilter]);
 
 
   const activeSales = filteredSales.filter(s => (s as any).status !== 'cancelled');
@@ -656,6 +664,29 @@ const Sales = () => {
               className="w-[110px]"
             />
           </div>
+          <Select value={saleTypeFilter} onValueChange={v => setSaleTypeFilter(v as any)}>
+            <SelectTrigger className="w-[160px]">
+              <Tag className="h-4 w-4 mr-2" />
+              <SelectValue placeholder="Modalidade" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas modalidades</SelectItem>
+              <SelectItem value="varejo">Varejo</SelectItem>
+              <SelectItem value="atacado">Atacado</SelectItem>
+              <SelectItem value="exclusivo">Exclusivo</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={channelFilter} onValueChange={v => setChannelFilter(v as any)}>
+            <SelectTrigger className="w-[160px]">
+              <Store className="h-4 w-4 mr-2" />
+              <SelectValue placeholder="Canal" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos canais</SelectItem>
+              <SelectItem value="presencial">Presencial</SelectItem>
+              <SelectItem value="online">Online</SelectItem>
+            </SelectContent>
+          </Select>
           <Select value={sortOrder} onValueChange={v => setSortOrder(v as 'newest' | 'az' | 'za' | 'highest' | 'lowest')}>
             <SelectTrigger className="w-[180px]">
               <TrendingUp className="h-4 w-4 mr-2" />
