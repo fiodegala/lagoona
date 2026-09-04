@@ -66,7 +66,7 @@ const Sales = () => {
   const [storeFilter, setStoreFilter] = useState('all');
   const [minValue, setMinValue] = useState('');
   const [maxValue, setMaxValue] = useState('');
-  const [sortOrder, setSortOrder] = useState<'newest' | 'az' | 'za' | 'highest' | 'lowest'>('newest');
+  const [sortOrder, setSortOrder] = useState<'newest' | 'oldest' | 'az' | 'za' | 'highest' | 'lowest'>('newest');
   const [saleTypeFilter, setSaleTypeFilter] = useState<'all' | 'varejo' | 'atacado' | 'exclusivo'>('all');
   const [channelFilter, setChannelFilter] = useState<'all' | 'presencial' | 'online'>('all');
   const [isEditingPayment, setIsEditingPayment] = useState(false);
@@ -527,6 +527,9 @@ const Sales = () => {
       case 'lowest':
         result.sort((a, b) => Number(a.total) - Number(b.total));
         break;
+      case 'oldest':
+        result.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+        break;
       case 'newest':
       default:
         result.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
@@ -687,13 +690,14 @@ const Sales = () => {
               <SelectItem value="online">Online</SelectItem>
             </SelectContent>
           </Select>
-          <Select value={sortOrder} onValueChange={v => setSortOrder(v as 'newest' | 'az' | 'za' | 'highest' | 'lowest')}>
+          <Select value={sortOrder} onValueChange={v => setSortOrder(v as 'newest' | 'oldest' | 'az' | 'za' | 'highest' | 'lowest')}>
             <SelectTrigger className="w-[180px]">
               <TrendingUp className="h-4 w-4 mr-2" />
               <SelectValue placeholder="Ordenar" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="newest">Mais recentes</SelectItem>
+              <SelectItem value="oldest">Mais antigas</SelectItem>
               <SelectItem value="az">Cliente A-Z</SelectItem>
               <SelectItem value="za">Cliente Z-A</SelectItem>
               <SelectItem value="highest">Maior valor</SelectItem>
