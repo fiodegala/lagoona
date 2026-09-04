@@ -64,9 +64,13 @@ const Sales = () => {
   const [logoBase64, setLogoBase64] = useState<string>('');
   const [sellerFilter, setSellerFilter] = useState('all');
   const [storeFilter, setStoreFilter] = useState('all');
+  const [minValue, setMinValue] = useState('');
+  const [maxValue, setMaxValue] = useState('');
+  const [sortOrder, setSortOrder] = useState<'newest' | 'az' | 'za'>('newest');
   const [isEditingPayment, setIsEditingPayment] = useState(false);
   const [isEditingItems, setIsEditingItems] = useState(false);
   const [isSavingCampaign, setIsSavingCampaign] = useState(false);
+
 
   const handleToggleCampaign = async (value: boolean) => {
     if (!detailSale) return;
