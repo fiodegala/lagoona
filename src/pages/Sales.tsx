@@ -467,36 +467,61 @@ const Sales = () => {
     },
   });
 
-  const filteredSales = sales.reduce<any[]>((acc, s) => {
-    const matchesSearch =
-      s.customer_name?.toLowerCase().includes(search.toLowerCase()) ||
-      s.customer_document?.toLowerCase().includes(search.toLowerCase()) ||
-      s.id.toLowerCase().includes(search.toLowerCase());
+  const filteredSales = useMemo(() => {
+    const min = parseFloat(minValue.replace(/\./g, '').replace(',', '.')) || 0;
+    const max = parseFloat(maxValue.replace(/\./g, '').replace(',', '.')) || Infinity;
 
-    const matchesSeller = sellerFilter === 'all' || s.user_id === sellerFilter || (s as any).seller_id === sellerFilter;
-    if (!matchesSearch || !matchesSeller) return acc;
+    const result = sales.reduce<any[]>((acc, s) => {
+      const matchesSearch =
+        s.customer_name?.toLowerCase().includes(search.toLowerCase()) ||
+        s.customer_document?.toLowerCase().includes(search.toLowerCase()) ||
+        s.id.toLowerCase().includes(search.toLowerCase());
 
-    // Lagoona store: filter by item flag, recompute total
-    if (storeFilter === LAGOONA_STORE_ID) {
-      const items = saleItems(s.items);
-      const lagoonaItems = items.filter(isLagoonaItem);
-      if (lagoonaItems.length === 0) return acc;
-      const lagoonaTotal = lagoonaItems.reduce((sum: number, it: any) => sum + getItemTotal(it), 0);
-      acc.push({ ...s, items: lagoonaItems, subtotal: lagoonaTotal, discount_amount: 0, total: lagoonaTotal });
-      return acc;
-    }
+      const matchesSeller = sellerFilter === 'all' || s.user_id === sellerFilter || (s as any).seller_id === sellerFilter;
+      if (!matchesSearch || !matchesSeller) return acc;
 
-    // Other physical stores: include the entire sale (Lagoona items also count for the store where it was sold)
-    if (storeFilter !== 'all' && storeFilter !== WEBSITE_STORE_ID && storeFilter !== LAGOONA_STORE_ID) {
-      if (s.store_id !== storeFilter) return acc;
+      const saleTotal = Number(s.total);
+      if (saleTotal < min || saleTotal > max) return acc;
+
+      // Lagoona store: filter by item flag, recompute total
+      if (storeFilter === LAGOONA_STORE_ID) {
+        const items = saleItems(s.items);
+        const lagoonaItems = items.filter(isLagoonaItem);
+        if (lagoonaItems.length === 0) return acc;
+        const lagoonaTotal = lagoonaItems.reduce((sum: number, it: any) => sum + getItemTotal(it), 0);
+        if (lagoonaTotal < min || lagoonaTotal > max) return acc;
+        acc.push({ ...s, items: lagoonaItems, subtotal: lagoonaTotal, discount_amount: 0, total: lagoonaTotal });
+        return acc;
+      }
+
+      // Other physical stores: include the entire sale (Lagoona items also count for the store where it was sold)
+      if (storeFilter !== 'all' && storeFilter !== WEBSITE_STORE_ID && storeFilter !== LAGOONA_STORE_ID) {
+        if (s.store_id !== storeFilter) return acc;
+        acc.push(s);
+        return acc;
+      }
+
+      if (storeFilter !== 'all' && s.store_id !== storeFilter) return acc;
       acc.push(s);
       return acc;
+    }, []);
+
+    switch (sortOrder) {
+      case 'az':
+        result.sort((a, b) => (a.customer_name || '').localeCompare(b.customer_name || '', 'pt-BR'));
+        break;
+      case 'za':
+        result.sort((a, b) => (b.customer_name || '').localeCompare(a.customer_name || '', 'pt-BR'));
+        break;
+      case 'newest':
+      default:
+        result.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        break;
     }
 
-    if (storeFilter !== 'all' && s.store_id !== storeFilter) return acc;
-    acc.push(s);
-    return acc;
-  }, []);
+    return result;
+  }, [sales, search, sellerFilter, storeFilter, minValue, maxValue, sortOrder]);
+
 
   const activeSales = filteredSales.filter(s => (s as any).status !== 'cancelled');
   const nonGiftSales = activeSales.filter(s => (s as any).sale_type !== 'brinde');
