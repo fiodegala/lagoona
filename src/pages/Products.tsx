@@ -55,9 +55,8 @@ import { toast } from 'sonner';
 import { productsService, Product, categoriesService, Category } from '@/services/products';
 import {
   exportProductsToMercadoLivreCSV,
-  exportProductsToMercadoLivreXML,
+  exportProductsToMercadoLivreXLSX,
   downloadMercadoLivreCSV,
-  downloadMercadoLivreXML,
 } from '@/services/mercadoLivreExportService';
 
 import ProductFormModal from '@/components/ProductFormModal';
