@@ -424,6 +424,20 @@ const sections: ManualSection[] = [
     ],
   },
   {
+    icon: ShoppingCart,
+    title: 'Mercado Livre — Publicação em Massa',
+    badge: 'Admin',
+    category: 'Administração',
+    description: 'Guia completo para exportar os produtos do sistema e publicá-los em massa no Mercado Livre.',
+    features: ['Exportação de todos os produtos em CSV', 'Uma linha por variação (SKU, cor, tamanho)', 'Título, preço, estoque, peso, medidas e fotos prontos', 'Compatível com a planilha oficial do Mercado Livre'],
+    tutorials: [
+      { title: 'Passo 1 — Baixar a planilha oficial do Mercado Livre', steps: ['No Mercado Livre, entre em **Anúncios → Publicar em massa**', 'Escolha a **categoria** (ex.: Camisetas, Bermudas) e baixe o **modelo oficial** em Excel', 'Vende em categorias diferentes? Baixe um modelo por categoria — cada arquivo aceita apenas uma categoria'] },
+      { title: 'Passo 2 — Gerar o CSV no sistema', steps: ['Vá em **Produtos** no menu lateral', 'Clique em **Exportar → Mercado Livre (todos os produtos)**', 'O arquivo é baixado com uma linha por variação, já com título, descrição, preço, estoque, cor, tamanho, código de barras, peso, medidas e URLs das fotos'] },
+      { title: 'Passo 3 — Transferir os dados para a planilha oficial', steps: ['Abra os dois arquivos no Excel: o modelo oficial do Mercado Livre e o CSV gerado pelo sistema', 'Copie as colunas do nosso arquivo e cole nas colunas equivalentes do modelo oficial', 'Confira especialmente: **SKU, Título, Preço, Estoque, Fotos (URLs)** e atributos de variação (cor/tamanho)', 'Preencha a **categoria do Mercado Livre** e revise a **marca** (exportamos "Fio de Gala" por padrão)', 'Salve o arquivo final no formato exigido pelo Mercado Livre (.xlsx ou .csv)'] },
+      { title: 'Passo 4 — Subir e publicar em massa', steps: ['No Mercado Livre, volte em **Publicar em massa** e faça upload da planilha preenchida', 'Aguarde o processamento — o Mercado Livre valida cada linha', 'Corrija as linhas com erro (o relatório do ML indica o motivo) e reenvie apenas elas', 'Revise alguns anúncios de amostra antes de ativar todos', 'Dica: produtos com o mesmo título e SKU diferentes entram como **variações de um único anúncio** — por isso geramos uma linha por variação'] },
+    ],
+  },
+  {
     icon: Upload,
     title: 'Importação de Dados',
     badge: 'Admin',
