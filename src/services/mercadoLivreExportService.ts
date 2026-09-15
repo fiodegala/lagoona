@@ -371,3 +371,25 @@ export function downloadMercadoLivreCSV(csv: string) {
 export function downloadMercadoLivreXML(xml: string) {
   download(xml, 'application/xml;charset=utf-8;', `mercado-livre-produtos-${new Date().toISOString().slice(0, 10)}.xml`);
 }
+
+/**
+ * Gera e baixa um arquivo .xlsx real (Excel) com o layout do Mercado Livre.
+ */
+export async function exportProductsToMercadoLivreXLSX(options?: {
+  productIds?: string[];
+  onlyActive?: boolean;
+}): Promise<{ rows: number }> {
+  const rows = await buildMercadoLivreRows(options);
+  const XLSX = await import('xlsx');
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols'] = (rows[0] || []).map((_, i) => ({
+    wch: Math.min(
+      60,
+      Math.max(12, ...rows.slice(0, 200).map(r => String(r[i] ?? '').length + 2)),
+    ),
+  }));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Mercado Livre');
+  XLSX.writeFile(wb, `mercado-livre-produtos-${new Date().toISOString().slice(0, 10)}.xlsx`);
+  return { rows: rows.length - 1 };
+}

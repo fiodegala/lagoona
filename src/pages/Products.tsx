@@ -55,9 +55,8 @@ import { toast } from 'sonner';
 import { productsService, Product, categoriesService, Category } from '@/services/products';
 import {
   exportProductsToMercadoLivreCSV,
-  exportProductsToMercadoLivreXML,
+  exportProductsToMercadoLivreXLSX,
   downloadMercadoLivreCSV,
-  downloadMercadoLivreXML,
 } from '@/services/mercadoLivreExportService';
 
 import ProductFormModal from '@/components/ProductFormModal';
@@ -508,7 +507,7 @@ const Products = () => {
     toast.success(`${data.length} produto(s) exportado(s) para Excel`);
   };
 
-  const exportToMercadoLivre = async (scope: 'all' | 'selected' | 'filtered', format: 'xml' | 'csv') => {
+  const exportToMercadoLivre = async (scope: 'all' | 'selected' | 'filtered', format: 'xlsx' | 'csv') => {
     setIsMLExporting(true);
     try {
       const productIds =
@@ -523,10 +522,9 @@ const Products = () => {
         return;
       }
 
-      if (format === 'xml') {
-        const { xml, rows } = await exportProductsToMercadoLivreXML({ productIds, onlyActive: scope === 'all' });
-        downloadMercadoLivreXML(xml);
-        toast.success(`${rows} linha(s) exportada(s) em XML no formato Mercado Livre`);
+      if (format === 'xlsx') {
+        const { rows } = await exportProductsToMercadoLivreXLSX({ productIds, onlyActive: scope === 'all' });
+        toast.success(`${rows} linha(s) exportada(s) em Excel (.xlsx) no formato Mercado Livre`);
       } else {
         const { csv, rows } = await exportProductsToMercadoLivreCSV({ productIds, onlyActive: scope === 'all' });
         downloadMercadoLivreCSV(csv);
@@ -571,9 +569,9 @@ const Products = () => {
                   Exportar Excel
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuLabel className="text-xs text-muted-foreground">Mercado Livre (XML)</DropdownMenuLabel>
+                <DropdownMenuLabel className="text-xs text-muted-foreground">Mercado Livre (Excel .xlsx)</DropdownMenuLabel>
                 <DropdownMenuItem
-                  onClick={() => exportToMercadoLivre('all', 'xml')}
+                  onClick={() => exportToMercadoLivre('all', 'xlsx')}
                   disabled={isMLExporting}
                   className="gap-2 cursor-pointer"
                 >
@@ -581,7 +579,7 @@ const Products = () => {
                   Todos os produtos ativos
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  onClick={() => exportToMercadoLivre('selected', 'xml')}
+                  onClick={() => exportToMercadoLivre('selected', 'xlsx')}
                   disabled={isMLExporting || selectedProducts.size === 0}
                   className="gap-2 cursor-pointer"
                 >
@@ -589,7 +587,7 @@ const Products = () => {
                   Somente selecionados ({selectedProducts.size})
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  onClick={() => exportToMercadoLivre('filtered', 'xml')}
+                  onClick={() => exportToMercadoLivre('filtered', 'xlsx')}
                   disabled={isMLExporting || filteredProducts.length === 0}
                   className="gap-2 cursor-pointer"
                 >
