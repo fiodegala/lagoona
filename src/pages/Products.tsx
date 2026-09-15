@@ -47,11 +47,18 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
 import { productsService, Product, categoriesService, Category } from '@/services/products';
-import { exportProductsToMercadoLivreCSV, downloadMercadoLivreCSV } from '@/services/mercadoLivreExportService';
+import {
+  exportProductsToMercadoLivreCSV,
+  exportProductsToMercadoLivreXML,
+  downloadMercadoLivreCSV,
+  downloadMercadoLivreXML,
+} from '@/services/mercadoLivreExportService';
 
 import ProductFormModal from '@/components/ProductFormModal';
 import ProductImportModal from '@/components/ProductImportModal';
@@ -501,12 +508,30 @@ const Products = () => {
     toast.success(`${data.length} produto(s) exportado(s) para Excel`);
   };
 
-  const exportToMercadoLivre = async () => {
+  const exportToMercadoLivre = async (scope: 'all' | 'selected' | 'filtered', format: 'xml' | 'csv') => {
     setIsMLExporting(true);
     try {
-      const { csv, rows } = await exportProductsToMercadoLivreCSV({ onlyActive: true });
-      downloadMercadoLivreCSV(csv);
-      toast.success(`${rows} linha(s) exportada(s) no formato Mercado Livre`);
+      const productIds =
+        scope === 'selected'
+          ? Array.from(selectedProducts)
+          : scope === 'filtered'
+            ? filteredProducts.map(p => p.id)
+            : undefined;
+
+      if (scope !== 'all' && (!productIds || productIds.length === 0)) {
+        toast.error('Nenhum produto selecionado');
+        return;
+      }
+
+      if (format === 'xml') {
+        const { xml, rows } = await exportProductsToMercadoLivreXML({ productIds, onlyActive: scope === 'all' });
+        downloadMercadoLivreXML(xml);
+        toast.success(`${rows} linha(s) exportada(s) em XML no formato Mercado Livre`);
+      } else {
+        const { csv, rows } = await exportProductsToMercadoLivreCSV({ productIds, onlyActive: scope === 'all' });
+        downloadMercadoLivreCSV(csv);
+        toast.success(`${rows} linha(s) exportada(s) em CSV no formato Mercado Livre`);
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Erro ao exportar para Mercado Livre');
     } finally {
@@ -545,13 +570,39 @@ const Products = () => {
                   <FileSpreadsheet className="h-4 w-4" />
                   Exportar Excel
                 </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel className="text-xs text-muted-foreground">Mercado Livre (XML)</DropdownMenuLabel>
                 <DropdownMenuItem
-                  onClick={exportToMercadoLivre}
+                  onClick={() => exportToMercadoLivre('all', 'xml')}
                   disabled={isMLExporting}
                   className="gap-2 cursor-pointer"
                 >
                   {isMLExporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileSpreadsheet className="h-4 w-4" />}
-                  Mercado Livre (todos os produtos)
+                  Todos os produtos ativos
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => exportToMercadoLivre('selected', 'xml')}
+                  disabled={isMLExporting || selectedProducts.size === 0}
+                  className="gap-2 cursor-pointer"
+                >
+                  <FileSpreadsheet className="h-4 w-4" />
+                  Somente selecionados ({selectedProducts.size})
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => exportToMercadoLivre('filtered', 'xml')}
+                  disabled={isMLExporting || filteredProducts.length === 0}
+                  className="gap-2 cursor-pointer"
+                >
+                  <FileSpreadsheet className="h-4 w-4" />
+                  Produtos da busca atual ({filteredProducts.length})
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => exportToMercadoLivre('all', 'csv')}
+                  disabled={isMLExporting}
+                  className="gap-2 cursor-pointer"
+                >
+                  <Download className="h-4 w-4" />
+                  Mercado Livre em CSV (todos)
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
