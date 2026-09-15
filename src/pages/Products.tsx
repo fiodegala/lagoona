@@ -56,6 +56,7 @@ import { productsService, Product, categoriesService, Category } from '@/service
 import {
   exportProductsToMercadoLivreCSV,
   exportProductsToMercadoLivreXLSX,
+  exportProductsToMercadoLivreTemplateXLSX,
   downloadMercadoLivreCSV,
 } from '@/services/mercadoLivreExportService';
 
@@ -522,7 +523,10 @@ const Products = () => {
         return;
       }
 
-      if (format === 'xlsx') {
+      if (format === 'template') {
+        const { rows } = await exportProductsToMercadoLivreTemplateXLSX({ productIds, onlyActive: scope === 'all' });
+        toast.success(`${rows} linha(s) exportada(s) na planilha oficial do Mercado Livre — pronta para upload`);
+      } else if (format === 'xlsx') {
         const { rows } = await exportProductsToMercadoLivreXLSX({ productIds, onlyActive: scope === 'all' });
         toast.success(`${rows} linha(s) exportada(s) em Excel (.xlsx) no formato Mercado Livre`);
       } else {
