@@ -508,7 +508,7 @@ const Products = () => {
     toast.success(`${data.length} produto(s) exportado(s) para Excel`);
   };
 
-  const exportToMercadoLivre = async (scope: 'all' | 'selected' | 'filtered', format: 'xlsx' | 'csv') => {
+  const exportToMercadoLivre = async (scope: 'all' | 'selected' | 'filtered', format: 'template' | 'xlsx' | 'csv') => {
     setIsMLExporting(true);
     try {
       const productIds =
