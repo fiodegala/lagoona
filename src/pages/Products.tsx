@@ -569,9 +569,9 @@ const Products = () => {
                   Exportar Excel
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuLabel className="text-xs text-muted-foreground">Mercado Livre (XML)</DropdownMenuLabel>
+                <DropdownMenuLabel className="text-xs text-muted-foreground">Mercado Livre (Excel .xlsx)</DropdownMenuLabel>
                 <DropdownMenuItem
-                  onClick={() => exportToMercadoLivre('all', 'xml')}
+                  onClick={() => exportToMercadoLivre('all', 'xlsx')}
                   disabled={isMLExporting}
                   className="gap-2 cursor-pointer"
                 >
@@ -579,7 +579,7 @@ const Products = () => {
                   Todos os produtos ativos
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  onClick={() => exportToMercadoLivre('selected', 'xml')}
+                  onClick={() => exportToMercadoLivre('selected', 'xlsx')}
                   disabled={isMLExporting || selectedProducts.size === 0}
                   className="gap-2 cursor-pointer"
                 >
@@ -587,7 +587,7 @@ const Products = () => {
                   Somente selecionados ({selectedProducts.size})
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  onClick={() => exportToMercadoLivre('filtered', 'xml')}
+                  onClick={() => exportToMercadoLivre('filtered', 'xlsx')}
                   disabled={isMLExporting || filteredProducts.length === 0}
                   className="gap-2 cursor-pointer"
                 >
