@@ -545,6 +545,14 @@ const Products = () => {
                   <FileSpreadsheet className="h-4 w-4" />
                   Exportar Excel
                 </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={exportToMercadoLivre}
+                  disabled={isMLExporting}
+                  className="gap-2 cursor-pointer"
+                >
+                  {isMLExporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileSpreadsheet className="h-4 w-4" />}
+                  Mercado Livre (todos os produtos)
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
             {canManageProducts && (
