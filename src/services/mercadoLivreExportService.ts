@@ -405,7 +405,7 @@ const ML_TEMPLATE_HEADER: string[][] = [
     'Calçados, Roupas e Bolsas > Camisetas e Regatas', '', '',
     'Crie variações \nCopie todas as linhas que pertencem ao mesmo produto e altere estas colunas.',
     '', '', '', '', '', '', '', '', '', '', '', 'Informações do produto', '', '', '', 'Condições do anúncio',
-    '', '', '', '', '', '', '',
+    '', '', '', '', '', '', '', '',
     'Características do produto \nCaso crie variações, você deve manter as mesmas informações para todas',
     '', '', '', '', '', '', '', '', '', '', '', '', '', '',
   ],
