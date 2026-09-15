@@ -81,6 +81,7 @@ const Products = () => {
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
   const [isBulkActionLoading, setIsBulkActionLoading] = useState(false);
+  const [isMLExporting, setIsMLExporting] = useState(false);
 
   const loadData = async () => {
     try {
