@@ -287,18 +287,87 @@ export async function buildMercadoLivreRows(options?: {
     }
   }
 
+  return rows;
+}
+
+export async function exportProductsToMercadoLivreCSV(options?: {
+  productIds?: string[];
+  onlyActive?: boolean;
+}): Promise<{ csv: string; rows: number }> {
+  const rows = await buildMercadoLivreRows(options);
   const csv = '\uFEFF' + rows.map(row => row.map(escapeCSV).join(';')).join('\n');
   return { csv, rows: rows.length - 1 };
 }
 
-export function downloadMercadoLivreCSV(csv: string) {
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+function escapeXML(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    // remove caracteres de controle inválidos em XML
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '');
+}
+
+/**
+ * Gera uma planilha XML (SpreadsheetML / Excel 2003) com o layout do Mercado Livre.
+ * Abre direto no Excel/Google Sheets, mantendo acentuação e colunas separadas.
+ */
+export async function exportProductsToMercadoLivreXML(options?: {
+  productIds?: string[];
+  onlyActive?: boolean;
+}): Promise<{ xml: string; rows: number }> {
+  const rows = await buildMercadoLivreRows(options);
+  const [header, ...body] = rows;
+
+  const headerRow = `<Row>${header
+    .map(h => `<Cell ss:StyleID="header"><Data ss:Type="String">${escapeXML(h)}</Data></Cell>`)
+    .join('')}</Row>`;
+
+  const bodyRows = body
+    .map(row => `<Row>${row.map(cell => `<Cell><Data ss:Type="String">${escapeXML(cell)}</Data></Cell>`).join('')}</Row>`)
+    .join('\n      ');
+
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+  xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+  <Styles>
+    <Style ss:ID="Default" ss:Name="Normal">
+      <Alignment ss:Vertical="Bottom"/>
+    </Style>
+    <Style ss:ID="header">
+      <Font ss:Bold="1"/>
+      <Interior ss:Color="#E0E0E0" ss:Pattern="Solid"/>
+    </Style>
+  </Styles>
+  <Worksheet ss:Name="Mercado Livre">
+    <Table>
+      ${headerRow}
+      ${bodyRows}
+    </Table>
+  </Worksheet>
+</Workbook>`;
+
+  return { xml, rows: body.length };
+}
+
+function download(content: string, mime: string, filename: string) {
+  const blob = new Blob([content], { type: mime });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  link.download = `mercado-livre-produtos-${new Date().toISOString().slice(0, 10)}.csv`;
+  link.download = filename;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
+}
+
+export function downloadMercadoLivreCSV(csv: string) {
+  download(csv, 'text/csv;charset=utf-8;', `mercado-livre-produtos-${new Date().toISOString().slice(0, 10)}.csv`);
+}
+
+export function downloadMercadoLivreXML(xml: string) {
+  download(xml, 'application/xml;charset=utf-8;', `mercado-livre-produtos-${new Date().toISOString().slice(0, 10)}.xml`);
 }
