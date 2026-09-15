@@ -501,12 +501,30 @@ const Products = () => {
     toast.success(`${data.length} produto(s) exportado(s) para Excel`);
   };
 
-  const exportToMercadoLivre = async () => {
+  const exportToMercadoLivre = async (scope: 'all' | 'selected' | 'filtered', format: 'xml' | 'csv') => {
     setIsMLExporting(true);
     try {
-      const { csv, rows } = await exportProductsToMercadoLivreCSV({ onlyActive: true });
-      downloadMercadoLivreCSV(csv);
-      toast.success(`${rows} linha(s) exportada(s) no formato Mercado Livre`);
+      const productIds =
+        scope === 'selected'
+          ? Array.from(selectedProducts)
+          : scope === 'filtered'
+            ? filteredProducts.map(p => p.id)
+            : undefined;
+
+      if (scope !== 'all' && (!productIds || productIds.length === 0)) {
+        toast.error('Nenhum produto selecionado');
+        return;
+      }
+
+      if (format === 'xml') {
+        const { xml, rows } = await exportProductsToMercadoLivreXML({ productIds, onlyActive: scope === 'all' });
+        downloadMercadoLivreXML(xml);
+        toast.success(`${rows} linha(s) exportada(s) em XML no formato Mercado Livre`);
+      } else {
+        const { csv, rows } = await exportProductsToMercadoLivreCSV({ productIds, onlyActive: scope === 'all' });
+        downloadMercadoLivreCSV(csv);
+        toast.success(`${rows} linha(s) exportada(s) em CSV no formato Mercado Livre`);
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Erro ao exportar para Mercado Livre');
     } finally {
