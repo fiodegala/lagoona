@@ -151,10 +151,10 @@ function otherAttrs(values: AttrValue[]): string {
     .join(' | ');
 }
 
-export async function exportProductsToMercadoLivreCSV(options?: {
+export async function buildMercadoLivreRows(options?: {
   productIds?: string[];
   onlyActive?: boolean;
-}): Promise<{ csv: string; rows: number }> {
+}): Promise<string[][]> {
   const onlyActive = options?.onlyActive ?? true;
 
   let query = supabase.from('products').select('*').order('name');
