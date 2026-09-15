@@ -500,6 +500,19 @@ const Products = () => {
     toast.success(`${data.length} produto(s) exportado(s) para Excel`);
   };
 
+  const exportToMercadoLivre = async () => {
+    setIsMLExporting(true);
+    try {
+      const { csv, rows } = await exportProductsToMercadoLivreCSV({ onlyActive: true });
+      downloadMercadoLivreCSV(csv);
+      toast.success(`${rows} linha(s) exportada(s) no formato Mercado Livre`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao exportar para Mercado Livre');
+    } finally {
+      setIsMLExporting(false);
+    }
+  };
+
   return (
     <AdminLayout>
       <div className="space-y-6 animate-fade-in">
