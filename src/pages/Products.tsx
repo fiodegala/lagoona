@@ -51,6 +51,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
 import { productsService, Product, categoriesService, Category } from '@/services/products';
+import { exportProductsToMercadoLivreCSV, downloadMercadoLivreCSV } from '@/services/mercadoLivreExportService';
 
 import ProductFormModal from '@/components/ProductFormModal';
 import ProductImportModal from '@/components/ProductImportModal';
