@@ -568,13 +568,39 @@ const Products = () => {
                   <FileSpreadsheet className="h-4 w-4" />
                   Exportar Excel
                 </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel className="text-xs text-muted-foreground">Mercado Livre (XML)</DropdownMenuLabel>
                 <DropdownMenuItem
-                  onClick={exportToMercadoLivre}
+                  onClick={() => exportToMercadoLivre('all', 'xml')}
                   disabled={isMLExporting}
                   className="gap-2 cursor-pointer"
                 >
                   {isMLExporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileSpreadsheet className="h-4 w-4" />}
-                  Mercado Livre (todos os produtos)
+                  Todos os produtos ativos
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => exportToMercadoLivre('selected', 'xml')}
+                  disabled={isMLExporting || selectedProducts.size === 0}
+                  className="gap-2 cursor-pointer"
+                >
+                  <FileSpreadsheet className="h-4 w-4" />
+                  Somente selecionados ({selectedProducts.size})
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => exportToMercadoLivre('filtered', 'xml')}
+                  disabled={isMLExporting || filteredProducts.length === 0}
+                  className="gap-2 cursor-pointer"
+                >
+                  <FileSpreadsheet className="h-4 w-4" />
+                  Produtos da busca atual ({filteredProducts.length})
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => exportToMercadoLivre('all', 'csv')}
+                  disabled={isMLExporting}
+                  className="gap-2 cursor-pointer"
+                >
+                  <Download className="h-4 w-4" />
+                  Mercado Livre em CSV (todos)
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
