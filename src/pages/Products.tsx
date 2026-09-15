@@ -573,7 +573,33 @@ const Products = () => {
                   Exportar Excel
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuLabel className="text-xs text-muted-foreground">Mercado Livre (Excel .xlsx)</DropdownMenuLabel>
+                <DropdownMenuLabel className="text-xs text-muted-foreground">Mercado Livre — Planilha oficial (upload direto)</DropdownMenuLabel>
+                <DropdownMenuItem
+                  onClick={() => exportToMercadoLivre('all', 'template')}
+                  disabled={isMLExporting}
+                  className="gap-2 cursor-pointer"
+                >
+                  {isMLExporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileSpreadsheet className="h-4 w-4" />}
+                  Planilha oficial — todos os ativos
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => exportToMercadoLivre('selected', 'template')}
+                  disabled={isMLExporting || selectedProducts.size === 0}
+                  className="gap-2 cursor-pointer"
+                >
+                  <FileSpreadsheet className="h-4 w-4" />
+                  Planilha oficial — selecionados ({selectedProducts.size})
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => exportToMercadoLivre('filtered', 'template')}
+                  disabled={isMLExporting || filteredProducts.length === 0}
+                  className="gap-2 cursor-pointer"
+                >
+                  <FileSpreadsheet className="h-4 w-4" />
+                  Planilha oficial — busca atual ({filteredProducts.length})
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel className="text-xs text-muted-foreground">Mercado Livre (Excel .xlsx simples)</DropdownMenuLabel>
                 <DropdownMenuItem
                   onClick={() => exportToMercadoLivre('all', 'xlsx')}
                   disabled={isMLExporting}
