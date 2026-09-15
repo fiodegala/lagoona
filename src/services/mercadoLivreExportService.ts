@@ -393,3 +393,115 @@ export async function exportProductsToMercadoLivreXLSX(options?: {
   XLSX.writeFile(wb, `mercado-livre-produtos-${new Date().toISOString().slice(0, 10)}.xlsx`);
   return { rows: rows.length - 1 };
 }
+
+/**
+ * Layout oficial da planilha de "Publicação em massa" do Mercado Livre
+ * (categoria Calçados, Roupas e Bolsas > Camisetas e Regatas).
+ * Reproduz as 7 linhas de cabeçalho do modelo oficial para que o arquivo
+ * gerado possa ser enviado direto no Mercado Livre, sem copiar/colar.
+ */
+const ML_TEMPLATE_HEADER: string[][] = [
+  [
+    'Calçados, Roupas e Bolsas > Camisetas e Regatas', '', '', '',
+    'Crie variações \nCopie todas as linhas que pertencem ao mesmo produto e altere estas colunas.',
+    '', '', '', '', '', '', '', '', '', 'Informações do produto', '', '', '', 'Condições do anúncio',
+    '', '', '', '', '', '', '',
+    'Características do produto \nCaso crie variações, você deve manter as mesmas informações para todas',
+    '', '', '', '', '', '', '', '', '', '', '', '', '', '',
+  ],
+  ['Camisetas e Regatas', ...Array(40).fill('')],
+  [
+    'Título: informe o produto, marca, modelo e destaque as características principais \nCaso crie variações, você deve criar um título geral para todas',
+    'Quantidade de caracteres', 'Condição', 'Varia por: Nome comercial da cor', 'Varia por: Desenho impresso',
+    'Varia por: Desenho do tecido', 'Tamanho', 'Marca', 'Gênero', 'Código do guia', 'Fotos',
+    'Código universal de produto', 'SKU', 'Estoque', 'Preço [R$]', 'Formato de venda',
+    'Quantidade de camisetas', 'Descrição', 'Tipo de anúncio', 'Tarifa de venda', 'Forma de envio',
+    'Custo de envio', 'Retirar pessoalmente', 'Tipo de garantia', 'Tempo de garantia',
+    'Unidade de Tempo de garantia', 'Modelo', 'Tipo de roupa', 'Tipo de manga', 'Material principal',
+    'Esportiva', 'Usos recomendados', 'Tipo de tecido', 'Composição', 'Tipo de gola',
+    'Forma de caimento', 'Apta para gestação', 'Materiais reciclados', 'Resumo de erros',
+    'BUYBOX_FORMULA', 'HIDDEN_PICTURES',
+  ],
+  [
+    'Obrigatório', '', 'Obrigatório', 'Obrigatório', '', '', 'Obrigatório', 'Obrigatório', 'Obrigatório',
+    'Obrigatório', 'Obrigatório', 'Obrigatório', '', 'Obrigatório', 'Obrigatório', '', '', '',
+    'Obrigatório', '', 'Obrigatório', 'Obrigatório', 'Obrigatório', '', '', '', 'Obrigatório',
+    'Obrigatório', 'Obrigatório', 'Obrigatório', '', '', '', '', '', '', '', '', '', '', '',
+  ],
+  Array(41).fill(''),
+  [
+    '', '', 'Ver política', 'Preciso de ajuda sobre variações', 'Preciso de ajuda sobre variações',
+    'Preciso de ajuda sobre variações', 'Verificar guia', '', '', 'Revisar guias de tamanhos existentes',
+    'Obter URLs no gestor de fotos', 'Identificar o código universal', '', '', '', '', '', '', '', '',
+    '', ' Saiba mais sobre envios', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '',
+    'Como preencher a planilha', '', '',
+  ],
+  [
+    ...Array(18).fill(''),
+    'Revise as condições de venda que completamos por você,  a partir dos seus anúncios anteriores.',
+    ...Array(22).fill(''),
+  ],
+];
+
+// Padrões da loja já configurados no modelo oficial do vendedor
+const ML_TEMPLATE_DEFAULTS = {
+  condicao: 'Novo',
+  guia: '8314249 - Camisetas Masculinas FDG',
+  tipoAnuncio: 'Premium',
+  tarifa: '-',
+  formaEnvio: 'Mercado Envios',
+  custoEnvio: 'Você oferece frete grátis',
+  retirar: 'Não aceito',
+  tipoGarantia: 'Garantia do vendedor',
+  tempoGarantia: '7',
+  unidadeGarantia: 'dias',
+} as const;
+
+function templateRow(r: string[]): string[] {
+  const [sku, titulo, descricao, , marca, , preco, , estoque, cor, tamanho, , gtin, , , , , , , fotos] = r;
+  const row = Array(41).fill('');
+  row[0] = titulo;
+  row[1] = String(titulo.length);
+  row[2] = ML_TEMPLATE_DEFAULTS.condicao;
+  row[3] = cor; // Varia por: Nome comercial da cor
+  row[6] = tamanho;
+  row[7] = marca;
+  row[9] = ML_TEMPLATE_DEFAULTS.guia;
+  row[10] = fotos;
+  row[11] = gtin;
+  row[12] = sku;
+  row[13] = estoque || '0';
+  row[14] = preco;
+  row[16] = '1'; // Quantidade de camisetas
+  row[17] = descricao;
+  row[18] = ML_TEMPLATE_DEFAULTS.tipoAnuncio;
+  row[19] = ML_TEMPLATE_DEFAULTS.tarifa;
+  row[20] = ML_TEMPLATE_DEFAULTS.formaEnvio;
+  row[21] = ML_TEMPLATE_DEFAULTS.custoEnvio;
+  row[22] = ML_TEMPLATE_DEFAULTS.retirar;
+  row[23] = ML_TEMPLATE_DEFAULTS.tipoGarantia;
+  row[24] = ML_TEMPLATE_DEFAULTS.tempoGarantia;
+  row[25] = ML_TEMPLATE_DEFAULTS.unidadeGarantia;
+  return row;
+}
+
+/**
+ * Gera e baixa um .xlsx idêntico ao modelo oficial de publicação em massa
+ * do Mercado Livre (aba "Camisetas e Regatas"), pronto para upload direto.
+ * Uma linha por variação; variações do mesmo produto repetem o título.
+ */
+export async function exportProductsToMercadoLivreTemplateXLSX(options?: {
+  productIds?: string[];
+  onlyActive?: boolean;
+}): Promise<{ rows: number }> {
+  const rows = await buildMercadoLivreRows(options);
+  const [, ...body] = rows;
+  const data = body.map(templateRow);
+  const XLSX = await import('xlsx');
+  const ws = XLSX.utils.aoa_to_sheet([...ML_TEMPLATE_HEADER, ...data]);
+  ws['!cols'] = Array(41).fill({ wch: 22 });
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Camisetas e Regatas');
+  XLSX.writeFile(wb, `mercado-livre-planilha-oficial-${new Date().toISOString().slice(0, 10)}.xlsx`);
+  return { rows: data.length };
+}
