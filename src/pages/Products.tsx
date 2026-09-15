@@ -51,6 +51,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
 import { productsService, Product, categoriesService, Category } from '@/services/products';
+import { exportProductsToMercadoLivreCSV, downloadMercadoLivreCSV } from '@/services/mercadoLivreExportService';
 
 import ProductFormModal from '@/components/ProductFormModal';
 import ProductImportModal from '@/components/ProductImportModal';
@@ -80,6 +81,7 @@ const Products = () => {
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
   const [isBulkActionLoading, setIsBulkActionLoading] = useState(false);
+  const [isMLExporting, setIsMLExporting] = useState(false);
 
   const loadData = async () => {
     try {
@@ -499,6 +501,19 @@ const Products = () => {
     toast.success(`${data.length} produto(s) exportado(s) para Excel`);
   };
 
+  const exportToMercadoLivre = async () => {
+    setIsMLExporting(true);
+    try {
+      const { csv, rows } = await exportProductsToMercadoLivreCSV({ onlyActive: true });
+      downloadMercadoLivreCSV(csv);
+      toast.success(`${rows} linha(s) exportada(s) no formato Mercado Livre`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao exportar para Mercado Livre');
+    } finally {
+      setIsMLExporting(false);
+    }
+  };
+
   return (
     <AdminLayout>
       <div className="space-y-6 animate-fade-in">
@@ -529,6 +544,14 @@ const Products = () => {
                 <DropdownMenuItem onClick={exportToExcel} className="gap-2 cursor-pointer">
                   <FileSpreadsheet className="h-4 w-4" />
                   Exportar Excel
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={exportToMercadoLivre}
+                  disabled={isMLExporting}
+                  className="gap-2 cursor-pointer"
+                >
+                  {isMLExporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileSpreadsheet className="h-4 w-4" />}
+                  Mercado Livre (todos os produtos)
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
