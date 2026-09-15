@@ -523,10 +523,9 @@ const Products = () => {
         return;
       }
 
-      if (format === 'xml') {
-        const { xml, rows } = await exportProductsToMercadoLivreXML({ productIds, onlyActive: scope === 'all' });
-        downloadMercadoLivreXML(xml);
-        toast.success(`${rows} linha(s) exportada(s) em XML no formato Mercado Livre`);
+      if (format === 'xlsx') {
+        const { rows } = await exportProductsToMercadoLivreXLSX({ productIds, onlyActive: scope === 'all' });
+        toast.success(`${rows} linha(s) exportada(s) em Excel (.xlsx) no formato Mercado Livre`);
       } else {
         const { csv, rows } = await exportProductsToMercadoLivreCSV({ productIds, onlyActive: scope === 'all' });
         downloadMercadoLivreCSV(csv);
