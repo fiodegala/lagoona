@@ -609,7 +609,33 @@ const Products = () => {
                   Exportar Excel
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuLabel className="text-xs text-muted-foreground">Mercado Livre — Planilha oficial (upload direto)</DropdownMenuLabel>
+                <DropdownMenuLabel className="text-xs text-muted-foreground">Mercado Livre — preencher a planilha que você baixou (recomendado)</DropdownMenuLabel>
+                <DropdownMenuItem
+                  onClick={() => { setMlFillScope('all'); setTimeout(() => mlFileInputRef.current?.click(), 0); }}
+                  disabled={isMLExporting}
+                  className="gap-2 cursor-pointer"
+                >
+                  {isMLExporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                  Preencher com todos os ativos
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => { setMlFillScope('selected'); setTimeout(() => mlFileInputRef.current?.click(), 0); }}
+                  disabled={isMLExporting || selectedProducts.size === 0}
+                  className="gap-2 cursor-pointer"
+                >
+                  <Upload className="h-4 w-4" />
+                  Preencher com selecionados ({selectedProducts.size})
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => { setMlFillScope('filtered'); setTimeout(() => mlFileInputRef.current?.click(), 0); }}
+                  disabled={isMLExporting || filteredProducts.length === 0}
+                  className="gap-2 cursor-pointer"
+                >
+                  <Upload className="h-4 w-4" />
+                  Preencher com a busca atual ({filteredProducts.length})
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel className="text-xs text-muted-foreground">Mercado Livre — cópia do layout oficial</DropdownMenuLabel>
                 <DropdownMenuItem
                   onClick={() => exportToMercadoLivre('all', 'template')}
                   disabled={isMLExporting}
