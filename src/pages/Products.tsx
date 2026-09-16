@@ -541,8 +541,41 @@ const Products = () => {
     }
   };
 
+  const handleFillTemplateFile = async (file: File | undefined) => {
+    if (!file) return;
+    setIsMLExporting(true);
+    try {
+      const scope = mlFillScope;
+      const productIds =
+        scope === 'selected'
+          ? Array.from(selectedProducts)
+          : scope === 'filtered'
+            ? filteredProducts.map(p => p.id)
+            : undefined;
+      const { rows } = await fillMercadoLivreDownloadedTemplate(file, {
+        productIds,
+        onlyActive: scope === 'all',
+      });
+      toast.success(`${rows} linha(s) preenchidas na sua planilha do Mercado Livre. Envie o arquivo "-preenchida.xlsx".`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao preencher a planilha');
+    } finally {
+      setIsMLExporting(false);
+    }
+  };
+
   return (
     <AdminLayout>
+      <input
+        ref={mlFileInputRef}
+        type="file"
+        accept=".xlsx,.xls"
+        className="hidden"
+        onChange={e => {
+          handleFillTemplateFile(e.target.files?.[0]);
+          e.target.value = '';
+        }}
+      />
       <div className="space-y-6 animate-fade-in">
         <div className="flex items-center justify-between">
           <div>
