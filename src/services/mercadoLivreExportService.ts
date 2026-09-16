@@ -490,6 +490,54 @@ function templateRow(r: string[]): string[] {
  * do Mercado Livre (aba "Camisetas e Regatas"), pronto para upload direto.
  * Uma linha por variação; variações do mesmo produto repetem o título.
  */
+/**
+ * Preenche a PRÓPRIA planilha baixada do Mercado Livre (arquivo original do
+ * usuário), preservando abas ocultas, validações e metadados que o ML exige.
+ * Esta é a forma recomendada: o ML rejeita arquivos criados de zero.
+ */
+export async function fillMercadoLivreDownloadedTemplate(
+  file: File,
+  options?: { productIds?: string[]; onlyActive?: boolean },
+): Promise<{ rows: number; sheet: string }> {
+  const rows = await buildMercadoLivreRows(options);
+  const [, ...body] = rows;
+  const data = body.map(templateRow);
+
+  const XLSX = await import('xlsx');
+  const buffer = await file.arrayBuffer();
+  const wb = XLSX.read(buffer, { cellStyles: true, cellNF: true, bookVBA: true });
+
+  // Aba de dados: a que contém a linha de cabeçalhos oficiais (col A = "Título...")
+  const sheetName =
+    wb.SheetNames.find(name => {
+      const sheet = wb.Sheets[name];
+      const a3 = sheet['A3'];
+      return typeof a3?.v === 'string' && a3.v.toLowerCase().includes('título');
+    }) || wb.SheetNames[0];
+
+  const ws = wb.Sheets[sheetName];
+  const START_ROW = 7; // linha 8 na planilha (0-indexed)
+
+  data.forEach((row, r) => {
+    row.forEach((value, c) => {
+      const address = XLSX.utils.encode_cell({ r: START_ROW + r, c });
+      if (value === '' || value === undefined || value === null) {
+        delete ws[address];
+        return;
+      }
+      ws[address] = { t: 's', v: String(value) };
+    });
+  });
+
+  const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
+  range.e.r = Math.max(range.e.r, START_ROW + data.length - 1);
+  range.e.c = Math.max(range.e.c, 40);
+  ws['!ref'] = XLSX.utils.encode_range(range);
+
+  XLSX.writeFile(wb, file.name.replace(/\.xlsx?$/i, '') + '-preenchida.xlsx', { bookType: 'xlsx', cellStyles: true });
+  return { rows: data.length, sheet: sheetName };
+}
+
 export async function exportProductsToMercadoLivreTemplateXLSX(options?: {
   productIds?: string[];
   onlyActive?: boolean;
