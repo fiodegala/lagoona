@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import AdminLayout from '@/components/AdminLayout';
@@ -57,6 +57,7 @@ import {
   exportProductsToMercadoLivreCSV,
   exportProductsToMercadoLivreXLSX,
   exportProductsToMercadoLivreTemplateXLSX,
+  fillMercadoLivreDownloadedTemplate,
   downloadMercadoLivreCSV,
 } from '@/services/mercadoLivreExportService';
 
@@ -89,6 +90,8 @@ const Products = () => {
   const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
   const [isBulkActionLoading, setIsBulkActionLoading] = useState(false);
   const [isMLExporting, setIsMLExporting] = useState(false);
+  const [mlFillScope, setMlFillScope] = useState<'all' | 'selected' | 'filtered'>('all');
+  const mlFileInputRef = useRef<HTMLInputElement>(null);
 
   const loadData = async () => {
     try {
@@ -541,8 +544,41 @@ const Products = () => {
     }
   };
 
+  const handleFillTemplateFile = async (file: File | undefined) => {
+    if (!file) return;
+    setIsMLExporting(true);
+    try {
+      const scope = mlFillScope;
+      const productIds =
+        scope === 'selected'
+          ? Array.from(selectedProducts)
+          : scope === 'filtered'
+            ? filteredProducts.map(p => p.id)
+            : undefined;
+      const { rows } = await fillMercadoLivreDownloadedTemplate(file, {
+        productIds,
+        onlyActive: scope === 'all',
+      });
+      toast.success(`${rows} linha(s) preenchidas na sua planilha do Mercado Livre. Envie o arquivo "-preenchida.xlsx".`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao preencher a planilha');
+    } finally {
+      setIsMLExporting(false);
+    }
+  };
+
   return (
     <AdminLayout>
+      <input
+        ref={mlFileInputRef}
+        type="file"
+        accept=".xlsx,.xls"
+        className="hidden"
+        onChange={e => {
+          handleFillTemplateFile(e.target.files?.[0]);
+          e.target.value = '';
+        }}
+      />
       <div className="space-y-6 animate-fade-in">
         <div className="flex items-center justify-between">
           <div>
@@ -573,7 +609,33 @@ const Products = () => {
                   Exportar Excel
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuLabel className="text-xs text-muted-foreground">Mercado Livre — Planilha oficial (upload direto)</DropdownMenuLabel>
+                <DropdownMenuLabel className="text-xs text-muted-foreground">Mercado Livre — preencher a planilha que você baixou (recomendado)</DropdownMenuLabel>
+                <DropdownMenuItem
+                  onClick={() => { setMlFillScope('all'); setTimeout(() => mlFileInputRef.current?.click(), 0); }}
+                  disabled={isMLExporting}
+                  className="gap-2 cursor-pointer"
+                >
+                  {isMLExporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                  Preencher com todos os ativos
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => { setMlFillScope('selected'); setTimeout(() => mlFileInputRef.current?.click(), 0); }}
+                  disabled={isMLExporting || selectedProducts.size === 0}
+                  className="gap-2 cursor-pointer"
+                >
+                  <Upload className="h-4 w-4" />
+                  Preencher com selecionados ({selectedProducts.size})
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => { setMlFillScope('filtered'); setTimeout(() => mlFileInputRef.current?.click(), 0); }}
+                  disabled={isMLExporting || filteredProducts.length === 0}
+                  className="gap-2 cursor-pointer"
+                >
+                  <Upload className="h-4 w-4" />
+                  Preencher com a busca atual ({filteredProducts.length})
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel className="text-xs text-muted-foreground">Mercado Livre — cópia do layout oficial</DropdownMenuLabel>
                 <DropdownMenuItem
                   onClick={() => exportToMercadoLivre('all', 'template')}
                   disabled={isMLExporting}
