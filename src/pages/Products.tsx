@@ -57,6 +57,7 @@ import {
   exportProductsToMercadoLivreCSV,
   exportProductsToMercadoLivreXLSX,
   exportProductsToMercadoLivreTemplateXLSX,
+  fillMercadoLivreDownloadedTemplate,
   downloadMercadoLivreCSV,
 } from '@/services/mercadoLivreExportService';
 
