@@ -89,6 +89,8 @@ const Products = () => {
   const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
   const [isBulkActionLoading, setIsBulkActionLoading] = useState(false);
   const [isMLExporting, setIsMLExporting] = useState(false);
+  const [mlFillScope, setMlFillScope] = useState<'all' | 'selected' | 'filtered'>('all');
+  const mlFileInputRef = useRef<HTMLInputElement>(null);
 
   const loadData = async () => {
     try {
