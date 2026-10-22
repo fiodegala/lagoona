@@ -474,9 +474,11 @@ const Sales = () => {
     const max = parseFloat(maxValue.replace(/\./g, '').replace(',', '.')) || Infinity;
 
     const result = sales.reduce<any[]>((acc, s) => {
+      const searchDigits = search.replace(/\D/g, '');
       const matchesSearch =
         s.customer_name?.toLowerCase().includes(search.toLowerCase()) ||
         s.customer_document?.toLowerCase().includes(search.toLowerCase()) ||
+        (searchDigits.length >= 3 && (s.customer_document || '').replace(/\D/g, '').includes(searchDigits)) ||
         s.id.toLowerCase().includes(search.toLowerCase());
 
       const matchesSeller = sellerFilter === 'all' || s.user_id === sellerFilter || (s as any).seller_id === sellerFilter;
