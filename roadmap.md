@@ -1,2 +1,3 @@
 - [ ] Mercado Livre: erro na planilha (aguardando mensagem de erro do usuário)
 - [ ] Exportar estoque completo para importar no Bling
+- [ ] Orçamentos: opção visível para adicionar produtos nos detalhes e na edição

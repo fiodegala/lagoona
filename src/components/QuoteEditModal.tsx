@@ -53,6 +53,7 @@ interface QuoteEditModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSaved: () => void;
+  focusProductSearch?: boolean;
 }
 
 interface SearchResult {
@@ -85,7 +86,7 @@ const paymentMethods = [
   { value: 'mixed', label: 'Misto' },
 ];
 
-const QuoteEditModal = ({ quote, open, onOpenChange, onSaved }: QuoteEditModalProps) => {
+const QuoteEditModal = ({ quote, open, onOpenChange, onSaved, focusProductSearch = false }: QuoteEditModalProps) => {
   const { toast } = useToast();
   const { user, profile } = useAuth();
   const [saving, setSaving] = useState(false);
@@ -117,6 +118,18 @@ const QuoteEditModal = ({ quote, open, onOpenChange, onSaved }: QuoteEditModalPr
   const [isSearching, setIsSearching] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const productSearchRef = useRef<HTMLDivElement>(null);
+
+  const focusSearch = () => {
+    productSearchRef.current?.scrollIntoView({ block: 'start' });
+    searchInputRef.current?.focus({ preventScroll: true });
+  };
+
+  useEffect(() => {
+    if (!open || !focusProductSearch) return;
+    const timeout = setTimeout(focusSearch, 100);
+    return () => clearTimeout(timeout);
+  }, [open, focusProductSearch]);
 
   // Variation picker state
   const [variationPickerProduct, setVariationPickerProduct] = useState<SearchResult | null>(null);
@@ -518,6 +531,12 @@ const QuoteEditModal = ({ quote, open, onOpenChange, onSaved }: QuoteEditModalPr
             <Save className="h-5 w-5" />
             Editar Orçamento #{quote.id.slice(0, 8).toUpperCase()}
           </DialogTitle>
+          <div className="pt-2">
+            <Button type="button" size="sm" onClick={focusSearch}>
+              <Plus className="h-4 w-4 mr-1" />
+              Adicionar produtos
+            </Button>
+          </div>
         </DialogHeader>
 
         <div className="flex-1 min-h-0 overflow-y-auto space-y-6 py-2 px-1">
@@ -553,10 +572,12 @@ const QuoteEditModal = ({ quote, open, onOpenChange, onSaved }: QuoteEditModalPr
             </h4>
 
             {/* Product Search */}
-            <div className="relative mb-3">
+            <div ref={productSearchRef} className="relative mb-3 scroll-mt-2">
+              <Label htmlFor="quote-product-search" className="mb-2 block">Adicionar produto</Label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
+                  id="quote-product-search"
                   ref={searchInputRef}
                   type="text"
                   placeholder="Buscar produto por nome, SKU ou código de barras..."
@@ -583,9 +604,11 @@ const QuoteEditModal = ({ quote, open, onOpenChange, onSaved }: QuoteEditModalPr
                       {searchResults.map((product) => {
                         const display = getDisplayInfo(product);
                         return (
-                          <button
+                          <Button
+                            type="button"
+                            variant="ghost"
                             key={`${product.id}-${display.variationId || ''}`}
-                            className={cn('w-full px-3 py-2 flex items-center gap-3 hover:bg-accent text-left', display.stock <= 0 && !product.variations.length && 'opacity-50')}
+                            className={cn('h-auto w-full justify-start rounded-none px-3 py-2 flex items-center gap-3 hover:bg-accent text-left', display.stock <= 0 && !product.variations.length && 'opacity-50')}
                             onClick={() => handleProductSelected(product)}
                           >
                             {display.image ? (
@@ -603,7 +626,7 @@ const QuoteEditModal = ({ quote, open, onOpenChange, onSaved }: QuoteEditModalPr
                                 {product.variations.length > 0 && !display.variationId ? `${product.variations.filter(v => v.is_active).length} variações` : display.stock <= 0 ? 'Sem estoque' : `${display.stock} disp.`}
                               </p>
                             </div>
-                          </button>
+                          </Button>
                         );
                       })}
                     </div>

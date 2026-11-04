@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Separator } from '@/components/ui/separator';
 import QuoteEditModal from '@/components/QuoteEditModal';
 
-import { Search, FileText, Eye, Trash2, Loader2, Clock, User, CreditCard, Package, Printer, Share2, Pencil, History, ShoppingCart, Lock } from 'lucide-react';
+import { Search, FileText, Eye, Trash2, Loader2, Clock, User, CreditCard, Package, Printer, Share2, Pencil, History, ShoppingCart, Lock, Plus } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -142,6 +142,7 @@ const Quotes = () => {
   const [search, setSearch] = useState('');
   const [selectedQuote, setSelectedQuote] = useState<Quote | null>(null);
   const [editQuote, setEditQuote] = useState<Quote | null>(null);
+  const [focusProductSearch, setFocusProductSearch] = useState(false);
   const [quoteHistory, setQuoteHistory] = useState<any[]>([]);
   const [converting, setConverting] = useState(false);
 
@@ -343,7 +344,7 @@ const Quotes = () => {
                               <Button variant="ghost" size="icon" onClick={() => setSelectedQuote(q)}><Eye className="h-4 w-4" /></Button>
                               {q.status === 'pending' && (
                                 <>
-                                  <Button variant="ghost" size="icon" onClick={() => setEditQuote(q)} title="Editar"><Pencil className="h-4 w-4" /></Button>
+                                  <Button variant="ghost" size="icon" onClick={() => { setFocusProductSearch(false); setEditQuote(q); }} title="Editar"><Pencil className="h-4 w-4" /></Button>
                                   <Button variant="ghost" size="icon" onClick={() => handleConvertToSale(q)} title="Converter em Venda" className="text-green-600 hover:text-green-700"><ShoppingCart className="h-4 w-4" /></Button>
                                 </>
                               )}
@@ -374,6 +375,7 @@ const Quotes = () => {
                 {selectedQuote.status === 'pending' && (
                   <>
                     <Button variant="outline" size="sm" onClick={() => {
+                      setFocusProductSearch(false);
                       setEditQuote(selectedQuote);
                       setSelectedQuote(null);
                     }}>
@@ -507,10 +509,22 @@ const Quotes = () => {
 
                 {/* Itens */}
                 <div>
-                  <h4 className="text-sm font-semibold mb-2 flex items-center gap-1.5">
-                    <Package className="h-3.5 w-3.5 text-muted-foreground" />
-                    Itens do Orçamento
-                  </h4>
+                  <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                    <h4 className="text-sm font-semibold flex items-center gap-1.5">
+                      <Package className="h-3.5 w-3.5 text-muted-foreground" />
+                      Itens do Orçamento
+                    </h4>
+                    {selectedQuote.status === 'pending' && (
+                      <Button size="sm" onClick={() => {
+                        setFocusProductSearch(true);
+                        setEditQuote(selectedQuote);
+                        setSelectedQuote(null);
+                      }}>
+                        <Plus className="h-4 w-4 mr-1" />
+                        Adicionar produtos
+                      </Button>
+                    )}
+                  </div>
                   {(selectedQuote.items || []).length > 0 ? (
                     <div className="space-y-2">
                       {(selectedQuote.items || []).map((item: any, idx: number) => (
@@ -639,6 +653,7 @@ const Quotes = () => {
       </Dialog>
       <QuoteEditModal
         quote={editQuote as any}
+        focusProductSearch={focusProductSearch}
         open={!!editQuote}
         onOpenChange={open => !open && setEditQuote(null)}
         onSaved={() => {
