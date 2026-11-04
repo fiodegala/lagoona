@@ -552,9 +552,34 @@ const Sales = () => {
   return (
     <AdminLayout>
       <div className="space-y-6 animate-fade-in">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Vendas</h1>
-          <p className="text-muted-foreground mt-1">Histórico detalhado de vendas do PDV</p>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Vendas</h1>
+            <p className="text-muted-foreground mt-1">Histórico detalhado de vendas do PDV</p>
+          </div>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className="gap-2"><FileText className="h-4 w-4" />Exportar clientes</Button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-56 p-2 space-y-1">
+              <p className="text-xs text-muted-foreground px-2 pb-1">Clientes das vendas do filtro atual</p>
+              {(['csv', 'xml', 'pdf'] as const).map((fmtType) => (
+                <Button key={fmtType} variant="ghost" className="w-full justify-start" onClick={async () => {
+                  const ex = await import('@/services/salesCustomersExport');
+                  const rows = await ex.buildCustomerRows(filteredSales);
+                  if (!rows.length) { toast.error('Nenhum cliente identificado no filtro'); return; }
+                  const name = `clientes-${format(new Date(), 'yyyy-MM-dd')}`;
+                  const sub = `Período: ${format(dateRange.start, 'dd/MM/yyyy')} a ${format(dateRange.end, 'dd/MM/yyyy')}`;
+                  if (fmtType === 'csv') ex.exportCSV(rows, name);
+                  else if (fmtType === 'xml') ex.exportXML(rows, name);
+                  else ex.exportPDF(rows, name, sub);
+                  toast.success(`${rows.length} clientes exportados`);
+                }}>
+                  {fmtType.toUpperCase()}
+                </Button>
+              ))}
+            </PopoverContent>
+          </Popover>
         </div>
 
         {/* KPIs */}
