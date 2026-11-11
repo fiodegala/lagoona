@@ -557,6 +557,35 @@ const Sales = () => {
             <h1 className="text-2xl font-bold text-foreground">Vendas</h1>
             <p className="text-muted-foreground mt-1">Histórico detalhado de vendas do PDV</p>
           </div>
+          <div className="flex flex-wrap gap-2">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className="gap-2"><Receipt className="h-4 w-4" />Exportar vendas</Button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-60 p-2 space-y-1">
+              <p className="text-xs text-muted-foreground px-2 pb-1">Vendas do filtro atual, com itens, pagamentos e dados completos do cliente</p>
+              {(['csv', 'xml', 'pdf'] as const).map((fmtType) => (
+                <Button key={fmtType} variant="ghost" className="w-full justify-start" onClick={async () => {
+                  if (!filteredSales.length) { toast.error('Nenhuma venda no filtro'); return; }
+                  const t = toast.loading('Preparando exportação...');
+                  try {
+                    const ex = await import('@/services/salesExport');
+                    const records = await ex.buildSaleRecords(filteredSales);
+                    const name = `vendas-${format(dateRange.start, 'yyyy-MM-dd')}_a_${format(dateRange.end, 'yyyy-MM-dd')}`;
+                    const sub = `Período: ${format(dateRange.start, 'dd/MM/yyyy')} a ${format(dateRange.end, 'dd/MM/yyyy')}`;
+                    if (fmtType === 'csv') ex.exportSalesCSV(records, name);
+                    else if (fmtType === 'xml') ex.exportSalesXML(records, name);
+                    else ex.exportSalesPDF(records, name, sub);
+                    toast.success(`${records.length} vendas exportadas`, { id: t });
+                  } catch (e: any) {
+                    toast.error('Erro ao exportar: ' + (e?.message || ''), { id: t });
+                  }
+                }}>
+                  {fmtType.toUpperCase()}
+                </Button>
+              ))}
+            </PopoverContent>
+          </Popover>
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="outline" className="gap-2"><FileText className="h-4 w-4" />Exportar clientes</Button>
@@ -580,6 +609,7 @@ const Sales = () => {
               ))}
             </PopoverContent>
           </Popover>
+          </div>
         </div>
 
         {/* KPIs */}

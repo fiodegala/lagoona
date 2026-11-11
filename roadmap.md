@@ -1,3 +1,4 @@
 - [ ] Mercado Livre: erro na planilha (aguardando mensagem de erro do usuário)
 - [ ] Exportar estoque completo para importar no Bling
 - [x] Orçamentos: opção visível para adicionar produtos nos detalhes e na edição
+- [x] Vendas: exportar vendas completas (itens, pagamentos, cliente) em CSV, XML ou PDF
