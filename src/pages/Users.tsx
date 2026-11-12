@@ -265,11 +265,15 @@ const UsersPage = () => {
 
       // Update full name if provided
       if (fullName !== undefined) {
-        const { error: profileError } = await supabase
+        const { data: updatedProfiles, error: profileError } = await supabase
           .from('profiles')
           .update({ full_name: fullName } as never)
-          .eq('user_id', userId);
+          .eq('user_id', userId)
+          .select('user_id');
         if (profileError) throw profileError;
+        if (!updatedProfiles || updatedProfiles.length === 0) {
+          throw new Error('Não foi possível salvar o nome deste usuário.');
+        }
       }
 
       // Delete all existing roles for this user, then insert the new one
