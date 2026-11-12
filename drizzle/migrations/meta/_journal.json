@@ -15,6 +15,13 @@
       "when": 1794504487768,
       "tag": "0001_cashback_proportional_min_purchase",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794505307814,
+      "tag": "0002_restrict_manual_videos_select_to_staff",
+      "breakpoints": true
     }
   ]
 }
