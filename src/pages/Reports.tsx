@@ -119,10 +119,10 @@ const Reports = () => {
 
   // Set default store for non-admin users
   useEffect(() => {
-    if (!isAdmin && !isManager && userStoreId && selectedStoreId === 'all') {
+    if (!isAdmin && userStoreId && selectedStoreId === 'all' && (!isManager || accessibleStoreIds.length > 1)) {
       setSelectedStoreId(userStoreId);
     }
-  }, [isAdmin, isManager, userStoreId]);
+  }, [isAdmin, isManager, userStoreId, accessibleStoreIds.length]);
 
   const showStoreSelector = isAdmin || accessibleStoreIds.length > 1;
   const activeStoreFilter = isAdmin ? (selectedStoreId === 'all' ? null : selectedStoreId) : (selectedStoreId === 'all' ? userStoreId : selectedStoreId);

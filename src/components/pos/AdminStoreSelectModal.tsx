@@ -15,9 +15,12 @@ interface StoreOption {
 interface AdminStoreSelectModalProps {
   open: boolean;
   onSelect: (storeId: string, storeName: string) => void;
+  /** Limita às lojas do gerente; sem isso mostra todas (admin). */
+  storeIds?: string[];
 }
 
-const AdminStoreSelectModal = ({ open, onSelect }: AdminStoreSelectModalProps) => {
+const AdminStoreSelectModal = ({ open, onSelect, storeIds }: AdminStoreSelectModalProps) => {
+  const storeKey = (storeIds || []).join(',');
   const [stores, setStores] = useState<StoreOption[]>([]);
   const [selected, setSelected] = useState<string>('');
   const [loading, setLoading] = useState(true);
@@ -26,15 +29,16 @@ const AdminStoreSelectModal = ({ open, onSelect }: AdminStoreSelectModalProps) =
     if (!open) return;
     (async () => {
       setLoading(true);
-      const { data } = await supabase
+      let q = supabase
         .from('stores')
         .select('id, name, type')
-        .in('type', ['physical', 'online'])
-        .order('name');
+        .in('type', ['physical', 'online']);
+      if (storeIds) q = q.in('id', storeIds);
+      const { data } = await q.order('name');
       setStores((data as StoreOption[]) || []);
       setLoading(false);
     })();
-  }, [open]);
+  }, [open, storeKey]);
 
   const handleConfirm = () => {
     const store = stores.find((s) => s.id === selected);
@@ -50,7 +54,7 @@ const AdminStoreSelectModal = ({ open, onSelect }: AdminStoreSelectModalProps) =
             Selecione a loja
           </DialogTitle>
           <DialogDescription>
-            Como administrador, escolha em qual loja física as vendas desta sessão do PDV serão registradas.
+            {storeIds ? 'Você gerencia mais de uma loja. Escolha' : 'Como administrador, escolha'} em qual loja as vendas desta sessão do PDV serão registradas.
           </DialogDescription>
         </DialogHeader>
 

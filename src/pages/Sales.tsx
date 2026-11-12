@@ -42,7 +42,8 @@ const paymentMethodLabels: Record<string, string> = {
 };
 
 const Sales = () => {
-  const { isAdmin, isManager, user, userStoreId, allowedMenus } = useAuth();
+  const { isAdmin, isManager, user, userStoreId, managedStoreIds, allowedMenus } = useAuth();
+  const isMultiStoreManager = !isAdmin && isManager && managedStoreIds.length > 1;
   const queryClient = useQueryClient();
   const canCancel = isAdmin || isManager || allowedMenus.includes('sales-manage');
   const [search, setSearch] = useState('');
@@ -146,7 +147,7 @@ const Sales = () => {
       if (error) throw error;
       return data;
     },
-    enabled: isAdmin,
+    enabled: isAdmin || isMultiStoreManager,
   });
 
   const getSaleOrigin = (sale: any) => sale?.payment_details?.sale_origin as 'online' | 'presencial' | undefined;
@@ -447,7 +448,7 @@ const Sales = () => {
   );
 
    const { data: sales = [], isLoading } = useQuery({
-    queryKey: ['pos-sales', dateRange.start.toISOString(), dateRange.end.toISOString(), isAdmin, isManager, userStoreId, user?.id],
+    queryKey: ['pos-sales', dateRange.start.toISOString(), dateRange.end.toISOString(), isAdmin, isManager, userStoreId, managedStoreIds.join(','), user?.id],
     queryFn: async () => {
       let query = supabase
         .from('pos_sales')
@@ -459,6 +460,8 @@ const Sales = () => {
       // Admin: vê tudo. Manager: vê a loja inteira. Vendedor: vê vendas registradas por ele OU atribuídas a ele.
       if (!isAdmin && !isManager && user?.id) {
         query = query.or(`user_id.eq.${user.id},seller_id.eq.${user.id}`);
+      } else if (!isAdmin && isMultiStoreManager) {
+        query = query.in('store_id', managedStoreIds);
       } else if (!isAdmin && userStoreId) {
         query = query.eq('store_id', userStoreId);
       }
@@ -680,6 +683,20 @@ const Sales = () => {
               <span className="text-muted-foreground">até</span>
               <Input type="date" value={customEnd} onChange={e => setCustomEnd(e.target.value)} className="w-[160px]" />
             </div>
+          )}
+          {isMultiStoreManager && (
+            <Select value={storeFilter} onValueChange={setStoreFilter}>
+              <SelectTrigger className="w-[180px]">
+                <Building2 className="h-4 w-4 mr-2" />
+                <SelectValue placeholder="Loja" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas as minhas lojas</SelectItem>
+                {stores.filter(store => managedStoreIds.includes(store.id)).map(store => (
+                  <SelectItem key={store.id} value={store.id}>{store.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           )}
           {isAdmin && (
             <>

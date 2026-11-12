@@ -30,6 +30,8 @@ interface AuthContextType {
   userStore: UserStore | null;
   userStoreId: string | null;
   accessibleStoreIds: string[];
+  /** Loja principal + lojas extras atribuídas (sem a loja 'website' automática). */
+  managedStoreIds: string[];
   isOnlineStore: boolean;
   isLoading: boolean;
   isAdmin: boolean;
@@ -61,6 +63,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [roles, setRoles] = useState<AppRole[]>([]);
   const [userStore, setUserStore] = useState<UserStore | null>(null);
   const [accessibleStoreIds, setAccessibleStoreIds] = useState<string[]>([]);
+  const [managedStoreIds, setManagedStoreIds] = useState<string[]>([]);
   const [allowedMenus, setAllowedMenus] = useState<string[]>([]);
   const [hasExplicitMenuPermissions, setHasExplicitMenuPermissions] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -102,34 +105,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (rolesData) {
         setRoles(rolesData.map(r => r.role as AppRole));
-        
-        // Fetch store info if user has a store_id
+
+        // Lojas extras (gerentes podem gerir mais de uma loja)
+        const { data: extraData } = await supabase
+          .from('user_extra_stores')
+          .select('store_id')
+          .eq('user_id', userId);
+        const extraIds = (extraData || []).map((r) => r.store_id as string);
+
         const storeId = rolesData[0]?.store_id;
-        if (storeId) {
-          const { data: storeData } = await supabase
+        const ownIds = [...new Set([storeId, ...extraIds].filter(Boolean) as string[])];
+        if (ownIds.length > 0) {
+          const { data: storesData } = await supabase
             .from('stores')
             .select('id, name, slug, type')
-            .eq('id', storeId)
-            .single();
-          
-          if (storeData) {
-            setUserStore(storeData as UserStore);
-            
-            // If user is from 'online' store, also include 'website' store
-            if (storeData.type === 'online') {
-              const { data: websiteStore } = await supabase
-                .from('stores')
-                .select('id')
-                .eq('type', 'website')
-                .maybeSingle();
-              setAccessibleStoreIds(websiteStore ? [storeId, websiteStore.id] : [storeId]);
-            } else {
-              setAccessibleStoreIds([storeId]);
-            }
+            .in('id', ownIds);
+          const list = (storesData || []) as UserStore[];
+          const primary = list.find((st) => st.id === storeId) || list[0] || null;
+          setUserStore(primary);
+
+          let accessible = primary ? [primary.id, ...ownIds.filter((id) => id !== primary.id)] : ownIds;
+          // Lojas 'online' também enxergam a loja 'website'
+          if (list.some((st) => st.type === 'online')) {
+            const { data: websiteStore } = await supabase
+              .from('stores')
+              .select('id')
+              .eq('type', 'website')
+              .maybeSingle();
+            if (websiteStore && !accessible.includes(websiteStore.id)) accessible = [...accessible, websiteStore.id];
           }
+          setAccessibleStoreIds(accessible);
+          setManagedStoreIds(primary ? [primary.id, ...ownIds.filter((id) => id !== primary.id)] : ownIds);
         } else {
           setUserStore(null);
           setAccessibleStoreIds([]);
+          setManagedStoreIds([]);
         }
       }
       setUserDataLoaded(true);
@@ -185,6 +195,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setAllowedMenus([]);
       setHasExplicitMenuPermissions(false);
       setAccessibleStoreIds([]);
+      setManagedStoreIds([]);
       setUserDataLoaded(false);
       setIsLoading(false);
         }
@@ -238,6 +249,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setRoles([]);
     setUserStore(null);
     setAccessibleStoreIds([]);
+    setManagedStoreIds([]);
     setAllowedMenus([]);
     setHasExplicitMenuPermissions(false);
     setUserDataLoaded(false);
@@ -268,6 +280,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         userStore,
         userStoreId,
         accessibleStoreIds,
+        managedStoreIds,
         isOnlineStore,
         isLoading: effectiveLoading,
         isAdmin,

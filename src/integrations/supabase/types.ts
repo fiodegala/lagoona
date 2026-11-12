@@ -3509,6 +3509,32 @@ export type Database = {
           },
         ]
       }
+      user_extra_stores: {
+        Row: {
+          created_at: string
+          store_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          store_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          store_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_extra_stores_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_favorites: {
         Row: {
           created_at: string
@@ -3891,6 +3917,7 @@ export type Database = {
         Returns: string[]
       }
       user_store_id: { Args: { _user_id: string }; Returns: string }
+      user_store_ids: { Args: { _user_id: string }; Returns: string[] }
     }
     Enums: {
       api_key_status: "active" | "revoked" | "expired"

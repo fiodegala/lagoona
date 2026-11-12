@@ -56,6 +56,7 @@ interface UserWithRole {
   role: AppRole;
   store_id: string | null;
   store_name?: string;
+  extra_store_ids: string[];
   created_at: string;
   profile?: {
     full_name: string;
@@ -94,6 +95,15 @@ const roleColors: Record<AppRole, string> = {
 const countOptionalMenus = (menus: string[] = []) =>
   stripAlwaysVisibleMenuKeys(menus).length;
 
+const saveExtraStores = async (userId: string, role: AppRole, primaryStoreId: string | null, extraIds: string[]) => {
+  const ids = role === 'manager' ? [...new Set(extraIds)].filter((id) => id && id !== primaryStoreId) : [];
+  const { error: delError } = await supabase.from('user_extra_stores').delete().eq('user_id', userId);
+  if (delError) throw delError;
+  if (ids.length === 0) return;
+  const { error } = await supabase.from('user_extra_stores').insert(ids.map((store_id) => ({ user_id: userId, store_id })));
+  if (error) throw error;
+};
+
 const UsersPage = () => {
   const { isAdmin, user } = useAuth();
   const { toast } = useToast();
@@ -110,6 +120,7 @@ const UsersPage = () => {
     fullName: '',
     role: 'seller' as AppRole,
     store_id: '' as string,
+    extra_store_ids: [] as string[],
     allowed_menus: normalizeAllowedMenuKeys([]) as string[],
   });
 
@@ -148,6 +159,10 @@ const UsersPage = () => {
 
       if (profilesError) throw profilesError;
 
+      const { data: extras } = await supabase.from('user_extra_stores').select('user_id, store_id');
+      const extrasMap = new Map<string, string[]>();
+      (extras || []).forEach((e) => extrasMap.set(e.user_id, [...(extrasMap.get(e.user_id) || []), e.store_id]));
+
       // Fetch emails via edge function
       let emailsMap: Record<string, string> = {};
       try {
@@ -173,6 +188,7 @@ const UsersPage = () => {
           role: role.role as AppRole,
           store_id: role.store_id || null,
           store_name: store?.name,
+          extra_store_ids: (extrasMap.get(role.user_id) || []).filter((id) => id !== role.store_id),
           created_at: role.created_at,
           profile: profile ? {
             full_name: profile.full_name,
@@ -223,6 +239,10 @@ const UsersPage = () => {
       }
       if (responseData?.error) throw new Error(responseData.error);
 
+      if (responseData?.user?.id && data.role === 'manager' && data.extra_store_ids.length > 0) {
+        await saveExtraStores(responseData.user.id, data.role, data.store_id || null, data.extra_store_ids);
+      }
+
       return responseData?.user;
     },
     onSuccess: () => {
@@ -240,7 +260,7 @@ const UsersPage = () => {
   });
 
   const updateRoleMutation = useMutation({
-    mutationFn: async ({ userId, role, store_id, allowed_menus, fullName }: { userId: string; role: AppRole; store_id: string | null; allowed_menus: string[]; fullName?: string }) => {
+    mutationFn: async ({ userId, role, store_id, extra_store_ids, allowed_menus, fullName }: { userId: string; role: AppRole; store_id: string | null; extra_store_ids: string[]; allowed_menus: string[]; fullName?: string }) => {
       const normalizedAllowedMenus = stripAlwaysVisibleMenuKeys(allowed_menus);
 
       // Update full name if provided
@@ -265,6 +285,8 @@ const UsersPage = () => {
         .insert({ user_id: userId, role, store_id } as never);
 
       if (insertError) throw insertError;
+
+      await saveExtraStores(userId, role, store_id, extra_store_ids);
 
       // Upsert menu permissions
       if (normalizedAllowedMenus.length === 0) {
@@ -302,6 +324,7 @@ const UsersPage = () => {
         .eq('user_id', userId);
 
       if (error) throw error;
+      await supabase.from('user_extra_stores').delete().eq('user_id', userId);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users-with-roles'] });
@@ -333,6 +356,7 @@ const UsersPage = () => {
         fullName: userRole.profile?.full_name || '',
         role: userRole.role,
         store_id: userRole.store_id || '',
+        extra_store_ids: userRole.role === 'manager' ? userRole.extra_store_ids : [],
         allowed_menus: normalizeAllowedMenuKeys((menuPerms?.allowed_menus as string[]) || []),
       });
     } else {
@@ -343,6 +367,7 @@ const UsersPage = () => {
         fullName: '',
         role: 'seller',
         store_id: '',
+        extra_store_ids: [],
         allowed_menus: normalizeAllowedMenuKeys([]),
       });
     }
@@ -359,6 +384,7 @@ const UsersPage = () => {
       fullName: '',
       role: 'seller',
       store_id: '',
+      extra_store_ids: [],
       allowed_menus: normalizeAllowedMenuKeys([]),
     });
   };
@@ -367,7 +393,11 @@ const UsersPage = () => {
     e.preventDefault();
     
     if (selectedUser) {
-      updateRoleMutation.mutate({ userId: selectedUser.user_id, role: formData.role, store_id: formData.store_id || null, allowed_menus: formData.allowed_menus, fullName: formData.fullName });
+      if (formData.role === 'manager' && !formData.store_id && formData.extra_store_ids.length > 0) {
+        toast({ title: 'Escolha a loja principal do gerente', variant: 'destructive' });
+        return;
+      }
+      updateRoleMutation.mutate({ userId: selectedUser.user_id, role: formData.role, store_id: formData.store_id || null, extra_store_ids: formData.extra_store_ids, allowed_menus: formData.allowed_menus, fullName: formData.fullName });
     } else {
       if (!formData.email || !formData.password || !formData.fullName) {
         toast({ title: 'Preencha todos os campos', variant: 'destructive' });
@@ -488,6 +518,11 @@ const UsersPage = () => {
                           <span className="text-sm">
                             {userRole.store_name || 'Todas'}
                           </span>
+                          {userRole.role === 'manager' && userRole.extra_store_ids.length > 0 && (
+                            <div className="text-xs text-muted-foreground">
+                              + {userRole.extra_store_ids.map((id) => stores.find((st) => st.id === id)?.name).filter(Boolean).join(', ')}
+                            </div>
+                          )}
                         </TableCell>
                         <TableCell>
                           <Badge className={roleColors[userRole.role]}>
@@ -697,7 +732,7 @@ const UsersPage = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="store">Loja *</Label>
+                <Label htmlFor="store">{formData.role === 'manager' ? 'Loja principal *' : 'Loja *'}</Label>
                 <Select
                   value={formData.store_id || (formData.role === 'admin' ? '__global__' : '')}
                   onValueChange={(value: string) => setFormData({ ...formData, store_id: value === '__global__' ? '' : value })}
@@ -722,6 +757,32 @@ const UsersPage = () => {
                   </p>
                 )}
               </div>
+
+              {formData.role === 'manager' && (
+                <div className="space-y-2">
+                  <Label>Outras lojas que este gerente administra</Label>
+                  <div className="grid sm:grid-cols-2 gap-2 rounded-md border p-3">
+                    {stores.filter((st) => st.id !== formData.store_id).map((st) => (
+                      <label key={st.id} className="flex items-center gap-2 text-sm">
+                        <Checkbox
+                          checked={formData.extra_store_ids.includes(st.id)}
+                          onCheckedChange={(c) => setFormData({
+                            ...formData,
+                            extra_store_ids: c
+                              ? [...formData.extra_store_ids, st.id]
+                              : formData.extra_store_ids.filter((id) => id !== st.id),
+                          })}
+                          aria-label={`Gerencia ${st.name}`}
+                        />
+                        {st.name}
+                      </label>
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    O gerente pode trocar entre essas lojas no Painel, em Vendas, nos Relatórios e no PDV.
+                  </p>
+                </div>
+              )}
 
               {/* Menu Permissions */}
               {formData.role !== 'admin' && (

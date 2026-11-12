@@ -55,7 +55,9 @@ const POSPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
-  const { userStoreId, isAdmin } = useAuth();
+  const { userStoreId, isAdmin, managedStoreIds } = useAuth();
+  // Gerentes com mais de uma loja escolhem a loja da sessão, como o admin.
+  const canPickStore = isAdmin || managedStoreIds.length > 1;
   const TIKTOK_SHOP_STORE_ID = '2e77df46-e984-4480-bb0c-a890ed57d7da';
 
   // Admin scope: when an admin opens the PDV they must pick a store for the session
@@ -68,8 +70,9 @@ const POSPage = () => {
     if (typeof window === 'undefined') return null;
     return window.sessionStorage.getItem(`${ADMIN_STORE_KEY}_name`);
   });
-  const effectiveStoreId = isAdmin ? (adminStoreId || userStoreId) : userStoreId;
-  const showAdminStorePicker = isAdmin && !adminStoreId;
+  const pickedStoreValid = !!adminStoreId && (isAdmin || managedStoreIds.includes(adminStoreId));
+  const effectiveStoreId = canPickStore ? ((pickedStoreValid ? adminStoreId : null) || userStoreId) : userStoreId;
+  const showAdminStorePicker = canPickStore && !pickedStoreValid;
 
   const handleAdminStorePicked = (storeId: string, storeName: string) => {
     setAdminStoreId(storeId);
@@ -913,7 +916,7 @@ const POSPage = () => {
     if (typeof window !== 'undefined') {
       window.sessionStorage.removeItem(POS_DRAFT_STORAGE_KEY);
       // Reset admin store choice so next session asks again
-      if (isAdmin) {
+      if (canPickStore) {
         window.sessionStorage.removeItem(ADMIN_STORE_KEY);
         window.sessionStorage.removeItem(`${ADMIN_STORE_KEY}_name`);
         setAdminStoreId(null);
@@ -947,13 +950,13 @@ const POSPage = () => {
         <DollarSign className="h-12 w-12 sm:h-16 sm:w-16 text-muted-foreground" />
         <h1 className="text-xl sm:text-2xl font-bold">Caixa Fechado</h1>
         <p className="text-muted-foreground text-center text-sm sm:text-base">Abra o caixa para iniciar as vendas</p>
-        {isAdmin && adminStoreName && (
+        {canPickStore && pickedStoreValid && adminStoreName && (
           <Badge variant="secondary" className="gap-1">Loja: {adminStoreName}</Badge>
         )}
         <Button size="lg" onClick={() => setOpenSessionModal(true)} disabled={showAdminStorePicker}>Abrir Caixa</Button>
         <Button variant="ghost" onClick={() => navigate('/admin')}>Voltar ao Admin</Button>
         <OpenSessionModal open={openSessionModal} onOpenChange={setOpenSessionModal} onConfirm={handleOpenSession} />
-        <AdminStoreSelectModal open={showAdminStorePicker} onSelect={handleAdminStorePicked} />
+        <AdminStoreSelectModal open={showAdminStorePicker} onSelect={handleAdminStorePicked} storeIds={isAdmin ? undefined : managedStoreIds} />
       </div>
     );
   }
@@ -1200,7 +1203,7 @@ const POSPage = () => {
         total={completedSaleTotal}
         onComplete={resetWizard}
       />
-      <AdminStoreSelectModal open={showAdminStorePicker} onSelect={handleAdminStorePicked} />
+      <AdminStoreSelectModal open={showAdminStorePicker} onSelect={handleAdminStorePicked} storeIds={isAdmin ? undefined : managedStoreIds} />
     </POSLayout>
   );
 };

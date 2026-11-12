@@ -46,7 +46,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { profile, roles, signOut, isAdmin, userStore, allowedMenus, hasExplicitMenuPermissions } = useAuth();
+  const { profile, roles, signOut, isAdmin, userStore, managedStoreIds, allowedMenus, hasExplicitMenuPermissions } = useAuth();
   const { unreadCount } = useChatUnread();
   const pinnedShortcutItems = [
     { icon: ClipboardList, label: 'Ordens de Serviço', path: '/admin/ordens-servico', menuKey: 'service-orders' },
@@ -215,7 +215,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
                 <div className="flex-1 text-left min-w-0">
                   <p className="text-sm font-medium truncate">{profile?.full_name || 'Usuário'}</p>
                   <p className="text-xs text-sidebar-foreground/60 truncate">
-                    {userStore?.name || 'Todas as lojas'} • <span className="capitalize">{roles[0] || 'Sem role'}</span>
+                    {userStore?.name || 'Todas as lojas'}{managedStoreIds.length > 1 ? ` +${managedStoreIds.length - 1}` : ''} • <span className="capitalize">{roles[0] || 'Sem role'}</span>
                   </p>
                 </div>
               )}
