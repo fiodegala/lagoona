@@ -2,3 +2,4 @@
 - [ ] Exportar estoque completo para importar no Bling
 - [x] Orçamentos: opção visível para adicionar produtos nos detalhes e na edição
 - [x] Vendas: exportar vendas completas (itens, pagamentos, cliente) em CSV, XML ou PDF
+- [x] Cashback: aviso automático no dia seguinte à venda para usuários escolhidos (regras configuráveis, lojas por usuário, até marcar enviado, só lembrete)

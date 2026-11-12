@@ -61,6 +61,7 @@ const CalendarPage = lazy(() => import("./pages/Calendar"));
 const SellerReconciliation = lazy(() => import("./pages/SellerReconciliation"));
 const PdvSiteReport = lazy(() => import("./pages/PdvSiteReport"));
 const ProductCosts = lazy(() => import("./pages/ProductCosts"));
+const CashbackReminders = lazy(() => import("./pages/CashbackReminders"));
 const CustomerPurchasesByProduct = lazy(() => import("./pages/CustomerPurchasesByProduct"));
 
 // Store pages temporarily redirected to the new address
@@ -296,6 +297,14 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <CustomerPurchasesByProduct />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/cashback"
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <CashbackReminders />
                   </ProtectedRoute>
                 }
               />

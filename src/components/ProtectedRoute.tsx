@@ -28,6 +28,7 @@ const routeToMenuKey: Record<string, string> = {
   '/admin/settings/api-keys': 'api-keys',
   '/admin/settings/api-docs': 'api-docs',
   '/admin/database-export': 'database-export',
+  '/admin/cashback': 'cashback',
 };
 
 interface ProtectedRouteProps {

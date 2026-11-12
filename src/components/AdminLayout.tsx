@@ -22,6 +22,7 @@ import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import PendingTransferModal from '@/components/PendingTransferModal';
 import AnnouncementPopup from '@/components/AnnouncementPopup';
+import CashbackReminderPopup from '@/components/CashbackReminderPopup';
 import GlobalNotificationPopups from '@/components/GlobalNotificationPopups';
 import FloatingChatWidget from '@/components/FloatingChatWidget';
 import { useChatUnread } from '@/hooks/useChatUnread';
@@ -288,6 +289,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
       {/* Forced modal for pending transfers targeting this user's store */}
       <PendingTransferModal />
       <AnnouncementPopup />
+      <CashbackReminderPopup />
       <FloatingChatWidget />
     </div>
   );

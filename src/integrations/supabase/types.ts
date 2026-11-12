@@ -621,6 +621,149 @@ export type Database = {
         }
         Relationships: []
       }
+      cashback_reminders: {
+        Row: {
+          cashback_percent: number
+          cashback_value: number
+          created_at: string
+          customer_document: string | null
+          customer_id: string | null
+          customer_name: string | null
+          customer_phone: string | null
+          expires_at: string
+          id: string
+          items: Json
+          min_use_value: number
+          sale_date: string
+          sale_id: string
+          sale_total: number
+          seller_id: string | null
+          sent_at: string | null
+          sent_by: string | null
+          status: string
+          store_id: string | null
+          store_name: string | null
+          updated_at: string
+        }
+        Insert: {
+          cashback_percent?: number
+          cashback_value?: number
+          created_at?: string
+          customer_document?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          expires_at: string
+          id?: string
+          items?: Json
+          min_use_value?: number
+          sale_date: string
+          sale_id: string
+          sale_total?: number
+          seller_id?: string | null
+          sent_at?: string | null
+          sent_by?: string | null
+          status?: string
+          store_id?: string | null
+          store_name?: string | null
+          updated_at?: string
+        }
+        Update: {
+          cashback_percent?: number
+          cashback_value?: number
+          created_at?: string
+          customer_document?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          expires_at?: string
+          id?: string
+          items?: Json
+          min_use_value?: number
+          sale_date?: string
+          sale_id?: string
+          sale_total?: number
+          seller_id?: string | null
+          sent_at?: string | null
+          sent_by?: string | null
+          status?: string
+          store_id?: string | null
+          store_name?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cashback_reminders_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: true
+            referencedRelation: "pos_sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cashback_settings: {
+        Row: {
+          enabled: boolean
+          id: number
+          message_template: string
+          min_sale_value: number
+          min_use_value: number
+          percent: number
+          sale_types: string[]
+          updated_at: string
+          updated_by: string | null
+          validity_days: number
+        }
+        Insert: {
+          enabled?: boolean
+          id?: number
+          message_template?: string
+          min_sale_value?: number
+          min_use_value?: number
+          percent?: number
+          sale_types?: string[]
+          updated_at?: string
+          updated_by?: string | null
+          validity_days?: number
+        }
+        Update: {
+          enabled?: boolean
+          id?: number
+          message_template?: string
+          min_sale_value?: number
+          min_use_value?: number
+          percent?: number
+          sale_types?: string[]
+          updated_at?: string
+          updated_by?: string | null
+          validity_days?: number
+        }
+        Relationships: []
+      }
+      cashback_viewers: {
+        Row: {
+          all_stores: boolean
+          created_at: string
+          store_ids: string[]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          all_stores?: boolean
+          created_at?: string
+          store_ids?: string[]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          all_stores?: boolean
+          created_at?: string
+          store_ids?: string[]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       categories: {
         Row: {
           created_at: string
@@ -3666,6 +3809,10 @@ export type Database = {
       can_manage_products: { Args: { _user_id: string }; Returns: boolean }
       can_manage_sales: { Args: { _user_id: string }; Returns: boolean }
       can_manage_users: { Args: { _user_id: string }; Returns: boolean }
+      can_view_cashback_store: {
+        Args: { _store_id: string; _user_id: string }
+        Returns: boolean
+      }
       cleanup_old_nonces: { Args: never; Returns: undefined }
       deduct_sale_stock: {
         Args: { _items: Json; _store_id: string }
@@ -3717,6 +3864,14 @@ export type Database = {
       process_stock_transfer: {
         Args: { _action: string; _transfer_id: string; _user_id: string }
         Returns: Json
+      }
+      set_cashback_reminder_status: {
+        Args: { _reminder_id: string; _status: string }
+        Returns: undefined
+      }
+      upsert_cashback_reminder: {
+        Args: { _sale_id: string }
+        Returns: undefined
       }
       user_accessible_store_ids: {
         Args: { _user_id: string }

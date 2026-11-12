@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1794503910938,
+      "tag": "0000_cashback_reminders",
+      "breakpoints": true
+    }
+  ]
+}
