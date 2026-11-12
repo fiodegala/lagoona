@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Gift, Loader2, MessageCircle, Check, RotateCcw, Save, Search } from 'lucide-react';
+import { Gift, Loader2, MessageCircle, Check, RotateCcw, Save, Search, Eye } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import CashbackReminderView from '@/components/CashbackReminderView';
 import { toast } from 'sonner';
 import AdminLayout from '@/components/AdminLayout';
 import { supabase } from '@/integrations/supabase/client';
@@ -64,6 +66,15 @@ const RemindersTab = () => {
   const [status, setStatus] = useState('pending');
   const [storeId, setStoreId] = useState('all');
   const [search, setSearch] = useState('');
+  const [preview, setPreview] = useState<CashbackReminder | null>(null);
+  const [previewMessage, setPreviewMessage] = useState('');
+  const [previewSaving, setPreviewSaving] = useState(false);
+  const template = settings?.message_template || DEFAULT_CASHBACK_TEMPLATE;
+
+  const openPreview = (r: CashbackReminder) => {
+    setPreview(r);
+    setPreviewMessage(buildCashbackMessage(template, r));
+  };
 
   const { data: reminders = [], isLoading } = useQuery({
     queryKey: ['cashback-reminders-admin', status, storeId],
@@ -94,10 +105,19 @@ const RemindersTab = () => {
 
   const setReminderStatus = async (r: CashbackReminder, next: 'sent' | 'pending') => {
     const { error } = await supabase.rpc('set_cashback_reminder_status', { _reminder_id: r.id, _status: next });
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return false; }
     toast.success(next === 'sent' ? 'Marcado como enviado' : 'Aviso reaberto');
     queryClient.invalidateQueries({ queryKey: ['cashback-reminders-admin'] });
     queryClient.invalidateQueries({ queryKey: ['cashback-due-reminders'] });
+    return true;
+  };
+
+  const markPreviewSent = async () => {
+    if (!preview) return;
+    setPreviewSaving(true);
+    const ok = await setReminderStatus(preview, 'sent');
+    setPreviewSaving(false);
+    if (ok) setPreview(null);
   };
 
   return (
@@ -132,7 +152,7 @@ const RemindersTab = () => {
           </Select>
         </div>
         <p className="text-sm text-muted-foreground">
-          {totals.count} aviso(s) • {formatBRL(totals.cashback)} em cashback
+          Clique no cliente para ver como o pop-up vai aparecer. • {totals.count} aviso(s) • {formatBRL(totals.cashback)} em cashback
         </p>
 
         {isLoading ? (
@@ -157,9 +177,9 @@ const RemindersTab = () => {
                   <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">Nenhum aviso encontrado.</TableCell></TableRow>
                 )}
                 {filtered.map((r) => {
-                  const link = whatsappLink(r.customer_phone, buildCashbackMessage(settings?.message_template || DEFAULT_CASHBACK_TEMPLATE, r));
+                  const link = whatsappLink(r.customer_phone, buildCashbackMessage(template, r));
                   return (
-                    <TableRow key={r.id}>
+                    <TableRow key={r.id} className="cursor-pointer" onClick={() => openPreview(r)} title="Ver como fica o pop-up">
                       <TableCell className="whitespace-nowrap">{formatDateBR(r.sale_date)}</TableCell>
                       <TableCell>
                         <div className="font-medium">{r.customer_name}</div>
@@ -175,8 +195,11 @@ const RemindersTab = () => {
                         </Badge>
                         {r.sent_at && <div className="text-xs text-muted-foreground mt-0.5">{formatDateBR(r.sent_at)}</div>}
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                         <div className="flex justify-end gap-1">
+                          <Button size="icon" variant="ghost" onClick={() => openPreview(r)} title="Ver pop-up" aria-label={`Ver pop-up de ${r.customer_name}`}>
+                            <Eye className="h-4 w-4" />
+                          </Button>
                           {link && r.status !== 'cancelled' && (
                             <Button size="icon" variant="ghost" asChild title="Abrir WhatsApp">
                               <a href={link} target="_blank" rel="noopener noreferrer"><MessageCircle className="h-4 w-4" /></a>
@@ -202,6 +225,41 @@ const RemindersTab = () => {
           </div>
         )}
       </CardContent>
+
+      <Dialog open={!!preview} onOpenChange={(v) => { if (!v) setPreview(null); }}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          {preview && (
+            <>
+              <div className="-mt-2 mb-1 rounded-md border border-dashed bg-muted/40 px-3 py-1.5 text-xs text-muted-foreground text-center">
+                Pré-visualização • é assim que o aviso aparece para quem recebe
+                {preview.status !== 'pending' && <> • este aviso está <strong>{STATUS_LABEL[preview.status]?.toLowerCase()}</strong></>}
+              </div>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <Gift className="h-5 w-5 text-primary" />
+                  Cashback para avisar no WhatsApp
+                </DialogTitle>
+                <DialogDescription>1 cliente para avisar</DialogDescription>
+              </DialogHeader>
+              <CashbackReminderView
+                reminder={preview}
+                message={previewMessage}
+                onMessageChange={setPreviewMessage}
+                onMarkSent={preview.status === 'pending' ? markPreviewSent : undefined}
+                saving={previewSaving}
+                footer={
+                  <div className="flex justify-between">
+                    <Button variant="ghost" size="sm" onClick={() => setPreviewMessage(buildCashbackMessage(template, preview))}>
+                      <RotateCcw className="h-4 w-4 mr-1" /> Restaurar mensagem
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => setPreview(null)}>Fechar</Button>
+                  </div>
+                }
+              />
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };

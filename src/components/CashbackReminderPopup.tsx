@@ -4,19 +4,15 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
-import { Gift, MessageCircle, Check, ChevronRight, Clock } from 'lucide-react';
+import { Gift, ChevronRight, Clock } from 'lucide-react';
+import CashbackReminderView from '@/components/CashbackReminderView';
 import { toast } from 'sonner';
 import {
   buildCashbackMessage,
   DEFAULT_CASHBACK_TEMPLATE,
-  formatBRL,
-  formatDateBR,
   isReminderDue,
   spDateKey,
   spStartOfTodayISO,
-  whatsappLink,
   type CashbackReminder,
 } from '@/lib/cashback';
 
@@ -84,8 +80,6 @@ const CashbackReminderPopup = () => {
 
   if (!open || !current) return null;
 
-  const waLink = whatsappLink(current.customer_phone, message);
-
   const remindLater = () => {
     sessionStorage.setItem(SNOOZE_KEY, '1');
     setOpen(false);
@@ -122,82 +116,25 @@ const CashbackReminderPopup = () => {
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
-          <div className="rounded-lg border bg-muted/40 p-3 space-y-1">
-            <p className="font-semibold text-base">{current.customer_name}</p>
-            <div className="text-sm text-muted-foreground space-y-0.5">
-              <p>WhatsApp: {current.customer_phone || <span className="text-destructive">sem telefone cadastrado</span>}</p>
-              {current.customer_document && <p>CPF/CNPJ: {current.customer_document}</p>}
-              <p>Comprou em {formatDateBR(current.sale_date)} na loja <strong className="text-foreground">{current.store_name || '—'}</strong></p>
-            </div>
-          </div>
-
-          {current.items?.length > 0 && (
-            <div className="space-y-1">
-              <p className="text-sm font-medium">Peças</p>
-              <ul className="text-sm divide-y rounded-lg border max-h-40 overflow-y-auto">
-                {current.items.map((it, i) => (
-                  <li key={i} className="flex justify-between gap-3 px-3 py-1.5">
-                    <span className="min-w-0">{it.quantity}x {it.name}</span>
-                    <span className="whitespace-nowrap text-muted-foreground">{formatBRL(it.total)}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          <div className="grid grid-cols-2 gap-2 text-sm">
-            <div className="rounded-lg border p-2">
-              <p className="text-muted-foreground text-xs">Valor da compra</p>
-              <p className="font-semibold">{formatBRL(current.sale_total)}</p>
-            </div>
-            <div className="rounded-lg border border-primary/40 bg-primary/10 p-2">
-              <p className="text-muted-foreground text-xs">Cashback ({Number(current.cashback_percent)}%)</p>
-              <p className="font-bold text-primary">{formatBRL(current.cashback_value)}</p>
-            </div>
-            <div className="rounded-lg border p-2">
-              <p className="text-muted-foreground text-xs">Compra mínima seguinte</p>
-              <p className="font-semibold">{formatBRL(current.min_use_value)}</p>
-            </div>
-            <div className="rounded-lg border p-2">
-              <p className="text-muted-foreground text-xs">Válido até</p>
-              <p className="font-semibold">{formatDateBR(current.expires_at)}</p>
-            </div>
-          </div>
-
-          <div className="space-y-1">
-            <p className="text-sm font-medium">Mensagem</p>
-            <Textarea value={message} onChange={(e) => setMessage(e.target.value)} rows={5} className="text-sm" />
-          </div>
-
-          <div className="flex flex-col sm:flex-row gap-2">
-            <Button className="flex-1" disabled={!waLink} asChild={!!waLink}>
-              {waLink ? (
-                <a href={waLink} target="_blank" rel="noopener noreferrer">
-                  <MessageCircle className="h-4 w-4 mr-2" /> Abrir WhatsApp
-                </a>
-              ) : (
-                <span><MessageCircle className="h-4 w-4 mr-2 inline" /> Sem WhatsApp</span>
-              )}
-            </Button>
-            <Button variant="secondary" className="flex-1" onClick={markSent} disabled={saving}>
-              <Check className="h-4 w-4 mr-2" /> Mensagem enviada
-            </Button>
-          </div>
-          <div className="flex justify-between">
-            <Button variant="ghost" size="sm" onClick={remindLater}>
-              <Clock className="h-4 w-4 mr-1" /> Lembrar depois
-            </Button>
-            {queue.length > 1 && (
-              <Button variant="ghost" size="sm" onClick={skip}>
-                Próximo <ChevronRight className="h-4 w-4 ml-1" />
+        <CashbackReminderView
+          reminder={current}
+          message={message}
+          onMessageChange={setMessage}
+          onMarkSent={markSent}
+          saving={saving}
+          footer={
+            <div className="flex justify-between">
+              <Button variant="ghost" size="sm" onClick={remindLater}>
+                <Clock className="h-4 w-4 mr-1" /> Lembrar depois
               </Button>
-            )}
-          </div>
-          <p className="text-xs text-center text-muted-foreground">
-            O aviso continua aparecendo até alguém marcar <Badge variant="outline" className="text-[10px]">Mensagem enviada</Badge>
-          </p>
-        </div>
+              {queue.length > 1 && (
+                <Button variant="ghost" size="sm" onClick={skip}>
+                  Próximo <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
+              )}
+            </div>
+          }
+        />
       </DialogContent>
     </Dialog>
   );
