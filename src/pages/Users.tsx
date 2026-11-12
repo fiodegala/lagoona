@@ -361,7 +361,15 @@ const UsersPage = () => {
         role: userRole.role,
         store_id: userRole.store_id || '',
         extra_store_ids: userRole.role === 'manager' ? (userRole.extra_store_ids ?? []) : [],
-        allowed_menus: normalizeAllowedMenuKeys((menuPerms?.allowed_menus as string[]) || []),
+        // Sem permissões salvas, o usuário vê todos os menus padrão do cargo; o formulário mostra isso marcado
+        // para que salvar não apague o acesso que ele já tinha.
+        allowed_menus: normalizeAllowedMenuKeys(
+          menuPerms
+            ? ((menuPerms.allowed_menus as string[]) || [])
+            : userRole.role === 'admin'
+              ? []
+              : allMenuItems.filter((item) => !item.requireAdmin).map((item) => item.menuKey),
+        ),
       });
     } else {
       setSelectedUser(null);
