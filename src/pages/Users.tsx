@@ -9,7 +9,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { allMenuItems, isAlwaysVisibleMenu, normalizeAllowedMenuKeys, stripAlwaysVisibleMenuKeys } from '@/config/menuItems';
 import {
   Table,
@@ -577,7 +576,7 @@ const UsersPage = () => {
 
       {/* Create/Edit User Dialog */}
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <DialogContent className="max-h-[90vh] flex flex-col">
+        <DialogContent className="max-h-[90vh] sm:max-w-2xl flex flex-col">
           <DialogHeader className="shrink-0">
             <DialogTitle>
               {selectedUser ? 'Editar Permissão' : 'Novo Usuário'}
@@ -589,7 +588,7 @@ const UsersPage = () => {
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="flex flex-col min-h-0 flex-1">
-            <ScrollArea className="flex-1 min-h-0 pr-3">
+            <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain pr-3">
             <div className="grid gap-4 py-4">
               {!selectedUser && (
                 <>
@@ -823,8 +822,8 @@ const UsersPage = () => {
                   <p className="text-xs text-muted-foreground">
                     Selecione quais páginas este usuário poderá acessar. <strong>Manual</strong>, <strong>Ordens de Serviço</strong> e <strong>Comunicados</strong> são obrigatórios e sempre visíveis.
                   </p>
-                  <ScrollArea className="h-[200px] rounded-md border p-3">
-                    <div className="grid gap-2">
+                  <div className="rounded-md border p-3">
+                    <div className="grid sm:grid-cols-2 gap-x-3 gap-y-1">
                       {allMenuItems.map((item) => (
                         <label key={item.menuKey} className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 rounded px-2 py-1">
                           <Checkbox
@@ -848,7 +847,7 @@ const UsersPage = () => {
                         </label>
                       ))}
                     </div>
-                  </ScrollArea>
+                  </div>
                 </div>
               )}
 
@@ -872,7 +871,7 @@ const UsersPage = () => {
                 </div>
               </div>
             </div>
-            </ScrollArea>
+            </div>
             <DialogFooter className="shrink-0 pt-4">
               <Button type="button" variant="outline" onClick={handleCloseForm}>
                 Cancelar
