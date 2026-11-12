@@ -156,7 +156,7 @@ const CashbackReminderPopup = () => {
               <p className="font-bold text-primary">{formatBRL(current.cashback_value)}</p>
             </div>
             <div className="rounded-lg border p-2">
-              <p className="text-muted-foreground text-xs">Para compras acima de</p>
+              <p className="text-muted-foreground text-xs">Compra mínima seguinte</p>
               <p className="font-semibold">{formatBRL(current.min_use_value)}</p>
             </div>
             <div className="rounded-lg border p-2">

@@ -633,6 +633,7 @@ export type Database = {
           expires_at: string
           id: string
           items: Json
+          max_cover_percent: number | null
           min_use_value: number
           sale_date: string
           sale_id: string
@@ -656,6 +657,7 @@ export type Database = {
           expires_at: string
           id?: string
           items?: Json
+          max_cover_percent?: number | null
           min_use_value?: number
           sale_date: string
           sale_id: string
@@ -679,6 +681,7 @@ export type Database = {
           expires_at?: string
           id?: string
           items?: Json
+          max_cover_percent?: number | null
           min_use_value?: number
           sale_date?: string
           sale_id?: string
@@ -705,8 +708,10 @@ export type Database = {
         Row: {
           enabled: boolean
           id: number
+          max_cover_percent: number
           message_template: string
           min_sale_value: number
+          min_use_mode: string
           min_use_value: number
           percent: number
           sale_types: string[]
@@ -717,8 +722,10 @@ export type Database = {
         Insert: {
           enabled?: boolean
           id?: number
+          max_cover_percent?: number
           message_template?: string
           min_sale_value?: number
+          min_use_mode?: string
           min_use_value?: number
           percent?: number
           sale_types?: string[]
@@ -729,8 +736,10 @@ export type Database = {
         Update: {
           enabled?: boolean
           id?: number
+          max_cover_percent?: number
           message_template?: string
           min_sale_value?: number
+          min_use_mode?: string
           min_use_value?: number
           percent?: number
           sale_types?: string[]
@@ -3812,6 +3821,10 @@ export type Database = {
       can_view_cashback_store: {
         Args: { _store_id: string; _user_id: string }
         Returns: boolean
+      }
+      cashback_min_next_purchase: {
+        Args: { _cashback: number; _cover_percent: number }
+        Returns: number
       }
       cleanup_old_nonces: { Args: never; Returns: undefined }
       deduct_sale_stock: {

@@ -33,7 +33,7 @@ export interface CashbackReminder {
 }
 
 export const DEFAULT_CASHBACK_TEMPLATE =
-  'Olá, {nome}! Tudo bem? Aqui é da Fio de Gala 💛\nNa sua compra de {data_compra} na loja {loja}, no valor de {valor_compra}, você ganhou {cashback} de cashback para usar em compras acima de {compra_minima}.\nSeu cashback vale até {validade}. Esperamos você!';
+  'Olá, {nome}! Tudo bem? Aqui é da Fio de Gala 💛\nNa sua compra de {data_compra} na loja {loja}, no valor de {valor_compra}, você ganhou {cashback} de cashback para usar em compras a partir de {compra_minima}.\nSeu cashback vale até {validade}. Esperamos você!';
 
 const SP_OFFSET_MS = 3 * 60 * 60 * 1000;
 
@@ -96,3 +96,14 @@ export const whatsappLink = (phone: string | null | undefined, message: string) 
   if (!p) return null;
   return `https://wa.me/${p}?text=${encodeURIComponent(message)}`;
 };
+
+/** Valor do cashback: percentual da compra, em centavos. */
+export const cashbackValue = (saleTotal: number, percent: number) =>
+  Math.round(saleTotal * percent) / 100;
+
+/**
+ * Compra mínima seguinte no modo proporcional: o cashback cobre no máximo `coverPercent`% da próxima compra,
+ * arredondado para cima em reais inteiros (mesma conta do banco, cashback_min_next_purchase).
+ */
+export const cashbackMinNextPurchase = (cashback: number, coverPercent: number) =>
+  Math.ceil(Math.round((cashback * 100 / coverPercent) * 1e6) / 1e6);

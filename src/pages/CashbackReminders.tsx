@@ -22,6 +22,8 @@ import {
   formatBRL,
   formatDateBR,
   whatsappLink,
+  cashbackValue,
+  cashbackMinNextPurchase,
   type CashbackReminder,
 } from '@/lib/cashback';
 
@@ -211,7 +213,8 @@ const RulesTab = () => {
   const { data: settings, isLoading } = useTemplate();
   const [form, setForm] = useState({
     enabled: true, percent: '10', min_sale_value: '0', min_use_value: '150', validity_days: '30',
-    sale_types: ['varejo', 'atacado', 'exclusivo'] as string[], message_template: DEFAULT_CASHBACK_TEMPLATE,
+    min_use_mode: 'proportional', max_cover_percent: '15',
+    sale_types: ['varejo'] as string[], message_template: DEFAULT_CASHBACK_TEMPLATE,
   });
   const [saving, setSaving] = useState(false);
 
@@ -222,6 +225,8 @@ const RulesTab = () => {
       percent: String(settings.percent),
       min_sale_value: String(settings.min_sale_value),
       min_use_value: String(settings.min_use_value),
+      min_use_mode: settings.min_use_mode,
+      max_cover_percent: String(settings.max_cover_percent),
       validity_days: String(settings.validity_days),
       sale_types: settings.sale_types || [],
       message_template: settings.message_template,
@@ -234,6 +239,8 @@ const RulesTab = () => {
     const percent = toNum(form.percent);
     const minSale = toNum(form.min_sale_value);
     const minUse = toNum(form.min_use_value);
+    const cover = toNum(form.max_cover_percent);
+    if (form.min_use_mode === 'proportional' && !(cover > 0 && cover <= 100)) return toast.error('O limite da próxima compra precisa ficar entre 0 e 100%.');
     const days = Math.round(toNum(form.validity_days));
     if (!(percent > 0 && percent <= 100)) return toast.error('O percentual precisa ficar entre 0 e 100.');
     if (!(minSale >= 0) || !(minUse >= 0)) return toast.error('Valores mínimos inválidos.');
@@ -241,7 +248,7 @@ const RulesTab = () => {
     if (form.sale_types.length === 0) return toast.error('Escolha pelo menos uma modalidade.');
     setSaving(true);
     const { error } = await supabase.from('cashback_settings').upsert({
-      id: 1, enabled: form.enabled, percent, min_sale_value: minSale, min_use_value: minUse, validity_days: days,
+      id: 1, enabled: form.enabled, percent, min_sale_value: minSale, min_use_value: minUse, min_use_mode: form.min_use_mode, max_cover_percent: form.min_use_mode === 'proportional' ? cover : (settings?.max_cover_percent ?? 15), validity_days: days,
       sale_types: form.sale_types, message_template: form.message_template || DEFAULT_CASHBACK_TEMPLATE,
       updated_at: new Date().toISOString(), updated_by: user?.id ?? null,
     });
@@ -255,6 +262,10 @@ const RulesTab = () => {
   if (isLoading) return <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin" /></div>;
 
   const pct = toNum(form.percent) || 0;
+  const exampleCash = cashbackValue(1000, pct);
+  const exampleMin = form.min_use_mode === 'proportional'
+    ? cashbackMinNextPurchase(exampleCash, toNum(form.max_cover_percent) || 15)
+    : toNum(form.min_use_value);
 
   return (
     <Card>
@@ -279,8 +290,26 @@ const RulesTab = () => {
             <Input inputMode="numeric" value={form.validity_days} onChange={(e) => setForm({ ...form, validity_days: e.target.value })} />
           </div>
           <div className="space-y-1.5">
-            <Label>Usar em compras acima de (R$)</Label>
-            <Input inputMode="decimal" value={form.min_use_value} onChange={(e) => setForm({ ...form, min_use_value: e.target.value })} />
+            <Label>Compra mínima para usar o cashback</Label>
+            <Select value={form.min_use_mode} onValueChange={(v) => setForm({ ...form, min_use_mode: v })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="proportional">Proporcional ao cashback</SelectItem>
+                <SelectItem value="fixed">Valor fixo</SelectItem>
+              </SelectContent>
+            </Select>
+            {form.min_use_mode === 'proportional' ? (
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">O cashback cobre no máximo (% da próxima compra)</Label>
+                <Input inputMode="decimal" value={form.max_cover_percent} onChange={(e) => setForm({ ...form, max_cover_percent: e.target.value })} />
+                <p className="text-xs text-muted-foreground">Arredondado para cima em reais inteiros.</p>
+              </div>
+            ) : (
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Usar em compras acima de (R$)</Label>
+                <Input inputMode="decimal" value={form.min_use_value} onChange={(e) => setForm({ ...form, min_use_value: e.target.value })} />
+              </div>
+            )}
           </div>
           <div className="space-y-1.5">
             <Label>Compra mínima para gerar (R$)</Label>
@@ -314,7 +343,7 @@ const RulesTab = () => {
           </p>
         </div>
         <div className="rounded-lg border bg-muted/40 p-3 text-sm">
-          Exemplo: uma compra de {formatBRL(1000)} gera {formatBRL(1000 * pct / 100)} de cashback, para usar em compras acima de {formatBRL(toNum(form.min_use_value))}, válido por {form.validity_days} dias.
+          Exemplo: uma compra de {formatBRL(1000)} gera {formatBRL(exampleCash)} de cashback, para usar em compras a partir de {formatBRL(exampleMin)}, válido por {form.validity_days} dias.
         </div>
         <Button onClick={save} disabled={saving}>
           {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}

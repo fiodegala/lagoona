@@ -44,3 +44,18 @@ describe('normalizeWhatsappPhone', () => {
     expect(normalizeWhatsappPhone('98187')).toBeNull();
   });
 });
+
+import { cashbackValue, cashbackMinNextPurchase } from './cashback';
+
+describe('tabela Fio de Gala | Cashback varejo (10%, cobre até 15% da próxima compra)', () => {
+  const tabela: Array<[number, number, number]> = [
+    [100, 10, 67], [200, 20, 134], [300, 30, 200], [400, 40, 267], [500, 50, 334],
+    [600, 60, 400], [700, 70, 467], [900, 90, 600], [1000, 100, 667], [1500, 150, 1000],
+    [1600, 160, 1067], [2000, 200, 1334], [2900, 290, 1934], [3000, 300, 2000],
+  ];
+  it.each(tabela)('compra de R$ %i gera R$ %i e exige compra mínima de R$ %i', (compra, cashback, minima) => {
+    const cb = cashbackValue(compra, 10);
+    expect(cb).toBe(cashback);
+    expect(cashbackMinNextPurchase(cb, 15)).toBe(minima);
+  });
+});
