@@ -239,8 +239,8 @@ const UsersPage = () => {
       }
       if (responseData?.error) throw new Error(responseData.error);
 
-      if (responseData?.user?.id && data.role === 'manager' && data.extra_store_ids.length > 0) {
-        await saveExtraStores(responseData.user.id, data.role, data.store_id || null, data.extra_store_ids);
+      if (responseData?.user?.id && data.role === 'manager' && (data.extra_store_ids?.length ?? 0) > 0) {
+        await saveExtraStores(responseData.user.id, data.role, data.store_id || null, data.extra_store_ids ?? []);
       }
 
       return responseData?.user;
@@ -356,7 +356,7 @@ const UsersPage = () => {
         fullName: userRole.profile?.full_name || '',
         role: userRole.role,
         store_id: userRole.store_id || '',
-        extra_store_ids: userRole.role === 'manager' ? userRole.extra_store_ids : [],
+        extra_store_ids: userRole.role === 'manager' ? (userRole.extra_store_ids ?? []) : [],
         allowed_menus: normalizeAllowedMenuKeys((menuPerms?.allowed_menus as string[]) || []),
       });
     } else {
@@ -393,11 +393,11 @@ const UsersPage = () => {
     e.preventDefault();
     
     if (selectedUser) {
-      if (formData.role === 'manager' && !formData.store_id && formData.extra_store_ids.length > 0) {
+      if (formData.role === 'manager' && !formData.store_id && (formData.extra_store_ids?.length ?? 0) > 0) {
         toast({ title: 'Escolha a loja principal do gerente', variant: 'destructive' });
         return;
       }
-      updateRoleMutation.mutate({ userId: selectedUser.user_id, role: formData.role, store_id: formData.store_id || null, extra_store_ids: formData.extra_store_ids, allowed_menus: formData.allowed_menus, fullName: formData.fullName });
+      updateRoleMutation.mutate({ userId: selectedUser.user_id, role: formData.role, store_id: formData.store_id || null, extra_store_ids: formData.extra_store_ids ?? [], allowed_menus: formData.allowed_menus, fullName: formData.fullName });
     } else {
       if (!formData.email || !formData.password || !formData.fullName) {
         toast({ title: 'Preencha todos os campos', variant: 'destructive' });
@@ -518,9 +518,9 @@ const UsersPage = () => {
                           <span className="text-sm">
                             {userRole.store_name || 'Todas'}
                           </span>
-                          {userRole.role === 'manager' && userRole.extra_store_ids.length > 0 && (
+                          {userRole.role === 'manager' && (userRole.extra_store_ids?.length ?? 0) > 0 && (
                             <div className="text-xs text-muted-foreground">
-                              + {userRole.extra_store_ids.map((id) => stores.find((st) => st.id === id)?.name).filter(Boolean).join(', ')}
+                              + {(userRole.extra_store_ids ?? []).map((id) => stores.find((st) => st.id === id)?.name).filter(Boolean).join(', ')}
                             </div>
                           )}
                         </TableCell>
@@ -765,12 +765,12 @@ const UsersPage = () => {
                     {stores.filter((st) => st.id !== formData.store_id).map((st) => (
                       <label key={st.id} className="flex items-center gap-2 text-sm">
                         <Checkbox
-                          checked={formData.extra_store_ids.includes(st.id)}
+                          checked={(formData.extra_store_ids ?? []).includes(st.id)}
                           onCheckedChange={(c) => setFormData({
                             ...formData,
                             extra_store_ids: c
-                              ? [...formData.extra_store_ids, st.id]
-                              : formData.extra_store_ids.filter((id) => id !== st.id),
+                              ? [...(formData.extra_store_ids ?? []), st.id]
+                              : (formData.extra_store_ids ?? []).filter((id) => id !== st.id),
                           })}
                           aria-label={`Gerencia ${st.name}`}
                         />
