@@ -61,6 +61,16 @@ const useTemplate = () =>
 /* ---------------- Avisos ---------------- */
 const RemindersTab = () => {
   const queryClient = useQueryClient();
+  const { user, isAdmin } = useAuth();
+  const { data: myViewer, isLoading: viewerLoading } = useQuery({
+    queryKey: ['cashback-viewer', user?.id],
+    enabled: !!user && !isAdmin,
+    queryFn: async () => {
+      const { data } = await supabase.from('cashback_viewers').select('user_id, all_stores, store_ids').eq('user_id', user!.id).maybeSingle();
+      return data;
+    },
+  });
+  const notReleased = !isAdmin && !viewerLoading && !myViewer;
   const { data: stores = [] } = useStores();
   const { data: settings } = useTemplate();
   const [status, setStatus] = useState('pending');
@@ -129,6 +139,11 @@ const RemindersTab = () => {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        {notReleased && (
+          <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm">
+            Você ainda não foi liberado para ver os clientes de cashback. Peça a um administrador para ligar seu nome em <strong>Cashback → Quem recebe</strong> e marcar suas lojas.
+          </div>
+        )}
         <div className="flex flex-wrap gap-2">
           <div className="relative flex-1 min-w-[200px]">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
