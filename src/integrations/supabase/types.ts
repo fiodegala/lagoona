@@ -719,6 +719,7 @@ export type Database = {
           min_sale_value: number
           min_use_mode: string
           min_use_value: number
+          old_sales_message_template: string | null
           percent: number
           sale_types: string[]
           updated_at: string
@@ -733,6 +734,7 @@ export type Database = {
           min_sale_value?: number
           min_use_mode?: string
           min_use_value?: number
+          old_sales_message_template?: string | null
           percent?: number
           sale_types?: string[]
           updated_at?: string
@@ -747,6 +749,7 @@ export type Database = {
           min_sale_value?: number
           min_use_mode?: string
           min_use_value?: number
+          old_sales_message_template?: string | null
           percent?: number
           sale_types?: string[]
           updated_at?: string

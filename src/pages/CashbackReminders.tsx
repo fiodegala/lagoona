@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Gift, Loader2, MessageCircle, Check, RotateCcw, Save, Search, Eye } from 'lucide-react';
+import { Gift, Loader2, MessageCircle, Check, RotateCcw, Save, Search, Eye, History, Trash2 } from 'lucide-react';
+import OldSalesCashbackDialog from '@/components/OldSalesCashbackDialog';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import CashbackReminderView from '@/components/CashbackReminderView';
 import { toast } from 'sonner';
@@ -21,6 +22,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import {
   buildCashbackMessage,
   DEFAULT_CASHBACK_TEMPLATE,
+  DEFAULT_OLD_SALES_TEMPLATE,
+  templateForReminder,
   formatBRL,
   formatDateBR,
   whatsappLink,
@@ -79,11 +82,24 @@ const RemindersTab = () => {
   const [preview, setPreview] = useState<CashbackReminder | null>(null);
   const [previewMessage, setPreviewMessage] = useState('');
   const [previewSaving, setPreviewSaving] = useState(false);
-  const template = settings?.message_template || DEFAULT_CASHBACK_TEMPLATE;
+  const [oldSalesOpen, setOldSalesOpen] = useState(false);
+  const tpl = (r: CashbackReminder) => templateForReminder(r, settings);
+  const canCreate = isAdmin || (!!myViewer && (myViewer.all_stores || (myViewer.store_ids || []).length > 0));
+  const allowedStoreIds = isAdmin || myViewer?.all_stores ? null : (myViewer?.store_ids || []);
 
   const openPreview = (r: CashbackReminder) => {
     setPreview(r);
-    setPreviewMessage(buildCashbackMessage(template, r));
+    setPreviewMessage(buildCashbackMessage(tpl(r), r));
+  };
+
+  const deleteReminder = async (r: CashbackReminder) => {
+    if (!window.confirm(`Excluir o aviso de cashback de ${r.customer_name}?`)) return;
+    const { error } = await supabase.rpc('delete_manual_cashback_reminder', { _reminder_id: r.id });
+    if (error) return toast.error(error.message);
+    toast.success('Aviso excluído');
+    queryClient.invalidateQueries({ queryKey: ['cashback-reminders-admin'] });
+    queryClient.invalidateQueries({ queryKey: ['cashback-due-reminders'] });
+    queryClient.invalidateQueries({ queryKey: ['cashback-old-sales'] });
   };
 
   const { data: reminders = [], isLoading } = useQuery({
@@ -132,11 +148,18 @@ const RemindersTab = () => {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Avisos de cashback</CardTitle>
-        <CardDescription>
-          Cada venda do PDV com cliente cadastrado gera um aviso. Ele aparece para os usuários escolhidos a partir do dia seguinte, até alguém marcar como enviado.
-        </CardDescription>
+      <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between space-y-0">
+        <div className="space-y-1.5">
+          <CardTitle>Avisos de cashback</CardTitle>
+          <CardDescription>
+            Cada venda do PDV com cliente cadastrado gera um aviso. Ele aparece para os usuários escolhidos a partir do dia seguinte, até alguém marcar como enviado.
+          </CardDescription>
+        </div>
+        {canCreate && (
+          <Button variant="outline" onClick={() => setOldSalesOpen(true)} className="shrink-0">
+            <History className="h-4 w-4 mr-2" /> Cashback de compras antigas
+          </Button>
+        )}
       </CardHeader>
       <CardContent className="space-y-4">
         {notReleased && (
@@ -192,13 +215,16 @@ const RemindersTab = () => {
                   <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">Nenhum aviso encontrado.</TableCell></TableRow>
                 )}
                 {filtered.map((r) => {
-                  const link = whatsappLink(r.customer_phone, buildCashbackMessage(template, r));
+                  const link = whatsappLink(r.customer_phone, buildCashbackMessage(tpl(r), r));
                   return (
                     <TableRow key={r.id} className="cursor-pointer" onClick={() => openPreview(r)} title="Ver como fica o pop-up">
                       <TableCell className="whitespace-nowrap">{formatDateBR(r.sale_date)}</TableCell>
                       <TableCell>
                         <div className="font-medium">{r.customer_name}</div>
-                        <div className="text-xs text-muted-foreground">{r.customer_phone || 'sem telefone'}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {r.customer_phone || 'sem telefone'}
+                          {r.source === 'sale_manual' && <Badge variant="outline" className="ml-2">Compra antiga</Badge>}
+                        </div>
                       </TableCell>
                       <TableCell>{r.store_name}</TableCell>
                       <TableCell className="text-right whitespace-nowrap">{formatBRL(r.sale_total)}</TableCell>
@@ -228,6 +254,11 @@ const RemindersTab = () => {
                           {r.status === 'sent' && (
                             <Button size="sm" variant="ghost" onClick={() => setReminderStatus(r, 'pending')}>
                               <RotateCcw className="h-4 w-4 mr-1" /> Reabrir
+                            </Button>
+                          )}
+                          {isAdmin && r.source === 'sale_manual' && (
+                            <Button size="icon" variant="ghost" onClick={() => deleteReminder(r)} title="Excluir aviso" aria-label={`Excluir aviso de ${r.customer_name}`}>
+                              <Trash2 className="h-4 w-4 text-destructive" />
                             </Button>
                           )}
                         </div>
@@ -264,7 +295,7 @@ const RemindersTab = () => {
                 saving={previewSaving}
                 footer={
                   <div className="flex justify-between">
-                    <Button variant="ghost" size="sm" onClick={() => setPreviewMessage(buildCashbackMessage(template, preview))}>
+                    <Button variant="ghost" size="sm" onClick={() => setPreviewMessage(buildCashbackMessage(tpl(preview), preview))}>
                       <RotateCcw className="h-4 w-4 mr-1" /> Restaurar mensagem
                     </Button>
                     <Button variant="ghost" size="sm" onClick={() => setPreview(null)}>Fechar</Button>
@@ -275,6 +306,16 @@ const RemindersTab = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {canCreate && (
+        <OldSalesCashbackDialog
+          open={oldSalesOpen}
+          onOpenChange={setOldSalesOpen}
+          stores={stores}
+          allowedStoreIds={allowedStoreIds}
+          settings={settings}
+        />
+      )}
     </Card>
   );
 };
@@ -287,7 +328,7 @@ const RulesTab = () => {
   const [form, setForm] = useState({
     enabled: true, percent: '10', min_sale_value: '0', min_use_value: '150', validity_days: '30',
     min_use_mode: 'proportional', max_cover_percent: '15',
-    sale_types: ['varejo'] as string[], message_template: DEFAULT_CASHBACK_TEMPLATE,
+    sale_types: ['varejo'] as string[], message_template: DEFAULT_CASHBACK_TEMPLATE, old_sales_message_template: DEFAULT_OLD_SALES_TEMPLATE,
   });
   const [saving, setSaving] = useState(false);
 
@@ -303,6 +344,7 @@ const RulesTab = () => {
       validity_days: String(settings.validity_days),
       sale_types: settings.sale_types || [],
       message_template: settings.message_template,
+      old_sales_message_template: settings.old_sales_message_template || DEFAULT_OLD_SALES_TEMPLATE,
     });
   }, [settings]);
 
@@ -323,6 +365,7 @@ const RulesTab = () => {
     const { error } = await supabase.from('cashback_settings').upsert({
       id: 1, enabled: form.enabled, percent, min_sale_value: minSale, min_use_value: minUse, min_use_mode: form.min_use_mode, max_cover_percent: form.min_use_mode === 'proportional' ? cover : (settings?.max_cover_percent ?? 15), validity_days: days,
       sale_types: form.sale_types, message_template: form.message_template || DEFAULT_CASHBACK_TEMPLATE,
+      old_sales_message_template: form.old_sales_message_template || DEFAULT_OLD_SALES_TEMPLATE,
       updated_at: new Date().toISOString(), updated_by: user?.id ?? null,
     });
     setSaving(false);
@@ -413,6 +456,13 @@ const RulesTab = () => {
           <Textarea rows={6} value={form.message_template} onChange={(e) => setForm({ ...form, message_template: e.target.value })} />
           <p className="text-xs text-muted-foreground">
             Campos automáticos: {'{nome}'}, {'{nome_completo}'}, {'{loja}'}, {'{data_compra}'}, {'{valor_compra}'}, {'{cashback}'}, {'{compra_minima}'}, {'{validade}'}
+          </p>
+        </div>
+        <div className="space-y-1.5">
+          <Label>Mensagem do WhatsApp para compras antigas</Label>
+          <Textarea rows={6} value={form.old_sales_message_template} onChange={(e) => setForm({ ...form, old_sales_message_template: e.target.value })} />
+          <p className="text-xs text-muted-foreground">
+            Usada nos avisos criados em "Cashback de compras antigas", para clientes que compraram antes do cashback existir. Mesmos campos automáticos.
           </p>
         </div>
         <div className="rounded-lg border bg-muted/40 p-3 text-sm">

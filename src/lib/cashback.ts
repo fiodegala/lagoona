@@ -30,10 +30,27 @@ export interface CashbackReminder {
   status: 'pending' | 'sent' | 'cancelled';
   sent_at: string | null;
   sent_by: string | null;
+  /** 'auto' = gerado na venda; 'sale_manual' = criado depois, a partir de uma venda antiga. */
+  source?: 'auto' | 'sale_manual';
 }
 
 export const DEFAULT_CASHBACK_TEMPLATE =
   'Olá, {nome}! Tudo bem? Aqui é da Fio de Gala 💛\nNa sua compra de {data_compra} na loja {loja}, no valor de {valor_compra}, você ganhou {cashback} de cashback para usar em compras a partir de {compra_minima}.\nSeu cashback vale até {validade}. Esperamos você!';
+
+/** Mensagem para clientes de compras feitas antes de o cashback existir. */
+export const DEFAULT_OLD_SALES_TEMPLATE =
+  'Olá, {nome}! Tudo bem? Aqui é da Fio de Gala 💛\nAgora a Fio de Gala tem cashback! Pela sua compra de {data_compra} na loja {loja}, no valor de {valor_compra}, você ganhou {cashback} de cashback para usar em compras a partir de {compra_minima}.\nAproveite: seu cashback vale até {validade}. Esperamos você!';
+
+export interface CashbackTemplates {
+  message_template?: string | null;
+  old_sales_message_template?: string | null;
+}
+
+/** Avisos criados para vendas antigas usam o modelo próprio; os demais, o modelo normal. */
+export const templateForReminder = (r: Pick<CashbackReminder, 'source'>, t?: CashbackTemplates | null) =>
+  r.source === 'sale_manual'
+    ? (t?.old_sales_message_template?.trim() || DEFAULT_OLD_SALES_TEMPLATE)
+    : (t?.message_template?.trim() || DEFAULT_CASHBACK_TEMPLATE);
 
 const SP_OFFSET_MS = 3 * 60 * 60 * 1000;
 
@@ -107,3 +124,46 @@ export const cashbackValue = (saleTotal: number, percent: number) =>
  */
 export const cashbackMinNextPurchase = (cashback: number, coverPercent: number) =>
   Math.ceil(Math.round((cashback * 100 / coverPercent) * 1e6) / 1e6);
+
+/** Validade contada a partir de hoje (Brasília): hoje + dias, em AAAA-MM-DD (mesma conta do banco). */
+export const validityFromToday = (days: number, now: Date = new Date()) => {
+  const [y, m, d] = spDateKey(now).split('-').map(Number);
+  return new Date(Date.UTC(y, m - 1, d + days)).toISOString().slice(0, 10);
+};
+
+export interface OldSale {
+  id: string;
+  created_at: string;
+  customer_id: string | null;
+  customer_name: string | null;
+  sale_type: string | null;
+  status: string;
+  total: number;
+  store_id: string | null;
+}
+
+export interface EligibilityRules {
+  sale_types: string[];
+  min_sale_value: number;
+}
+
+/** Mesmos filtros do banco (upsert_cashback_reminder): concluída, com cliente, modalidade aceita, valor mínimo, sem Consumidor Final. */
+export const isSaleEligibleForCashback = (s: OldSale, rules: EligibilityRules) => {
+  if (s.status !== 'completed' || !s.customer_id) return false;
+  if (!rules.sale_types.includes(s.sale_type || 'varejo')) return false;
+  const total = Number(s.total || 0);
+  if (total <= 0 || total < Number(rules.min_sale_value || 0)) return false;
+  if ((s.customer_name || '').trim().toLowerCase().startsWith('consumidor final')) return false;
+  return true;
+};
+
+/** Mantém só a compra mais recente de cada cliente. */
+export const latestSalePerCustomer = <T extends Pick<OldSale, 'customer_id' | 'created_at'>>(sales: T[]) => {
+  const best = new Map<string, T>();
+  for (const s of sales) {
+    const key = s.customer_id || '';
+    const cur = best.get(key);
+    if (!cur || s.created_at > cur.created_at) best.set(key, s);
+  }
+  return sales.filter((s) => best.get(s.customer_id || '') === s);
+};

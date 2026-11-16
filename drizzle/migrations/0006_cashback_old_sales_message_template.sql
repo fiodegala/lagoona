@@ -1,0 +1,1 @@
+ALTER TABLE public.cashback_settings ADD COLUMN IF NOT EXISTS old_sales_message_template text;

@@ -59,3 +59,54 @@ describe('tabela Fio de Gala | Cashback varejo (10%, cobre até 15% da próxima 
     expect(cashbackMinNextPurchase(cb, 15)).toBe(minima);
   });
 });
+
+import {
+  validityFromToday,
+  isSaleEligibleForCashback,
+  latestSalePerCustomer,
+  templateForReminder,
+  DEFAULT_OLD_SALES_TEMPLATE,
+  type OldSale,
+} from './cashback';
+
+describe('cashback de compras antigas', () => {
+  it('validade a partir de hoje: 16/11/2026 + 30 dias = 16/12/2026', () => {
+    expect(validityFromToday(30, new Date('2026-11-16T19:20:00Z'))).toBe('2026-12-16');
+  });
+  it('às 22h de Brasília ainda conta o dia de hoje', () => {
+    expect(validityFromToday(30, new Date('2026-11-17T01:00:00Z'))).toBe('2026-12-16');
+  });
+
+  const sale: OldSale = {
+    id: 's1', created_at: '2026-08-01T15:00:00Z', customer_id: 'c1', customer_name: 'JOÃO',
+    sale_type: 'varejo', status: 'completed', total: 1000, store_id: 'st',
+  };
+  const rules = { sale_types: ['varejo'], min_sale_value: 0 };
+
+  it('compra de varejo concluída com cliente gera', () => {
+    expect(isSaleEligibleForCashback(sale, rules)).toBe(true);
+  });
+  it('atacado não gera', () => {
+    expect(isSaleEligibleForCashback({ ...sale, sale_type: 'atacado' }, rules)).toBe(false);
+  });
+  it('Consumidor Final não gera', () => {
+    expect(isSaleEligibleForCashback({ ...sale, customer_name: 'Consumidor Final' }, rules)).toBe(false);
+  });
+  it('venda cancelada não gera', () => {
+    expect(isSaleEligibleForCashback({ ...sale, status: 'cancelled' }, rules)).toBe(false);
+  });
+
+  it('só a compra mais recente de cada cliente', () => {
+    const list = [
+      { ...sale, id: 'a', created_at: '2026-08-01T15:00:00Z' },
+      { ...sale, id: 'b', created_at: '2026-09-10T15:00:00Z' },
+      { ...sale, id: 'c', customer_id: 'c2', created_at: '2026-07-05T15:00:00Z' },
+    ];
+    expect(latestSalePerCustomer(list).map((s) => s.id).sort()).toEqual(['b', 'c']);
+  });
+
+  it('aviso de compra antiga usa a mensagem própria', () => {
+    expect(templateForReminder({ source: 'sale_manual' }, { message_template: 'normal' })).toBe(DEFAULT_OLD_SALES_TEMPLATE);
+    expect(templateForReminder({ source: 'auto' }, { message_template: 'normal' })).toBe('normal');
+  });
+});

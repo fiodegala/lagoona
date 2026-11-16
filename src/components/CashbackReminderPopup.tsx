@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import {
   buildCashbackMessage,
   DEFAULT_CASHBACK_TEMPLATE,
+  templateForReminder,
   isReminderDue,
   spDateKey,
   spStartOfTodayISO,
@@ -37,12 +38,12 @@ const CashbackReminderPopup = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  const { data: template = DEFAULT_CASHBACK_TEMPLATE } = useQuery({
+  const { data: templates } = useQuery({
     queryKey: ['cashback-template'],
     enabled: !!viewer,
     queryFn: async () => {
-      const { data } = await supabase.from('cashback_settings').select('message_template').eq('id', 1).maybeSingle();
-      return data?.message_template || DEFAULT_CASHBACK_TEMPLATE;
+      const { data } = await supabase.from('cashback_settings').select('message_template, old_sales_message_template').eq('id', 1).maybeSingle();
+      return data ?? { message_template: DEFAULT_CASHBACK_TEMPLATE, old_sales_message_template: null };
     },
   });
 
@@ -75,8 +76,8 @@ const CashbackReminderPopup = () => {
   }, [queue.length, open]);
 
   useEffect(() => {
-    if (current) setMessage(buildCashbackMessage(template, current));
-  }, [current?.id, template]);
+    if (current) setMessage(buildCashbackMessage(templateForReminder(current, templates), current));
+  }, [current?.id, templates]);
 
   if (!open || !current) return null;
 
