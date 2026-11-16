@@ -626,6 +626,7 @@ export type Database = {
           cashback_percent: number
           cashback_value: number
           created_at: string
+          created_by: string | null
           customer_document: string | null
           customer_id: string | null
           customer_name: string | null
@@ -641,6 +642,7 @@ export type Database = {
           seller_id: string | null
           sent_at: string | null
           sent_by: string | null
+          source: string
           status: string
           store_id: string | null
           store_name: string | null
@@ -650,6 +652,7 @@ export type Database = {
           cashback_percent?: number
           cashback_value?: number
           created_at?: string
+          created_by?: string | null
           customer_document?: string | null
           customer_id?: string | null
           customer_name?: string | null
@@ -665,6 +668,7 @@ export type Database = {
           seller_id?: string | null
           sent_at?: string | null
           sent_by?: string | null
+          source?: string
           status?: string
           store_id?: string | null
           store_name?: string | null
@@ -674,6 +678,7 @@ export type Database = {
           cashback_percent?: number
           cashback_value?: number
           created_at?: string
+          created_by?: string | null
           customer_document?: string | null
           customer_id?: string | null
           customer_name?: string | null
@@ -689,6 +694,7 @@ export type Database = {
           seller_id?: string | null
           sent_at?: string | null
           sent_by?: string | null
+          source?: string
           status?: string
           store_id?: string | null
           store_name?: string | null
@@ -3853,9 +3859,17 @@ export type Database = {
         Returns: number
       }
       cleanup_old_nonces: { Args: never; Returns: undefined }
+      create_cashback_reminders_from_sales: {
+        Args: { _sale_ids: string[]; _validity_from_today?: boolean }
+        Returns: number
+      }
       deduct_sale_stock: {
         Args: { _items: Json; _store_id: string }
         Returns: Json
+      }
+      delete_manual_cashback_reminder: {
+        Args: { _reminder_id: string }
+        Returns: undefined
       }
       get_product_stock: {
         Args: { _product_id: string }

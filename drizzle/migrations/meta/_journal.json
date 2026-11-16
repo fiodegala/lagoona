@@ -36,6 +36,13 @@
       "when": 1794506155656,
       "tag": "0004_admins_can_update_profiles",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1794856971890,
+      "tag": "0005_cashback_reminders_from_old_sales",
+      "breakpoints": true
     }
   ]
 }
