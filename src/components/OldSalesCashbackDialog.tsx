@@ -195,7 +195,7 @@ const OldSalesCashbackDialog = ({ open, onOpenChange, stores, allowedStoreIds, s
           {settings && !settings.enabled && (
             <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm">O cashback está desligado em Regras. Ligue antes de criar avisos.</div>
           )}
-          <div className="grid gap-2 sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             <div className="space-y-1">
               <Label htmlFor="old-from">Compras de</Label>
               <Input id="old-from" type="date" value={from} max={to} onChange={(e) => setFrom(e.target.value)} />
@@ -204,7 +204,7 @@ const OldSalesCashbackDialog = ({ open, onOpenChange, stores, allowedStoreIds, s
               <Label htmlFor="old-to">até</Label>
               <Input id="old-to" type="date" value={to} min={from} max={spDateKey(new Date())} onChange={(e) => setTo(e.target.value)} />
             </div>
-            <div className="space-y-1">
+            <div className="space-y-1 col-span-2 sm:col-span-1">
               <Label>Loja</Label>
               <Select value={storeId} onValueChange={setStoreId}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
@@ -214,7 +214,7 @@ const OldSalesCashbackDialog = ({ open, onOpenChange, stores, allowedStoreIds, s
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-1">
+            <div className="space-y-1 col-span-2 sm:col-span-1">
               <Label htmlFor="old-search">Cliente</Label>
               <div className="relative">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
