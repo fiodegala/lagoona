@@ -1,6 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Gift, Loader2, MessageCircle, Check, RotateCcw, Save, Search, Eye, History, Trash2 } from 'lucide-react';
+import { Gift, Loader2, MessageCircle, Check, RotateCcw, Save, Search, Eye, History, Trash2, CalendarIcon } from 'lucide-react';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils';
 import OldSalesCashbackDialog from '@/components/OldSalesCashbackDialog';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import CashbackReminderView from '@/components/CashbackReminderView';
@@ -39,6 +44,49 @@ const SALE_TYPES = [
 ];
 
 const STATUS_LABEL: Record<string, string> = { pending: 'Pendente', sent: 'Enviado', cancelled: 'Venda cancelada' };
+
+type PeriodKey = 'all' | 'today' | 'yesterday' | 'week' | 'month' | 'last_month' | 'custom';
+
+const PERIOD_OPTIONS: { value: PeriodKey; label: string }[] = [
+  { value: 'all', label: 'Todo o período' },
+  { value: 'today', label: 'Hoje' },
+  { value: 'yesterday', label: 'Ontem' },
+  { value: 'week', label: 'Essa semana' },
+  { value: 'month', label: 'Este mês' },
+  { value: 'last_month', label: 'Mês passado' },
+  { value: 'custom', label: 'Personalizado' },
+];
+
+const toISODate = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+const periodRange = (period: PeriodKey, customFrom?: Date, customTo?: Date): { from: string; to: string } => {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  switch (period) {
+    case 'today':
+      return { from: toISODate(today), to: toISODate(today) };
+    case 'yesterday': {
+      const y = new Date(today); y.setDate(y.getDate() - 1);
+      return { from: toISODate(y), to: toISODate(y) };
+    }
+    case 'week': {
+      const start = new Date(today);
+      start.setDate(start.getDate() - ((start.getDay() + 6) % 7)); // segunda-feira
+      return { from: toISODate(start), to: toISODate(today) };
+    }
+    case 'month':
+      return { from: toISODate(new Date(today.getFullYear(), today.getMonth(), 1)), to: toISODate(today) };
+    case 'last_month': {
+      const start = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+      const end = new Date(today.getFullYear(), today.getMonth(), 0);
+      return { from: toISODate(start), to: toISODate(end) };
+    }
+    case 'custom':
+      return { from: customFrom ? toISODate(customFrom) : '', to: customTo ? toISODate(customTo) : '' };
+    default:
+      return { from: '', to: '' };
+  }
+};
 
 interface Store { id: string; name: string; }
 
@@ -79,8 +127,9 @@ const RemindersTab = () => {
   const [status, setStatus] = useState('pending');
   const [storeId, setStoreId] = useState('all');
   const [search, setSearch] = useState('');
-  const [dateFrom, setDateFrom] = useState('');
-  const [dateTo, setDateTo] = useState('');
+  const [period, setPeriod] = useState<PeriodKey>('all');
+  const [customFrom, setCustomFrom] = useState<Date | undefined>();
+  const [customTo, setCustomTo] = useState<Date | undefined>();
   const [preview, setPreview] = useState<CashbackReminder | null>(null);
   const [previewMessage, setPreviewMessage] = useState('');
   const [previewSaving, setPreviewSaving] = useState(false);
@@ -119,17 +168,18 @@ const RemindersTab = () => {
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
     const digits = term.replace(/\D/g, '');
+    const { from, to } = periodRange(period, customFrom, customTo);
     return reminders.filter((r) => {
       const day = (r.sale_date || '').slice(0, 10);
-      if (dateFrom && day < dateFrom) return false;
-      if (dateTo && day > dateTo) return false;
+      if (from && day < from) return false;
+      if (to && day > to) return false;
       if (!term) return true;
       return (
         (r.customer_name || '').toLowerCase().includes(term) ||
         (digits && ((r.customer_phone || '').replace(/\D/g, '').includes(digits) || (r.customer_document || '').replace(/\D/g, '').includes(digits)))
       );
     });
-  }, [reminders, search, dateFrom, dateTo]);
+  }, [reminders, search, period, customFrom, customTo]);
 
   const totals = useMemo(() => ({
     count: filtered.length,
@@ -195,15 +245,39 @@ const RemindersTab = () => {
               {stores.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
             </SelectContent>
           </Select>
-          <div className="flex items-center gap-1.5">
-            <span className="text-xs text-muted-foreground whitespace-nowrap">De</span>
-            <Input type="date" className="w-[140px]" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
-            <span className="text-xs text-muted-foreground whitespace-nowrap">até</span>
-            <Input type="date" className="w-[140px]" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
-            {(dateFrom || dateTo) && (
-              <Button variant="ghost" size="sm" onClick={() => { setDateFrom(''); setDateTo(''); }}>Limpar</Button>
-            )}
-          </div>
+          <Select value={period} onValueChange={(v) => setPeriod(v as PeriodKey)}>
+            <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {PERIOD_OPTIONS.map((p) => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          {period === 'custom' && (
+            <div className="flex items-center gap-1.5">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className={cn('w-[130px] justify-start text-left font-normal', !customFrom && 'text-muted-foreground')}>
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {customFrom ? format(customFrom, 'dd/MM/yyyy') : 'De'}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar mode="single" selected={customFrom} onSelect={setCustomFrom} locale={ptBR} initialFocus className={cn('p-3 pointer-events-auto')} />
+                </PopoverContent>
+              </Popover>
+              <span className="text-xs text-muted-foreground">até</span>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className={cn('w-[130px] justify-start text-left font-normal', !customTo && 'text-muted-foreground')}>
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {customTo ? format(customTo, 'dd/MM/yyyy') : 'Até'}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar mode="single" selected={customTo} onSelect={setCustomTo} locale={ptBR} initialFocus className={cn('p-3 pointer-events-auto')} />
+                </PopoverContent>
+              </Popover>
+            </div>
+          )}
         </div>
         <p className="text-sm text-muted-foreground">
           Clique no cliente para ver como o pop-up vai aparecer. • {totals.count} aviso(s) • {formatBRL(totals.cashback)} em cashback
