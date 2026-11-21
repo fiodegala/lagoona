@@ -79,6 +79,8 @@ const RemindersTab = () => {
   const [status, setStatus] = useState('pending');
   const [storeId, setStoreId] = useState('all');
   const [search, setSearch] = useState('');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   const [preview, setPreview] = useState<CashbackReminder | null>(null);
   const [previewMessage, setPreviewMessage] = useState('');
   const [previewSaving, setPreviewSaving] = useState(false);
@@ -117,12 +119,17 @@ const RemindersTab = () => {
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
     const digits = term.replace(/\D/g, '');
-    if (!term) return reminders;
-    return reminders.filter((r) =>
-      (r.customer_name || '').toLowerCase().includes(term) ||
-      (digits && ((r.customer_phone || '').replace(/\D/g, '').includes(digits) || (r.customer_document || '').replace(/\D/g, '').includes(digits))),
-    );
-  }, [reminders, search]);
+    return reminders.filter((r) => {
+      const day = (r.sale_date || '').slice(0, 10);
+      if (dateFrom && day < dateFrom) return false;
+      if (dateTo && day > dateTo) return false;
+      if (!term) return true;
+      return (
+        (r.customer_name || '').toLowerCase().includes(term) ||
+        (digits && ((r.customer_phone || '').replace(/\D/g, '').includes(digits) || (r.customer_document || '').replace(/\D/g, '').includes(digits)))
+      );
+    });
+  }, [reminders, search, dateFrom, dateTo]);
 
   const totals = useMemo(() => ({
     count: filtered.length,
@@ -188,6 +195,15 @@ const RemindersTab = () => {
               {stores.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
             </SelectContent>
           </Select>
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs text-muted-foreground whitespace-nowrap">De</span>
+            <Input type="date" className="w-[140px]" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
+            <span className="text-xs text-muted-foreground whitespace-nowrap">até</span>
+            <Input type="date" className="w-[140px]" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
+            {(dateFrom || dateTo) && (
+              <Button variant="ghost" size="sm" onClick={() => { setDateFrom(''); setDateTo(''); }}>Limpar</Button>
+            )}
+          </div>
         </div>
         <p className="text-sm text-muted-foreground">
           Clique no cliente para ver como o pop-up vai aparecer. • {totals.count} aviso(s) • {formatBRL(totals.cashback)} em cashback
