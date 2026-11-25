@@ -23,6 +23,8 @@ const BirthdayReminderPopup = () => {
   const [message, setMessage] = useState('');
   const [saving, setSaving] = useState(false);
   const [doneKeys, setDoneKeys] = useState<Set<string>>(new Set());
+  const [localImageUrl, setLocalImageUrl] = useState<string | null>(null);
+  const [localImageRemoved, setLocalImageRemoved] = useState(false);
 
   const { data: viewer } = useQuery({
     queryKey: ['birthday-viewer', user?.id],
@@ -71,7 +73,32 @@ const BirthdayReminderPopup = () => {
     if (current) setMessage(buildBirthdayMessage(settings?.message_template, current));
   }, [current?.customer_id, current?.birthday_year, settings?.message_template]);
 
+  useEffect(() => {
+    return () => {
+      if (localImageUrl) URL.revokeObjectURL?.(localImageUrl);
+    };
+  }, [localImageUrl]);
+
   if (!open || !current) return null;
+
+  const effectiveImageUrl = localImageUrl ?? (localImageRemoved ? null : settings?.gift_image_url ?? null);
+
+  const handleAttachLocalImage = (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      toast.error('Selecione um arquivo de imagem (JPG, PNG ou WebP).');
+      return;
+    }
+    if (localImageUrl) URL.revokeObjectURL?.(localImageUrl);
+    setLocalImageUrl(URL.createObjectURL(file));
+    setLocalImageRemoved(false);
+    toast.success('Imagem anexada! Use "Copiar imagem" ou "Baixar imagem" para enviar junto.');
+  };
+
+  const handleRemoveLocalImage = () => {
+    if (localImageUrl) URL.revokeObjectURL?.(localImageUrl);
+    setLocalImageUrl(null);
+    setLocalImageRemoved(true);
+  };
 
   const remindLater = () => {
     sessionStorage.setItem(SNOOZE_KEY, '1');
@@ -117,7 +144,9 @@ const BirthdayReminderPopup = () => {
           reminder={current}
           message={message}
           onMessageChange={setMessage}
-          giftImageUrl={settings?.gift_image_url}
+          giftImageUrl={effectiveImageUrl}
+          onAttachImage={handleAttachLocalImage}
+          onRemoveImage={handleRemoveLocalImage}
           onMarkSent={markSent}
           saving={saving}
           footer={

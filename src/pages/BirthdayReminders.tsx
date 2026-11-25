@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Cake, Loader2, MessageCircle, Check, RotateCcw, Search, Eye, CalendarIcon } from 'lucide-react';
+import { Cake, Loader2, MessageCircle, Check, RotateCcw, Search, Eye, CalendarIcon, ImagePlus, Upload, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
@@ -27,7 +27,10 @@ import {
   buildBirthdayMessage,
   fetchAllBirthdayReminders,
   formatDayMonthBR,
+  generateBirthdayMessageFromImage,
   isBirthdayToday,
+  saveBirthdayGiftImage,
+  uploadBirthdayGiftImage,
   type BirthdayPeriodKey,
   type BirthdayReminder,
 } from '@/lib/birthdays';
@@ -62,6 +65,93 @@ const RemindersTab = () => {
   const [preview, setPreview] = useState<BirthdayReminder | null>(null);
   const [previewMessage, setPreviewMessage] = useState('');
   const [previewSaving, setPreviewSaving] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [generatingMessage, setGeneratingMessage] = useState(false);
+  const [localImageUrl, setLocalImageUrl] = useState<string | null>(null);
+  const [savedImageOverride, setSavedImageOverride] = useState<string | null | undefined>(undefined);
+  const headerFileRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setSavedImageOverride(undefined);
+  }, [settings?.gift_image_url]);
+
+  useEffect(() => {
+    return () => {
+      if (localImageUrl) URL.revokeObjectURL?.(localImageUrl);
+    };
+  }, [localImageUrl]);
+
+  const activeGiftImageUrl =
+    savedImageOverride !== undefined ? savedImageOverride : localImageUrl ?? settings?.gift_image_url ?? null;
+
+  const invalidateBirthdayImage = () => {
+    queryClient.invalidateQueries({ queryKey: ['birthday-settings'] });
+    queryClient.invalidateQueries({ queryKey: ['birthday-template'] });
+    queryClient.invalidateQueries({ queryKey: ['birthday-due-reminders'] });
+  };
+
+  const handleAttachImage = async (file: File) => {
+    if (!isAdmin) {
+      if (!file.type.startsWith('image/')) {
+        toast.error('Selecione um arquivo de imagem (JPG, PNG ou WebP).');
+        return;
+      }
+      if (localImageUrl) URL.revokeObjectURL?.(localImageUrl);
+      setLocalImageUrl(URL.createObjectURL(file));
+      toast.success('Imagem anexada para este envio!');
+      return;
+    }
+    setUploadingImage(true);
+    try {
+      const publicUrl = await uploadBirthdayGiftImage(file);
+      await saveBirthdayGiftImage(publicUrl, user?.id);
+      setSavedImageOverride(publicUrl);
+      invalidateBirthdayImage();
+      toast.success('Imagem anexada e salva! Ela já aparece junto da mensagem para quem for enviar.');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao anexar imagem.');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const handleRemoveImage = async () => {
+    if (!isAdmin) {
+      if (localImageUrl) URL.revokeObjectURL?.(localImageUrl);
+      setLocalImageUrl(null);
+      return;
+    }
+    setUploadingImage(true);
+    try {
+      await saveBirthdayGiftImage(null, user?.id);
+      setSavedImageOverride(null);
+      invalidateBirthdayImage();
+      toast.success('Imagem removida dos avisos.');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao remover imagem.');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const handleGenerateMessageInPreview = async () => {
+    if (!preview || !activeGiftImageUrl || !isAdmin) return;
+    setGeneratingMessage(true);
+    try {
+      const template = await generateBirthdayMessageFromImage(activeGiftImageUrl);
+      await supabase
+        .from('birthday_settings')
+        .update({ message_template: template, updated_at: new Date().toISOString(), updated_by: user?.id ?? null })
+        .eq('id', 1);
+      setPreviewMessage(buildBirthdayMessage(template, preview));
+      invalidateBirthdayImage();
+      toast.success('Mensagem criada com base na imagem e salva nas regras!');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao gerar mensagem.');
+    } finally {
+      setGeneratingMessage(false);
+    }
+  };
 
   const { data: reminders = [], isLoading } = useQuery({
     queryKey: ['birthday-reminders-admin', user?.id],
@@ -129,6 +219,59 @@ const RemindersTab = () => {
         {notReleased && (
           <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm">
             Você ainda não foi liberado para ver os aniversariantes. Peça a um administrador para ligar seu nome em <strong>Aniversariantes → Quem recebe</strong> e marcar suas lojas.
+          </div>
+        )}
+        {(isAdmin || activeGiftImageUrl) && (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-muted/30 px-3 py-2.5">
+            <input
+              ref={headerFileRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                e.target.value = '';
+                if (f) handleAttachImage(f);
+              }}
+            />
+            <div className="flex items-center gap-3 min-w-0">
+              {activeGiftImageUrl ? (
+                <img src={activeGiftImageUrl} alt="Imagem anexada aos avisos" className="h-11 w-11 rounded object-cover border bg-background flex-shrink-0" />
+              ) : (
+                <div className="h-11 w-11 rounded border border-dashed bg-background flex items-center justify-center flex-shrink-0">
+                  <ImagePlus className="h-5 w-5 text-muted-foreground" />
+                </div>
+              )}
+              <div className="min-w-0">
+                <p className="text-sm font-medium">
+                  {activeGiftImageUrl ? 'Imagem anexada junto da mensagem' : 'Nenhuma imagem anexada à mensagem'}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {activeGiftImageUrl
+                    ? 'Quem for enviar o aviso vê esta imagem para copiar ou baixar e mandar no WhatsApp.'
+                    : 'Anexe a foto do brinde para aparecer junto da mensagem no pop-up da equipe.'}
+                </p>
+              </div>
+            </div>
+            {isAdmin && (
+              <div className="flex items-center gap-1.5">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={activeGiftImageUrl ? 'outline' : 'default'}
+                  onClick={() => headerFileRef.current?.click()}
+                  disabled={uploadingImage}
+                >
+                  {uploadingImage ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : activeGiftImageUrl ? <Upload className="h-4 w-4 mr-1.5" /> : <ImagePlus className="h-4 w-4 mr-1.5" />}
+                  {activeGiftImageUrl ? 'Trocar imagem' : 'Anexar imagem'}
+                </Button>
+                {activeGiftImageUrl && (
+                  <Button type="button" size="sm" variant="ghost" onClick={handleRemoveImage} disabled={uploadingImage} aria-label="Remover imagem anexada">
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
         )}
         <div className="flex flex-wrap gap-2">
@@ -280,7 +423,13 @@ const RemindersTab = () => {
                 reminder={preview}
                 message={previewMessage}
                 onMessageChange={setPreviewMessage}
-                giftImageUrl={settings?.gift_image_url}
+                giftImageUrl={activeGiftImageUrl}
+                onAttachImage={handleAttachImage}
+                onRemoveImage={handleRemoveImage}
+                onGenerateMessage={isAdmin ? handleGenerateMessageInPreview : undefined}
+                uploadingImage={uploadingImage}
+                generatingMessage={generatingMessage}
+                attachSavesGlobally={isAdmin}
                 onMarkSent={preview.status === 'pending' ? markPreviewSent : undefined}
                 saving={previewSaving}
                 footer={

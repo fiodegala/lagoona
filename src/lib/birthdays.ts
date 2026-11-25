@@ -159,4 +159,79 @@ export const fetchAllBirthdayReminders = async (
   return all;
 };
 
+const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
+
+export const uploadBirthdayGiftImage = async (file: File): Promise<string> => {
+  if (!file.type.startsWith('image/')) {
+    throw new Error('Selecione um arquivo de imagem (JPG, PNG ou WebP).');
+  }
+  if (file.size > MAX_IMAGE_BYTES) {
+    throw new Error('A imagem deve ter no máximo 8 MB.');
+  }
+  const ext = file.name.split('.').pop()?.toLowerCase() || 'png';
+  const path = `birthdays/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+  const { error } = await supabase.storage
+    .from('product-images')
+    .upload(path, file, { upsert: true, contentType: file.type });
+  if (error) throw new Error('Erro ao enviar imagem: ' + error.message);
+  const { data } = supabase.storage.from('product-images').getPublicUrl(path);
+  return data.publicUrl;
+};
+
+export const saveBirthdayGiftImage = async (
+  imageUrl: string | null,
+  userId?: string | null,
+): Promise<void> => {
+  const payload = {
+    gift_image_url: imageUrl,
+    updated_at: new Date().toISOString(),
+    updated_by: userId ?? null,
+  };
+  const { data, error } = await supabase
+    .from('birthday_settings')
+    .update(payload)
+    .eq('id', 1)
+    .select('id');
+  if (error) throw error;
+  if (!data || data.length === 0) {
+    const { error: upsertErr } = await supabase.from('birthday_settings').upsert({
+      id: 1,
+      enabled: true,
+      days_before: 0,
+      days_after: 0,
+      message_template: DEFAULT_BIRTHDAY_TEMPLATE,
+      ...payload,
+    });
+    if (upsertErr) throw upsertErr;
+  }
+};
+
+export const generateBirthdayMessageFromImage = async (imageUrl: string): Promise<string> => {
+  const { data, error } = await supabase.functions.invoke('generate-birthday-message', {
+    body: { imageUrl },
+  });
+  if (error) throw new Error(error.message || 'Não foi possível gerar a mensagem a partir da imagem.');
+  if (data?.error) throw new Error(String(data.error));
+  if (!data?.message) throw new Error('A IA não retornou uma mensagem. Tente novamente.');
+  return String(data.message);
+};
+
+export const imageExtensionFromMime = (mime: string): string => {
+  if (mime.includes('jpeg') || mime.includes('jpg')) return 'jpg';
+  if (mime.includes('webp')) return 'webp';
+  if (mime.includes('gif')) return 'gif';
+  return 'png';
+};
+
+export const downloadBlobFile = (blob: Blob, filename: string) => {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL?.(url), 30_000);
+};
+
 export { whatsappLink };

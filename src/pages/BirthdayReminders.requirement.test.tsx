@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import BirthdayReminders from '@/pages/BirthdayReminders';
 import BirthdayReminderPopup from '@/components/BirthdayReminderPopup';
 import { BirthdayRulesTab } from '@/components/BirthdaySettingsTabs';
 
@@ -12,6 +13,10 @@ const mockFrom = vi.fn();
 
 vi.mock('@/contexts/AuthContext', () => ({
   useAuth: () => ({ user: { id: 'admin-1' }, isAdmin: true }),
+}));
+
+vi.mock('@/components/AdminLayout', () => ({
+  default: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
 vi.mock('@/integrations/supabase/client', () => ({
@@ -114,6 +119,180 @@ describe('O pop-up de aniversário avisa no dia e exibe a imagem do brinde', () 
         _year: 2026,
         _status: 'sent',
       });
+    });
+  });
+
+  it('Quando não há imagem global salva, quem recebe o pop-up pode anexar uma imagem junto da mensagem na hora do envio', async () => {
+    const origCreateObjectUrl = URL.createObjectURL;
+    URL.createObjectURL = vi.fn(() => 'blob:local-cinto');
+
+    try {
+      mockFrom.mockImplementation((table: string) => {
+        if (table === 'birthday_viewers') {
+          return {
+            select: () => ({
+              eq: () => ({
+                maybeSingle: async () => ({ data: { user_id: 'admin-1', all_stores: true, store_ids: [] }, error: null }),
+              }),
+            }),
+          };
+        }
+        if (table === 'birthday_settings') {
+          return {
+            select: () => ({
+              eq: () => ({
+                maybeSingle: async () => ({
+                  data: {
+                    enabled: true,
+                    message_template: 'Feliz aniversário, {nome}!',
+                    gift_image_url: null,
+                  },
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        }
+        return {};
+      });
+
+      mockRpc.mockImplementation((fn: string) => {
+        if (fn === 'get_birthday_reminders') {
+          return {
+            range: async () => ({
+              data: [
+                {
+                  customer_id: 'cust-2',
+                  customer_name: 'ANA LIMA',
+                  customer_phone: '62998887766',
+                  customer_document: null,
+                  birthday: '1992-11-25',
+                  birthday_year: 2026,
+                  birthday_date: '2026-11-25',
+                  turning_age: 34,
+                  store_id: 'store-1',
+                  store_name: 'Bernardo Sayão',
+                  status: 'pending',
+                  sent_at: null,
+                  sent_by: null,
+                },
+              ],
+              error: null,
+            }),
+          };
+        }
+        return Promise.resolve({ data: null, error: null });
+      });
+
+      wrap(<BirthdayReminderPopup />);
+
+      expect(await screen.findByText('ANA LIMA')).toBeInTheDocument();
+      const attachBtn = screen.getByRole('button', { name: /Anexar imagem/i });
+      expect(attachBtn).toBeInTheDocument();
+
+      const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+      expect(input).toBeTruthy();
+      const file = new File(['img-bytes'], 'cintos-elasticos.jpeg', { type: 'image/jpeg' });
+      fireEvent.change(input, { target: { files: [file] } });
+
+      expect(await screen.findByAltText('Imagem do brinde de aniversário')).toHaveAttribute('src', 'blob:local-cinto');
+      expect(screen.getByRole('button', { name: /Copiar imagem/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Baixar imagem/i })).toBeInTheDocument();
+    } finally {
+      URL.createObjectURL = origCreateObjectUrl;
+    }
+  });
+
+  it('Na aba Avisos, o administrador consegue anexar a imagem junto da mensagem e salvar para todos os envios', async () => {
+    const mockSettingsUpdateEq = vi.fn().mockResolvedValue({ data: [{ id: 1 }], error: null });
+    const mockSettingsUpdate = vi.fn(() => ({
+      eq: () => ({
+        select: mockSettingsUpdateEq,
+      }),
+    }));
+
+    mockFrom.mockImplementation((table: string) => {
+      if (table === 'stores') {
+        return {
+          select: () => ({
+            eq: () => ({
+              order: async () => ({ data: [{ id: 'store-1', name: 'Bernardo Sayão' }], error: null }),
+            }),
+          }),
+        };
+      }
+      if (table === 'birthday_settings') {
+        return {
+          select: () => ({
+            eq: () => ({
+              maybeSingle: async () => ({
+                data: {
+                  id: 1,
+                  enabled: true,
+                  days_before: 0,
+                  days_after: 0,
+                  message_template: 'Feliz aniversário, {nome}!',
+                  gift_image_url: null,
+                },
+                error: null,
+              }),
+            }),
+          }),
+          update: mockSettingsUpdate,
+        };
+      }
+      return {};
+    });
+
+    mockRpc.mockImplementation((fn: string) => {
+      if (fn === 'get_birthday_reminders') {
+        return {
+          range: async () => ({
+            data: [
+              {
+                customer_id: 'cust-3',
+                customer_name: 'JOAO ALVES',
+                customer_phone: '62997776655',
+                customer_document: null,
+                birthday: '1988-11-25',
+                birthday_year: 2026,
+                birthday_date: '2026-11-25',
+                turning_age: 38,
+                store_id: 'store-1',
+                store_name: 'Bernardo Sayão',
+                status: 'pending',
+                sent_at: null,
+                sent_by: null,
+              },
+            ],
+            error: null,
+          }),
+        };
+      }
+      return Promise.resolve({ data: null, error: null });
+    });
+
+    mockUpload.mockResolvedValue({ error: null });
+    mockGetPublicUrl.mockReturnValue({ data: { publicUrl: 'https://cdn.example.com/birthdays/cintos.jpeg' } });
+
+    wrap(<BirthdayReminders />);
+
+    expect(await screen.findByText('JOAO ALVES')).toBeInTheDocument();
+    fireEvent.click(screen.getByText('JOAO ALVES'));
+
+    const attachBtn = await screen.findByRole('button', { name: /Anexar imagem/i });
+    expect(attachBtn).toBeInTheDocument();
+
+    const dialog = screen.getByRole('dialog');
+    const fileInput = dialog.querySelector('input[type="file"]') as HTMLInputElement;
+    const file = new File(['img-bytes'], 'cintos.jpeg', { type: 'image/jpeg' });
+    fireEvent.change(fileInput, { target: { files: [file] } });
+
+    await waitFor(() => {
+      expect(mockUpload).toHaveBeenCalled();
+      expect(mockSettingsUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({ gift_image_url: 'https://cdn.example.com/birthdays/cintos.jpeg' }),
+      );
     });
   });
 });

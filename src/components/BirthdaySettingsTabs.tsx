@@ -14,6 +14,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import {
   buildBirthdayMessage,
   DEFAULT_BIRTHDAY_TEMPLATE,
+  generateBirthdayMessageFromImage,
+  uploadBirthdayGiftImage,
   type BirthdaySettings,
 } from '@/lib/birthdays';
 
@@ -71,21 +73,11 @@ export const BirthdayRulesTab = () => {
   const generateMessageFromImage = async (imageUrl: string) => {
     setGenerating(true);
     try {
-      const { data, error } = await supabase.functions.invoke('generate-birthday-message', {
-        body: { imageUrl },
-      });
-      if (error) {
-        toast.error(error.message || 'Não foi possível gerar a mensagem a partir da imagem.');
-        return;
-      }
-      if (data?.error) {
-        toast.error(data.error);
-        return;
-      }
-      if (data?.message) {
-        setForm((prev) => ({ ...prev, message_template: data.message }));
-        toast.success('Mensagem criada com base na imagem do brinde! Revise e clique em Salvar regras.');
-      }
+      const generated = await generateBirthdayMessageFromImage(imageUrl);
+      setForm((prev) => ({ ...prev, message_template: generated }));
+      toast.success('Mensagem criada com base na imagem do brinde! Revise e clique em Salvar regras.');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Não foi possível gerar a mensagem a partir da imagem.');
     } finally {
       setGenerating(false);
     }
@@ -95,31 +87,14 @@ export const BirthdayRulesTab = () => {
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file) return;
-    if (!file.type.startsWith('image/')) {
-      toast.error('Selecione um arquivo de imagem (JPG, PNG ou WebP).');
-      return;
-    }
-    if (file.size > 8 * 1024 * 1024) {
-      toast.error('A imagem deve ter no máximo 8 MB.');
-      return;
-    }
-
     setUploading(true);
     try {
-      const ext = file.name.split('.').pop()?.toLowerCase() || 'png';
-      const path = `birthdays/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-      const { error: upErr } = await supabase.storage
-        .from('product-images')
-        .upload(path, file, { upsert: true, contentType: file.type });
-      if (upErr) {
-        toast.error('Erro ao enviar imagem: ' + upErr.message);
-        return;
-      }
-      const { data: pub } = supabase.storage.from('product-images').getPublicUrl(path);
-      const publicUrl = pub.publicUrl;
+      const publicUrl = await uploadBirthdayGiftImage(file);
       setForm((prev) => ({ ...prev, gift_image_url: publicUrl }));
       toast.success('Imagem anexada! Gerando mensagem automaticamente...');
       await generateMessageFromImage(publicUrl);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao enviar imagem.');
     } finally {
       setUploading(false);
     }
@@ -161,6 +136,14 @@ export const BirthdayRulesTab = () => {
     birthday_date: '2026-11-25',
     turning_age: 32,
   });
+
+  const hasUnsavedChanges =
+    !!settings &&
+    (form.enabled !== settings.enabled ||
+      Number(form.days_before) !== (settings.days_before ?? 0) ||
+      Number(form.days_after) !== (settings.days_after ?? 0) ||
+      (form.message_template || '') !== (settings.message_template || DEFAULT_BIRTHDAY_TEMPLATE) ||
+      form.gift_image_url !== (settings.gift_image_url ?? null));
 
   return (
     <Card>
@@ -265,15 +248,29 @@ export const BirthdayRulesTab = () => {
           </p>
         </div>
 
-        <div className="rounded-lg border bg-muted/40 p-3 text-sm space-y-1">
+        <div className="rounded-lg border bg-muted/40 p-3 text-sm space-y-2">
           <p className="text-xs font-medium text-muted-foreground">Exemplo de como fica a mensagem:</p>
+          {form.gift_image_url && (
+            <img
+              src={form.gift_image_url}
+              alt="Prévia da imagem do brinde"
+              className="max-h-44 rounded-md border bg-background object-contain"
+            />
+          )}
           <p className="whitespace-pre-line">{sampleMessage}</p>
         </div>
 
-        <Button onClick={save} disabled={saving || uploading || generating}>
-          {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
-          Salvar regras
-        </Button>
+        <div className="flex flex-wrap items-center gap-3">
+          <Button onClick={save} disabled={saving || uploading || generating}>
+            {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+            Salvar regras
+          </Button>
+          {hasUnsavedChanges && (
+            <span className="text-xs text-amber-600 dark:text-amber-400 font-medium">
+              Clique em Salvar regras para aplicar nos avisos da equipe.
+            </span>
+          )}
+        </div>
       </CardContent>
     </Card>
   );
