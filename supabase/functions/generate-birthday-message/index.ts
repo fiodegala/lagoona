@@ -13,8 +13,9 @@ const corsHeaders = {
 const SYSTEM_PROMPT = `Você escreve mensagens curtas, calorosas e elegantes de WhatsApp para clientes aniversariantes da loja de moda Fio de Gala (em português do Brasil).
 
 Regras obrigatórias:
-- Analise a imagem enviada: identifique o brinde, presente, arte promocional ou qualquer texto/regra visível na imagem (como nome do brinde, validade ou condição de retirada).
-- Crie UMA mensagem pronta para o WhatsApp parabenizando o cliente e apresentando esse brinde de aniversário de forma convidativa e natural.
+- Analise a imagem enviada e identifique exatamente qual produto/brinde aparece na foto, além de qualquer texto ou regra visível (como nome do produto, validade ou condição de retirada).
+- Diga de forma clara e direta na mensagem que o cliente GANHOU esse produto específico mostrado na imagem de presente de aniversário da Fio de Gala (ex.: "você ganhou um Cinto Elástico de presente de aniversário"). Se a foto mostrar várias cores/opções do mesmo produto, fale no singular (ex.: "um Cinto Elástico para escolher sua cor favorita"), a menos que a imagem diga explicitamente que é um kit.
+- Crie UMA mensagem pronta para o WhatsApp parabenizando o cliente, avisando que ele ganhou o produto da imagem e convidando para retirar o presente na loja {loja}.
 - Use exatamente os marcadores {nome} (para o primeiro nome do cliente) e {loja} (para o nome da loja), sem inventar outros marcadores.
 - Seja breve e natural para WhatsApp (3 a 5 linhas curtas, emojis com moderação, sem asteriscos de markdown exagerados).
 - Retorne SOMENTE o texto da mensagem, sem aspas, sem título e sem explicações.`;
@@ -97,7 +98,7 @@ serve(async (req) => {
           content: [
             {
               type: "text",
-              text: "Olhe esta imagem do brinde de aniversário da Fio de Gala e escreva a mensagem de WhatsApp para parabenizar o cliente {nome} e avisar sobre esse brinde na loja {loja}.",
+              text: "Olhe esta imagem do presente de aniversário da Fio de Gala e escreva a mensagem de WhatsApp parabenizando o cliente {nome} e dizendo claramente que ele ganhou o produto mostrado na imagem de presente, convidando para retirar na loja {loja}.",
             },
             {
               type: "image",

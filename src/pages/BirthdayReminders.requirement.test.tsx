@@ -346,4 +346,112 @@ describe('Anexar a imagem do brinde cria automaticamente a mensagem de aniversá
       await screen.findByDisplayValue('Olá, {nome}! Feliz aniversário! Você ganhou uma necessaire exclusiva na {loja}.'),
     ).toBeInTheDocument();
   });
+
+  it('Quando o administrador anexa a imagem na aba Avisos, a mensagem é gerada automaticamente avisando que o cliente ganhou o produto da imagem', async () => {
+    const mockSettingsUpdate = vi.fn(() => ({
+      eq: () => ({
+        select: vi.fn().mockResolvedValue({ data: [{ id: 1 }], error: null }),
+      }),
+    }));
+
+    mockFrom.mockImplementation((table: string) => {
+      if (table === 'stores') {
+        return {
+          select: () => ({
+            eq: () => ({
+              order: async () => ({ data: [{ id: 'store-1', name: 'Bernardo Sayão' }], error: null }),
+            }),
+          }),
+        };
+      }
+      if (table === 'birthday_settings') {
+        return {
+          select: () => ({
+            eq: () => ({
+              maybeSingle: async () => ({
+                data: {
+                  id: 1,
+                  enabled: true,
+                  days_before: 0,
+                  days_after: 0,
+                  message_template: 'Mensagem padrão antiga',
+                  gift_image_url: null,
+                },
+                error: null,
+              }),
+            }),
+          }),
+          update: mockSettingsUpdate,
+        };
+      }
+      return {};
+    });
+
+    mockRpc.mockImplementation((fn: string) => {
+      if (fn === 'get_birthday_reminders') {
+        return {
+          range: async () => ({
+            data: [
+              {
+                customer_id: 'cust-4',
+                customer_name: 'MARCOS SOUZA',
+                customer_phone: '62996665544',
+                customer_document: null,
+                birthday: '1985-11-25',
+                birthday_year: 2026,
+                birthday_date: '2026-11-25',
+                turning_age: 41,
+                store_id: 'store-1',
+                store_name: 'Bernardo Sayão',
+                status: 'pending',
+                sent_at: null,
+                sent_by: null,
+              },
+            ],
+            error: null,
+          }),
+        };
+      }
+      return Promise.resolve({ data: null, error: null });
+    });
+
+    mockUpload.mockResolvedValue({ error: null });
+    mockGetPublicUrl.mockReturnValue({ data: { publicUrl: 'https://cdn.example.com/birthdays/cinto-elastico.jpeg' } });
+    mockInvoke.mockResolvedValue({
+      data: {
+        message:
+          'Olá, {nome}! Feliz aniversário! Você ganhou um Cinto Elástico de presente da Fio de Gala. Passe na {loja} para retirar o seu!',
+      },
+      error: null,
+    });
+
+    wrap(<BirthdayReminders />);
+
+    expect(await screen.findByText('MARCOS SOUZA')).toBeInTheDocument();
+    fireEvent.click(screen.getByText('MARCOS SOUZA'));
+
+    const dialog = await screen.findByRole('dialog');
+    const fileInput = dialog.querySelector('input[type="file"]') as HTMLInputElement;
+    const file = new File(['img-bytes'], 'cinto-elastico.jpeg', { type: 'image/jpeg' });
+    fireEvent.change(fileInput, { target: { files: [file] } });
+
+    await waitFor(() => {
+      expect(mockInvoke).toHaveBeenCalledWith('generate-birthday-message', {
+        body: { imageUrl: 'https://cdn.example.com/birthdays/cinto-elastico.jpeg' },
+      });
+    });
+
+    expect(
+      await screen.findByDisplayValue(
+        'Olá, Marcos! Feliz aniversário! Você ganhou um Cinto Elástico de presente da Fio de Gala. Passe na Bernardo Sayão para retirar o seu!',
+      ),
+    ).toBeInTheDocument();
+
+    expect(mockSettingsUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message_template:
+          'Olá, {nome}! Feliz aniversário! Você ganhou um Cinto Elástico de presente da Fio de Gala. Passe na {loja} para retirar o seu!',
+      }),
+    );
+  });
 });

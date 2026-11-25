@@ -181,12 +181,21 @@ export const uploadBirthdayGiftImage = async (file: File): Promise<string> => {
 export const saveBirthdayGiftImage = async (
   imageUrl: string | null,
   userId?: string | null,
+  messageTemplate?: string,
 ): Promise<void> => {
-  const payload = {
+  const payload: {
+    gift_image_url: string | null;
+    updated_at: string;
+    updated_by: string | null;
+    message_template?: string;
+  } = {
     gift_image_url: imageUrl,
     updated_at: new Date().toISOString(),
     updated_by: userId ?? null,
   };
+  if (messageTemplate !== undefined) {
+    payload.message_template = messageTemplate.trim() || DEFAULT_BIRTHDAY_TEMPLATE;
+  }
   const { data, error } = await supabase
     .from('birthday_settings')
     .update(payload)
@@ -207,9 +216,11 @@ export const saveBirthdayGiftImage = async (
 };
 
 export const generateBirthdayMessageFromImage = async (imageUrl: string): Promise<string> => {
-  const { data, error } = await supabase.functions.invoke('generate-birthday-message', {
+  const response = await supabase.functions.invoke('generate-birthday-message', {
     body: { imageUrl },
   });
+  const data = response?.data;
+  const error = response?.error;
   if (error) throw new Error(error.message || 'Não foi possível gerar a mensagem a partir da imagem.');
   if (data?.error) throw new Error(String(data.error));
   if (!data?.message) throw new Error('A IA não retornou uma mensagem. Tente novamente.');

@@ -102,16 +102,33 @@ const RemindersTab = () => {
       return;
     }
     setUploadingImage(true);
+    let publicUrl: string;
     try {
-      const publicUrl = await uploadBirthdayGiftImage(file);
+      publicUrl = await uploadBirthdayGiftImage(file);
       await saveBirthdayGiftImage(publicUrl, user?.id);
       setSavedImageOverride(publicUrl);
       invalidateBirthdayImage();
-      toast.success('Imagem anexada e salva! Ela já aparece junto da mensagem para quem for enviar.');
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Erro ao anexar imagem.');
+      setUploadingImage(false);
+      return;
     } finally {
       setUploadingImage(false);
+    }
+
+    setGeneratingMessage(true);
+    try {
+      const template = await generateBirthdayMessageFromImage(publicUrl);
+      await saveBirthdayGiftImage(publicUrl, user?.id, template);
+      if (preview) {
+        setPreviewMessage(buildBirthdayMessage(template, preview));
+      }
+      invalidateBirthdayImage();
+      toast.success('Imagem anexada e mensagem criada avisando sobre o presente!');
+    } catch {
+      toast.success('Imagem anexada! Clique em "Criar mensagem com IA" para atualizar o texto.');
+    } finally {
+      setGeneratingMessage(false);
     }
   };
 
@@ -139,10 +156,7 @@ const RemindersTab = () => {
     setGeneratingMessage(true);
     try {
       const template = await generateBirthdayMessageFromImage(activeGiftImageUrl);
-      await supabase
-        .from('birthday_settings')
-        .update({ message_template: template, updated_at: new Date().toISOString(), updated_by: user?.id ?? null })
-        .eq('id', 1);
+      await saveBirthdayGiftImage(activeGiftImageUrl, user?.id, template);
       setPreviewMessage(buildBirthdayMessage(template, preview));
       invalidateBirthdayImage();
       toast.success('Mensagem criada com base na imagem e salva nas regras!');
@@ -260,10 +274,10 @@ const RemindersTab = () => {
                   size="sm"
                   variant={activeGiftImageUrl ? 'outline' : 'default'}
                   onClick={() => headerFileRef.current?.click()}
-                  disabled={uploadingImage}
+                  disabled={uploadingImage || generatingMessage}
                 >
-                  {uploadingImage ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : activeGiftImageUrl ? <Upload className="h-4 w-4 mr-1.5" /> : <ImagePlus className="h-4 w-4 mr-1.5" />}
-                  {activeGiftImageUrl ? 'Trocar imagem' : 'Anexar imagem'}
+                  {uploadingImage || generatingMessage ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : activeGiftImageUrl ? <Upload className="h-4 w-4 mr-1.5" /> : <ImagePlus className="h-4 w-4 mr-1.5" />}
+                  {generatingMessage ? 'Criando mensagem...' : activeGiftImageUrl ? 'Trocar imagem' : 'Anexar imagem'}
                 </Button>
                 {activeGiftImageUrl && (
                   <Button type="button" size="sm" variant="ghost" onClick={handleRemoveImage} disabled={uploadingImage} aria-label="Remover imagem anexada">
