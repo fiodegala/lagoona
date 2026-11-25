@@ -23,6 +23,7 @@ import { cn } from '@/lib/utils';
 import PendingTransferModal from '@/components/PendingTransferModal';
 import AnnouncementPopup from '@/components/AnnouncementPopup';
 import CashbackReminderPopup from '@/components/CashbackReminderPopup';
+import BirthdayReminderPopup from '@/components/BirthdayReminderPopup';
 import GlobalNotificationPopups from '@/components/GlobalNotificationPopups';
 import FloatingChatWidget from '@/components/FloatingChatWidget';
 import { useChatUnread } from '@/hooks/useChatUnread';
@@ -290,6 +291,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
       <PendingTransferModal />
       <AnnouncementPopup />
       <CashbackReminderPopup />
+      <BirthdayReminderPopup />
       <FloatingChatWidget />
     </div>
   );

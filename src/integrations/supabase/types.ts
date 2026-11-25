@@ -503,6 +503,111 @@ export type Database = {
         }
         Relationships: []
       }
+      birthday_reminders: {
+        Row: {
+          birthday_year: number
+          created_at: string
+          customer_id: string
+          id: string
+          sent_at: string | null
+          sent_by: string | null
+          status: string
+          store_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          birthday_year: number
+          created_at?: string
+          customer_id: string
+          id?: string
+          sent_at?: string | null
+          sent_by?: string | null
+          status?: string
+          store_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          birthday_year?: number
+          created_at?: string
+          customer_id?: string
+          id?: string
+          sent_at?: string | null
+          sent_by?: string | null
+          status?: string
+          store_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "birthday_reminders_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "birthday_reminders_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      birthday_settings: {
+        Row: {
+          days_after: number
+          days_before: number
+          enabled: boolean
+          gift_image_url: string | null
+          id: number
+          message_template: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          days_after?: number
+          days_before?: number
+          enabled?: boolean
+          gift_image_url?: string | null
+          id?: number
+          message_template?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          days_after?: number
+          days_before?: number
+          enabled?: boolean
+          gift_image_url?: string | null
+          id?: number
+          message_template?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      birthday_viewers: {
+        Row: {
+          all_stores: boolean
+          store_ids: string[]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          all_stores?: boolean
+          store_ids?: string[]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          all_stores?: boolean
+          store_ids?: string[]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       calendar_event_participants: {
         Row: {
           created_at: string
@@ -3849,10 +3954,18 @@ export type Database = {
       }
     }
     Functions: {
+      birthday_date_in_year: {
+        Args: { _birthday: string; _year: number }
+        Returns: string
+      }
       can_manage_goals: { Args: { _user_id: string }; Returns: boolean }
       can_manage_products: { Args: { _user_id: string }; Returns: boolean }
       can_manage_sales: { Args: { _user_id: string }; Returns: boolean }
       can_manage_users: { Args: { _user_id: string }; Returns: boolean }
+      can_view_birthday_store: {
+        Args: { _store_id: string; _user_id: string }
+        Returns: boolean
+      }
       can_view_cashback_store: {
         Args: { _store_id: string; _user_id: string }
         Returns: boolean
@@ -3873,6 +3986,24 @@ export type Database = {
       delete_manual_cashback_reminder: {
         Args: { _reminder_id: string }
         Returns: undefined
+      }
+      get_birthday_reminders: {
+        Args: { _only_popup_due?: boolean; _year?: number }
+        Returns: {
+          birthday: string
+          birthday_date: string
+          birthday_year: number
+          customer_document: string
+          customer_id: string
+          customer_name: string
+          customer_phone: string
+          sent_at: string
+          sent_by: string
+          status: string
+          store_id: string
+          store_name: string
+          turning_age: number
+        }[]
       }
       get_product_stock: {
         Args: { _product_id: string }
@@ -3920,6 +4051,10 @@ export type Database = {
       process_stock_transfer: {
         Args: { _action: string; _transfer_id: string; _user_id: string }
         Returns: Json
+      }
+      set_birthday_reminder_status: {
+        Args: { _customer_id: string; _status: string; _year: number }
+        Returns: undefined
       }
       set_cashback_reminder_status: {
         Args: { _reminder_id: string; _status: string }
