@@ -27,7 +27,7 @@ export interface BirthdaySettings {
 }
 
 export const DEFAULT_BIRTHDAY_TEMPLATE =
-  'Olá, {nome}! Feliz aniversário! 🎉💛\nAqui é da Fio de Gala! Passando para desejar um dia incrível, cheio de saúde, alegria e muitas conquistas.\nPasse em qualquer uma de nossas lojas para comemorar essa data especial e retirar seu presente — válido dentro do mês do seu aniversário, até {validade}!';
+  'Olá, {nome}! Feliz aniversário! 🎉💛\nAqui é da Fio de Gala! Passando para desejar um dia incrível, cheio de saúde, alegria e muitas conquistas.\nVá a qualquer loja Fio de Gala para comemorar essa data especial e retirar seu presente — válido dentro do mês do seu aniversário, até {validade}!';
 
 export type BirthdayPeriodKey =
   | 'today'

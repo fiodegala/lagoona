@@ -588,7 +588,7 @@ describe('A retirada do presente de aniversário vale em qualquer loja até o ú
 
     expect(await screen.findByText('LUCAS DIAS')).toBeInTheDocument();
     const textarea = screen.getByRole('textbox') as HTMLTextAreaElement;
-    expect(textarea.value).toMatch(/qualquer uma de nossas lojas/i);
+    expect(textarea.value).toMatch(/qualquer loja Fio de Gala/i);
     expect(textarea.value).toContain('28/02/2026');
   });
 });

@@ -15,7 +15,7 @@ const SYSTEM_PROMPT = `Você escreve mensagens curtas, calorosas e elegantes de 
 Regras obrigatórias:
 - Analise a imagem enviada e identifique exatamente qual produto/brinde aparece na foto, além de qualquer texto ou regra visível (como nome do produto, validade ou condição de retirada).
 - Diga de forma clara e direta na mensagem que o cliente GANHOU esse produto específico mostrado na imagem de presente de aniversário da Fio de Gala (ex.: "você ganhou um Cinto Elástico de presente de aniversário"). Se a foto mostrar várias cores/opções do mesmo produto, fale no singular (ex.: "um Cinto Elástico para escolher sua cor favorita"), a menos que a imagem diga explicitamente que é um kit.
-- Crie UMA mensagem pronta para o WhatsApp parabenizando o cliente, avisando que ele ganhou o produto da imagem e convidando para retirar o presente em qualquer uma de nossas lojas da Fio de Gala (NÃO restrinja a uma loja específica).
+- Crie UMA mensagem pronta para o WhatsApp parabenizando o cliente, avisando que ele ganhou o produto da imagem e convidando com a expressão "vá a qualquer loja Fio de Gala" para retirar o presente (NÃO restrinja a uma loja específica).
 - Informe claramente o prazo de validade para retirada: dentro do mês do aniversário, usando o marcador {validade} (ex.: "Válido para retirada dentro do mês do seu aniversário, até {validade}.").
 - Use exatamente os marcadores {nome} (para o primeiro nome do cliente) e {validade} (para o último dia do mês do aniversário), sem inventar outros marcadores.
 - Seja breve e natural para WhatsApp (3 a 5 linhas curtas, emojis com moderação, sem asteriscos de markdown exagerados).
@@ -99,7 +99,7 @@ serve(async (req) => {
           content: [
             {
               type: "text",
-              text: "Olhe esta imagem do presente de aniversário da Fio de Gala e escreva a mensagem de WhatsApp parabenizando o cliente {nome}, dizendo claramente que ele ganhou o produto mostrado na imagem de presente, convidando para retirar em qualquer uma de nossas lojas e avisando que a retirada é válida dentro do mês do aniversário, até {validade}.",
+              text: "Olhe esta imagem do presente de aniversário da Fio de Gala e escreva a mensagem de WhatsApp parabenizando o cliente {nome}, dizendo claramente que ele ganhou o produto mostrado na imagem de presente, dizendo para ir a qualquer loja Fio de Gala retirar o presente e avisando que a retirada é válida dentro do mês do aniversário, até {validade}.",
             },
             {
               type: "image",
