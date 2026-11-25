@@ -131,6 +131,7 @@ export const birthdayPeriodRange = (
 export const buildBirthdayMessage = (
   template: string | null | undefined,
   r: Pick<BirthdayReminder, 'customer_name' | 'store_name' | 'birthday_date' | 'turning_age'>,
+  now: Date = new Date(),
 ) => {
   const firstName = (r.customer_name || '').trim().split(/\s+/)[0] || '';
   const pretty = firstName ? firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase() : '';
@@ -143,7 +144,18 @@ export const buildBirthdayMessage = (
     validade: formatBirthdayValidityBR(r.birthday_date),
     idade: age,
   };
-  return (template?.trim() || DEFAULT_BIRTHDAY_TEMPLATE).replace(/\{(\w+)\}/g, (m, k) => (k in values ? values[k] : m));
+  const message = (template?.trim() || DEFAULT_BIRTHDAY_TEMPLATE).replace(/\{(\w+)\}/g, (m, k) => (k in values ? values[k] : m));
+  const today = spDateKey(now);
+  const birthday = r.birthday_date.slice(0, 10);
+  if (birthday.slice(0, 7) !== today.slice(0, 7) || birthday >= today) return message;
+
+  const month = new Intl.DateTimeFormat('pt-BR', { month: 'long', timeZone: 'America/Sao_Paulo' }).format(now);
+  const greeting = `Olá ${pretty}, vimos que você fez aniversário nesse mês de ${month}!`;
+  const birthdayGreeting = /^(?:Olá[^\n!]*!\s*)?Feliz aniversário[^!\n]*!/i;
+  if (birthdayGreeting.test(message)) return message.replace(birthdayGreeting, greeting);
+  const helloGreeting = /^Olá[^!\n]*!/i;
+  if (helloGreeting.test(message)) return message.replace(helloGreeting, greeting);
+  return `${greeting}\n\n${message}`;
 };
 
 /** Busca todos os aniversariantes com paginação para não cortar acima de 1000 linhas. */

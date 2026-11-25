@@ -297,6 +297,48 @@ describe('O pop-up de aniversário avisa no dia e exibe a imagem do brinde', () 
   });
 });
 
+describe('Clientes cujo aniversário já passou neste mês recebem uma saudação de aniversário atrasado', () => {
+  it.each([
+    ['01', '2026-11-25T17:46:00Z', 'Olá Paula, vimos que você fez aniversário nesse mês de novembro!'],
+    ['24', '2026-11-25T17:46:00Z', 'Olá Paula, vimos que você fez aniversário nesse mês de novembro!'],
+    ['25', '2026-11-25T17:46:00Z', 'Feliz aniversário, Paula!'],
+    ['26', '2026-11-25T17:46:00Z', 'Feliz aniversário, Paula!'],
+    ['25', '2026-11-26T01:00:00Z', 'Feliz aniversário, Paula!'],
+  ])('Ao abrir o aviso de uma cliente nascida em %s/11, no instante %s, a equipe vê a saudação correta', async (day, instant, greeting) => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(instant));
+    try {
+      mockFrom.mockImplementation((table: string) => {
+        if (table === 'stores') return {
+          select: () => ({ eq: () => ({ order: async () => ({ data: [], error: null }) }) }),
+        };
+        if (table === 'birthday_settings') return {
+          select: () => ({ eq: () => ({ maybeSingle: async () => ({
+            data: { id: 1, enabled: true, days_before: 0, days_after: 0,
+              message_template: 'Feliz aniversário, {nome}! 🎉\n\nVocê ganhou um Cinto Elástico! Retire em qualquer loja Fio de Gala até {validade}.',
+              gift_image_url: null }, error: null,
+          }) }) }),
+        };
+        return {};
+      });
+      mockRpc.mockImplementation(() => ({ range: async () => ({ data: [{
+        customer_id: 'cliente-paula', customer_name: 'PAULA MENDES', customer_phone: '62999998888',
+        customer_document: null, birthday: `1995-11-${day}`, birthday_year: 2026,
+        birthday_date: `2026-11-${day}`, turning_age: 31, store_id: null, store_name: null,
+        status: 'pending', sent_at: null, sent_by: null,
+      }], error: null }) }));
+      wrap(<BirthdayReminders />);
+      fireEvent.click(await screen.findByText('PAULA MENDES'));
+      const message = `${greeting} 🎉\n\nVocê ganhou um Cinto Elástico! Retire em qualquer loja Fio de Gala até 30/11/2026.`;
+      const textarea = screen.getByRole('dialog').querySelector('textarea');
+      expect(textarea).toHaveValue(message);
+      expect(screen.getByRole('link', { name: 'Abrir WhatsApp' })).toHaveAttribute('href', expect.stringContaining(encodeURIComponent(message)));
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
+
 describe('Anexar a imagem do brinde cria automaticamente a mensagem de aniversário', () => {
   it('Quando o administrador anexa uma imagem do brinde, a mensagem do WhatsApp é preenchida com o texto gerado pela IA', async () => {
     mockFrom.mockImplementation((table: string) => {
