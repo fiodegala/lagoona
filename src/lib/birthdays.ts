@@ -27,7 +27,7 @@ export interface BirthdaySettings {
 }
 
 export const DEFAULT_BIRTHDAY_TEMPLATE =
-  'Olá, {nome}! Feliz aniversário! 🎉💛\nAqui é da Fio de Gala! Passando para desejar um dia incrível, cheio de saúde, alegria e muitas conquistas.\nSerá um prazer receber você na {loja} para comemorar essa data especial!';
+  'Olá, {nome}! Feliz aniversário! 🎉💛\nAqui é da Fio de Gala! Passando para desejar um dia incrível, cheio de saúde, alegria e muitas conquistas.\nPasse em qualquer uma de nossas lojas para comemorar essa data especial e retirar seu presente — válido dentro do mês do seu aniversário, até {validade}!';
 
 export type BirthdayPeriodKey =
   | 'today'
@@ -60,6 +60,16 @@ const localISO = (d: Date) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pa
 export const formatDayMonthBR = (isoDate: string) => {
   const [, m, d] = isoDate.slice(0, 10).split('-');
   return d && m ? `${d}/${m}` : isoDate;
+};
+
+/** Último dia do mês do aniversário em "DD/MM/AAAA" a partir de "AAAA-MM-DD". */
+export const formatBirthdayValidityBR = (isoDate: string) => {
+  const [yStr, mStr] = isoDate.slice(0, 10).split('-');
+  const y = Number(yStr);
+  const m = Number(mStr);
+  if (!Number.isInteger(y) || !Number.isInteger(m) || m < 1 || m > 12) return '';
+  const lastDay = new Date(Date.UTC(y, m, 0)).getUTCDate();
+  return `${pad2(lastDay)}/${pad2(m)}/${y}`;
 };
 
 /** Verdadeiro quando a data de aniversário cai hoje no horário de Brasília. */
@@ -130,6 +140,7 @@ export const buildBirthdayMessage = (
     nome_completo: r.customer_name || '',
     loja: r.store_name || 'Fio de Gala',
     data_aniversario: formatDayMonthBR(r.birthday_date),
+    validade: formatBirthdayValidityBR(r.birthday_date),
     idade: age,
   };
   return (template?.trim() || DEFAULT_BIRTHDAY_TEMPLATE).replace(/\{(\w+)\}/g, (m, k) => (k in values ? values[k] : m));

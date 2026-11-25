@@ -455,3 +455,140 @@ describe('Anexar a imagem do brinde cria automaticamente a mensagem de aniversá
     );
   });
 });
+
+describe('A retirada do presente de aniversário vale em qualquer loja até o último dia do mês do aniversário', () => {
+  it('Para um cliente que faz aniversário em novembro, o pop-up mostra a mensagem com retirada em qualquer loja e validade até 30/11/2026', async () => {
+    mockFrom.mockImplementation((table: string) => {
+      if (table === 'birthday_viewers') {
+        return {
+          select: () => ({
+            eq: () => ({
+              maybeSingle: async () => ({ data: { user_id: 'admin-1', all_stores: true, store_ids: [] }, error: null }),
+            }),
+          }),
+        };
+      }
+      if (table === 'birthday_settings') {
+        return {
+          select: () => ({
+            eq: () => ({
+              maybeSingle: async () => ({
+                data: {
+                  enabled: true,
+                  message_template:
+                    'Feliz aniversário, {nome}! Retire seu presente em qualquer uma de nossas lojas até {validade}.',
+                  gift_image_url: null,
+                },
+                error: null,
+              }),
+            }),
+          }),
+        };
+      }
+      return {};
+    });
+
+    mockRpc.mockImplementation((fn: string) => {
+      if (fn === 'get_birthday_reminders') {
+        return {
+          range: async () => ({
+            data: [
+              {
+                customer_id: 'cust-nov',
+                customer_name: 'PAULA MENDES',
+                customer_phone: '62995554433',
+                customer_document: null,
+                birthday: '1995-11-25',
+                birthday_year: 2026,
+                birthday_date: '2026-11-25',
+                turning_age: 31,
+                store_id: 'store-1',
+                store_name: 'Bernardo Sayão',
+                status: 'pending',
+                sent_at: null,
+                sent_by: null,
+              },
+            ],
+            error: null,
+          }),
+        };
+      }
+      return Promise.resolve({ data: null, error: null });
+    });
+
+    wrap(<BirthdayReminderPopup />);
+
+    expect(await screen.findByText('PAULA MENDES')).toBeInTheDocument();
+    expect(
+      screen.getByDisplayValue(
+        'Feliz aniversário, Paula! Retire seu presente em qualquer uma de nossas lojas até 30/11/2026.',
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('Para um cliente que faz aniversário em fevereiro de 2026, a mensagem padrão calcula validade até 28/02/2026 e indica qualquer loja', async () => {
+    mockFrom.mockImplementation((table: string) => {
+      if (table === 'birthday_viewers') {
+        return {
+          select: () => ({
+            eq: () => ({
+              maybeSingle: async () => ({ data: { user_id: 'admin-1', all_stores: true, store_ids: [] }, error: null }),
+            }),
+          }),
+        };
+      }
+      if (table === 'birthday_settings') {
+        return {
+          select: () => ({
+            eq: () => ({
+              maybeSingle: async () => ({
+                data: {
+                  enabled: true,
+                  message_template: '',
+                  gift_image_url: null,
+                },
+                error: null,
+              }),
+            }),
+          }),
+        };
+      }
+      return {};
+    });
+
+    mockRpc.mockImplementation((fn: string) => {
+      if (fn === 'get_birthday_reminders') {
+        return {
+          range: async () => ({
+            data: [
+              {
+                customer_id: 'cust-feb',
+                customer_name: 'LUCAS DIAS',
+                customer_phone: '62994443322',
+                customer_document: null,
+                birthday: '1993-02-10',
+                birthday_year: 2026,
+                birthday_date: '2026-02-10',
+                turning_age: 33,
+                store_id: 'store-1',
+                store_name: 'Bernardo Sayão',
+                status: 'pending',
+                sent_at: null,
+                sent_by: null,
+              },
+            ],
+            error: null,
+          }),
+        };
+      }
+      return Promise.resolve({ data: null, error: null });
+    });
+
+    wrap(<BirthdayReminderPopup />);
+
+    expect(await screen.findByText('LUCAS DIAS')).toBeInTheDocument();
+    const textarea = screen.getByRole('textbox') as HTMLTextAreaElement;
+    expect(textarea.value).toMatch(/qualquer uma de nossas lojas/i);
+    expect(textarea.value).toContain('28/02/2026');
+  });
+});

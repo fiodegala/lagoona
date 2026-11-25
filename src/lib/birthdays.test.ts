@@ -39,6 +39,41 @@ describe('aniversariantes helpers', () => {
     expect(msg).toBe('Parabéns, Maria (MARIA OLIVEIRA)! 25/11 - 30 anos na Fio de Gala.');
   });
 
+  it('calcula {validade} como o último dia do mês do aniversário (incluindo fevereiro e ano bissexto)', () => {
+    expect(
+      buildBirthdayMessage('Retire até {validade}.', {
+        customer_name: 'ANA',
+        store_name: 'Online',
+        birthday_date: '2026-11-25',
+        turning_age: 29,
+      }),
+    ).toBe('Retire até 30/11/2026.');
+    expect(
+      buildBirthdayMessage('Retire até {validade}.', {
+        customer_name: 'ANA',
+        store_name: 'Online',
+        birthday_date: '2026-02-10',
+        turning_age: 29,
+      }),
+    ).toBe('Retire até 28/02/2026.');
+    expect(
+      buildBirthdayMessage('Retire até {validade}.', {
+        customer_name: 'ANA',
+        store_name: 'Online',
+        birthday_date: '2028-02-10',
+        turning_age: 31,
+      }),
+    ).toBe('Retire até 29/02/2028.');
+    expect(
+      buildBirthdayMessage('Retire até {validade}.', {
+        customer_name: 'ANA',
+        store_name: 'Online',
+        birthday_date: '2026-12-05',
+        turning_age: 29,
+      }),
+    ).toBe('Retire até 31/12/2026.');
+  });
+
   it('calcula intervalos de período corretamente', () => {
     expect(birthdayPeriodRange('today', now)).toEqual({ from: '2026-11-25', to: '2026-11-25' });
     expect(birthdayPeriodRange('tomorrow', now)).toEqual({ from: '2026-11-26', to: '2026-11-26' });

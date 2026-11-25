@@ -244,7 +244,7 @@ export const BirthdayRulesTab = () => {
             onChange={(e) => setForm({ ...form, message_template: e.target.value })}
           />
           <p className="text-xs text-muted-foreground">
-            Campos automáticos: {'{nome}'}, {'{nome_completo}'}, {'{loja}'}, {'{data_aniversario}'}, {'{idade}'}
+            Campos automáticos: {'{nome}'}, {'{nome_completo}'}, {'{loja}'}, {'{data_aniversario}'}, {'{validade}'}, {'{idade}'}
           </p>
         </div>
 
