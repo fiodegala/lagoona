@@ -79,12 +79,12 @@ export function ManageSaleActionTags({ inline = false }: { inline?: boolean }) {
   </>;
 }
 
-export function SaleActionTagSelect({ value, onChange }: { value: string | null; onChange: (id: string | null) => void }) {
+export function SaleActionTagSelect({ value, onChange, disabled = false }: { value: string | null; onChange: (id: string | null) => void; disabled?: boolean }) {
   const { data: tags = [], isLoading, isError, refetch } = useSaleActionTags();
   const available = tags.filter(tag => tag.is_active || tag.id === value);
   return <div className="space-y-2">
     <div className="flex flex-wrap items-center justify-between gap-2"><Label htmlFor="sale-action-tag">Etiqueta da ação</Label><ManageSaleActionTags /></div>
-    <Select value={value || 'none'} onValueChange={id => onChange(id === 'none' ? null : id)} disabled={isLoading || isError}>
+    <Select value={value || 'none'} onValueChange={id => onChange(id === 'none' ? null : id)} disabled={disabled || isLoading || isError}>
       <SelectTrigger id="sale-action-tag" aria-label="Etiqueta da ação"><SelectValue placeholder="Sem etiqueta" /></SelectTrigger>
       <SelectContent><SelectItem value="none">Sem etiqueta</SelectItem>{available.map(tag => <SelectItem key={tag.id} value={tag.id}>{tag.name}{!tag.is_active ? ' (inativa)' : ''}</SelectItem>)}</SelectContent>
     </Select>

@@ -29,6 +29,8 @@ import { toast } from 'sonner';
 import { auditService } from '@/services/auditService';
 import EditPaymentMethodModal from '@/components/EditPaymentMethodModal';
 import EditSaleItemsModal from '@/components/EditSaleItemsModal';
+import { SaleActionTagSelect } from '@/components/SaleActionTags';
+import { useSaleActionTags } from '@/hooks/useSaleActionTags';
 
 const paymentMethodLabels: Record<string, string> = {
   cash: 'Dinheiro',
@@ -73,6 +75,9 @@ const Sales = () => {
   const [isEditingPayment, setIsEditingPayment] = useState(false);
   const [isEditingItems, setIsEditingItems] = useState(false);
   const [isSavingCampaign, setIsSavingCampaign] = useState(false);
+  const [isSavingActionTag, setIsSavingActionTag] = useState(false);
+  const { data: actionTags = [] } = useSaleActionTags();
+  const actionTagMap = useMemo(() => new Map(actionTags.map(tag => [tag.id, tag])), [actionTags]);
 
 
   const handleToggleCampaign = async (value: boolean) => {
@@ -99,6 +104,37 @@ const Sales = () => {
       toast.error('Erro ao atualizar etiqueta: ' + (e.message || ''));
     } finally {
       setIsSavingCampaign(false);
+    }
+  };
+
+  const handleUpdateActionTag = async (actionTagId: string | null) => {
+    if (!detailSale || detailSale.status !== 'completed') return;
+    setIsSavingActionTag(true);
+    try {
+      const { error } = await supabase.rpc('set_pos_sale_action_tag', {
+        _sale_id: detailSale.id,
+        _action_tag_id: actionTagId,
+      });
+      if (error) throw error;
+
+      auditService.log({
+        action: 'update_action_tag',
+        entity_type: 'pos_sale',
+        entity_id: detailSale.id,
+        details: {
+          old_action_tag_id: detailSale.action_tag_id ?? null,
+          new_action_tag_id: actionTagId,
+        },
+      });
+
+      setDetailSale((prev: any) => (prev ? { ...prev, action_tag_id: actionTagId } : prev));
+      queryClient.invalidateQueries({ queryKey: ['pos-sales'] });
+      queryClient.invalidateQueries({ queryKey: ['action-tag-results'] });
+      toast.success(actionTagId ? 'Etiqueta da ação atualizada' : 'Etiqueta da ação removida');
+    } catch (e: any) {
+      toast.error('Erro ao atualizar etiqueta: ' + (e.message || ''));
+    } finally {
+      setIsSavingActionTag(false);
     }
   };
 
@@ -852,6 +888,11 @@ const Sales = () => {
                                 <Megaphone className="h-2.5 w-2.5" /> Campanha
                               </Badge>
                             )}
+                            {sale.action_tag_id && actionTagMap.get(sale.action_tag_id) && (
+                              <Badge variant="outline" className="text-[10px] gap-1">
+                                <Tag className="h-2.5 w-2.5" /> {actionTagMap.get(sale.action_tag_id)?.name}
+                              </Badge>
+                            )}
 
                           </div>
                         </TableCell>
@@ -976,6 +1017,20 @@ const Sales = () => {
                   disabled={!canCancel || isSavingCampaign}
                   onCheckedChange={handleToggleCampaign}
                 />
+              </div>
+
+              {/* Action tag */}
+              <div className="rounded-lg border p-3 space-y-1">
+                <SaleActionTagSelect
+                  value={detailSale.action_tag_id ?? null}
+                  onChange={handleUpdateActionTag}
+                  disabled={isSavingActionTag || detailSale.status !== 'completed'}
+                />
+                {detailSale.status !== 'completed' && (
+                  <p className="text-xs text-muted-foreground">
+                    A etiqueta da ação só pode ser alterada em vendas concluídas.
+                  </p>
+                )}
               </div>
 
               {/* Sale info */}

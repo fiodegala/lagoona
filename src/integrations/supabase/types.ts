@@ -4091,6 +4091,10 @@ export type Database = {
         Args: { _reminder_id: string; _status: string }
         Returns: undefined
       }
+      set_pos_sale_action_tag: {
+        Args: { _action_tag_id: string; _sale_id: string }
+        Returns: undefined
+      }
       upsert_cashback_reminder: {
         Args: { _sale_id: string }
         Returns: undefined
