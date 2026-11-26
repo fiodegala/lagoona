@@ -71,6 +71,13 @@
       "when": 1795619315370,
       "tag": "0009_fix_get_birthday_reminders_unnest",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1795695401850,
+      "tag": "0010_sale_action_tags",
+      "breakpoints": true
     }
   ]
 }

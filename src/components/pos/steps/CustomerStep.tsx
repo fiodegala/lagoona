@@ -44,12 +44,15 @@ import { Customer } from '@/components/pos/CustomerSelector';
 import { SaleType } from '@/components/pos/ProductSearch';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { SaleActionTagSelect } from '@/components/SaleActionTags';
 
 interface CustomerStepProps {
   selectedCustomer: Customer | null;
   onSelectCustomer: (customer: Customer | null) => void;
   isCampaign?: boolean;
   onCampaignChange?: (value: boolean) => void;
+  actionTagId?: string | null;
+  onActionTagChange?: (id: string | null) => void;
   saleType: SaleType;
   onNext: () => void;
   onBack: () => void;
@@ -82,7 +85,7 @@ const emptyForm = {
   profession: '',
 };
 
-const CustomerStep = ({ selectedCustomer, onSelectCustomer, isCampaign = false, onCampaignChange, saleType, onNext, onBack }: CustomerStepProps) => {
+const CustomerStep = ({ selectedCustomer, onSelectCustomer, isCampaign = false, onCampaignChange, actionTagId = null, onActionTagChange, saleType, onNext, onBack }: CustomerStepProps) => {
   const isExchange = saleType === 'troca';
   const isColaborador = saleType === 'colaborador';
   const isGiftCard = saleType === 'cartao_presente';
@@ -296,6 +299,7 @@ const CustomerStep = ({ selectedCustomer, onSelectCustomer, isCampaign = false, 
       </p>
 
       <div className="w-full max-w-md space-y-4">
+        {onActionTagChange && <SaleActionTagSelect value={actionTagId} onChange={onActionTagChange} />}
         {/* Campaign tag */}
         {!isColaborador && (
           <label className="flex items-center gap-3 p-3 rounded-xl border-2 border-dashed cursor-pointer hover:bg-muted/40">

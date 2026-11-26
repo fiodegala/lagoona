@@ -28,6 +28,7 @@ import { calculateDailyGoalTarget } from '@/lib/salesGoals';
 import { DateRange } from 'react-day-picker';
 import BrazilSalesMap from '@/components/dashboard/BrazilSalesMap';
 import WhatsAppMetrics from '@/components/dashboard/WhatsAppMetrics';
+import SaleActionTagsReport from '@/components/dashboard/SaleActionTagsReport';
 import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 type PeriodFilter = 'today' | 'week' | 'month' | 'currentMonth' | 'lastMonth' | 'all' | 'custom';
@@ -110,6 +111,7 @@ interface RawPOSSale {
   status: string;
   sale_type: string | null;
   is_campaign: boolean;
+  action_tag_id: string | null;
   notes: string | null;
   items: { product_id?: string; name?: string; qty?: number; quantity?: number; unit_price?: number; price?: number; is_lagoona?: boolean; is_promotional?: boolean; original_price?: number; total?: number }[];
   created_at: string;
@@ -370,7 +372,16 @@ const Dashboard = () => {
         supabase.from('product_reviews').select('id, is_approved'),
         supabase.from('coupons').select('id, is_active'),
         supabase.from('categories').select('id, is_active'),
-        posSalesQuery,
+        (async () => {
+          if (isSiteStoreSelected) return { data: [], error: null };
+          const allSales = [];
+          for (let offset = 0; ; offset += 1000) {
+            const result = await posSalesQuery.order('id').range(offset, offset + 999);
+            if (result.error) throw result.error;
+            allSales.push(...(result.data || []));
+            if (!result.data || result.data.length < 1000) return { data: allSales, error: null };
+          }
+        })(),
         supabase.from('sales_goals').select('*').eq('is_active', true),
         supabase.from('customers').select('id, state, city'),
       ]);
@@ -402,6 +413,7 @@ const Dashboard = () => {
         status: sale.status,
         sale_type: (sale as any).sale_type || null,
         is_campaign: Boolean((sale as any).is_campaign),
+        action_tag_id: sale.action_tag_id || null,
         notes: sale.notes || null,
         items: (sale.items as any[] || []),
         created_at: sale.created_at,
@@ -2326,6 +2338,7 @@ const Dashboard = () => {
         )}
 
         {/* Campaign Customers Section */}
+        <SaleActionTagsReport sales={filteredPOSSales} loading={isLoading} />
         <Card className="card-elevated border-l-4 border-l-accent">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">

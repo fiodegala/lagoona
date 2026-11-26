@@ -47,6 +47,7 @@ interface POSDraftState {
   quotePriceMode: QuotePriceMode;
   selectedSeller: Seller | null;
   selectedCustomer: Customer | null;
+  actionTagId?: string | null;
   cartItems: CartItem[];
   generalDiscount: { type: 'percentage' | 'fixed'; value: number };
 }
@@ -96,6 +97,7 @@ const POSPage = () => {
   const [selectedSeller, setSelectedSeller] = useState<Seller | null>(null);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [isCampaignCustomer, setIsCampaignCustomer] = useState(false);
+  const [actionTagId, setActionTagId] = useState<string | null>(null);
 
   const [customerCreditBalance, setCustomerCreditBalance] = useState(0);
 
@@ -128,6 +130,7 @@ const POSPage = () => {
     if (state?.prefillCustomer && !prefillAppliedRef.current) {
       prefillAppliedRef.current = true;
       setSelectedCustomer(state.prefillCustomer);
+      setActionTagId(null);
       // Reset wizard to sale-type step so user must choose the sale modality first
       setCurrentStep('sale-type');
       setSaleType('varejo');
@@ -249,6 +252,7 @@ const POSPage = () => {
       setQuotePriceMode(draft.quotePriceMode || 'varejo');
       setSelectedSeller(draft.selectedSeller ?? null);
       setSelectedCustomer(draft.selectedCustomer ?? null);
+      setActionTagId(draft.actionTagId ?? null);
       setCartItems(Array.isArray(draft.cartItems) ? draft.cartItems : []);
       setGeneralDiscount(
         draft.generalDiscount?.type
@@ -273,6 +277,7 @@ const POSPage = () => {
       quotePriceMode,
       selectedSeller,
       selectedCustomer,
+      actionTagId,
       cartItems,
       generalDiscount,
     };
@@ -286,6 +291,7 @@ const POSPage = () => {
     quotePriceMode,
     selectedSeller,
     selectedCustomer,
+    actionTagId,
     cartItems,
     generalDiscount,
   ]);
@@ -753,6 +759,7 @@ const POSPage = () => {
       seller_id: selectedSeller?.user_id,
       customer_id: isColaboradorSale ? undefined : selectedCustomer?.id,
       is_campaign: isCampaignCustomer,
+      action_tag_id: actionTagId || undefined,
       customer_name: selectedCustomer?.name,
       customer_document: selectedCustomer?.document || undefined,
       items: cartItems.filter(i => !i.is_return).map((item) => ({
@@ -890,6 +897,7 @@ const POSPage = () => {
     setQuotePriceMode('varejo');
     setSelectedSeller(null);
     setSelectedCustomer(null);
+    setActionTagId(null);
     setCustomerCreditBalance(0);
     setCartItems([]);
     setGeneralDiscount({ type: 'percentage', value: 0 });
@@ -1051,6 +1059,8 @@ const POSPage = () => {
               onSelectCustomer={setSelectedCustomer}
               isCampaign={isCampaignCustomer}
               onCampaignChange={setIsCampaignCustomer}
+              actionTagId={actionTagId}
+              onActionTagChange={setActionTagId}
               saleType={saleType}
               onNext={() => setCurrentStep(isExchangeMode ? 'products' : 'products')}
               onBack={() => setCurrentStep('seller')}

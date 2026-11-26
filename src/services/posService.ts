@@ -92,6 +92,7 @@ export interface CreateSaleData {
   seller_id?: string;
   customer_id?: string;
   is_campaign?: boolean;
+  action_tag_id?: string;
   customer_name?: string;
   customer_document?: string;
   items: POSSaleItem[];
@@ -344,6 +345,7 @@ export const posService = {
       seller_id: saleData.seller_id || user.id,
       customer_id: saleData.customer_id || null,
       is_campaign: saleData.is_campaign || false,
+      action_tag_id: saleData.action_tag_id || null,
       customer_name: saleData.customer_name || null,
       customer_document: saleData.customer_document || null,
       items: saleData.items as unknown as Record<string, unknown>[],

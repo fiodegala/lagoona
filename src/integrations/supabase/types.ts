@@ -1958,6 +1958,7 @@ export type Database = {
       }
       pos_sales: {
         Row: {
+          action_tag_id: string | null
           amount_received: number | null
           cancel_reason: string | null
           cancelled_at: string | null
@@ -1992,6 +1993,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          action_tag_id?: string | null
           amount_received?: number | null
           cancel_reason?: string | null
           cancelled_at?: string | null
@@ -2026,6 +2028,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          action_tag_id?: string | null
           amount_received?: number | null
           cancel_reason?: string | null
           cancelled_at?: string | null
@@ -2060,6 +2063,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "pos_sales_action_tag_id_fkey"
+            columns: ["action_tag_id"]
+            isOneToOne: false
+            referencedRelation: "sale_action_tags"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "pos_sales_coupon_id_fkey"
             columns: ["coupon_id"]
@@ -2887,6 +2897,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      sale_action_tags: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+        }
+        Relationships: []
       }
       sales_goals: {
         Row: {
