@@ -78,6 +78,13 @@
       "when": 1795695401850,
       "tag": "0010_sale_action_tags",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1795697235405,
+      "tag": "0011_add_set_pos_sale_action_tag_rpc",
+      "breakpoints": true
     }
   ]
 }
