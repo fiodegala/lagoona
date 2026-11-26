@@ -14,3 +14,9 @@
 - [x] Seleção de etiqueta no PDV, preservada no rascunho e na sincronização
 - [x] Retorno por ação no dashboard com filtros existentes
 - [x] Testes e verificação autenticada do cadastro, seleção e rascunho; nenhuma venda real registrada na verificação
+
+# Seção de Etiquetas de ações
+
+- [x] Seção própria com abas de cadastro e resultados automáticos por etiqueta
+- [x] Selecionar etiquetas também ao finalizar a venda no PDV
+- [x] Testes e verificação autenticada do cadastro, painel automático, seleção no pagamento e preservação do rascunho; etiqueta temporária removida e nenhuma venda real registrada

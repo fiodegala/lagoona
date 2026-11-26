@@ -10,7 +10,7 @@ export interface ActionTaggedSale {
 }
 const money = (value: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 
-export default function SaleActionTagsReport({ sales, loading }: { sales: ActionTaggedSale[]; loading: boolean }) {
+export default function SaleActionTagsReport({ sales, loading, cards = false }: { sales: ActionTaggedSale[]; loading: boolean; cards?: boolean }) {
   const { data: tags = [], isLoading, isError } = useSaleActionTags();
   const rows = tags.map(tag => {
     const matching = sales.filter(sale => sale.action_tag_id === tag.id && sale.status === 'completed' && sale.sale_type !== 'brinde');
@@ -19,6 +19,17 @@ export default function SaleActionTagsReport({ sales, loading }: { sales: Action
     return { ...tag, count: matching.length, revenue, customers, ticket: matching.length ? revenue / matching.length : 0 };
   }).sort((a, b) => b.revenue - a.revenue || a.name.localeCompare(b.name));
   const total = rows.reduce((sum, row) => sum + row.revenue, 0);
+  if (cards) return <section aria-label="Resultados por ação" className="space-y-6">
+    {loading || isLoading ? <Skeleton className="h-28 w-full" /> : isError ? <p role="alert" className="text-destructive">Não foi possível carregar as ações.</p> : <>
+      <div className="border-b pb-5"><p className="text-sm text-muted-foreground">Total vendido nas ações</p><p className="text-3xl font-bold text-primary">{money(total)}</p></div>
+      {rows.length === 0 ? <p className="text-sm text-muted-foreground">Nenhuma etiqueta cadastrada.</p> : <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        {rows.map(row => <Card key={row.id} aria-label={`Resultados de ${row.name}`}>
+          <CardHeader><CardTitle className="flex items-start gap-2 text-lg"><Tags className="mt-1 h-4 w-4 shrink-0 text-primary" /><span className="min-w-0 break-words">{row.name}</span></CardTitle>{!row.is_active && <p className="text-xs text-muted-foreground">Inativa</p>}</CardHeader>
+          <CardContent><p className="text-sm text-muted-foreground">Valor vendido</p><p className="mb-5 text-2xl font-bold">{money(row.revenue)}</p><dl className="grid grid-cols-2 gap-4 text-sm"><div><dt className="text-muted-foreground">Vendas</dt><dd className="text-lg font-semibold">{row.count}</dd></div><div><dt className="text-muted-foreground">Clientes</dt><dd className="text-lg font-semibold">{row.customers}</dd></div><div className="col-span-2 border-t pt-3"><dt className="text-muted-foreground">Ticket médio</dt><dd className="font-semibold">{money(row.ticket)}</dd></div></dl></CardContent>
+        </Card>)}
+      </div>}
+    </>}
+  </section>;
   return <Card>
     <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3">
       <CardTitle className="flex items-center gap-2"><Tags className="h-5 w-5 text-primary" />Retorno por ação</CardTitle>

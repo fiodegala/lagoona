@@ -30,6 +30,7 @@ const routeToMenuKey: Record<string, string> = {
   '/admin/database-export': 'database-export',
   '/admin/cashback': 'cashback',
   '/admin/aniversariantes': 'birthdays',
+  '/admin/etiquetas': 'action-tags',
 };
 
 interface ProtectedRouteProps {

@@ -47,7 +47,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { profile, roles, signOut, isAdmin, userStore, managedStoreIds, allowedMenus, hasExplicitMenuPermissions } = useAuth();
+  const { profile, roles, signOut, isAdmin, isManager, userStore, managedStoreIds, allowedMenus, hasExplicitMenuPermissions } = useAuth();
   const { unreadCount } = useChatUnread();
   const pinnedShortcutItems = [
     { icon: ClipboardList, label: 'Ordens de Serviço', path: '/admin/ordens-servico', menuKey: 'service-orders' },
@@ -79,10 +79,11 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
   };
 
 
-  const NavItem = ({ icon: Icon, label, path, menuKey, requireAdmin, forceVisible = false }: typeof navItems[0] & { forceVisible?: boolean }) => {
+  const NavItem = ({ icon: Icon, label, path, menuKey, requireAdmin, requireManager, forceVisible = false }: typeof navItems[0] & { forceVisible?: boolean }) => {
     const isPinnedVisible = forceVisible || isAlwaysVisibleMenu(menuKey);
     // If user has explicit menu permission, show it regardless of requireAdmin
     const hasExplicitPermission = hasExplicitMenuPermissions && allowedMenus.includes(menuKey);
+    if (!forceVisible && requireManager && !isAdmin && !isManager && !hasExplicitPermission) return null;
     if (!forceVisible && requireAdmin && !isAdmin && !hasExplicitPermission && !isPinnedVisible) return null;
     if (!forceVisible && !hasMenuAccess(menuKey) && !isPinnedVisible) return null;
     

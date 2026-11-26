@@ -49,6 +49,7 @@ export interface MenuItem {
   path: string;
   menuKey: string;
   requireAdmin?: boolean;
+  requireManager?: boolean;
 }
 
 export const alwaysVisibleMenuKeys = ['manual', 'service-orders', 'announcements', 'abc-curve'] as const;
@@ -82,6 +83,7 @@ export const navItems: MenuItem[] = [
   { icon: Search, label: 'Compras por Produto', path: '/admin/compras-por-produto', menuKey: 'customer-purchases-by-product' },
   { icon: Gift, label: 'Cashback', path: '/admin/cashback', menuKey: 'cashback', requireAdmin: true },
   { icon: Cake, label: 'Aniversariantes', path: '/admin/aniversariantes', menuKey: 'birthdays', requireAdmin: true },
+  { icon: Tag, label: 'Etiquetas de ações', path: '/admin/etiquetas', menuKey: 'action-tags', requireManager: true },
   { icon: Wrench, label: 'Reconciliação Vendedores', path: '/admin/reconciliacao-vendedores', menuKey: 'seller-reconciliation', requireAdmin: true },
   { icon: BarChart3, label: 'Relatório PDV vs Site', path: '/admin/relatorio-pdv-site', menuKey: 'pdv-site-report', requireAdmin: true },
   { icon: ShoppingBasket, label: 'Carrinhos Abandonados', path: '/admin/abandoned-carts', menuKey: 'abandoned-carts' },

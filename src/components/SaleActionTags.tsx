@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 
-export function ManageSaleActionTags() {
+export function ManageSaleActionTags({ inline = false }: { inline?: boolean }) {
   const { isAdmin, isManager } = useAuth();
   const { data: tags = [], isLoading, isError } = useSaleActionTags();
   const client = useQueryClient();
@@ -44,11 +44,7 @@ export function ManageSaleActionTags() {
     } finally { setBusy(false); }
   }
 
-  return <>
-    <Button variant="outline" size="sm" onClick={() => setOpen(true)}><Tags className="mr-2 h-4 w-4" />Gerenciar etiquetas</Button>
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
-        <DialogHeader><DialogTitle>Etiquetas de ações</DialogTitle></DialogHeader>
+  const editor = <div className="space-y-5">
         <form className="space-y-2" onSubmit={event => { event.preventDefault(); void save(null, name); }}>
           <Label htmlFor="new-action-tag">Nova etiqueta</Label>
           <div className="flex gap-2"><Input id="new-action-tag" placeholder="Ex.: Cashback, Aniversário" maxLength={80} value={name} onChange={event => setName(event.target.value)} />
@@ -57,6 +53,7 @@ export function ManageSaleActionTags() {
         {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
         {isError && <p role="alert" className="text-destructive">Não foi possível carregar as etiquetas.</p>}
         <div className="divide-y">
+          {!isLoading && !isError && tags.length === 0 && <p className="py-4 text-sm text-muted-foreground">Nenhuma etiqueta cadastrada.</p>}
           {tags.map(tag => <div key={tag.id} className="flex items-center gap-2 py-3">
             {editingId === tag.id ? <>
               <Input aria-label="Nome da etiqueta" maxLength={80} value={editingName} onChange={event => setEditingName(event.target.value)} />
@@ -69,6 +66,14 @@ export function ManageSaleActionTags() {
             </>}
           </div>)}
         </div>
+      </div>;
+  if (inline) return editor;
+  return <>
+    <Button variant="outline" size="sm" onClick={() => setOpen(true)}><Tags className="mr-2 h-4 w-4" />Gerenciar etiquetas</Button>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+        <DialogHeader><DialogTitle>Etiquetas de ações</DialogTitle></DialogHeader>
+        {editor}
       </DialogContent>
     </Dialog>
   </>;

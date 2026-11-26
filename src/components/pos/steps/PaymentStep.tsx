@@ -16,6 +16,7 @@ import { Seller } from './SellerStep';
 import { Customer } from '@/components/pos/CustomerSelector';
 import { SaleType } from '@/components/pos/ProductSearch';
 import { cn } from '@/lib/utils';
+import { SaleActionTagSelect } from '@/components/SaleActionTags';
 
 interface PaymentStepProps {
   cartItems: CartItem[];
@@ -31,6 +32,8 @@ interface PaymentStepProps {
   onPayment: (method: 'cash' | 'card' | 'pix' | 'mixed' | 'boleto' | 'cheque', amountReceived?: number, paymentDetails?: Record<string, number>, saleDate?: string) => void;
   onBack: () => void;
   onAddGiftItem?: (product: ProductResult, variationId?: string) => void;
+  actionTagId?: string | null;
+  onActionTagChange?: (id: string | null) => void;
 }
 
 const saleTypeLabels: Record<SaleType, string> = {
@@ -61,6 +64,8 @@ const PaymentStep = ({
   onPayment,
   onBack,
   onAddGiftItem,
+  actionTagId = null,
+  onActionTagChange,
 }: PaymentStepProps) => {
   const today = new Date();
   const [saleDate, setSaleDate] = useState<Date>(today);
@@ -234,6 +239,8 @@ const PaymentStep = ({
             </div>
           </div>
         )}
+
+        {onActionTagChange && <div className="mb-6"><SaleActionTagSelect value={actionTagId} onChange={onActionTagChange} /></div>}
 
         {/* Gift button */}
         {onAddGiftItem && saleType !== 'brinde' && (

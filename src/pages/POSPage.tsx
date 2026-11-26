@@ -1120,6 +1120,8 @@ const POSPage = () => {
 
           {currentStep === 'payment' && isQuoteMode && (
             <PaymentStep
+              actionTagId={actionTagId}
+              onActionTagChange={setActionTagId}
               cartItems={cartItems}
               subtotal={subtotal}
               discountAmount={discountsOnly}
@@ -1138,6 +1140,8 @@ const POSPage = () => {
 
           {currentStep === 'payment' && !isQuoteMode && (
             <PaymentStep
+              actionTagId={actionTagId}
+              onActionTagChange={setActionTagId}
               cartItems={cartItems}
               subtotal={subtotal}
               discountAmount={discountsOnly}
